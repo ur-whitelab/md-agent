@@ -1,0 +1,2 @@
+git+https://github.com/blackadad/paper-scraper.git
+pre-commit
