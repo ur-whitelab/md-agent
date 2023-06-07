@@ -15,8 +15,8 @@ def paper_search(search, pdir="query"):
 
 def partial(func, *args, **kwargs):
     """
-    This function is a workaround for the partial function error in new langchain versions.
-    This can be removed if langchain adds support for partial functions.
+    This function is a workaround for the partial function error in newer langchain versions.
+    This can be removed if not needed.
     """
     def wrapped(*args_wrapped, **kwargs_wrapped):
         final_args = args + args_wrapped

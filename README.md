@@ -4,8 +4,8 @@ It's built using Langchain and uses a collection of tools to set up and execute 
 
 ## Installation
 ```
-conda create -n md-agent python=3.8
-conda activate md-agent
+conda create -n mdagent python=3.8
+conda activate mdagent
 pip install -e .
 ```
 
