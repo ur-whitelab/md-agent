@@ -19,9 +19,10 @@ setup(
     install_requires=[
         "pypdf",
        "langchain==0.0.173",
-        "paper-qa==1.1.1",
+        "pqapi",
         "google-search-results",
-        "rmrkl @ git+https://github.com/doncamilom/robust-mrkl.git",
+        "rmrkl",
+        "paper-scraper@git+https://github.com/blackadad/paper-scraper.git",
     ],
     test_suite="tests",
     long_description=long_description,
