@@ -4,7 +4,7 @@ It's built using Langchain and uses a collection of tools to set up and execute 
 
 ## Installation
 ```
-conda create -n mdagent python=3.8
+conda create -n mdagent python=3.10
 conda activate mdagent
 pip install -e .
 ```
@@ -25,5 +25,3 @@ To contribute to MD-Agent's development, follow these steps to ensure the pre-co
 4. Prior to committing, ensure that pre-commit checks pass: `pre-commit run --all`
 
 Note: If you have already committed and encounter a pre-commit error during a pull request, complete step 4 above.
-
-

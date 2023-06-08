@@ -1,8 +1,6 @@
-import os
-from glob import glob
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-exec(open("mdagent/version.py").read())
+from mdagent.version import __version__
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -18,11 +16,11 @@ setup(
     packages=find_packages(),
     install_requires=[
         "pypdf",
-       "langchain==0.0.173",
+        "langchain",
         "pqapi",
+        "paper-qa",
         "google-search-results",
         "rmrkl",
-        "paper-scraper@git+https://github.com/blackadad/paper-scraper.git",
     ],
     test_suite="tests",
     long_description=long_description,

@@ -39,4 +39,4 @@ jobs:
        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
        PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
       run: |
-         pytest tests 
+         pytest tests

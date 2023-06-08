@@ -1,21 +1,22 @@
 import langchain
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
-class MDagent:
+
+class MDAgent:
     def __init__(
-            self,
-            tools,
-            model="text-davinci-003",
-            temp=0.1,
-            max_iterations=40,
-            api_key=None,
+        self,
+        tools,
+        model="text-davinci-003",
+        temp=0.1,
+        max_iterations=40,
+        api_key=None,
     ):
         if model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
             self.llm = langchain.chat_models.ChatOpenAI(
                 temperature=temp,
                 model_name=model,
                 request_timeout=1000,
-                max_tokens=2000
+                max_tokens=2000,
             )
         elif model.startswith("text-"):
             self.llm = langchain.OpenAI(temperature=temp, model_name=model)
@@ -34,7 +35,6 @@ class MDagent:
             max_iterations=max_iterations,
             return_intermediate_steps=True,
         )
-
 
     def run(self, prompt):
         outputs = self.agent_executor({"input": prompt})
