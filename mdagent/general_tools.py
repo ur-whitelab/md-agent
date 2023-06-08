@@ -9,6 +9,10 @@ from langchain import SerpAPIWrapper
 from pypdf.errors import PdfReadError
 
 
+def dummy_function() -> int:
+    return 46
+
+
 def paper_search(search: str, pdir: str = "query") -> Dict[str, Any]:
     try:
         return paperscraper.search_papers(search, pdir=pdir)
