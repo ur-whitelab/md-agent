@@ -4,17 +4,13 @@ It's built using Langchain and uses a collection of tools to set up and execute 
 
 ## Installation
 ```
-conda create -n mdagent python=3.10
-conda activate mdagent
-pip install -e .
+pip install git+https://github.com/ur-whitelab/md-agent.git
 ```
 
 
 # Usage
 The first step is to set up your API keys in your environment. An OpenAI key is necessary for this project.
-Other tools require API keys, such as:
-- SERP (for web searches)
-- Semantic Scholar and paper-qa (for literature searches)
+Other tools require API keys, such as Semantic Scholar and paper-qa for literature searches.
 
 
 ## Developing
