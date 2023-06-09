@@ -58,17 +58,9 @@ class MDTools:
         and knowledge distillation with llms.
         """
 
+        search_tools = []
         if self.pqa_key is not None:
             pqa_result = Scholar2ResultLLM(self.pqa_key)
+            search_tools.append(pqa_result)
 
-        search_tools = [
-            agents.Tool(
-                name="LiteratureSearch",
-                func=pqa_result.query,
-                description=(
-                    "Input a specific question,"
-                    "returns an answer from literature search. "
-                ),
-            )
-        ]
         return search_tools
