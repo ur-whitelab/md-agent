@@ -28,10 +28,15 @@ jobs:
     - name: Install
       run: |
         pip install .
+    - name: Check pre-commit
+      run: |
+        pip install pre-commit
+        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
     - name: Run Test
       env:
        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+       PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
       run: |
-         pytest tests 
+         pytest tests
