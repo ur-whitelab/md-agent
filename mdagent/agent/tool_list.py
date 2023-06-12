@@ -8,6 +8,7 @@ class MyPythonREPLTool:
 
     # Note that the import for PythonREPLTool is within the constructor
     def __init__(self, *args, **kwargs):
+        from langchain.tools.python.tool import PythonREPLTool
         super().__init__(*args, **kwargs)
 
 
