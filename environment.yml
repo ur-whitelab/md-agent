@@ -1,4 +1,4 @@
-name: md-agent
+name: mdagent
 channels:
   - conda-forge
   - defaults
