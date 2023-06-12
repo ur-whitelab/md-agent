@@ -1,17 +1,6 @@
 import os
 
 
-class MyPythonREPLTool:
-    @property
-    def is_single_input(self):
-        return True
-
-    # Note that the import for PythonREPLTool is within the constructor
-    def __init__(self, *args, **kwargs):
-        from langchain.tools.python.tool import PythonREPLTool
-        super().__init__(*args, **kwargs)
-
-
 class MDTools:
     def __init__(
         self,
@@ -38,7 +27,7 @@ class MDTools:
     def _standard_tools(self):
         """
         Standard tools:
-        Tools directly imported from langchain: math, python-repl, etc.
+        Tools directly imported from langchain: math, etc.
         """
         import langchain
         from langchain import agents
@@ -47,9 +36,7 @@ class MDTools:
             temperature=self.surrogate_llm_temp, model_name=self.surrogate_llm
         )
 
-        self.standard_tools = agents.load_tools(
-            ["python_repl", "human", "llm-math"], sub_llm
-        )
+        self.standard_tools = agents.load_tools(["human", "llm-math"], sub_llm)
 
         return self.standard_tools
 
