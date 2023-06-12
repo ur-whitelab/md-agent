@@ -20,7 +20,6 @@ setup(
         "paper-qa",
         "google-search-results",
         "rmrkl",
-        "git+https://github.com/blackadad/paper-scraper.git",
     ],
     test_suite="tests",
     long_description=long_description,
