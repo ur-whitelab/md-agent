@@ -23,25 +23,22 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Create and activate virtual environment
+      - name: Install Poetry
         run: |
-          python -m venv venv
-          source venv/bin/activate
+          curl -sSL https://install.python-poetry.org | python3 -
+          source $HOME/.poetry/env
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest build
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          poetry install --no-root
 
       - name: Install package
         run: |
-          pip install .
+          poetry install --no-root --no-dev
 
       - name: Check pre-commit
         run: |
-          pip install pre-commit
-          pre-commit run --all-files || (git status --short; git diff; exit 1)
+          poetry run pre-commit run --all-files || (git status --short; git diff; exit 1)
 
       - name: Run tests
         env:
@@ -50,4 +47,4 @@ jobs:
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
         run: |
-          pytest tests
+          poetry run pytest tests

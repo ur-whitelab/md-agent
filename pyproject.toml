@@ -1,0 +1,36 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "md-agent"
+version = "0.0.1" # Replace with your version
+description = "Collection of MD tools for use with language models"
+authors = ["Andrew White <andrew.white@rochester.edu>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/ur-whitelab/md-agent"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pypdf = "*"
+langchain = "*"
+pqapi = "*"
+paper-qa = "*"
+google-search-results = "*"
+rmrkl = "*"
+paper-scraper = {git = "https://github.com/blackadad/paper-scraper.git"}
+pre-commit = "*"
+
+[tool.poetry.dev-dependencies]
+pre-commit ="*"
+
+[[tool.poetry.source]]
+name = "legacy"
+url = "https://pypi.org/simple"
+secondary = true
