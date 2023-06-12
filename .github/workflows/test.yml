@@ -48,20 +48,27 @@ jobs:
     - name: Install dependencies
       run: |
         conda env update --file environment.yml --name base
-
+    #----------------------------------------------
+    #       Install
+    #----------------------------------------------
     - name: Install
       run: |
         conda install .
+    #----------------------------------------------
+    #       check to make sure pre-commit was run
+    #----------------------------------------------
     - name: Check pre-commit
       run: |
         conda install pre_commit
         pre-commit install
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+    #----------------------------------------------
+    #       run tests
+    #----------------------------------------------
     - name: Run Test
       env:
        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
-       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
        PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
       run: |
         conda install pytest
