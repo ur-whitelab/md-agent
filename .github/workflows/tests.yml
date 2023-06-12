@@ -28,7 +28,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Install 
       run: |
-        pip install .
+        pip install . --no-deps
     - name: Run Test
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
