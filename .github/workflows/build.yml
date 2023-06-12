@@ -1,4 +1,4 @@
-ame: publish
+name: publish
 
 on:
   release:
