@@ -1,5 +1,6 @@
 from typing import Any
 
+import langchain
 import pqapi
 from langchain.tools import BaseTool
 
