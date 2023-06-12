@@ -53,7 +53,7 @@ jobs:
     #----------------------------------------------
     - name: Install
       run: |
-        conda install .
+        pip install .
     #----------------------------------------------
     #       check to make sure pre-commit was run
     #----------------------------------------------
@@ -69,6 +69,7 @@ jobs:
       env:
        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
        PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
       run: |
         conda install pytest
