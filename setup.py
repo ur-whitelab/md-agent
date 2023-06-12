@@ -14,7 +14,12 @@ setup(
     url="https://github.com/ur-whitelab/md-agent",
     license="MIT",
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "langchain",
+        "paper-qa",
+        "pqapi",
+        "rmrkl",
+    ],
     test_suite="tests",
     long_description=long_description,
     long_description_content_type="text/markdown",
