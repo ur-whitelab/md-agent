@@ -24,54 +24,54 @@ jobs:
     strategy:
       max-parallel: 5
 
-steps:
-    #----------------------------------------------
-    #       check-out repo
-    #----------------------------------------------
-    - uses: actions/checkout@v3
+  steps:
+      #----------------------------------------------
+      #       check-out repo
+      #----------------------------------------------
+      - uses: actions/checkout@v3
 
-    #----------------------------------------------
-    #       setup miniconda
-    #----------------------------------------------
-    - name: Set up Miniconda
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: 3.10
-        environment-file: environment.yml
-        activate-environment: mdagent
-        auto-activate-base: true
+      #----------------------------------------------
+      #       setup miniconda
+      #----------------------------------------------
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          python-version: 3.10
+          environment-file: environment.yml
+          activate-environment: mdagent
+          auto-activate-base: true
 
-    #----------------------------------------------
-    #       deactivate base environment and activate mdagent
-    #----------------------------------------------
-    - name: Switching environment
-      shell: bash -l {0}
-      run: |
-        conda deactivate
-        conda activate mdagent
-    #----------------------------------------------
-    #       Install
-    #----------------------------------------------
-    - name: Install
-      run: |
-        pip install -e .
-    #----------------------------------------------
-    #       check to make sure pre-commit was run
-    #----------------------------------------------
-    - name: Check pre-commit
-      run: |
-        conda install pre_commit
-        pre-commit install
-        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
-    #----------------------------------------------
-    #       run tests
-    #----------------------------------------------
-    - name: Run Test
-      env:
-       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-       SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
-       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-       PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
-      run: |
-        conda install pytest
-        pytest tests
+      #----------------------------------------------
+      #       deactivate base environment and activate mdagent
+      #----------------------------------------------
+      - name: Switching environment
+        shell: bash -l {0}
+        run: |
+          conda deactivate
+          conda activate mdagent
+      #----------------------------------------------
+      #       Install
+      #----------------------------------------------
+      - name: Install
+        run: |
+          pip install -e .
+      #----------------------------------------------
+      #       check to make sure pre-commit was run
+      #----------------------------------------------
+      - name: Check pre-commit
+        run: |
+          conda install pre_commit
+          pre-commit install
+          pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+      #----------------------------------------------
+      #       run tests
+      #----------------------------------------------
+      - name: Run Test
+        env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+        PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
+        run: |
+          conda install pytest
+          pytest tests
