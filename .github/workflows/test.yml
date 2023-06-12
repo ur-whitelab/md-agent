@@ -1,75 +1,53 @@
-name: Unit tests
+name: test
 
 on:
   push:
-    branches: ['main'] # Run when anything is pushed to main
+    branches: [main]
   pull_request:
-    branches: ['*'] # Run when there's a pull request from any branch
-  workflow_dispatch: # Allow for manual triggering of this workflow
-
-concurrency:
-  group: >-
-    ${{ github.workflow }}-${{ github.ref_type }}-
-    ${{ github.event.pull_request.number || github.sha }}
-  cancel-in-progress: true
+    branches: [main]
 
 jobs:
-  build-linux:
+  test:
     runs-on: ubuntu-latest
+
     strategy:
-      max-parallel: 5
+      matrix:
+        python-version: [3.8, 3.9, "3.10"]
 
     steps:
-      #----------------------------------------------
-      #       check-out repo
-      #----------------------------------------------
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      #----------------------------------------------
-      #       setup miniconda
-      #----------------------------------------------
-      - name: Set up Miniconda
-        uses: conda-incubator/setup-miniconda@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.10
-          environment-file: environment.yml
-          activate-environment: mdagent
-          auto-activate-base: true
+          python-version: ${{ matrix.python-version }}
 
-      #----------------------------------------------
-      #       deactivate base environment and activate mdagent
-      #----------------------------------------------
-      - name: Switching environment
-        shell: bash -l {0}
+      - name: Create and activate virtual environment
         run: |
-          conda deactivate
-          conda activate mdagent
+          python -m venv venv
+          source venv/bin/activate
 
-      #----------------------------------------------
-      #       Install
-      #----------------------------------------------
-      - name: Install
+      - name: Install dependencies
         run: |
-          pip install -e .
+          python -m pip install --upgrade pip
+          pip install pytest build
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      #----------------------------------------------
-      #       check to make sure pre-commit was run
-      #----------------------------------------------
+      - name: Install package
+        run: |
+          pip install .
+
       - name: Check pre-commit
         run: |
-          conda install pre_commit
-          pre-commit install
-          pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+          pip install pre-commit
+          pre-commit run --all-files || (git status --short; git diff; exit 1)
 
-      #----------------------------------------------
-      #       run tests
-      #----------------------------------------------
-      - name: Run Test
+      - name: Run tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
         run: |
-          conda install pytest
           pytest tests
