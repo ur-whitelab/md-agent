@@ -1,0 +1,14 @@
+name: md-agent
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - langchain
+  - pip
+  - pip:
+    - pypdf
+    - pqapi
+    - paper-qa
+    - rmrkl
+    - git+https://github.com/blackadad/paper-scraper.git

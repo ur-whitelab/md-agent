@@ -1,0 +1,68 @@
+name: Unit tests
+
+on:
+  push:
+    branches: ['main'] # Run when anyting is pushed to main
+  pull_request:
+    branches: ['*'] # Run when there's a pull reqeust from any branch
+  workflow_dispatch: # Allow for manual triggering of this workflow
+concurrency:
+  # cancel in progress workflow run when another from the same group (branch and PR) is triggered
+  # {{ github.workflow }}: the workflow name is used to generate the concurrency group. This allows you to have more than one workflows
+  # {{ github.ref_type }}: the type of Git ref object created in the repository. Can be either branch or tag
+  # {{ github.event.pull_request.number}}: get PR number
+  # {{ github.sha }}: full commit sha
+  # credit: https://github.com/Sage-Bionetworks-Workflows/sagetasks/blob/main/.github/workflows/ci.yml
+  group: >-
+    ${{ github.workflow }}-${{ github.ref_type }}-
+    ${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+
+    steps:
+    #----------------------------------------------
+    #       check-out repo and set-up python
+    #----------------------------------------------
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.10'
+
+    #----------------------------------------------
+    #       add anaconda to path
+    #----------------------------------------------
+    - name: Add conda to system path
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        echo $CONDA/bin >> $GITHUB_PATH
+
+    #----------------------------------------------
+    #      Install environment packages
+    #----------------------------------------------
+    - name: Install dependencies
+      run: |
+        conda env update --file environment.yml --name base
+
+    - name: Install
+      run: |
+        conda install .
+    - name: Check pre-commit
+      run: |
+        conda install pre_commit
+        pre-commit install
+        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+    - name: Run Test
+      env:
+       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+       SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+       PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
+      run: |
+        conda install pytest
+        pytest tests
