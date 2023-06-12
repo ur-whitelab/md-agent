@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from mdagent.version import __version__
 
@@ -13,6 +13,7 @@ setup(
     author_email="andrew.white@rochester.edu",
     url="https://github.com/ur-whitelab/md-agent",
     license="MIT",
+    packages=find_packages(),
     install_requires=[
         "pypdf",
         "langchain",
