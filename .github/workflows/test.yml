@@ -53,7 +53,8 @@ jobs:
     #----------------------------------------------
     - name: Install
       run: |
-        pip install .
+        conda activate base
+        pip install -e .
     #----------------------------------------------
     #       check to make sure pre-commit was run
     #----------------------------------------------
