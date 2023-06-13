@@ -37,6 +37,6 @@ jobs:
        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
        SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-       PAPERQA_API_TOKEN: ${{ secrets.PAPERQA_API_TOKEN }}
+       PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
       run: |
          pytest tests
