@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8, 3.9, "3.10"]
+      max-parallel: 1
 
     steps:
     - uses: actions/checkout@v2
@@ -23,20 +24,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest  build
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
     - name: Install
       run: |
         pip install .
-    - name: Check pre-commit
-      run: |
-        pip install pre-commit
-        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
     - name: Run Test
       env:
-       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-       SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
-       SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
-       PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
+        PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
       run: |
-         pytest tests
+         pytest .

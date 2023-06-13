@@ -1,5 +1,7 @@
 from typing import Any
 
+import pqapi
+
 
 def dummy_function() -> int:
     return 46
@@ -25,7 +27,5 @@ class Scholar2ResultLLM:
         self.pqa_key = pqa_key
 
     def query(self, question: str) -> str:
-        import pqapi
-
         response = pqapi.agent_query("default", question)
         return response.answer

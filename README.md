@@ -5,7 +5,6 @@ It's built using Langchain and uses a collection of tools to set up and execute 
 ## Installation
 ```
 pip install git+https://github.com/ur-whitelab/md-agent.git
-pip install -r requirements.txt
 ```
 
 
