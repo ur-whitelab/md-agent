@@ -1,5 +1,10 @@
 import os
 
+import langchain
+from langchain import agents
+
+from ..general_tools import Scholar2ResultLLM
+
 
 class MDTools:
     def __init__(
@@ -29,8 +34,6 @@ class MDTools:
         Standard tools:
         Tools directly imported from langchain: math, etc.
         """
-        import langchain
-        from langchain import agents
 
         sub_llm = langchain.OpenAI(
             temperature=self.surrogate_llm_temp, model_name=self.surrogate_llm
@@ -46,8 +49,6 @@ class MDTools:
         Tools for extracting knowledge from the internet
         and knowledge distillation with llms.
         """
-
-        from ..general_tools import Scholar2ResultLLM
 
         search_tools = []
         if self.pqa_key is not None:
