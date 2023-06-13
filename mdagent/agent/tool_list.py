@@ -2,8 +2,15 @@ import os
 
 import langchain
 from langchain import agents
+from langchain.tools.python.tool import PythonREPLTool
 
 from ..general_tools import Scholar2ResultLLM
+
+
+class MyPythonREPLTool(PythonREPLTool):
+    @property
+    def is_single_input(self):
+        return True
 
 
 class MDTools:
@@ -32,14 +39,17 @@ class MDTools:
     def _standard_tools(self):
         """
         Standard tools:
-        Tools directly imported from langchain: math, etc.
+        Tools directly imported from langchain:
+        math, human, python-repl etc.
         """
 
         sub_llm = langchain.OpenAI(
             temperature=self.surrogate_llm_temp, model_name=self.surrogate_llm
         )
 
-        self.standard_tools = agents.load_tools(["human", "llm-math"], sub_llm)
+        self.standard_tools = agents.load_tools(
+            ["human", "llm-math", "python_repl"], sub_llm
+        )
 
         return self.standard_tools
 
@@ -50,17 +60,9 @@ class MDTools:
         and knowledge distillation with llms.
         """
 
+        search_tools = []
         if self.pqa_key is not None:
             pqa_result = Scholar2ResultLLM(self.pqa_key)
+            search_tools.append(pqa_result)
 
-        search_tools = [
-            agents.Tool(
-                name="LiteratureSearch",
-                func=pqa_result.query,
-                description=(
-                    "Input a specific question,"
-                    "returns an answer from literature search. "
-                ),
-            )
-        ]
         return search_tools
