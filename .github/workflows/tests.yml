@@ -25,10 +25,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install pytest  build
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Install 
+        if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
+    - name: Install
       run: |
-        pip install . --no-deps
+        pip install .
     - name: Run Test
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

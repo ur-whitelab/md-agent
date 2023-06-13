@@ -1,5 +1,5 @@
 default_language_version:
-    python: python3.10
+    python: python3
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -14,7 +14,6 @@ repos:
     hooks:
       - id: ruff
         args: [ --fix, --exit-non-zero-on-fix ]
-        exclude: '__init__.py'
   - repo: https://github.com/psf/black
     rev: "23.3.0"
     hooks:
