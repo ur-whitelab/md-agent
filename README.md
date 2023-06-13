@@ -8,7 +8,7 @@ pip install git+https://github.com/ur-whitelab/md-agent.git
 ```
 
 
-# Usage
+## Usage
 The first step is to set up your API keys in your environment. An OpenAI key is necessary for this project.
 Other tools require API keys, such as Semantic Scholar and paper-qa for literature searches.
 

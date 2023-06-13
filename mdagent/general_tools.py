@@ -1,8 +1,5 @@
-from typing import Any
-
 import pqapi
 from langchain.tools import BaseTool
-
 
 
 def dummy_function() -> int:

@@ -1,6 +1,7 @@
 import langchain
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
+
 class MDAgent:
     def __init__(
         self,
@@ -10,8 +11,6 @@ class MDAgent:
         max_iterations=40,
         api_key=None,
     ):
-
-
         if model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
             self.llm = langchain.chat_models.ChatOpenAI(
                 temperature=temp,
