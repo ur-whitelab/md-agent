@@ -1,5 +1,7 @@
 from setuptools import setup
 
+# fake to satisfy mypy
+__version__ = "0.0.0"
 exec(open("mdagent/version.py").read())
 
 with open("README.md", "r", encoding="utf-8") as fh:
