@@ -24,15 +24,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest  build
         if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
     - name: Install
       run: |
-        pip install .
+        pip install . 
     - name: Run Test
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
         PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
       run: |
-         pytest -m "not skip" tests
+         pytest .
