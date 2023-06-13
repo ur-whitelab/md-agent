@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 from mdagent.version import __version__
 
@@ -13,7 +13,7 @@ setup(
     author_email="andrew.white@rochester.edu",
     url="https://github.com/ur-whitelab/md-agent",
     license="MIT",
-    packages=find_packages(),
+    packages=["mdagent", "mdagent.agent"],
     install_requires=[
         "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
         "langchain",
