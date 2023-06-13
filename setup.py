@@ -1,6 +1,8 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
-from mdagent.version import __version__
+# fake to satisfy mypy
+__version__ = "0.0.0"
+exec(open("mdagent/version.py").read())
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -13,13 +15,12 @@ setup(
     author_email="andrew.white@rochester.edu",
     url="https://github.com/ur-whitelab/md-agent",
     license="MIT",
-    packages=find_packages(),
+    packages=["mdagent", "mdagent.agent"],
     install_requires=[
-        "pypdf",
+        "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
         "langchain",
-        "pqapi",
         "paper-qa",
-        "google-search-results",
+        "pqapi",
         "rmrkl",
     ],
     test_suite="tests",
