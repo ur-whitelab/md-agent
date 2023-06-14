@@ -13,14 +13,13 @@ def question():
 
 @pytest.fixture
 def litsearch():
-    return Scholar2ResultLLM(os.getenv("PQA_API_KEY"))
+    pqa = os.getenv("PQA_API_KEY")
+    openai = os.getenv("OPENAI_API_KEY")
+    semantic = os.getenv("SEMANTIC_API_KEY")
+    return Scholar2ResultLLM(pqa, openai, semantic)
 
 
 def test_litsearch(question, litsearch):
-    os.getenv("PQA_API_KEY")
-    os.getenv("OPENAI_API_KEY")
-    os.getenv("SEMANTIC_API_KEY")
-    pqa_result = litsearch(question)
-    result = pqa_result._run(question)
+    result = litsearch._run(question)
     assert isinstance(result, str)
     assert len(result) > 0
