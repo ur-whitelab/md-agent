@@ -2,6 +2,11 @@ import pqapi
 from langchain.tools import BaseTool
 
 
+def litsearch(question: str) -> str:
+    response = pqapi.agent_query("default", question)
+    return response.answer
+
+
 class Scholar2ResultLLM(BaseTool):
     name = "LiteratureSearch"
     description = """Input a specific question,
@@ -14,8 +19,7 @@ class Scholar2ResultLLM(BaseTool):
 
     def _run(self, question: str) -> str:
         """Use the tool"""
-        response = pqapi.agent_query("default", question)
-        return response.answer
+        return litsearch(question)
 
     async def _arun(self, question: str) -> str:
         """Use the tool asynchronously"""
