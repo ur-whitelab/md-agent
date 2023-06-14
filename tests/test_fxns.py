@@ -22,6 +22,7 @@ def test_dummy_run():
     assert True
 
 
+@pytest.mark.skip(reason="molrender is not pip installable")
 def test_run_molrender(path_to_cif):
     result = run_molrender(path_to_cif)
     assert result == "Visualization created"
