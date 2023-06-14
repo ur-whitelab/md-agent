@@ -4,7 +4,12 @@ import langchain
 from langchain import agents
 from langchain.tools.python.tool import PythonREPLTool
 
-from ..general_tools import Scholar2ResultLLM
+from ..general_tools import (
+    CheckDirectoryFiles,
+    PlanBVisualizationTool,
+    Scholar2ResultLLM,
+    VisualizationToolRender,
+)
 
 
 class MyPythonREPLTool(PythonREPLTool):
@@ -31,8 +36,9 @@ class MDTools:
         # Initialize tool lists
         self.search_tools = self._search_tools()
         self.standard_tools = self._standard_tools()
+        self.md_gen_tools = self._md_gen_tools()
 
-        self.all_tools = self.search_tools + self.standard_tools
+        self.all_tools = self.search_tools + self.standard_tools + self.md_gen_tools
 
         # Initialize standard tools
 
@@ -56,7 +62,8 @@ class MDTools:
     def _search_tools(self):
         """
         Search tools:
-        Tools for extracting knowledge from the internet
+        Tools for extracting
+        knowledge from the internet
         and knowledge distillation with llms.
         """
 
@@ -66,3 +73,18 @@ class MDTools:
             search_tools.append(pqa_result)
 
         return search_tools
+
+    def _md_gen_tools(self):
+        """
+        General MD tools:
+        Tools for visualizing
+        cif or pdb files.
+        """
+
+        md_gen_tools = []
+
+        md_gen_tools.append(
+            VisualizationToolRender(), PlanBVisualizationTool(), CheckDirectoryFiles()
+        )
+
+        return md_gen_tools
