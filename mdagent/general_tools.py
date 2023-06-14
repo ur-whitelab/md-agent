@@ -2,10 +2,6 @@ import pqapi
 from langchain.tools import BaseTool
 
 
-def dummy_function() -> int:
-    return 46
-
-
 class Scholar2ResultLLM(BaseTool):
     name = "LiteratureSearch"
     description = """Input a specific question,
