@@ -29,7 +29,7 @@ def _make_llm(model, temp, verbose):
 class MDAgent:
     def __init__(
         self,
-        tools,
+        tools=None,
         model="gpt-3.5-turbo-0613",
         tools_model="gpt-3.5-turbo-0613",
         temp=0.1,
