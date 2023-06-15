@@ -1,6 +1,6 @@
 from .agent import MDAgent, make_tools
-from .tools.gen_tools.search_tools import Scholar2ResultLLM
-from .tools.md_utils.vis_tools import (
+from .tools.search_tools import Scholar2ResultLLM
+from .tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
     VisFunctions,

@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from mdagent.tools.md_utils.vis_tools import VisFunctions
+from mdagent.tools.vis_tools import VisFunctions
 
 
 @pytest.fixture
