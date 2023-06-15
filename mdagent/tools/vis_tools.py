@@ -72,12 +72,12 @@ class VisualizationToolRender(BaseTool):
 
     name = "Visualization of PDB files"
     description = """This tool will create
-    a visualization of a cif
-    file as a png file in
-    the same directory. if
-    cif file doesnt exist
-    you should look for
-    alternatives in the directory"""
+                    a visualization of a cif
+                    file as a png file in
+                    the same directory. if
+                    cif file doesnt exist
+                    you should look for
+                    alternatives in the directory"""
 
     def _run(self, query: str) -> str:
         """use the tool."""
@@ -120,15 +120,15 @@ class PlanBVisualizationTool(BaseTool):
 
     name = "Plan B for Visualization of PDB or cif files"
     description = """This tool will create a .ipynb
-    file with the visualization
-    of the file. It is intended
-    to be used only if
-    VisualizationToolRender fails.
-    Give this tool the path to
-    the file and the output
-    will be a notebook the
-    user can use to visualize
-    the file."""
+                    file with the visualization
+                    of the file. It is intended
+                    to be used only if
+                    VisualizationToolRender fails.
+                    Give this tool the path to
+                    the file and the output
+                    will be a notebook the
+                    user can use to visualize
+                    the file."""
 
     def _run(self, query: str) -> str:
         """use the tool."""

@@ -19,9 +19,9 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     # add visualization tools
     all_tools += [
-        CheckDirectoryFiles,
-        VisualizationToolRender,
-        PlanBVisualizationTool,
+        CheckDirectoryFiles(),
+        VisualizationToolRender(),
+        PlanBVisualizationTool(),
     ]
 
     # add literature search tool
