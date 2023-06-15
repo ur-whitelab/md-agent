@@ -3,7 +3,12 @@ import os
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
-from mdagent.general_tools import Scholar2ResultLLM
+from ..general_tools import (
+    CheckDirectoryFiles,
+    PlanBVisualizationTool,
+    Scholar2ResultLLM,
+    VisualizationToolRender,
+)
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
@@ -12,7 +17,8 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    all_tools += []
+    # add visualization tools
+    all_tools += [CheckDirectoryFiles, VisualizationToolRender, PlanBVisualizationTool]
     if pqa_key:
         all_tools.append(Scholar2ResultLLM(pqa_key))
     return all_tools

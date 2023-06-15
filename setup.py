@@ -22,6 +22,7 @@ setup(
         "paper-qa",
         "pqapi",
         "rmrkl",
+        "nbformat",
     ],
     test_suite="tests",
     long_description=long_description,
