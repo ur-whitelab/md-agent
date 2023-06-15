@@ -26,5 +26,5 @@ def test_run_molrender(
 
 
 def test_create_notebook(path_to_cif, vis_fxns):
-    result = vis_fxns.reate_notebook(path_to_cif)
+    result = vis_fxns.create_notebook(path_to_cif)
     assert result == "Visualization Complete"
