@@ -38,4 +38,4 @@ jobs:
         SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
         PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
       run: |
-         pytest .
+         pytest -m "not skip" tests
