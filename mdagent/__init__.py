@@ -1,4 +1,5 @@
 from .agent import MDAgent, make_tools
-from .general_tools import Scholar2ResultLLM
+from .tools.gen_tools.search_tools import Scholar2ResultLLM
+from .tools.md_utils.vis_tools import VisFunctions
 
-__all__ = ["MDAgent", "Scholar2ResultLLM", "make_tools"]
+__all__ = ["MDAgent", "Scholar2ResultLLM", "make_tools", "VisFunctions", "MDAgent"]

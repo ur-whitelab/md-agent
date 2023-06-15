@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from mdagent.general_tools import create_notebook, run_molrender
+from mdagent.tools.md_utils.vis_tools import VisFunctions
 
 
 @pytest.fixture
@@ -12,12 +12,19 @@ def path_to_cif():
     return doc_path
 
 
+@pytest.fixture
+def vis_fxns():
+    return VisFunctions()
+
+
 @pytest.mark.skip(reason="molrender is not pip installable")
-def test_run_molrender(path_to_cif):
-    result = run_molrender(path_to_cif)
+def test_run_molrender(
+    path_to_ci,
+):
+    result = vis_fxns.run_molrender(path_to_cif, vis_fxns)
     assert result == "Visualization created"
 
 
-def test_create_notebook(path_to_cif):
-    result = create_notebook(path_to_cif)
+def test_create_notebook(path_to_cif, vis_fxns):
+    result = vis_fxns.reate_notebook(path_to_cif)
     assert result == "Visualization Complete"
