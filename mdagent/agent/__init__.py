@@ -1,4 +1,4 @@
 from .agent import MDAgent
-from .tool_list import MDTools
+from .tools import make_tools
 
-__all__ = ["MDAgent", "MDTools"]
+__all__ = ["MDAgent", "make_tools"]

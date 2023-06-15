@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 # fake to satisfy mypy
 __version__ = "0.0.0"
@@ -15,7 +15,7 @@ setup(
     author_email="andrew.white@rochester.edu",
     url="https://github.com/ur-whitelab/md-agent",
     license="MIT",
-    packages=["mdagent", "mdagent.agent"],
+    packages=find_packages(),
     install_requires=[
         "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
         "langchain",
