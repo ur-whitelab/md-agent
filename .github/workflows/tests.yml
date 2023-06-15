@@ -28,6 +28,10 @@ jobs:
     - name: Install
       run: |
         pip install .
+    - name: Check pre-commit
+      run: |
+        pip install pre-commit
+        pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
     - name: Run Test
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
