@@ -1,9 +1,31 @@
+import re
+
 from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
 
 
-def _specialized_cleaning(pdbfile: str):
+def _extract_path(user_input: str) -> str:
+    """Extract file path from user input."""
+
+    # Remove any leading or trailing white space
+    user_input = user_input.strip()
+
+    # Remove single and double quotes from the user_input
+    user_input = user_input.replace("'", "")
+    user_input = user_input.replace('"', "")
+
+    # Use a regex to find a sequence of non-space characters ending with .pdb or .cif
+    match = re.search(r"\b[\w/\\:.]+\.(?:pdb|cif)\b", user_input)
+
+    if match:
+        return match.group(0)
+    else:
+        raise ValueError("No valid file path found in user input.")
+
+
+def _standard_cleaning(pdbfile: str):
+    pdbfile = _extract_path(pdbfile)
     name = pdbfile.split(".")[0]
     end = pdbfile.split(".")[1]
     fixer = PDBFixer(filename=pdbfile)
@@ -22,10 +44,11 @@ def _specialized_cleaning(pdbfile: str):
         PDBxFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
         )
-    return "Cleaned File written to tidy_{name}.pdb"
+    return f"Cleaned File written to tidy_{name}.pdb"
 
 
 def _remove_water(pdbfile: str):
+    pdbfile = _extract_path(pdbfile)
     name = pdbfile.split(".")[0]
     end = pdbfile.split(".")[1]
     fixer = PDBFixer(filename=pdbfile)
@@ -38,10 +61,11 @@ def _remove_water(pdbfile: str):
         PDBxFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
         )
-    return "Cleaned File. Standard cleaning. Written to tidy_{name}.pdb"
+    return f"Cleaned File. Standard cleaning. Written to tidy_{name}.pdb"
 
 
 def _add_hydrogens_and_remove_water(pdbfile: str):
+    pdbfile = _extract_path(pdbfile)
     name = pdbfile.split(".")[0]
     end = pdbfile.split(".")[1]
     fixer = PDBFixer(filename=pdbfile)
@@ -55,11 +79,12 @@ def _add_hydrogens_and_remove_water(pdbfile: str):
         PDBxFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
         )
-    return """Cleaned File. Missing Hydrogens added,
-              and water removed. Written to tidy_{name}.pdb"""
+    return f"""Cleaned File. Missing Hydrogens added, and water
+            removed. Written to tidy_{name}.pdb"""
 
 
 def _add_hydrogens(pdbfile: str):
+    pdbfile = _extract_path(pdbfile)
     name = pdbfile.split(".")[0]
     end = pdbfile.split(".")[1]
     fixer = PDBFixer(filename=pdbfile)
@@ -72,7 +97,7 @@ def _add_hydrogens(pdbfile: str):
         PDBxFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
         )
-    return "Cleaned File. Missing Hydrogens added. Written to tidy_{name}.pdb"
+    return f"Cleaned File. Missing Hydrogens added. Written to tidy_{name}.pdb"
 
 
 class SpecializedCleanTool(BaseTool):
@@ -87,7 +112,7 @@ class SpecializedCleanTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """use the tool."""
-        return _specialized_cleaning(query)
+        return _standard_cleaning(query)
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
