@@ -23,6 +23,8 @@ setup(
         "pqapi",
         "rmrkl",
         "nbformat",
+        "pdbfixer",
+        "openmm",
     ],
     test_suite="tests",
     long_description=long_description,
