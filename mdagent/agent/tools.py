@@ -3,6 +3,11 @@ import os
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
+from ..tools.clean_tools import (
+    RemoveWaterCleaningTool,
+    SpecializedCleanTool,
+    addHydrogensCleaningTool,
+)
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.vis_tools import (
     CheckDirectoryFiles,
@@ -22,6 +27,9 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         CheckDirectoryFiles(),
         VisualizationToolRender(),
         PlanBVisualizationTool(),
+        SpecializedCleanTool(),
+        RemoveWaterCleaningTool(),
+        addHydrogensCleaningTool(),
     ]
 
     # add literature search tool
