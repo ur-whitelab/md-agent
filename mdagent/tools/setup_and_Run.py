@@ -97,7 +97,7 @@ def _extract_parameters_path():
         raise ValueError("No parameters.json file found in directory.")
 
 
-class SetUpAndRun(BaseTool):
+class SetUpAndRunTool(BaseTool):
     name = "Set Up simmulation objects and run simmulation"
     description = """This tool will set up the simmulation objects
                     and run the simmulation.
