@@ -45,6 +45,8 @@ def Prompt_summary(query: str):
                         The default is 1 fs.
                         Temperature: what is the temperature?
                         The default is 300 K.
+                        Friction: what is the friction coefficient?
+                        The default is 1.0 (1/ps)
                         Other Instructions: what other instructions do you have?
                         The default is none.
 
@@ -103,7 +105,7 @@ class InstructionSummary(BaseTool):
 
     def _run(self, query: str) -> str:
         summary = Prompt_summary(query)
-        _save_to_file(summary, "simmulation_parameters_summary.json")
+        _save_to_file(summary, "simmulation_parameters.json")
         return summary
 
     async def _arun(self, query: str) -> str:
