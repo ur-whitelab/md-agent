@@ -3,7 +3,7 @@ channels:
   - omnia
   - conda-forge
 dependencies:
-  - openmm
+  - openmm<7.6
   - pdbfixer
   - pip
   - pip:
