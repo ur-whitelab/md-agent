@@ -1,0 +1,13 @@
+name: my-environment
+channels:
+  - omnia
+  - conda-forge
+dependencies:
+  - python=3.9
+  - openmm
+  - pdbfixer
+  - pip
+  - pip:
+    - flake8
+    - pytest
+    - build
