@@ -21,7 +21,7 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: my-environment
-        environment-file: environment.yml
+        environment-file: environment.yaml
         python-version: ${{ matrix.python-version }}
         auto-activate-base: true
     - name: Install openmm with conda
