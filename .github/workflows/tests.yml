@@ -24,10 +24,10 @@ jobs:
         environment-file: environment.yaml
         python-version: ${{ matrix.python-version }}
         auto-activate-base: true
-    - name: Install openmm with conda
+    - name: Install [openmm pdbfixer] with conda
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge openmm
+        conda install -c conda-forge openmm pdbfixer
     - name: Install dependencies
       shell: bash -l {0}
       run: |
