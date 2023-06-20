@@ -33,6 +33,7 @@ jobs:
     - name: Run Test
       shell: bash -l {0}
       run: |
+         conda list
          pytest tests
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
