@@ -23,6 +23,7 @@ setup(
         "pqapi",
         "rmrkl",
         "nbformat",
+        "simtk.unit",
         "openmm",
     ],
     test_suite="tests",
