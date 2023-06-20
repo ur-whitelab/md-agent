@@ -73,11 +73,11 @@ def _add_hydrogens_and_remove_water(pdbfile: str):
     fixer.addMissingHydrogens(7.0)
     if end == "pdb":
         PDBFile.writeFile(
-            fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "a")
+            fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "w")
         )
     elif end == "cif":
         PDBxFile.writeFile(
-            fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
+            fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "w")
         )
     return f"""Cleaned File. Missing Hydrogens added, and water
             removed. Written to tidy_{name}.pdb"""

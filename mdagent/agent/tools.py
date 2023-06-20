@@ -9,6 +9,7 @@ from ..tools.clean_tools import (
     addHydrogensCleaningTool,
 )
 from ..tools.search_tools import Scholar2ResultLLM
+from ..tools.setup_and_Run import SetUpAndRunTool
 from ..tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
@@ -30,6 +31,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         SpecializedCleanTool(),
         RemoveWaterCleaningTool(),
         addHydrogensCleaningTool(),
+        SetUpAndRunTool(),
     ]
 
     # add literature search tool

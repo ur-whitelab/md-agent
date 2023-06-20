@@ -2,7 +2,7 @@ import json
 import os
 
 from langchain.tools import BaseTool
-from openmm import PME, HBonds, LangevinIntegrator, VerletIntegrator
+from openmm import LangevinIntegrator, VerletIntegrator, app
 from openmm.app import (
     ForceField,
     Modeller,
@@ -31,14 +31,14 @@ def _SetUpAndRunSimmulation(query):
     params["Forcefield"] = params["Forcefield"].replace("(default)", "")
     Forcefield = params["Forcefield"].split(",")[0]
     Water_model = params["Forcefield"].split(",")[1].strip()
-    print(Forcefield, Water_model)
+    print("Setting up forcields :", Forcefield, Water_model)
     # check if forcefields end in .xml
     if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
-        print("yes")
         forcefield = ForceField(Forcefield, Water_model)
 
         # Load the PDB file
     pdbfile = _extract_path(params["File Path"])
+    print("Starting pdb/cis file :", pdbfile)
     name = pdbfile.split(".")[0]
     end = pdbfile.split(".")[1]
     if end == "pdb":
@@ -49,9 +49,9 @@ def _SetUpAndRunSimmulation(query):
     modeller = Modeller(pdb.topology, pdb.positions)
     system = forcefield.createSystem(
         modeller.topology,
-        nonbondedMethod=PME,
+        nonbondedMethod=app.PME,
         nonbondedCutoff=1.0 * nanometers,
-        constraints=HBonds,
+        constraints=app.PME,
     )
 
     _integrator = params["Integrator"].split(" ")[0].strip()
@@ -59,14 +59,23 @@ def _SetUpAndRunSimmulation(query):
     _friction_coef = params["Friction"].split(" ")[0].strip()
     _timestep = params["Timestep"].split(" ")[0].strip()
 
-    print(_integrator)
     if _integrator == "Langevin":
+        print(
+            "Setting up Langevin integrator with Parameters:",
+            _temp,
+            "K",
+            _friction_coef,
+            "1/ps",
+            _timestep,
+            "fs",
+        )
         integrator = LangevinIntegrator(
             float(_temp) * kelvin,
             float(_friction_coef) / picosecond,
             float(_timestep) * femtoseconds,
         )
     elif _integrator == "Verlet":
+        print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
         integrator = VerletIntegrator(float(_timestep) * picoseconds)
 
     simulation = Simulation(modeller.topology, system, integrator)
@@ -108,7 +117,7 @@ class SetUpAndRunTool(BaseTool):
         # find the parameters in the directory
         parameters = _extract_parameters_path()
         _SetUpAndRunSimmulation(parameters)
-        return "Simmulation Complete"
+        return "Simmulation Completed, saved as .pdb and .csv files"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
