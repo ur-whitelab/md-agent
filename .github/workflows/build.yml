@@ -13,32 +13,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - name: Set up Python "3.9"
+      uses: actions/setup-python@v2
       with:
-        activate-environment: my-environment
-        environment-file: environment.yml
-        python-version: 3.9
-        auto-activate-base: true
+        python-version: "3.9"
     - name: Install dependencies
-      shell: bash -l {0}
       run: |
-        conda install -c conda-forge openmm
         python -m pip install --upgrade pip
         pip install flake8 pytest build
         if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
     - name: Install
-      shell: bash -l {0}
       run: |
-        python setup.py install
+        pip install .
     - name: Run Test
-      shell: bash -l {0}
       run: |
-         conda list
          pytest tests
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     - name: Build a binary wheel and a source tarball
-      shell: bash -l {0}
       run: |
         python -m build --sdist --wheel --outdir dist/ .
     - name: Publish distribution 📦 to PyPI
