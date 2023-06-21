@@ -47,7 +47,8 @@ class Name2PDBTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """Use the tool."""
-        return get_pdb(query)
+        get_pdb(query)
+        return "PDB file was downlaoded, please check the directory."
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
