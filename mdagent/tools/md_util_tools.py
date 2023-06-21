@@ -1,3 +1,4 @@
+import requests
 from langchain.tools import BaseTool
 
 
@@ -6,7 +7,6 @@ def get_pdb(query_string):
     Search RSCB's protein data bank using the given query string
     and return the path to temp pdb file
     """
-    import requests
 
     url = "https://search.rcsb.org/rcsbsearch/v2/query?json={search-request}"
     query = {
