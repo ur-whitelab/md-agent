@@ -5,7 +5,7 @@ from langchain.tools import BaseTool
 def get_pdb(query_string):
     """
     Search RSCB's protein data bank using the given query string
-    and return the path to temp pdb file
+    and return the path to pdb file
     """
 
     url = "https://search.rcsb.org/rcsbsearch/v2/query?json={search-request}"
@@ -18,7 +18,10 @@ def get_pdb(query_string):
         "return_type": "entry",
     }
     r = requests.post(url, json=query)
-    if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
+    if r.status_code == 204:
+        print("No Content Error: PDB ID not found for this substance.")
+        return None
+    elif "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found for fibronectin: {pdbid}")
         url = f"https://files.rcsb.org/download/{pdbid}.cif"

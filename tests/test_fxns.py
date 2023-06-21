@@ -5,8 +5,6 @@ import pytest
 from mdagent.tools.md_util_tools import get_pdb
 from mdagent.tools.vis_tools import VisFunctions
 
-# from mdagent.general_tools import dummy_function, name2pdb
-
 
 @pytest.fixture
 def path_to_cif():
@@ -40,7 +38,6 @@ def fibronectin():
     return "fibronectin"
 
 
-# test name2pdb function
 def test_getpdb(fibronectin):
     name = get_pdb(fibronectin)
     assert name == "1X3D.cif"
