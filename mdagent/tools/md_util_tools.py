@@ -32,9 +32,15 @@ def get_pdb(query_string):
 
 
 class Name2PDBTool(BaseTool):
-    name = "name2pdb"
-    description = "useful for when you need to retrieve PDB file using chemical names"
-    # change to mention pdb name must be given
+    name = "PDBFile Downloader"
+    description = """This tool downloads PDB (Protein Data Bank) or
+                    CIF (Crystallographic Information File)
+                    files using commercial chemical names.
+                    It’s ideal for situations where you
+                    need to directly retrieve these files
+                    using a chemical’s commercial name.
+                    Input: Commercial name of the chemical
+                    Output: Corresponding PDB or CIF file"""
 
     def _run(self, query: str) -> str:
         """Use the tool."""

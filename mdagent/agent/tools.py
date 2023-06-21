@@ -3,6 +3,7 @@ import os
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
+from ..tools.md_util_tools import Name2PDBTool
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.vis_tools import (
     CheckDirectoryFiles,
@@ -17,11 +18,11 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    # add visualization tools
     all_tools += [
         CheckDirectoryFiles(),
         VisualizationToolRender(),
         PlanBVisualizationTool(),
+        Name2PDBTool(),
     ]
 
     # add literature search tool
