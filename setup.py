@@ -24,6 +24,7 @@ setup(
         "rmrkl",
         "nbformat",
         "openmm",
+        "requests",
     ],
     test_suite="tests",
     long_description=long_description,

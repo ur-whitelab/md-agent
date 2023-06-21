@@ -3,11 +3,13 @@ import os
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
+
 from ..tools.clean_tools import (
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
     addHydrogensCleaningTool,
 )
+from ..tools.md_util_tools import Name2PDBTool
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.setup_and_Run import SetUpAndRunTool
 from ..tools.vis_tools import (
@@ -23,7 +25,6 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    # add visualization tools
     all_tools += [
         CheckDirectoryFiles(),
         VisualizationToolRender(),
@@ -32,6 +33,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         RemoveWaterCleaningTool(),
         addHydrogensCleaningTool(),
         SetUpAndRunTool(),
+        Name2PDBTool(),
     ]
 
     # add literature search tool

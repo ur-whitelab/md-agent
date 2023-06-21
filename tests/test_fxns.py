@@ -9,6 +9,7 @@ from mdagent.tools.setup_and_Run import (
     _extract_parameters_path,
     _setup_simulation_from_json,
 )
+from mdagent.tools.md_util_tools import get_pdb
 from mdagent.tools.vis_tools import VisFunctions
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -31,6 +32,7 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
+# Test visualization tools
 @pytest.fixture
 def vis_fxns():
     return VisFunctions()
@@ -47,6 +49,7 @@ def test_run_molrender(
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
     assert result == "Visualization Complete"
+
 
 
 def test_add_hydrogens_and_remove_water(path_to_cif):
@@ -88,3 +91,13 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open):
     mock_file_open.assert_called_once_with("test_file.json", "r")
     mock_json_load.assert_called_once()
     assert params == {"param1": "value1", "param2": "value2"}
+
+# Test MD utility tools
+@pytest.fixture
+def fibronectin():
+    return "fibronectin"
+
+
+def test_getpdb(fibronectin):
+    name = get_pdb(fibronectin)
+    assert name == "1X3D.cif"
