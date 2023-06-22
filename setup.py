@@ -25,7 +25,6 @@ setup(
         "nbformat",
         "requests",
         "python-dotenv",
-        "dotenv",
     ],
     test_suite="tests",
     long_description=long_description,
