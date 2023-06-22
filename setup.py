@@ -23,7 +23,6 @@ setup(
         "pqapi",
         "rmrkl",
         "nbformat",
-        "requests",
     ],
     test_suite="tests",
     long_description=long_description,
