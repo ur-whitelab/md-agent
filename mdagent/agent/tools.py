@@ -1,5 +1,6 @@
 import os
 
+
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
@@ -11,6 +12,11 @@ from ..tools.clean_tools import (
 from ..tools.md_util_tools import Name2PDBTool
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.setup_and_Run import SetUpAndRunTool
+from dotenv import load_dotenv
+from langchain import agents
+from langchain.base_language import BaseLanguageModel
+
+from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
@@ -19,10 +25,17 @@ from ..tools.vis_tools import (
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
+
+    load_dotenv()
+
+    # Get the api keys
+
     os.getenv("OPENAI_API_KEY")
     pqa_key = os.getenv("PQA_API_KEY")
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
+
+    # add visualization tools
 
     all_tools += [
         CheckDirectoryFiles(),
@@ -33,6 +46,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         addHydrogensCleaningTool(),
         SetUpAndRunTool(),
         Name2PDBTool(),
+
     ]
 
     # add literature search tool

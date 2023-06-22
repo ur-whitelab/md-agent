@@ -4,6 +4,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
+
 from mdagent.tools.clean_tools import _add_hydrogens_and_remove_water
 from mdagent.tools.md_util_tools import get_pdb
 from mdagent.tools.setup_and_Run import (
@@ -13,6 +14,7 @@ from mdagent.tools.setup_and_Run import (
 from mdagent.tools.vis_tools import VisFunctions
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
+from mdagent.tools.vis_tools import VisFunctions
 
 
 @pytest.fixture
