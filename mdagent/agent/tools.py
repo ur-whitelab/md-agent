@@ -1,5 +1,6 @@
 import os
 
+from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
@@ -12,6 +13,9 @@ from ..tools.vis_tools import (
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
+    load_dotenv()
+
+    # Get the api keys
     os.getenv("OPENAI_API_KEY")
     pqa_key = os.getenv("PQA_API_KEY")
 
