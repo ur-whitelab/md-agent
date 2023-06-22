@@ -35,7 +35,7 @@ def get_pdb(query_string):
 
 
 class Name2PDBTool(BaseTool):
-    name = "PDBFile Downloader"
+    name = "PDBFileDownloader"
     description = """This tool downloads PDB (Protein Data Bank) or
                     CIF (Crystallographic Information File)
                     files using commercial chemical names.

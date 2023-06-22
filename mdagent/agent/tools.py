@@ -5,13 +5,13 @@ from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
 from ..tools.clean_tools import (
+    AddHydrogensCleaningTool,
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
-    addHydrogensCleaningTool,
 )
 from ..tools.md_util_tools import Name2PDBTool
 from ..tools.search_tools import Scholar2ResultLLM
-from ..tools.setup_and_Run import SetUpAndRunTool
+from ..tools.setup_and_run import SetUpAndRunTool
 from ..tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
@@ -37,7 +37,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         PlanBVisualizationTool(),
         SpecializedCleanTool(),
         RemoveWaterCleaningTool(),
-        addHydrogensCleaningTool(),
+        AddHydrogensCleaningTool(),
         SetUpAndRunTool(),
         Name2PDBTool(),
     ]

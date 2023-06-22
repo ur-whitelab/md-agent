@@ -106,7 +106,7 @@ class InstructionSummary(BaseTool):
 
     def _run(self, query: str) -> str:
         summary = Prompt_summary(query)
-        _save_to_file(summary, "simmulation_parameters.json")
+        _save_to_file(summary, "simulation_parameters.json")
         return summary
 
     async def _arun(self, query: str) -> str:

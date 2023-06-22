@@ -1,11 +1,11 @@
 from .clean_tools import (
+    AddHydrogensCleaningTool,
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
-    addHydrogensCleaningTool,
 )
 from .md_util_tools import Name2PDBTool
 from .search_tools import Scholar2ResultLLM
-from .setup_and_Run import SetUpAndRunTool
+from .setup_and_run import SetUpAndRunTool
 from .vis_tools import CheckDirectoryFiles, PlanBVisualizationTool
 
 __all__ = [
@@ -17,7 +17,7 @@ __all__ = [
     "SetUpAndRunTool",
     "SpecializedCleanTool",
     "RemoveWaterCleaningTool",
-    "addHydrogensCleaningTool",
+    "AddHydrogensCleaningTool",
     "VisFunctions" "VisualizationToolRender",
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",

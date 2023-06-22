@@ -103,7 +103,7 @@ def _add_hydrogens(pdbfile: str):
 class SpecializedCleanTool(BaseTool):
     """Standard Cleaning of PDB or CIF files"""
 
-    name = "Standard Cleaning of PDB or CIF files"
+    name = "StandardCleaningTool"
     description = """
     This tool will perform a complete cleaning of a PDB or CIF file.
     Input: PDB or CIF file.
@@ -122,8 +122,7 @@ class SpecializedCleanTool(BaseTool):
 class RemoveWaterCleaningTool(BaseTool):
     """Removes water and adds hydrogens"""
 
-    name = """Cleaning tools that removes water
-    and add hydrogens in a pdb or cif file"""
+    name = """RemoveWaterAddHydrogensCleaningTool"""
     description = """This is the default cleaning tool.
     If and only if the human wants
     to remove water and heterogens, and add hydrogens.
@@ -141,11 +140,10 @@ class RemoveWaterCleaningTool(BaseTool):
         raise NotImplementedError("custom_search does not support async")
 
 
-class addHydrogensCleaningTool(BaseTool):
+class AddHydrogensCleaningTool(BaseTool):
     """Adds hydrogens"""
 
-    name = """Cleaning tools that adds hydrogens
-    in a pdb or cif file"""
+    name = "AddHydrogensCleaningTool"
     description = """
 ]   This tool only adds hydrogens to a pdb or cif file.
     in a pdb or cif file

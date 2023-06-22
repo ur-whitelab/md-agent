@@ -24,7 +24,7 @@ def _setup_simulation_from_json(file_name):
     return params
 
 
-def _SetUpAndRunSimmulation(query):
+def _setup_and_run_simulation(query):
     # Load the force field
     # ask for inputs from the user
     params = _setup_simulation_from_json(query)
@@ -107,17 +107,17 @@ def _extract_parameters_path():
 
 
 class SetUpAndRunTool(BaseTool):
-    name = "Set Up simmulation objects and run simmulation"
-    description = """This tool will set up the simmulation objects
-                    and run the simmulation.
+    name = "SetUpAndRunTool"
+    description = """This tool will set up the simulation objects
+                    and run the simulation.
                     It will ask for the parameters path.
                     """
 
     def _run(self, query: str) -> str:
         # find the parameters in the directory
         parameters = _extract_parameters_path()
-        _SetUpAndRunSimmulation(parameters)
-        return "Simmulation Completed, saved as .pdb and .csv files"
+        _setup_and_run_simulation(parameters)
+        return "Simulation Completed, saved as .pdb and .csv files"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
