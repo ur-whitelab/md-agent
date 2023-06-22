@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from mdagent.tools.md_util_tools import get_pdb
 from mdagent.tools.vis_tools import VisFunctions
 
 
@@ -12,6 +13,7 @@ def path_to_cif():
     return doc_path
 
 
+# Test visualization tools
 @pytest.fixture
 def vis_fxns():
     return VisFunctions()
@@ -28,3 +30,14 @@ def test_run_molrender(
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
     assert result == "Visualization Complete"
+
+
+# Test MD utility tools
+@pytest.fixture
+def fibronectin():
+    return "fibronectin"
+
+
+def test_getpdb(fibronectin):
+    name = get_pdb(fibronectin)
+    assert name == "1X3D.cif"

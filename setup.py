@@ -24,6 +24,7 @@ setup(
         "rmrkl",
         "nbformat",
         "python-dotenv",
+        "requests",
     ],
     test_suite="tests",
     long_description=long_description,
