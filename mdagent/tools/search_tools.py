@@ -1,4 +1,3 @@
-
 import json
 
 import langchain
@@ -80,13 +79,6 @@ def _save_to_file(summary: str, filename: str):
 class Scholar2ResultLLM(BaseTool):
     name = "LiteratureSearch"
     description = """Input a specific question,
-            returns an answer from literature search."""
-    
-
-
-class Scholar2ResultLLM(BaseTool):
-    name = "LiteratureSearch"
-    description = """Input a specific question,
                 returns an answer from literature search."""
 
     pqa_key: str = ""
@@ -105,7 +97,6 @@ class Scholar2ResultLLM(BaseTool):
         raise NotImplementedError
 
 
-
 class InstructionSummary(BaseTool):
     name = "Instruction Summary"
     description = """This tool will summarize the instructions
@@ -121,4 +112,3 @@ class InstructionSummary(BaseTool):
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("custom_search does not support async")
-

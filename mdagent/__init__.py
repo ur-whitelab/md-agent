@@ -11,7 +11,6 @@ from .tools.vis_tools import (
 __all__ = [
     "MDAgent",
     "Scholar2ResultLLM",
-
     "Name2PDBTool",
     "make_tools",
     "VisFunctions",

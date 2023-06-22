@@ -1,5 +1,4 @@
 import langchain
-
 from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
