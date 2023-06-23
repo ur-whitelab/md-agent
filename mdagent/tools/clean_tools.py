@@ -112,7 +112,12 @@ class SpecializedCleanTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """use the tool."""
-        return _standard_cleaning(query)
+        try:
+            return _standard_cleaning(query)
+        except FileNotFoundError:
+            return "Check your file path. File not found."
+        except Exception as e:
+            return f"Something went wrong. {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -133,7 +138,13 @@ class RemoveWaterCleaningTool(BaseTool):
     """
 
     def _run(self, query: str) -> str:
-        return _add_hydrogens_and_remove_water(query)
+        """use the tool."""
+        try:
+            return _add_hydrogens_and_remove_water(query)
+        except FileNotFoundError:
+            return "Check your file path. File not found."
+        except Exception as e:
+            return f"Something went wrong. {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -151,7 +162,13 @@ class AddHydrogensCleaningTool(BaseTool):
     Output: Cleaned PDB file"""
 
     def _run(self, query: str) -> str:
-        return _add_hydrogens(query)
+        """use the tool."""
+        try:
+            return _add_hydrogens(query)
+        except FileNotFoundError:
+            return "Check your file path. File not found."
+        except Exception as e:
+            return f"Something went wrong. {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

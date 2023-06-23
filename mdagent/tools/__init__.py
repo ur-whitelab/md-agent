@@ -11,14 +11,12 @@ from .vis_tools import CheckDirectoryFiles, PlanBVisualizationTool
 __all__ = [
     "Scholar2ResultLLM",
     "Name2PDBTool",
-    "VisFunctions" "VisualizationToolRender",
-    "CheckDirectoryFiles",
-    "PlanBVisualizationTool",
+    "VisFunctions",
+    "VisualizationToolRender",
     "SetUpAndRunTool",
     "SpecializedCleanTool",
     "RemoveWaterCleaningTool",
     "AddHydrogensCleaningTool",
-    "VisFunctions" "VisualizationToolRender",
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
 ]

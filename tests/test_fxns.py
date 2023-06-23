@@ -6,10 +6,7 @@ import pytest
 
 from mdagent.tools.clean_tools import _add_hydrogens_and_remove_water
 from mdagent.tools.md_util_tools import get_pdb
-from mdagent.tools.setup_and_run import (
-    _extract_parameters_path,
-    _setup_simulation_from_json,
-)
+from mdagent.tools.setup_and_run import SimulationFunctions
 from mdagent.tools.vis_tools import VisFunctions
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -32,10 +29,22 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
+# Test simulation tools
+@pytest.fixture
+def sim_fxns():
+    return SimulationFunctions()
+
+
 # Test visualization tools
 @pytest.fixture
 def vis_fxns():
     return VisFunctions()
+
+
+# Test MD utility tools
+@pytest.fixture
+def fibronectin():
+    return "fibronectin"
 
 
 @pytest.mark.skip(reason="molrender is not pip installable")
@@ -58,22 +67,22 @@ def test_add_hydrogens_and_remove_water(path_to_cif):
 
 @patch("os.path.exists")
 @patch("os.listdir")
-def test_extract_parameters_path(mock_listdir, mock_exists):
+def test_extract_parameters_path(sim_fxns, mock_listdir, mock_exists):
     # Test when parameters.json exists
     mock_exists.return_value = True
-    assert _extract_parameters_path() == "parameters.json"
+    assert sim_fxns._extract_parameters_path() == "parameters.json"
     mock_exists.assert_called_once_with("parameters.json")
     mock_exists.reset_mock()  # Reset the mock for the next scenario
 
     # Test when parameters.json does not exist, but some_parameters.json does
     mock_exists.return_value = False
     mock_listdir.return_value = ["some_parameters.json", "other_file.txt"]
-    assert _extract_parameters_path() == "some_parameters.json"
+    assert sim_fxns._extract_parameters_path() == "some_parameters.json"
 
     # Test when no appropriate file exists
     mock_listdir.return_value = ["other_file.json", "other_file.txt"]
     with pytest.raises(ValueError) as e:
-        _extract_parameters_path()
+        sim_fxns._extract_parameters_path()
     assert str(e.value) == "No parameters.json file found in directory."
 
 
@@ -86,16 +95,10 @@ def test_extract_parameters_path(mock_listdir, mock_exists):
 def test_setup_simulation_from_json(mock_json_load, mock_file_open):
     # Define the mock behavior for json.load
     mock_json_load.return_value = {"param1": "value1", "param2": "value2"}
-    params = _setup_simulation_from_json("test_file.json")
+    params = sim_fxns._setup_simulation_from_json("test_file.json")
     mock_file_open.assert_called_once_with("test_file.json", "r")
     mock_json_load.assert_called_once()
     assert params == {"param1": "value1", "param2": "value2"}
-
-
-# Test MD utility tools
-@pytest.fixture
-def fibronectin():
-    return "fibronectin"
 
 
 def test_getpdb(fibronectin):

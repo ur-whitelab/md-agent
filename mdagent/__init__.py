@@ -1,6 +1,7 @@
 from .agent import MDAgent, make_tools
 from .tools.md_util_tools import Name2PDBTool
 from .tools.search_tools import Scholar2ResultLLM
+from .tools.setup_and_run import SetUpAndRunTool
 from .tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
@@ -18,4 +19,5 @@ __all__ = [
     "VisualizationToolRender",
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
+    "SetUpAndRunTool",
 ]

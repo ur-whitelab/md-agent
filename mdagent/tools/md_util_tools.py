@@ -19,8 +19,7 @@ def get_pdb(query_string):
     }
     r = requests.post(url, json=query)
     if r.status_code == 204:
-        print("No Content Error: PDB ID not found for this substance.")
-        return None
+        return "No Content Error: PDB ID not found for this substance."
     elif "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found for fibronectin: {pdbid}")
@@ -47,8 +46,14 @@ class Name2PDBTool(BaseTool):
 
     def _run(self, query: str) -> str:
         """Use the tool."""
-        get_pdb(query)
-        return "PDB file was downlaoded, please check the directory."
+        try:
+            pdb = get_pdb(query)
+            if pdb is None:
+                return "Name2PDB tool failed to download the PDB file."
+            else:
+                return f"Name2PDB tool successfully downloaded the PDB file: {pdb}"
+        except Exception as e:
+            return f"Something went wrong. {e}"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
