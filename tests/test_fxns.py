@@ -92,7 +92,7 @@ def test_extract_parameters_path(sim_fxns, mock_listdir, mock_exists):
     read_data='{"param1": "value1", "param2": "value2"}',
 )
 @patch("json.load")
-def test_setup_simulation_from_json(mock_json_load, mock_file_open):
+def test_setup_simulation_from_json(sim_fxns, mock_json_load, mock_file_open):
     # Define the mock behavior for json.load
     mock_json_load.return_value = {"param1": "value1", "param2": "value2"}
     params = sim_fxns._setup_simulation_from_json("test_file.json")
