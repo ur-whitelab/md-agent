@@ -1,0 +1,1 @@
+{"File Path": "1X3D.cif", "Preprocessing": "standard cleaning", "Forcefield": "amber14-all.xml, tip3pfb.xml", "Ensemble": "NVT", "Integrator": "Langevin", "Number of Steps": "1000", "Timestep": "1 fs", "Temperature": "300 K", "Friction": "1.0 (1/ps)", "Other Instructions": "default instructions"}

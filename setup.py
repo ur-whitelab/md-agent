@@ -23,6 +23,7 @@ setup(
         "pqapi",
         "rmrkl",
         "nbformat",
+        "requests",
         "python-dotenv",
     ],
     test_suite="tests",
