@@ -1,5 +1,12 @@
 MD-Agent is a LLM-agent based toolset for Molecular Dynamics.
-It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations.
+It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations, particularly in OpenMM.
+
+
+## Environment Setup
+To use the OpenMM features in the agent, please set up a conda environment, following these steps.
+- Create conda environment: `conda env create -n mdagent -f environment.yaml`
+- Activate your environment: `conda activate mdagent`
+- Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer`
 
 
 ## Environment Setup
@@ -23,11 +30,8 @@ Other tools require API keys, such as paper-qa for literature searches. We recom
 2. Replace the placeholder values in `.env` with your actual keys
 
 
-## Developing
-To contribute to MD-Agent's development, follow these steps to ensure the pre-commit checks pass:
-1. Clone the repository
-2. Install the development dependencies: `pip install -r dev-requirements.txt`
-3. Configure pre-commit: `pre-commit install`
-4. Prior to committing, ensure that pre-commit checks pass: `pre-commit run --all`
+## Contributing
 
-Note: If you have already committed and encounter a pre-commit error during a pull request, complete step 4 above.
+We welcome contributions to MD-Agent! If you're interested in contributing to the project, please check out our [Contributor's Guide](CONTRIBUTING.md) for detailed instructions on getting started, feature development, and the pull request process.
+
+We value and appreciate all contributions to MD-Agent.
