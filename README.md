@@ -1,5 +1,5 @@
 MD-Agent is a LLM-agent based toolset for Molecular Dynamics.
-It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations, particularly in OpenMM. 
+It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations, particularly in OpenMM.
 
 
 ## Environment Setup
