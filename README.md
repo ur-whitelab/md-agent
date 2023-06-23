@@ -1,5 +1,12 @@
 MD-Agent is a LLM-agent based toolset for Molecular Dynamics.
-It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations.
+It's built using Langchain and uses a collection of tools to set up and execute molecular dynamics simulations, particularly in OpenMM. 
+
+
+## Environment Setup
+To use the OpenMM features in the agent, please set up a conda environment, following these steps.
+- Create conda environment: `conda env create -n mdagent -f environment.yaml`
+- Activate your environment: `conda activate mdagent`
+- Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer`
 
 
 ## Installation
