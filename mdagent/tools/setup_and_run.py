@@ -111,11 +111,19 @@ class SetUpAndRunTool(BaseTool):
     description = """This tool will set up the simulation objects
                     and run the simulation.
                     It will ask for the parameters path.
+                    input: parameters.json (if the .json)
                     """
 
     def _run(self, query: str) -> str:
         # find the parameters in the directory
-        parameters = _extract_parameters_path()
+        try:
+            parameters = _extract_parameters_path()
+        except ValueError as e:
+            return (
+                str(e)
+                + f"""\nPlease use the Instruction summary tool with the
+                query: {query} to create a parameters.json file in the directory."""
+            )
         _setup_and_run_simulation(parameters)
         return "Simulation Completed, saved as .pdb and .csv files"
 
