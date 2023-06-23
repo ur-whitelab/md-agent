@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
+from .prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
 from .tools import make_tools
 
 load_dotenv()
@@ -48,7 +49,13 @@ class MDAgent:
         # Initialize agent
         self.agent_executor = RetryAgentExecutor.from_agent_and_tools(
             tools=tools,
-            agent=ChatZeroShotAgent.from_llm_and_tools(self.llm, tools),
+            agent=ChatZeroShotAgent.from_llm_and_tools(
+                self.llm,
+                tools=tools,
+                suffix=SUFFIX,
+                format_instructions=FORMAT_INSTRUCTIONS,
+                question_prompt=QUESTION_PROMPT,
+            ),
             verbose=True,
             max_iterations=max_iterations,
             return_intermediate_steps=True,
