@@ -3,14 +3,15 @@ import json
 import langchain
 import pqapi
 from langchain import LLMChain, PromptTemplate
+from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 
+llm = langchain.chat_models.ChatOpenAI(
+    temperature=0.05, model_name="gpt-4", request_timeout=1000, max_tokens=2000
+)
 
-def Prompt_summary(query: str):
-    llm = langchain.chat_models.ChatOpenAI(
-        temperature=0.05, model_name="gpt-4", request_timeout=2000, max_tokens=2000
-    )
 
+def Prompt_summary(query: str, llm: BaseLanguageModel = llm):
     prompt_template = """Your input is the original query. Your
                         task is to parse through the user query.
                         and provide a summary of the file path input,
