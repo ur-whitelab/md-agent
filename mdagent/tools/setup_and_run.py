@@ -297,8 +297,8 @@ class SimulationFunctions:
     def _extract_parameters_path(self):
         """Check directory for parameters.json file."""
         # Check if there is a parameters.json file in the directory.
-        if os.path.exists("simmulation_parameters_summary.json"):
-            return "simmulation_parameters_summary.json"
+        if os.path.exists("simulation_parameters_summary.json"):
+            return "simulation_parameters_summary.json"
         # If there's no exact match, check for
         # any JSON file that contains 'parameters' in its name.
         else:
@@ -363,7 +363,7 @@ class InstructionSummary(BaseTool):
             path = pdb_cif_files[0]
         sim_fxns = SimulationFunctions()
         summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
-        sim_fxns._save_to_file(summary, "simmulation_parameters_summary.json")
+        sim_fxns._save_to_file(summary, "simulation_parameters_summary.json")
         return summary
 
     async def _arun(self, query: str) -> str:
