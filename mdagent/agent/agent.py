@@ -34,8 +34,8 @@ class MDAgent:
     def __init__(
         self,
         tools=None,
-        model="gpt-3.5-turbo-0613",
-        tools_model="gpt-3.5-turbo-0613",
+        model="gpt-4",
+        tools_model="gpt-4",
         temp=0.1,
         max_iterations=40,
         api_key=None,
