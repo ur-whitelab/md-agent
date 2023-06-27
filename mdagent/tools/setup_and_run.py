@@ -5,7 +5,13 @@ import langchain
 from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
-from openmm import LangevinIntegrator, VerletIntegrator, app
+from openmm import (
+    AndersenThermostat,
+    LangevinIntegrator,
+    MonteCarloBarostat,
+    VerletIntegrator,
+    app,
+)
 from openmm.app import (
     ForceField,
     Modeller,
@@ -15,7 +21,7 @@ from openmm.app import (
     Simulation,
     StateDataReporter,
 )
-from openmm.unit import femtoseconds, kelvin, nanometers, picosecond, picoseconds
+from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 
 from .clean_tools import _extract_path
 
@@ -48,7 +54,7 @@ class SimulationFunctions:
                             OPLS, GROMACS. The default is "amber14-all.xml, tip3p.xml".
                             Ensemble: what ensemble are you using?
                             you can choose from the following:
-                            NPT, NVT, NVE. This default is NVT
+                            NPT, NVT, NVE. The default is NVT
                             Integrator: what integrator are you using?
                             you can choose from the following:
                             Langevin, Verlet, Brownian.
@@ -60,6 +66,8 @@ class SimulationFunctions:
                             The default is 1 fs.
                             Temperature: what is the temperature?
                             The default is 300 K.
+                            Pressure: What is the pressure?
+                            If NPT ensemble, the default is 1.0 bar, otherwise None.
                             Friction: what is the friction coefficient?
                             The default is 1.0 (1/ps)
                             Other Instructions: what other instructions do you have?
@@ -145,12 +153,28 @@ class SimulationFunctions:
                 _timestep,
                 "fs",
             )
+            if params["Ensemble"] == "NPT":
+                _pressure = params["Pressure"].split(" ")[0].strip()
+                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
             integrator = LangevinIntegrator(
                 float(_temp) * kelvin,
                 float(_friction_coef) / picosecond,
                 float(_timestep) * femtoseconds,
             )
         elif _integrator == "Verlet":
+            if params["Ensemble"] == "NPT":
+                _pressure = params["Pressure"].split(" ")[0].strip()
+                system.addForce(AndersenThermostat(_temp * kelvin, 1 / picosecond))
+                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
+                print(
+                    "Setting up Verlet integrator with Parameters:",
+                    _timestep,
+                    "fs",
+                    _temp,
+                    "K",
+                    _pressure,
+                    "bar",
+                )
             print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
             integrator = VerletIntegrator(float(_timestep) * picoseconds)
 
