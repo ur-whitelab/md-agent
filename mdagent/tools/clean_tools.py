@@ -40,11 +40,12 @@ def _standard_cleaning(pdbfile: str):
         PDBFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "a")
         )
+        return f"Cleaned File written to tidy_{name}.pdb"
     elif end == "cif":
         PDBxFile.writeFile(
             fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
         )
-    return f"Cleaned File written to tidy_{name}.pdb"
+        return f"Cleaned File written to tidy_{name}.cif"
 
 
 def _remove_water(pdbfile: str):

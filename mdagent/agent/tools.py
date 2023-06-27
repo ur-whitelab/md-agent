@@ -11,7 +11,8 @@ from ..tools.clean_tools import (
 )
 from ..tools.md_util_tools import Name2PDBTool
 from ..tools.search_tools import Scholar2ResultLLM
-from ..tools.setup_and_run import SetUpAndRunTool
+from ..tools.setup_and_run import InstructionSummary, SetUpAndRunTool
+from ..tools.vis_tools import PlanBVisualizationTool, VisualizationToolRender
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
@@ -27,13 +28,14 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
     # add visualization tools
 
     all_tools += [
-        # VisualizationToolRender(),
-        # PlanBVisualizationTool(),
+        VisualizationToolRender(),
+        PlanBVisualizationTool(),
         SpecializedCleanTool(),
         RemoveWaterCleaningTool(),
         AddHydrogensCleaningTool(),
         SetUpAndRunTool(),
         Name2PDBTool(),
+        InstructionSummary(),
     ]
 
     # add literature search tool
