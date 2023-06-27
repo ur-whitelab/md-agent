@@ -1,10 +1,18 @@
 from .agent import MDAgent, make_tools
-from .tools.md_util_tools import Name2PDBTool
-from .tools.search_tools import Scholar2ResultLLM
-from .tools.setup_and_run import SetUpAndRunTool
-from .tools.vis_tools import (
+from .tools import (
     CheckDirectoryFiles,
+    FullRegistry2File,
+    ListRegistryObjects,
+    ListRegistryPaths,
+    MapPath2Name,
+    Name2PDBTool,
+    Objects2File,
+    OpenMMObjectRegistry,
+    PathRegistry,
+    Paths2File,
     PlanBVisualizationTool,
+    Scholar2ResultLLM,
+    SetUpAndRunTool,
     VisFunctions,
     VisualizationToolRender,
 )
@@ -20,4 +28,12 @@ __all__ = [
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
     "SetUpAndRunTool",
+    "ListRegistryObjects",
+    "ListRegistryPaths",
+    "Paths2File",
+    "PathRegistry",
+    "OpenMMObjectRegistry",
+    "MapPath2Name",
+    "Objects2File",
+    "FullRegistry2File",
 ]

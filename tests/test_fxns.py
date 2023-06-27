@@ -4,7 +4,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.tools.clean_tools import _add_hydrogens_and_remove_water
+from mdagent.tools.clean_tools import CleaningTools
 from mdagent.tools.md_util_tools import get_pdb
 from mdagent.tools.setup_and_run import SimulationFunctions
 from mdagent.tools.vis_tools import VisFunctions
@@ -29,6 +29,11 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
+@pytest.fixture
+def cleaning_fxns():
+    return CleaningTools()
+
+
 # Test simulation tools
 @pytest.fixture
 def sim_fxns():
@@ -48,10 +53,8 @@ def fibronectin():
 
 
 @pytest.mark.skip(reason="molrender is not pip installable")
-def test_run_molrender(
-    path_to_cif,
-):
-    result = vis_fxns.run_molrender(path_to_cif, vis_fxns)
+def test_run_molrender(path_to_cif, vis_fxns):
+    result = vis_fxns.run_molrender(path_to_cif)
     assert result == "Visualization created"
 
 
@@ -60,8 +63,8 @@ def test_create_notebook(path_to_cif, vis_fxns):
     assert result == "Visualization Complete"
 
 
-def test_add_hydrogens_and_remove_water(path_to_cif):
-    result = _add_hydrogens_and_remove_water(path_to_cif)
+def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
     assert "Cleaned File" in result  # just want to make sur the function ran
 
 
