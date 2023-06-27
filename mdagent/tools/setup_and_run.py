@@ -128,43 +128,6 @@ class SimulationFunctions:
             params = json.load(f)
         return params
 
-    def _add_reporters_from_json(simulation, name, json_file):
-        # Load the parameters from the json file
-        with open(json_file) as f:
-            params = json.load(f)
-
-        # Prepare a dict to store kwargs for StateDataReporter
-        reporter_args = {}
-
-        # Set the interval
-        reporter_args["reportInterval"] = 1000
-
-        # Parse the 'record_params' from the json file
-        for param in params["record_params"]:
-            if param in [
-                "step",
-                "time",
-                "potentialEnergy",
-                "kineticEnergy",
-                "totalEnergy",
-                "temperature",
-                "volume",
-                "density",
-                "progress",
-                "remainingTime",
-                "speed",
-                "elapsedTime",
-                "separator",
-                "systemMass",
-                "totalSteps",
-                "append",
-            ]:
-                # The params from the json file should be booleans
-                reporter_args[param] = True
-
-        # Add the reporter to the simulation
-        simulation.reporters.append(StateDataReporter(f"{name}.csv", **reporter_args))
-
     def _setup_and_run_simulation(self, query):
         # Load the force field
         # ask for inputs from the user
@@ -286,7 +249,6 @@ class SimulationFunctions:
             ]:
                 # The params from the json file should be booleans
                 reporter_args[param] = True
-        print(reporter_args)
         simulation.reporters.append(
             StateDataReporter(f"{name}.csv", 1000, **reporter_args)
         )
@@ -324,14 +286,33 @@ class SetUpAndRunTool(BaseTool):
         try:
             sim_fxns = SimulationFunctions()
             parameters = sim_fxns._extract_parameters_path()
+
         except ValueError as e:
             return (
                 str(e)
                 + """\nPlease use the Instruction summary tool with the
                 to create a parameters.json file in the directory."""
             )
-        sim_fxns._setup_and_run_simulation(parameters)
+        self.log("This are the parameters:")
+        self.log(parameters)
+        # print the parameters in json file
+        with open(parameters) as f:
+            params = json.load(f)
+        for key, value in params.items():
+            print(key, ":", value)
+        self.log("Are you sure you want to run the simulation? (y/n)")
+        response = input("yes or no: ")
+        if response.lower() in ["yes", "y"]:
+            sim_fxns._setup_and_run_simulation(parameters)
+        else:
+            return "Simulation interrupted due to human input"
         return "Simulation Completed, saved as .pdb and .csv files"
+
+    def log(self, text, color="blue"):
+        if color == "blue":
+            print("\033[1;34m\t{}\033[00m".format(text))
+        if color == "red":
+            print("\033[31m\t{}\033[00m".format(text))
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
