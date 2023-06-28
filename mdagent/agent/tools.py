@@ -10,6 +10,7 @@ from ..tools.clean_tools import (
     SpecializedCleanTool,
 )
 from ..tools.md_util_tools import Name2PDBTool
+from ..tools.plot_tools import SimulationOutputFigures
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.setup_and_run import SetUpAndRunTool
 
@@ -34,6 +35,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         AddHydrogensCleaningTool(),
         SetUpAndRunTool(),
         Name2PDBTool(),
+        SimulationOutputFigures(),
     ]
 
     # add literature search tool

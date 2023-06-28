@@ -9,14 +9,6 @@ To use the OpenMM features in the agent, please set up a conda environment, foll
 - Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer`
 
 
-## Environment Setup
-To set up the required environment, please follow these steps.
-
-- Activate your environmnent
-- Install the necessary conda dependencies by running the following command
-```
-conda install -c conda-forge openmm pdbfixer
-```
 ## Installation
 ```
 pip install git+https://github.com/ur-whitelab/md-agent.git

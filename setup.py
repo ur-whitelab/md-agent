@@ -25,7 +25,6 @@ setup(
         "nbformat",
         "requests",
         "python-dotenv",
-        "numpy",
         "matplotlib",
     ],
     test_suite="tests",
