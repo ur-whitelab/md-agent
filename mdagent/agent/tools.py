@@ -7,6 +7,7 @@ from langchain.base_language import BaseLanguageModel
 from ..tools import (
     AddHydrogensCleaningTool,
     CheckDirectoryFiles,
+    #InstructionSummary,
     ListRegistryPaths,
     MapPath2Name,
     Name2PDBTool,
@@ -16,8 +17,13 @@ from ..tools import (
     Scholar2ResultLLM,
     SerpGitTool,
     SetUpAndRunTool,
+    SimulationOutputFigures,
     SpecializedCleanTool,
     VisualizationToolRender,
+    # AvgRmsdTrajectoryTool,
+    # PpiDistanceTool,
+    # RmsdCompareTool,
+    # RmsdTrajectoryTool,
 )
 from ..utils import PathRegistry
 
@@ -27,11 +33,25 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    # add visualization tools
+    # add tools
 
     all_tools += [
         VisualizationToolRender(),
         CheckDirectoryFiles(),
+        PlanBVisualizationTool(),
+        SpecializedCleanTool(),
+        RemoveWaterCleaningTool(),
+        AddHydrogensCleaningTool(),
+        SetUpAndRunTool(),
+        Name2PDBTool(),
+        SimulationOutputFigures(),
+        #InstructionSummary(),
+
+        #rmsd tools
+        # PpiDistanceTool(),
+        # RmsdCompareTool(),
+        # RmsdTrajectoryTool(),
+        # AvgRmsdTrajectoryTool(),
     ]
 
     # add registry tools
@@ -49,13 +69,12 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         AddHydrogensCleaningTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
     ]
-    # add serpapi tool
+    
+    # Get the api keys
     serp_key = os.getenv("SERP_API_KEY")
     if serp_key:
-        all_tools.append(SerpGitTool(serp_key))
-    # add literature search tool
-    # Get the api keys
+        all_tools.append(SerpGitTool(serp_key))  # add serpapi tool
     pqa_key = os.getenv("PQA_API_KEY")
     if pqa_key:
-        all_tools.append(Scholar2ResultLLM(pqa_key))
+        all_tools.append(Scholar2ResultLLM(pqa_key)) # add literature search tool
     return all_tools
