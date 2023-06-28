@@ -23,7 +23,6 @@ pre-commit install
 
 ## Code Guidelines
 
-- Follow the [programming language] style guide for code formatting.
 - Use meaningful variable and function names.
 - Maintain consistency with the existing codebase.
 - Write clear and concise comments to explain your code.
@@ -52,7 +51,7 @@ These guidelines help maintain consistency, security, and thoroughness in the de
 1. Fork the repository to your own GitHub account.
 2. Create a new branch: `git checkout -b my-feature-branch`
 3. Make your changes, following the code guidelines mentioned above.
-4. Test your changes thoroughly.
+4. Test your changes thoroughly. Pytest workflows must pass in order for PR to be approved.
 5. Commit your changes: `git commit -am 'Add new feature'`
 6. Push your branch to your forked repository: `git push origin my-feature-branch`
 7. Submit a pull request, providing a detailed description of your changes and their purpose.
