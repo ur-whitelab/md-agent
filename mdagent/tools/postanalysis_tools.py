@@ -80,19 +80,21 @@ def avg_rmsd_overtime(pdbfile, trajectory, selection="backbone"):
     return avg_rmsd
 
 
-class PpiDistanceTool(BaseTool):
-    name = "PpiDistance"
+class PPIDistanceTool(BaseTool):
+    name = "PPIDistance"
     description = """
-        This tool will take a PDB or CIF file and compute RMSD to compare the
+        This tool will take a PDB file and compute RMSD to compare the
         average distance between protein and peptide or two proteins. The file
         must contain at least two chains to represent two distinct proteins or
-        peptides.
-        Give this tool the path to PDB or CIF file.
+        peptides. First, get PDB file instead of CIF file.
+        Give this tool the path to PDB file.
     """
 
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
+            if ".cif" in query:
+                return "Please use PDB file, not CIF"
             rmsd = ppi_distance(query)
             return f"RMSD is calculated: {rmsd}"
         except Exception as e:
@@ -106,12 +108,13 @@ class PpiDistanceTool(BaseTool):
 class RmsdCompareTool(BaseTool):
     name = "RmsdCompare"
     description = """
-        This tool will take two files (PDB or CIF) and compute RMSD to compare
+        This tool will take two files (PDB or PSF) and compute RMSD to compare
         the difference between two conformations. If trajectory files for both
         protein of interest and reference are obtained from either user or openmm,
         include these two trajectory files as well.
-        Give this tool the path to the files, separated by commas. Make sure to
-        give the files in the following order:
+        First, get PDB file instead of CIF file.
+        Give this tool the path to the files, separated by commas only (no spaces).
+        Make sure to give the files in the following order:
         pdb file, reference file, trajectory (Optional), reference trajectory
         (Optional).
     """
@@ -119,6 +122,8 @@ class RmsdCompareTool(BaseTool):
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
+            if ".cif" in query:
+                return "Please use PDB file, not CIF"
             if "," not in query:
                 return "Please separate file names with comma(s)"
             filelist = query.split(",")
@@ -138,16 +143,20 @@ class RmsdCompareTool(BaseTool):
 class RmsdTrajectoryTool(BaseTool):
     name = "RmsdTrajectory"
     description = """
-        This tool will take two files: 1) topology in form of PDB or CIF file and
+        This tool will take two files: 1) topology in form of PDB or PSF file and
         2) trajectory file from openmm simulation. It computes RMSD for each of
         trajectory frames compared to the reference, which is the initial frame.
         It stores RMSD array in a created file.
-        Give this tool the paths to topology file and trajectory file.
+        First, get PDB file instead of CIF file.
+        Give this tool the paths to topology file and trajectory file, separated
+        by comma without space.
     """
 
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
+            if ".cif" in query:
+                return "Please use PDB file, not CIF"
             if "," not in query:
                 return "Please separate file names with a comma"
             pdb, traj = query.split(",")
@@ -168,12 +177,16 @@ class AvgRmsdTrajectoryTool(BaseTool):
         2) trajectory file from openmm simulation. It computes RMSD for each of
         trajectory frames compared to the reference, which is the initial frame,
         then return the average of all RMSD values over time.
-        Give this tool the paths to topology file and trajectory file.
+        First, get PDB file instead of CIF file.
+        Give this tool the paths to topology file and trajectory file, separated
+        by comma without space.
     """
 
     def _run(self, query: str) -> str:
         """Use the tool."""
         try:
+            if ".cif" in query:
+                return "Please use PDB file, not CIF"
             if "," not in query:
                 return "Please separate file names with a comma"
             pdb, traj = query.split(",")

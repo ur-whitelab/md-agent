@@ -3,7 +3,7 @@ from .tools.md_util_tools import Name2PDBTool
 from .tools.plot_tools import SimulationOutputFigures
 from .tools.postanalysis_tools import (
     AvgRmsdTrajectoryTool,
-    PpiDistanceTool,
+    PPIDistanceTool,
     RmsdCompareTool,
     RmsdTrajectoryTool,
 )
@@ -28,7 +28,7 @@ __all__ = [
     "PlanBVisualizationTool",
     "SetUpAndRunTool",
     "SimulationOutputFigures",
-    "PpiDistanceTool",
+    "PPIDistanceTool",
     "RmsdCompareTool",
     "RmsdTrajectoryTool",
     "AvgRmsdTrajectoryTool",

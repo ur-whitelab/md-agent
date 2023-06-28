@@ -13,7 +13,7 @@ from ..tools.md_util_tools import Name2PDBTool
 from ..tools.plot_tools import SimulationOutputFigures
 from ..tools.postanalysis_tools import (
     AvgRmsdTrajectoryTool,
-    PpiDistanceTool,
+    PPIDistanceTool,
     RmsdCompareTool,
     RmsdTrajectoryTool,
 )
@@ -44,7 +44,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         Name2PDBTool(),
         SimulationOutputFigures(),
         InstructionSummary(),
-        PpiDistanceTool(),
+        PPIDistanceTool(),
         RmsdCompareTool(),
         RmsdTrajectoryTool(),
         AvgRmsdTrajectoryTool(),
