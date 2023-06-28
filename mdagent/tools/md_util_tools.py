@@ -21,7 +21,7 @@ def get_pdb(query_string, PathRegistry):
         "return_type": "entry",
     }
     r = requests.post(url, json=query)
-    if r.status_code == 204:
+    if r.status_code != 204: # need to check this
         return None
     if "cif" in query_string or "CIF" in query_string:
         filetype = "cif"
@@ -36,7 +36,6 @@ def get_pdb(query_string, PathRegistry):
         filename = f"{pdbid}.{filetype}"
         with open(filename, "w") as file:
             file.write(pdb.text)
-            file.close()
         print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
         PathRegistry.map_path(filename, filename, file_description)
