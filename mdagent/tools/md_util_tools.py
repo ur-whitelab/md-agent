@@ -18,8 +18,8 @@ def get_pdb(query_string):
         "return_type": "entry",
     }
     r = requests.post(url, json=query)
-    if r.status_code == 204:
-        return "No Content Error: PDB ID not found for this substance."
+    if r.status_code != 204:
+        return None
     elif "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found for fibronectin: {pdbid}")
@@ -28,7 +28,7 @@ def get_pdb(query_string):
         filename = f"{pdbid}.cif"
         with open(filename, "w") as file:
             file.write(pdb.text)
-        print(f"{filename} is created")
+        print(f"{filename} is created.")
         return filename
     return None
 
@@ -49,7 +49,7 @@ class Name2PDBTool(BaseTool):
         try:
             pdb = get_pdb(query)
             if pdb is None:
-                return "Name2PDB tool failed to download the PDB file."
+                return "Name2PDB tool failed to find and download PDB file."
             else:
                 return f"Name2PDB tool successfully downloaded the PDB file: {pdb}"
         except Exception as e:
