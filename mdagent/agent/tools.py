@@ -11,6 +11,12 @@ from ..tools.clean_tools import (
 )
 from ..tools.md_util_tools import Name2PDBTool
 from ..tools.plot_tools import SimulationOutputFigures
+from ..tools.postanalysis_tools import (
+    AvgRmsdTrajectoryTool,
+    PpiDistanceTool,
+    RmsdCompareTool,
+    RmsdTrajectoryTool,
+)
 from ..tools.search_tools import Scholar2ResultLLM
 from ..tools.setup_and_run import InstructionSummary, SetUpAndRunTool
 from ..tools.vis_tools import PlanBVisualizationTool, VisualizationToolRender
@@ -26,7 +32,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    # add visualization tools
+    # add tools
 
     all_tools += [
         VisualizationToolRender(),
@@ -38,6 +44,10 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         Name2PDBTool(),
         SimulationOutputFigures(),
         InstructionSummary(),
+        PpiDistanceTool(),
+        RmsdCompareTool(),
+        RmsdTrajectoryTool(),
+        AvgRmsdTrajectoryTool(),
     ]
 
     # add literature search tool
