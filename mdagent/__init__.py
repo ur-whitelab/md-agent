@@ -2,6 +2,7 @@ from .agent import MDAgent, make_tools
 from .tools import (
     CheckDirectoryFiles,
     CleaningTools,
+    Name2PDBTool,
     PlanBVisualizationTool,
     Scholar2ResultLLM,
     SetUpAndRunTool,
@@ -11,7 +12,7 @@ from .tools import (
     VisualizationToolRender,
     get_pdb,
     # AvgRmsdTrajectoryTool,
-    # PpiDistanceTool,
+    # PPIDistanceTool,
     # RmsdCompareTool,
     # RmsdTrajectoryTool,
 )
@@ -33,9 +34,9 @@ __all__ = [
     "SetUpAndRunTool",
     "PathRegistry",
     "SimulationOutputFigures",
-    "get_pdb",
+    get_pdb,
     # # rmsd tools
-    # "PpiDistanceTool",
+    # "PPIDistanceTool",
     # "RmsdCompareTool",
     # "RmsdTrajectoryTool",
     # "AvgRmsdTrajectoryTool",

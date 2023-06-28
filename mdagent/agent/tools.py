@@ -21,7 +21,7 @@ from ..tools import (
     SpecializedCleanTool,
     VisualizationToolRender,
     # AvgRmsdTrajectoryTool,
-    # PpiDistanceTool,
+    # PPIDistanceTool,
     # RmsdCompareTool,
     # RmsdTrajectoryTool,
 )
@@ -46,9 +46,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         Name2PDBTool(),
         SimulationOutputFigures(),
         #InstructionSummary(),
-
-        #rmsd tools
-        # PpiDistanceTool(),
+        # PPIDistanceTool(),
         # RmsdCompareTool(),
         # RmsdTrajectoryTool(),
         # AvgRmsdTrajectoryTool(),

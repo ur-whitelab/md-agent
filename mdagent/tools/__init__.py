@@ -11,7 +11,7 @@ from .plot_tools import SimulationOutputFigures
 from .registry_tools import ListRegistryPaths, MapPath2Name
 # from .postanalysis_tools import (
 #     AvgRmsdTrajectoryTool,
-#     PpiDistanceTool,
+#     PPIDistanceTool,
 #     RmsdCompareTool,
 #     RmsdTrajectoryTool,
 # )
@@ -45,7 +45,7 @@ __all__ = [
     "ListRegistryPaths",
     "MapPath2Name",
     "Name2PDBTool",
-    # "PpiDistanceTool",
+    # "PPIDistanceTool",
     # "RmsdCompareTool",
     # "RmsdTrajectoryTool",
     # "AvgRmsdTrajectoryTool",

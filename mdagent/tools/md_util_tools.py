@@ -21,13 +21,12 @@ def get_pdb(query_string, PathRegistry):
         "return_type": "entry",
     }
     r = requests.post(url, json=query)
-    if r.status_code != 204: # need to check this
+    if r.status_code == 204:
         return None
     if "cif" in query_string or "CIF" in query_string:
         filetype = "cif"
     else:
         filetype = "pdb"
-
     if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
