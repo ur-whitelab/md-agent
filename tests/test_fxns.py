@@ -103,4 +103,4 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 
 def test_getpdb(fibronectin):
     name = get_pdb(fibronectin)
-    assert name == "1X3D.cif"
+    assert name == "1X3D.pdb"
