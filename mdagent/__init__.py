@@ -1,6 +1,12 @@
 from .agent import MDAgent, make_tools
 from .tools.md_util_tools import Name2PDBTool
 from .tools.plot_tools import SimulationOutputFigures
+from .tools.postanalysis_tools import (
+    AvgRmsdTrajectoryTool,
+    PPIDistanceTool,
+    RmsdCompareTool,
+    RmsdTrajectoryTool,
+)
 from .tools.search_tools import Scholar2ResultLLM
 from .tools.setup_and_run import SetUpAndRunTool
 from .tools.vis_tools import (
@@ -22,4 +28,8 @@ __all__ = [
     "PlanBVisualizationTool",
     "SetUpAndRunTool",
     "SimulationOutputFigures",
+    "PPIDistanceTool",
+    "RmsdCompareTool",
+    "RmsdTrajectoryTool",
+    "AvgRmsdTrajectoryTool",
 ]
