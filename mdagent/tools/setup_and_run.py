@@ -19,7 +19,7 @@ from openmm.app import (
 from openmm.unit import femtoseconds, kelvin, nanometers, picosecond, picoseconds
 
 from .clean_tools import CleaningTools
-from .registry import OpenMMObjectRegistry, PathRegistry
+from .registry import PathRegistry
 
 
 class SimulationFunctions:
@@ -106,7 +106,7 @@ class SimulationFunctions:
             params = json.load(f)
         return params
 
-    def _setup_and_run_simulation(self, query, PathRegistry, OpenMMObjectRegistry):
+    def _setup_and_run_simulation(self, query, PathRegistry):
         # Load the force field
         # ask for inputs from the user
         params = self._setup_simulation_from_json(query)
@@ -118,7 +118,6 @@ class SimulationFunctions:
         if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
             forcefield = ForceField(Forcefield, Water_model)
         # adding forcefield to registry
-        OpenMMObjectRegistry.map_object("forcefield", forcefield)
 
         # Load the PDB file
         cleantools = CleaningTools()
@@ -159,12 +158,8 @@ class SimulationFunctions:
                 float(_friction_coef) / picosecond,
                 float(_timestep) * femtoseconds,
             )
-            # adding integrator object into registry
-            OpenMMObjectRegistry.map_object("Langevin integrator", integrator)
         elif _integrator == "Verlet":
             print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
-            # adding integrator object into registry
-            OpenMMObjectRegistry.map_object("Verlet integrator", integrator)
             integrator = VerletIntegrator(float(_timestep) * picoseconds)
 
         simulation = Simulation(modeller.topology, system, integrator)
@@ -177,8 +172,6 @@ class SimulationFunctions:
             )
         )
         simulation.step(int(params["Number of Steps"].split(" ")[0].strip()))
-        # add simulation object to registry
-        OpenMMObjectRegistry.map_object("simulation", simulation)
 
         # add filenames to registry
         file_name1 = "simulation_trajectory.pdb"
@@ -215,23 +208,20 @@ class SetUpAndRunTool(BaseTool):
                     input: parameters.json (if the .json)
                     """
     path_registry: Optional[PathRegistry]
-    object_registry: Optional[OpenMMObjectRegistry]
 
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
-        object_registry: Optional[OpenMMObjectRegistry],
     ):
         super().__init__()
         self.path_registry = path_registry
-        self.object_registry = object_registry
 
     def _run(self, query: str) -> str:
         """Use the tool"""
         # find the parameters in the directory
         try:
             if (
-                self.path_registry is None or self.object_registry is None
+                self.path_registry is None 
             ):  # this should not happen
                 return "Registry not initialized"
             sim_fxns = SimulationFunctions()
@@ -243,7 +233,7 @@ class SetUpAndRunTool(BaseTool):
                 query: {query} to create a parameters.json file in the directory."""
             )
         sim_fxns._setup_and_run_simulation(
-            parameters, self.path_registry, self.object_registry
+            parameters, self.path_registry
         )
         return "Simulation Completed, simulation trajectory and data files saved."
 

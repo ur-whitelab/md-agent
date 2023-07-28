@@ -27,7 +27,7 @@ Answer the question below using the following tools:
 {tool_strings}
 
 Use the tools provided, using the most specific tool available for each action.
-Once you map an object or path to a short name, you may only use that short name in future actions.
+Once you map a path to a short name, you may only use that short name in future actions.
 Your final answer should contain all information necessary to answer the question and subquestions.
 Your thought process should be clean and clear, and you must explicitly state the actions you are taking.
 Question: {input}

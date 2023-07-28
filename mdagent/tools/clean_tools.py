@@ -7,7 +7,6 @@ from pdbfixer import PDBFixer
 
 from .registry import PathRegistry
 
-
 class CleaningTools:
     def _extract_path(self, user_input: str) -> str:
         """Extract file path from user input."""

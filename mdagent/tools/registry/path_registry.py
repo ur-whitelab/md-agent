@@ -1,5 +1,5 @@
 import os
-
+import json
 
 class PathRegistry:
     instance = None
@@ -11,59 +11,68 @@ class PathRegistry:
         return cls.instance
 
     def __init__(self):
-        if PathRegistry.instance:
-            raise Exception("PathRegistry class has already been initialized")
-        self.paths = {}
+        self.json_file_path = "paths_registry.json"
 
     def _get_full_path(self, file_path):
         return os.path.abspath(file_path)
+    
+    def _check_for_json(self):
+        return os.path.exists(self.json_file_path)
+    
+    def _save_mapping_to_json(self, path_dict):  
+        existing_data = {}
+        if self._check_for_json():
+            with open(self.json_file_path, "r") as json_file:
+                existing_data = json.load(json_file)
+        existing_data.update(path_dict)
+        with open(self.json_file_path, "w") as json_file:
+            json.dump(existing_data, json_file)
+    
+    def _check_json_content(self, name):
+        if not self._check_for_json():
+            return False
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+            return name in data
 
-    def map_path(self, name, path, description=None, question=None):
-        """Map a name to a path in registry,
-        with an optional description."""
-        if description is None:
-            description = "No description provided"
+    def map_path(self, name, path, description=None):
+        description = description or "No description provided"
         full_path = self._get_full_path(path)
-        self.paths[name] = {"path": full_path, "description": description}
+        path_dict = {name: {"path": full_path, "description": description}}
+        self._save_mapping_to_json(path_dict)
+        saved = self._check_json_content(name)
+        return f"Path {'successfully' if saved else 'not'} mapped to name: {name}"
 
-        return f"Path mapped to name: {name}"
+    def get_mapped_path(self, name):
+        if not self._check_for_json():
+            return "The JSON file does not exist."
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+            return data.get(name, {}).get("path", "Name not found in path registry.")
 
-    def get_path(self, name):
-        """use this to get the path of a file, given name input
-        this will be used inside of functions
-        when we need to access a file"""
-        path_info = self.paths.get(name.strip().lower())
-        if path_info:
-            return f"Path: {path_info['path']}"
-        else:
-            return f"{name} not found in registry"
+    def _clear_json(self):
+        if self._check_for_json():
+            with open(self.json_file_path, "w") as json_file:
+                json_file.truncate(0)
+            return "JSON file cleared"
+        return "JSON file does not exist"
 
-    def clear_path_registry(self):
-        """ "Clear all paths from registry."""
-        self.paths.clear()
-        return "Path registry cleared"
+    def _remove_path_from_json(self, name):
+        if not self._check_for_json():
+            return "JSON file does not exist"
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+        if name in data:
+            del data[name]
+            with open(self.json_file_path, "w") as json_file:
+                json.dump(data, json_file)
+            return f"Path {name} removed from registry"
+        return f"Path {name} not found in registry"
 
-    def remove_path(self, name):
-        """Remove a single path from registry."""
-        if name in self.paths:
-            del self.paths[name]
-            return f"{name} removed from registry"
-        else:
-            return f"{name} not found in registry"
-
-    def list_path_names(self, paths_str=None):
-        """lists names that are mapped to paths in registry"""
-        names = ", ".join(self.paths.keys())
-        return "Names in path registry: " + names
-
-    def write_paths_to_file(self, file_name="path_registry.txt"):
-        """Write path directories to a text file."""
-        file_name = "path_registry.txt"  # forcing this for now
-        file_path = self._get_full_path(file_name)
-        with open(file_name, "w") as file:
-            for name, path_info in self.paths.items():
-                path = path_info["path"]
-                description = path_info.get("description", "")
-                file.write(f"{name}: {path} ({description})\n")
-
-        return f"Path directories written to file: {file_path}"
+    def list_path_names(self):
+        if not self._check_for_json():
+            return "JSON file does not exist"
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+        names = [key for key in data.keys()]
+        return "Names in path registry: " + ", ".join(names) if names else "No names found. The JSON file is empty or doesn't contain name mappings."

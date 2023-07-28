@@ -7,15 +7,10 @@ from langchain.base_language import BaseLanguageModel
 from ..tools import (
     AddHydrogensCleaningTool,
     CheckDirectoryFiles,
-    FullRegistry2File,
-    ListRegistryObjects,
     ListRegistryPaths,
     MapPath2Name,
     Name2PDBTool,
-    Objects2File,
-    OpenMMObjectRegistry,
     PathRegistry,
-    Paths2File,
     PlanBVisualizationTool,
     RemoveWaterCleaningTool,
     Scholar2ResultLLM,
@@ -40,15 +35,10 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
     # add registry tools
     # get instance first
     path_instance = PathRegistry.get_instance()
-    object_instance = OpenMMObjectRegistry.get_instance()
     # add tools
     all_tools += [
-        FullRegistry2File(path_registry=path_instance, object_registry=object_instance),
-        SetUpAndRunTool(path_registry=path_instance, object_registry=object_instance),
-        ListRegistryObjects(object_registry=object_instance),
-        Objects2File(object_registry=object_instance),
+        SetUpAndRunTool(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
-        Paths2File(path_registry=path_instance),
         MapPath2Name(path_registry=path_instance),
         PlanBVisualizationTool(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
