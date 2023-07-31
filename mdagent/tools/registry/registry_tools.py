@@ -11,13 +11,12 @@ class MapPath2Name(BaseTool):
     description = """Input the desired filename
     followed by the file's path, separated by a comma.
     Make sure the name is first, then the path.
+    Your path should look something like: name.pdb
     Stores the path in the registry with the
     name provided in the filename.
     If the output says Path mapped to name,
     then it was successful.
-    You do not need to check that file was created.
-    Once you use this tool, you may not
-    utilize the full path again"""
+    You do not need to check that file was created."""
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):

@@ -17,14 +17,22 @@ class PathRegistry:
         return os.path.abspath(file_path)
     
     def _check_for_json(self):
-        return os.path.exists(self.json_file_path)
+        #check short path first
+        short_path = self.json_file_path
+        if os.path.exists(short_path):
+            return True
+        full_path = self._get_full_path(self.json_file_path)
+        if os.path.exists(full_path):
+            self.json_file_path = full_path
+            return True
+        return False
     
     def _save_mapping_to_json(self, path_dict):  
         existing_data = {}
         if self._check_for_json():
             with open(self.json_file_path, "r") as json_file:
                 existing_data = json.load(json_file)
-        existing_data.update(path_dict)
+                existing_data.update(path_dict)
         with open(self.json_file_path, "w") as json_file:
             json.dump(existing_data, json_file)
     
