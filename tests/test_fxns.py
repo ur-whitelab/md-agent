@@ -73,8 +73,8 @@ def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
 def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns):
     # Test when parameters.json exists
     mock_exists.return_value = True
-    assert sim_fxns._extract_parameters_path() == "parameters.json"
-    mock_exists.assert_called_once_with("parameters.json")
+    assert sim_fxns._extract_parameters_path() == "simulation_parameters_summary.json"
+    mock_exists.assert_called_once_with("simulation_parameters_summary.json")
     mock_exists.reset_mock()  # Reset the mock for the next scenario
 
     # Test when parameters.json does not exist, but some_parameters.json does

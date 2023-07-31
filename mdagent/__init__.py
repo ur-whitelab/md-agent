@@ -5,6 +5,7 @@ from .tools import (
     MapPath2Name,
     Name2PDBTool,
     PathRegistry,
+    SimulationOutputFigures,
     PlanBVisualizationTool,
     Scholar2ResultLLM,
     SetUpAndRunTool,
@@ -26,4 +27,5 @@ __all__ = [
     "ListRegistryPaths",
     "PathRegistry",
     "MapPath2Name",
+    "SimulationOutputFigures",
 ]

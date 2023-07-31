@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 from typing import Optional
@@ -6,7 +7,13 @@ import langchain
 from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
-from openmm import LangevinIntegrator, VerletIntegrator, app
+from openmm import (
+    AndersenThermostat,
+    LangevinIntegrator,
+    MonteCarloBarostat,
+    VerletIntegrator,
+    app,
+)
 from openmm.app import (
     ForceField,
     Modeller,
@@ -16,7 +23,7 @@ from openmm.app import (
     Simulation,
     StateDataReporter,
 )
-from openmm.unit import femtoseconds, kelvin, nanometers, picosecond, picoseconds
+from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 
 from .clean_tools import CleaningTools
 from .registry import PathRegistry
@@ -47,26 +54,47 @@ class SimulationFunctions:
                             water. The default is add hydrogens and remove water.
                             Forcefield: what forcefields are you using?
                             you can choose from the following: AMBER, CHARMM,
-                            OPLS, GROMACS. The default is "amber14-all.xml, tip3p.xml".
+                            OPLS, GROMACS. Default -->  "amber14-all.xml, tip3p.xml".
                             Ensemble: what ensemble are you using?
                             you can choose from the following:
-                            NPT, NVT, NVE. This default is NVT
+                            NPT, NVT, NVE. Default --> "NVT".
                             Integrator: what integrator are you using?
                             you can choose from the following:
                             Langevin, Verlet, Brownian.
                             The default depends on the ensemble
                             (NPT -> Langevin, NVT -> Langevin, NVE -> Verlet).
                             Number of Steps: how many steps
-                            are you using? The default is 1000.
+                            are you using? The default is 10000.
                             Timestep: what is the timestep?
-                            The default is 1 fs.
+                            Default --> "1 fs".
                             Temperature: what is the temperature?
-                            The default is 300 K.
+                            Default --> "300 K".
+                            Pressure: What is the pressure?
+                            If NPT ensemble, the default is 1.0 bar, otherwise None.
                             Friction: what is the friction coefficient?
-                            The default is 1.0 (1/ps)
+                            Default --> "1.0"
+                            record_params: what parameters do you want to record?
+                            you can choose from the following:
+                            step, time, potentialEnergy, kineticEnergy,
+                            totalEnergy, temperature, volume, density,
+                            progress, remainingTime, speed, elapsedTime,
+                            separator, systemMass, totalSteps, append.
+                            Default --> ["step", "potentialEnergy", "temperature"].
                             Other Instructions: what other instructions do you have?
                             The default is none.
-
+                            Example of the final output:
+                            File Path: 1a1p.pdb
+                            Preprocessing: standard cleaning
+                            Forcefield: amber14-all.xml, tip3p.xml
+                            Ensemble: NPT
+                            Integrator: Langevin
+                            Number of Steps: 10000
+                            Timestep: 1 fs
+                            Temperature: 300 K
+                            Pressure: 1.0 bar
+                            Friction: 1.0
+                            record_params: ["step", "potentialEnergy", "temperature"]
+                            Other Instructions: none
                             If there is not enough information in a category,
                             you may fill in with the default, but explicitly state so.
                             Here is the information:{query}"""
@@ -110,9 +138,32 @@ class SimulationFunctions:
         # Load the force field
         # ask for inputs from the user
         params = self._setup_simulation_from_json(query)
-        params["Forcefield"] = params["Forcefield"].replace("(default)", "")
-        Forcefield = params["Forcefield"].split(",")[0]
-        Water_model = params["Forcefield"].split(",")[1].strip()
+
+        # forcefield key can be forcefield_files or Forcefield
+        if "forcefield_files" in params:
+            params["forcefield_files"] = (
+                params["forcefield_files"]
+                .replace("(default)", "")
+                .replace(" and ", ",")
+                .strip()
+            )
+            Forcefield_files = [
+                file.strip() for file in params["forcefield_files"].split(",")
+            ]
+            Forcefield = Forcefield_files[0]
+            Water_model = Forcefield_files[1]
+        else:
+            params["Forcefield"] = (
+                params["Forcefield"]
+                .replace("(default)", "")
+                .replace(" and ", ",")
+                .strip()
+            )
+            Forcefield_files = [
+                file.strip() for file in params["Forcefield"].split(",")
+            ]
+            Forcefield = Forcefield_files[0]
+            Water_model = Forcefield_files[1]
         print("Setting up forcields :", Forcefield, Water_model)
         # check if forcefields end in .xml
         if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
@@ -126,9 +177,9 @@ class SimulationFunctions:
         name = pdbfile.split(".")[0]
         end = pdbfile.split(".")[1]
         if end == "pdb":
-            pdb = PDBFile(params["File Path"])
+            pdb = PDBFile(pdbfile)
         elif end == "cif":
-            pdb = PDBxFile(params["File Path"])
+            pdb = PDBxFile(pdbfile)
 
         modeller = Modeller(pdb.topology, pdb.positions)
         system = forcefield.createSystem(
@@ -153,12 +204,28 @@ class SimulationFunctions:
                 _timestep,
                 "fs",
             )
+            if params["Ensemble"] == "NPT":
+                _pressure = params["Pressure"].split(" ")[0].strip()
+                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
             integrator = LangevinIntegrator(
                 float(_temp) * kelvin,
                 float(_friction_coef) / picosecond,
                 float(_timestep) * femtoseconds,
             )
         elif _integrator == "Verlet":
+            if params["Ensemble"] == "NPT":
+                _pressure = params["Pressure"].split(" ")[0].strip()
+                system.addForce(AndersenThermostat(_temp * kelvin, 1 / picosecond))
+                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
+                print(
+                    "Setting up Verlet integrator with Parameters:",
+                    _timestep,
+                    "fs",
+                    _temp,
+                    "K",
+                    _pressure,
+                    "bar",
+                )
             print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
             integrator = VerletIntegrator(float(_timestep) * picoseconds)
 
@@ -166,11 +233,34 @@ class SimulationFunctions:
         simulation.context.setPositions(modeller.positions)
         simulation.minimizeEnergy()
         simulation.reporters.append(PDBReporter(f"{name}.pdb", 1000))
+        # reporter_args = {"reportInterval": 1000}
+        reporter_args = {}
+        params["record_params"] = ast.literal_eval(params["record_params"])
+        for param in params["record_params"]:
+            if param in [
+                "step",
+                "time",
+                "potentialEnergy",
+                "kineticEnergy",
+                "totalEnergy",
+                "temperature",
+                "volume",
+                "density",
+                "progress",
+                "remainingTime",
+                "speed",
+                "elapsedTime",
+                "separator",
+                "systemMass",
+                "totalSteps",
+                "append",
+            ]:
+                # The params from the json file should be booleans
+                reporter_args[param] = True
         simulation.reporters.append(
-            StateDataReporter(
-                f"{name}.csv", 1000, step=True, potentialEnergy=True, temperature=True
-            )
+            StateDataReporter(f"{name}.csv", 1000, **reporter_args)
         )
+
         simulation.step(int(params["Number of Steps"].split(" ")[0].strip()))
 
         # add filenames to registry
@@ -188,8 +278,8 @@ class SimulationFunctions:
     def _extract_parameters_path(self):
         """Check directory for parameters.json file."""
         # Check if there is a parameters.json file in the directory.
-        if os.path.exists("parameters.json"):
-            return "parameters.json"
+        if os.path.exists("simulation_parameters_summary.json"):
+            return "simulation_parameters_summary.json"
         # If there's no exact match, check for
         # any JSON file that contains 'parameters' in its name.
         else:
@@ -202,10 +292,11 @@ class SimulationFunctions:
 
 class SetUpAndRunTool(BaseTool):
     name = "SetUpAndRunTool"
-    description = """This tool will set up the simulation objects
+    description = """This tool can only run after InstructionSummary
+                    This tool will set up the simulation objects
                     and run the simulation.
                     It will ask for the parameters path.
-                    input: parameters.json (if the .json)
+                    input:  json file
                     """
     path_registry: Optional[PathRegistry]
 
@@ -226,16 +317,66 @@ class SetUpAndRunTool(BaseTool):
                 return "Registry not initialized"
             sim_fxns = SimulationFunctions()
             parameters = sim_fxns._extract_parameters_path()
+
         except ValueError as e:
             return (
                 str(e)
-                + f"""\nPlease use the Instruction summary tool with the
-                query: {query} to create a parameters.json file in the directory."""
+                + """\nPlease use the Instruction summary tool with the
+                to create a parameters.json file in the directory."""
             )
-        sim_fxns._setup_and_run_simulation(
-            parameters, self.path_registry
-        )
+        self.log("This are the parameters:")
+        self.log(parameters)
+        # print the parameters in json file
+        with open(parameters) as f:
+            params = json.load(f)
+        for key, value in params.items():
+            print(key, ":", value)
+        self.log("Are you sure you want to run the simulation? (y/n)")
+        response = input("yes or no: ")
+        if response.lower() in ["yes", "y"]:
+            sim_fxns._setup_and_run_simulation(parameters, self.path_registry)
+        else:
+            return "Simulation interrupted due to human input"
         return "Simulation Completed, simulation trajectory and data files saved."
+
+    def log(self, text, color="blue"):
+        if color == "blue":
+            print("\033[1;34m\t{}\033[00m".format(text))
+        if color == "red":
+            print("\033[31m\t{}\033[00m".format(text))
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("custom_search does not support async")
+
+
+class InstructionSummary(BaseTool):
+    name = "Instruction Summary"
+    description = """This tool will summarize the instructions
+     given by the human. This is the first tool you will
+       use, unless you dont have a .cif or .pdb file in
+       which case you have to download one first.
+     Input: Instructions or original query.
+     Output: Summary of instructions"""
+
+    def _run(self, query: str) -> str:
+        # first check if there is any .cif or .pdb files in the directory
+        # if there is, then ask for instructions
+        files = os.listdir(".")
+        pdb_cif_files = [f for f in files if f.endswith(".pdb") or f.endswith(".cif")]
+        pdb_cif_files_tidy = [
+            f
+            for f in files
+            if (f.endswith(".pdb") or f.endswith(".cif")) and "tidy" in f
+        ]
+        if len(pdb_cif_files_tidy) != 0:
+            path = pdb_cif_files_tidy[0]
+        else:
+            path = pdb_cif_files[0]
+        sim_fxns = SimulationFunctions()
+        summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
+        sim_fxns._save_to_file(summary, "simulation_parameters_summary.json")
+        return summary
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
