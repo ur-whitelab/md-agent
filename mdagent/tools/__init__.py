@@ -9,7 +9,7 @@ from .registry import (
     ListRegistryPaths,
     MapPath2Name,
     PathRegistry,
-
+)
 from .plot_tools import SimulationOutputFigures
 from .search_tools import Scholar2ResultLLM
 from .setup_and_run import SetUpAndRunTool
