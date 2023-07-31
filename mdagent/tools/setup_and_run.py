@@ -311,9 +311,7 @@ class SetUpAndRunTool(BaseTool):
         """Use the tool"""
         # find the parameters in the directory
         try:
-            if (
-                self.path_registry is None 
-            ):  # this should not happen
+            if self.path_registry is None:  # this should not happen
                 return "Registry not initialized"
             sim_fxns = SimulationFunctions()
             parameters = sim_fxns._extract_parameters_path()
@@ -358,10 +356,20 @@ class InstructionSummary(BaseTool):
        which case you have to download one first.
      Input: Instructions or original query.
      Output: Summary of instructions"""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(
+        self,
+        path_registry: Optional[PathRegistry],
+    ):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, query: str) -> str:
         # first check if there is any .cif or .pdb files in the directory
         # if there is, then ask for instructions
+        if self.path_registry is None:  # this should not happen
+            return "Registry not initialized"
         files = os.listdir(".")
         pdb_cif_files = [f for f in files if f.endswith(".pdb") or f.endswith(".cif")]
         pdb_cif_files_tidy = [
@@ -373,9 +381,11 @@ class InstructionSummary(BaseTool):
             path = pdb_cif_files_tidy[0]
         else:
             path = pdb_cif_files[0]
-        sim_fxns = SimulationFunctions()
-        summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
-        sim_fxns._save_to_file(summary, "simulation_parameters_summary.json")
+            sim_fxns = SimulationFunctions()
+            summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
+            sim_fxns._save_to_file(
+                summary, "simulation_parameters_summary.json", self.path_registry
+            )
         return summary
 
     async def _arun(self, query: str) -> str:

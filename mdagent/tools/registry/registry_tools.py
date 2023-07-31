@@ -33,7 +33,7 @@ class MapPath2Name(BaseTool):
             file, path = file_and_path.split(",")
             map_name = self.path_registry.map_path(file, path)
             return map_name
-        except Exception as e:
+        except Exception:
             return "Error writing paths to file"
 
     async def _arun(self, file_name: str) -> str:
@@ -57,7 +57,7 @@ class ListRegistryPaths(BaseTool):
         try:
             if self.path_registry is None:
                 return "Path registry not initialized"
-            return self.path_registry.list_path_names(paths)
+            return self.path_registry.list_path_names()
         except Exception:
             return "Error listing paths"
 

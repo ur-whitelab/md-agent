@@ -4,13 +4,8 @@ from .clean_tools import (
     SpecializedCleanTool,
 )
 from .md_util_tools import Name2PDBTool
-
-from .registry import (
-    ListRegistryPaths,
-    MapPath2Name,
-    PathRegistry,
-)
 from .plot_tools import SimulationOutputFigures
+from .registry import ListRegistryPaths, MapPath2Name, PathRegistry
 from .search_tools import Scholar2ResultLLM
 from .setup_and_run import SetUpAndRunTool
 from .vis_tools import (

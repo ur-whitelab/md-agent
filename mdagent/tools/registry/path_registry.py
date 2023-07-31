@@ -1,5 +1,6 @@
-import os
 import json
+import os
+
 
 class PathRegistry:
     instance = None
@@ -15,9 +16,9 @@ class PathRegistry:
 
     def _get_full_path(self, file_path):
         return os.path.abspath(file_path)
-    
+
     def _check_for_json(self):
-        #check short path first
+        # check short path first
         short_path = self.json_file_path
         if os.path.exists(short_path):
             return True
@@ -26,8 +27,8 @@ class PathRegistry:
             self.json_file_path = full_path
             return True
         return False
-    
-    def _save_mapping_to_json(self, path_dict):  
+
+    def _save_mapping_to_json(self, path_dict):
         existing_data = {}
         if self._check_for_json():
             with open(self.json_file_path, "r") as json_file:
@@ -35,7 +36,7 @@ class PathRegistry:
                 existing_data.update(path_dict)
         with open(self.json_file_path, "w") as json_file:
             json.dump(existing_data, json_file)
-    
+
     def _check_json_content(self, name):
         if not self._check_for_json():
             return False
@@ -83,4 +84,10 @@ class PathRegistry:
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
         names = [key for key in data.keys()]
-        return "Names in path registry: " + ", ".join(names) if names else "No names found. The JSON file is empty or doesn't contain name mappings."
+        return (
+            "Names in path registry: " + ", ".join(names)
+            if names
+            else """No names found.
+            The JSON file is empty or doesn't
+            contain name mappings."""
+        )
