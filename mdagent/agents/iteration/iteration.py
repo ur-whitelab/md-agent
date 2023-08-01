@@ -119,6 +119,25 @@ class Iterator:
             return code
         else:
             return None
+        
+    def _write2tool(self, code, name, description):
+        code_template = f"""
+        class {name}(BaseTool):
+        name = "{name}"
+        description = "{description}"
+
+        def _run(self, query: str) -> str:
+        \"\"\"Use the tool.\"\"\"
+            result = self.use_the_tool(query)  # Replace this with the actual function call to use the tool
+        return result
+
+
+        async def _arun(self, query) -> str:
+        \"\"\"Use the tool asynchronously.\"\"\"
+        raise NotImplementedError("{name} does not support async")
+        """
+
+        return code_template
     
     def _run_loop(self, task, context, skills, code=None, code_output=None, files=None, critique=None, history=None):
         """
