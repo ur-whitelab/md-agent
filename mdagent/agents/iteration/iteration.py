@@ -1,5 +1,6 @@
-from mdagent.agents import _make_llm
+from mdagent.mdagent import _make_llm
 from mdagent.agents import ActionAgent, CodeCriticAgent, TaskCriticAgent, FirstActionAgent
+from mdagent.tools import PathRegistry
 import json
 import sys
 import re
@@ -14,8 +15,7 @@ class Iterator:
         verbose=True,
     ):
         self.llm = _make_llm(model, temp, max_iterations)
-        
-        
+        self.path_registry = PathRegistry()
         
         #init agents
         self.action_agent = ActionAgent(
@@ -174,11 +174,15 @@ class Iterator:
             task_critique = None
         return success, task_critique
         
+    def _get_files(self, description=True):
+        #get files from memory
+        file_names = self.path_registry.list_path_names(description)
+        return file_names
     
     def _run_action(self, recent_history, full_history, skills, task, context):
         if recent_history is None:
-            #get files --> memory, this should be easy
-            files = None
+            #get files from memory, with descriptions
+            files = self._get_files(True)
             action_output = self.first_action_agent._run(files, task, context, skills)
         else:
             action_output = self.action_agent._run(recent_history, full_history, skills)
@@ -191,8 +195,8 @@ class Iterator:
         #implement memory and get list of files
         #todo: implement memory
         
-        #get files
-        files=None
+         #get files from memory, with descriptions
+        files = self._get_files(True)
         
         action_output = self._run_action(recent_history, full_history, skills, task, context)
         #extract code part
@@ -213,10 +217,11 @@ class Iterator:
                 return success, code, output, files, context, task, critique
             #otherwise, run code critic
         critique = self.code_critic_agent._run(code, output, task, context)
-        return success, code, output, files, context, task, critique, task_critique
+        files_updated = self._get_files(True)
+        return success, code, output, files_updated, context, task, critique, task_critique
     
     
-    def _run_iteration(self, task, context, skills, files):
+    def _run_iteration(self, task, context, skills):
         
         """
         This is the iterator, which is the main function the in mdagent. 
@@ -238,6 +243,7 @@ class Iterator:
         #task is from curriculum
         #context is from curriculum
         
+        files = self._get_files(True)
         iter = 0
         success = False
         skill = False
@@ -276,7 +282,7 @@ class Iterator:
             #get files --> memory, this should be easy
             #get skills
             self._save_failures(None, f"Run {M}")
-            skill, output = self._run_iteration(self, task=task, context=context, skills=skills, files=files)
+            skill, output = self._run_iteration(self, task=task, context=context, skills=skills)
             if not skill:
                 msg_curr = "max iterations reached, please adjust task or context and try again"
         #return number of skills successfully learned and tasks addressed        
