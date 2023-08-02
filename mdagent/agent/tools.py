@@ -4,25 +4,24 @@ from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
-from ..tools.clean_tools import (
+from ..tools import (
     AddHydrogensCleaningTool,
+    CheckDirectoryFiles,
+    ListRegistryPaths,
+    MapPath2Name,
+    Name2PDBTool,
+    PathRegistry,
+    PlanBVisualizationTool,
     RemoveWaterCleaningTool,
+    Scholar2ResultLLM,
+    SetUpAndRunTool,
     SpecializedCleanTool,
+    VisualizationToolRender,
 )
-from ..tools.md_util_tools import Name2PDBTool
-from ..tools.plot_tools import SimulationOutputFigures
-from ..tools.search_tools import Scholar2ResultLLM
-from ..tools.setup_and_run import InstructionSummary, SetUpAndRunTool
-from ..tools.vis_tools import PlanBVisualizationTool, VisualizationToolRender
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
     load_dotenv()
-
-    # Get the api keys
-
-    os.getenv("OPENAI_API_KEY")
-    pqa_key = os.getenv("PQA_API_KEY")
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
@@ -30,17 +29,27 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
 
     all_tools += [
         VisualizationToolRender(),
-        PlanBVisualizationTool(),
-        SpecializedCleanTool(),
-        RemoveWaterCleaningTool(),
-        AddHydrogensCleaningTool(),
-        SetUpAndRunTool(),
-        Name2PDBTool(),
-        SimulationOutputFigures(),
-        InstructionSummary(),
+        CheckDirectoryFiles(),
+    ]
+
+    # add registry tools
+    # get instance first
+    path_instance = PathRegistry.get_instance()
+    # add tools
+    all_tools += [
+        SetUpAndRunTool(path_registry=path_instance),
+        ListRegistryPaths(path_registry=path_instance),
+        MapPath2Name(path_registry=path_instance),
+        PlanBVisualizationTool(path_registry=path_instance),
+        Name2PDBTool(path_registry=path_instance),
+        SpecializedCleanTool(path_registry=path_instance),
+        RemoveWaterCleaningTool(path_registry=path_instance),
+        AddHydrogensCleaningTool(path_registry=path_instance),
     ]
 
     # add literature search tool
+    # Get the api keys
+    pqa_key = os.getenv("PQA_API_KEY")
     if pqa_key:
         all_tools.append(Scholar2ResultLLM(pqa_key))
     return all_tools
