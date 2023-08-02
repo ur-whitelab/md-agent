@@ -285,6 +285,9 @@ class Iterator:
             skill, output = self._run_iteration(self, task=task, context=context, skills=skills)
             if not skill:
                 msg_curr = "max iterations reached, please adjust task or context and try again"
-        #return number of skills successfully learned and tasks addressed        
+        #return number of skills successfully learned and tasks addressed    
+        
+        #add failed iteration file to path registry with description
+        self.path_registry.map_path("failed_iterations", "failed_history.json", "Entries from all failed iterations")    
         return None
         
