@@ -28,7 +28,7 @@ class TaskCriticAgent:
         suffix = ""
         human_prompt = PromptTemplate(
             template = critic_prompt,
-            input_variables = ["files", "task", "context"],
+            input_variables = ["files", "code", "code_output", "task", "context", "additional_information"],
         )
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
@@ -52,6 +52,6 @@ class TaskCriticAgent:
             )
         return llm_chain
 
-    def _run(self, files, task, context):
-        output = self.llm.run({"files": files, "task": task, "context": context})
+    def _run(self, files, code, code_output, task, context, additional_information):
+        output = self.llm.run({"files":files, "code":code, "code_output":code_output, "task":task, "context":context, "additional_information":additional_information})
         return output

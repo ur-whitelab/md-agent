@@ -28,7 +28,7 @@ class ActionAgent:
         suffix = ""
         human_prompt = PromptTemplate(
             template = action_prompt,
-            input_variables = ["code", "code_output", "files", "task", "context", "critique", "history", "skills"],
+            input_variables = ["recent_history", "full_history", "skills"],
         )
         suffix = action_format
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
@@ -55,5 +55,5 @@ class ActionAgent:
             )
         return llm_chain
 
-    def _run(self, src, task, context, code_output, files, critique, history, skills):
-        return  self.llm.run({"code": src, "code_output": code_output, "files": files, "task": task, "context": context, "critique": critique, "history": history, "skills": skills})
+    def _run(self, recent_history, full_history, skills):
+        return self.llm.run({"recent_history": recent_history, "full_history": full_history, "skills": skills})

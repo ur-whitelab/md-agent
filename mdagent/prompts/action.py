@@ -19,23 +19,38 @@ def yourMainFunctionName(query):
 ```
 """
 
+action_inputs = """
+Recent History:
+1. The most recent completed iteration
+2. The task you must complete
+3. The context of the task
+4. The code written in the last iteration
+5. The output of the code written in the last iteration
+6. All available files from the last iteration
+7. The code critique from the last iteration
+8. The task critique from the last iteration, if applicable
+
+I will also give you all data from the beginning of the conversation, 
+the Full History
+1. Each Iteration Number
+2. The tasks
+3. The context of the tasks
+4. The code written in each iteration
+5. The output of the code written in the each iteration
+6. All available files from the each iteration
+7. The code critique from the each iteration
+8. The task critique from the each iteration, if applicable
+
+You will also have access to all Skills you have learned so far.
+You may reuse them in your code or use them to help you write your code if needed.
+The Skills will be a dictionary of name and function pairs.
+"""
+
 action_prefix = """
 You are a helpful assistant that writes python code to complete any 
 OpenMM or other molecular dynamics related task specified by me.
 
-
-At each round of conversation, I will give you:
-Code from the last round: ...
-Code Output (including execution error, if applicable): ...
-Files: ...
-Task: ...
-Context: ...
-History: ...
-Critique: ...
-
-You will also have access to all skills you have learned so far.
-You may reuse them in your code or use them to help you write your code if needed.
-The skills will be a dictionary of name and function pairs.
+I will give you the following: {action_inputs}
 
 You should then respond to me with
 Explain (if applicable): 
@@ -67,13 +82,8 @@ RESPONSE FORMAT:
 
 action_prompt = """
 INPUT: 
-code: {code},
-output: {code_output},
-files: {files},
-task: {task},
-context: {context},
-critique: {critique},
-history: {history},
+recent_history: {recent_history},
+full_history: {full_history},
 skills: {skills}
 """
 

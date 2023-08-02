@@ -14,34 +14,19 @@ class Iterator:
         verbose=True,
     ):
         self.llm = _make_llm(model, temp, max_iterations)
-        self.code_history = []
-        self.output_history = []
-        self.files_history = []
-        self.critique_history = []
-        self.task_critique_history = []
-        self.context = []
-        self.task = []
         
         
-        """
-        This is the iterator, which is the main function the in mdagent. 
-        This agent should interact with the following agents:
-        - code critic (to critique the code and provide feedback)
-        - action (to generate new code based on curriculum or critic feedback)
-        - task critic (to critique the task and provide feedback)
-        
-        This agent should start with the input from curriculum and then cycle 
-        through the following steps 5 times maximum:
-        1. action (to write code)
-        2. **run code** generated from action using python repl
-        3. code critic (to critique and suggest changes) 
-        
-        The final step is to use task critique to assess if the task is completed.
-        
-        """
         
         #init agents
         self.action_agent = ActionAgent(
+            model=model,
+            temp=temp,
+            max_iterations=max_iterations,
+            api_key=api_key,
+            verbose=verbose,
+        )
+        
+        self.first_action_agent = FirstActionAgent(
             model=model,
             temp=temp,
             max_iterations=max_iterations,
@@ -124,78 +109,6 @@ class Iterator:
         else:
             return None
         
-    def _write2tool(self, code, name, description):
-        code_template = f"""
-        class {name}(BaseTool):
-        name = "{name}"
-        description = "{description}"
-
-        def _run(self, query: str) -> str:
-        \"\"\"Use the tool.\"\"\"
-            result = self.use_the_tool(query)  # Replace this with the actual function call to use the tool
-        return result
-
-
-        async def _arun(self, query) -> str:
-        \"\"\"Use the tool asynchronously.\"\"\"
-        raise NotImplementedError("{name} does not support async")
-        """
-        return code_template
-    
-    def _parse_task_critic(self, output):
-        critic_output = output #run task critic
-        parsed_output = json.loads(critic_output)
-        
-        # Extract the success boolean
-        success = parsed_output.get("success", None)
-            # Check if it's a boolean value first
-        if isinstance(success, bool):
-            return success, parsed_output.get("critique", None)
-
-        # If not a boolean, make it boolean
-        if isinstance(success, str):
-            success_lower = success.lower()
-            if "true" in success_lower:
-                success = True
-            elif "false" in success_lower:
-                success = False
-            else:
-                raise ValueError(f"Invalid success value: {success}")
-            return success, parsed_output.get("critique", None) 
-        
-    
-    def _run_loop(self, task, context, skills, code_output=None, files=None, critique=None, history=None, task_critique=None):
-        """
-        this function just runs the loop 
-        """
-        #implement memory and get list of files
-        #todo: implement memory
-        
-        #first run action
-        if history == None: #first iteration
-            action_output = self.first_action_agent._run(task, context, files, skills)
-        else:
-            action_output = self.action_agent._run(code, task, context, code_output, files, critique, history, skills, task_critique)
-        #extract code part:
-        code = self._extract_code(action_output)
-        #run code
-        failed, output = self._run_code(code)
-        if failed == True:
-            task_critique = None
-            success = False
-        else: 
-            print ("code succeeded, running task critic")
-            #run task critic
-            task_critique_full = self.task_critic_agent._run(files, code, code_output, task, context)
-            success, task_critique = self._parse_task_critic(task_critique_full)
-            #check if task is complete
-            if success == True:
-                print ("task complete")
-                return success, code, output, files, context, task, critique
-            #otherwise, run code critic
-        critique = self.code_critic_agent._run(code, code_output, task, context)
-        return success, code, output, files, context, task, critique, task_critique
-    
     def _save_failures(self, history, msg):
         if msg == None:
             #save to file
@@ -208,35 +121,147 @@ class Iterator:
                 f.write("\n", msg, "\n")
             return None
     
+    #this function doesnt work but should be in skill library probably
+    def _write2tool(self, code, name, description): 
+        code_template = f"""
+        class {name}(BaseTool):
+        name = "{name}"
+        description = "{description}"
+
+        def _run(self, query: str) -> str:
+        \"\"\"Use the tool.\"\"\"
+            result = self.use_the_tool(query)  # Replace this with the actual function call to use the tool
+        return result
+
+        async def _arun(self, query) -> str:
+        \"\"\"Use the tool asynchronously.\"\"\"
+        raise NotImplementedError("{name} does not support async")
+        """
+        return code_template
+    
+    def _run_task_critic(self, files, code, code_output, task, context, msg=None): 
+        
+        #this helper function helps parse the output from task critic
+        def _parse_critic_output(critic_output):
+            parsed_output = json.loads(critic_output)
+            # Extract the success boolean
+            success = parsed_output.get("success", None)
+                # Check if it's a boolean value first
+            if isinstance(success, bool):
+                return success, parsed_output.get("critique", None)
+
+            # If not a boolean, make it boolean
+            if isinstance(success, str):
+                success_lower = success.lower()
+                if "true" in success_lower:
+                    success = True
+                elif "false" in success_lower:
+                    success = False
+                else:
+                    raise ValueError(f"Invalid success value: {success}")
+                return success, parsed_output.get("critique", None) 
+            
+        #running task critic, doing this in a loop to handle an error one time
+        for _ in range(2):  # Two attempts
+            try:
+                full_out = self.task_critic_agent._run(files, code, code_output, task, context, msg)
+                success, task_critique = _parse_critic_output(full_out)
+                break # Break out of the loop if successful
+            except ValueError: # Raised if the success value is invalid
+                msg = "Please ensure that your output matches the formatting requirements." #try again with additional message
+        else:  # Executed if the loop completes without a 'break', i.e. if both attempts failed
+            success = False
+            task_critique = None
+        return success, task_critique
+        
+    
+    def _run_action(self, recent_history, full_history, skills, task, context):
+        if recent_history is None:
+            #get files --> memory, this should be easy
+            files = None
+            action_output = self.first_action_agent._run(files, task, context, skills)
+        else:
+            action_output = self.action_agent._run(recent_history, full_history, skills)
+        return action_output
+    
+    def _run_loop(self, task, context, skills, recent_history, full_history):
+        """
+        this function just runs the iteration 1 time
+        """
+        #implement memory and get list of files
+        #todo: implement memory
+        
+        #get files
+        files=None
+        
+        action_output = self._run_action(recent_history, full_history, skills, task, context)
+        #extract code part
+        code = self._extract_code(action_output)
+        #run code
+        failed, output = self._run_code(code)
+        if failed == True:
+            task_critique = None
+            success = False
+        else: 
+            print ("code succeeded, running task critic")
+            #run task critic
+            success, task_critique = self._run_task_critic(files, code, output, task, context, msg=None)
+            
+            #check if task is complete
+            if success == True:
+                print ("task complete")
+                return success, code, output, files, context, task, critique
+            #otherwise, run code critic
+        critique = self.code_critic_agent._run(code, output, task, context)
+        return success, code, output, files, context, task, critique, task_critique
+    
+    
     def _run_iteration(self, task, context, skills, files):
+        
+        """
+        This is the iterator, which is the main function the in mdagent. 
+        This agent should interact with the following agents:
+        - code critic (to critique the code and provide feedback)
+        - action (to generate new code based on curriculum or critic feedback)
+        - task critic (to critique the task and provide feedback)
+        
+        This agent should start with the input from curriculum and then cycle 
+        through the following steps 5 times maximum:
+        1. action (to write code)
+        2. **run code** generated from action using python repl
+        3. code critic (to critique and suggest changes) 
+        
+        The final step is to use task critique to assess if the task is completed.
+        
+        """
+        
         #task is from curriculum
         #context is from curriculum
         
         iter = 0
         success = False
         skill = False
-        history = []
         while iter < 5 and success == False:
             if iter == 0:
-                success, code, output, files, context, task, critique, task_critique = self._run_loop(task, context, skills, None, files, None, None, None)
+                success, code, output, files, context, task, critique, task_critique = self._run_loop(task, context, skills, None, None)
             if iter > 0:
-                history = self._add_to_history(history, iter, task, context, code, output, files, critique, task_critique)
-                success, code, output, files, context, task, critique, task_critique = self._run_loop(task, context, skills, output, files, critique, history, task_critique)
+                full_history = self._add_to_history(recent_history, iter, task, context, code, output, files, critique, task_critique)
+                recent_history = full_history[-1]
+                success, code, output, files, context, task, critique, task_critique = self._run_loop(task, context, skills, recent_history, full_history)
             iter += 1
             #save to history
             if success:
                 #update variables and save to file
-                self._save_failures(history, None)
+                self._save_failures(full_history, None)
                 successful_code = code
                 skill = True
                 #give successful code to tool manager
                 return skill
         #if max iterations reached without success, save failures to file
         print ("max iterations reached, saving failed history to file")
-        full_failed = self._add_to_history(history, iter, task, context, code, output, files, critique, task_critique)
+        full_failed = self._add_to_history(full_history, iter, task, context, code, output, files, critique, task_critique)
         self._save_failures(full_failed, None)
         return skill, full_failed #give to curriculum
-    
     
     def main_run(self):
 
