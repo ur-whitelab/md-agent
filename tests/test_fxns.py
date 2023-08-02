@@ -4,10 +4,13 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.tools.clean_tools import _add_hydrogens_and_remove_water
-from mdagent.tools.md_util_tools import get_pdb
-from mdagent.tools.setup_and_run import SimulationFunctions
-from mdagent.tools.vis_tools import VisFunctions
+from mdagent.tools import (
+    CleaningTools,
+    PathRegistry,
+    SimulationFunctions,
+    VisFunctions,
+    get_pdb,
+)
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
 
@@ -29,6 +32,11 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
+@pytest.fixture
+def cleaning_fxns():
+    return CleaningTools()
+
+
 # Test simulation tools
 @pytest.fixture
 def sim_fxns():
@@ -47,27 +55,30 @@ def fibronectin():
     return "fibronectin"
 
 
+@pytest.fixture
+def get_registry():
+    return PathRegistry()
+
+
 @pytest.mark.skip(reason="molrender is not pip installable")
-def test_run_molrender(
-    path_to_cif,
-):
-    result = vis_fxns.run_molrender(path_to_cif, vis_fxns)
+def test_run_molrender(path_to_cif, vis_fxns):
+    result = vis_fxns.run_molrender(path_to_cif)
     assert result == "Visualization created"
 
 
-def test_create_notebook(path_to_cif, vis_fxns):
-    result = vis_fxns.create_notebook(path_to_cif)
+def test_create_notebook(path_to_cif, vis_fxns, get_registry):
+    result = vis_fxns.create_notebook(path_to_cif, get_registry)
     assert result == "Visualization Complete"
 
 
-def test_add_hydrogens_and_remove_water(path_to_cif):
-    result = _add_hydrogens_and_remove_water(path_to_cif)
+def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns, get_registry):
+    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif, get_registry)
     assert "Cleaned File" in result  # just want to make sur the function ran
 
 
 @patch("os.path.exists")
 @patch("os.listdir")
-def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns):
+def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns, get_registry):
     # Test when parameters.json exists
     mock_exists.return_value = True
     assert sim_fxns._extract_parameters_path() == "simulation_parameters_summary.json"
@@ -101,6 +112,6 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
     assert params == {"param1": "value1", "param2": "value2"}
 
 
-def test_getpdb(fibronectin):
-    name = get_pdb(fibronectin)
+def test_getpdb(fibronectin, get_registry):
+    name = get_pdb(fibronectin, get_registry)
     assert name == "1X3D.cif"

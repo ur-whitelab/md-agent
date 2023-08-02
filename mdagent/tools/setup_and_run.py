@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+from typing import Optional
 
 import langchain
 from langchain import LLMChain, PromptTemplate
@@ -24,7 +25,8 @@ from openmm.app import (
 )
 from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 
-from .clean_tools import _extract_path
+from .clean_tools import CleaningTools
+from .registry import PathRegistry
 
 
 class SimulationFunctions:
@@ -101,7 +103,7 @@ class SimulationFunctions:
 
         return llm_chain.run(" ".join(query))
 
-    def _save_to_file(self, summary: str, filename: str):
+    def _save_to_file(self, summary: str, filename: str, PathRegistry):
         """Parse the summary string and
         save it to a file in JSON format."""
         # Split the summary into lines
@@ -117,9 +119,13 @@ class SimulationFunctions:
         with open(filename, "w") as f:
             json.dump(summary_dict, f)
 
-    def _instruction_summary(self, query: str):
+        # add filename to registry
+        file_description = "Simulation Parameters"
+        PathRegistry.map_path(filename, filename, file_description)
+
+    def _instruction_summary(self, query: str, PathRegistry):
         summary = self._prompt_summary(query)
-        self._save_to_file(summary, "simulation_parameters.json")
+        self._save_to_file(summary, "simulation_parameters.json", PathRegistry)
         return summary
 
     def _setup_simulation_from_json(self, file_name):
@@ -128,7 +134,7 @@ class SimulationFunctions:
             params = json.load(f)
         return params
 
-    def _setup_and_run_simulation(self, query):
+    def _setup_and_run_simulation(self, query, PathRegistry):
         # Load the force field
         # ask for inputs from the user
         params = self._setup_simulation_from_json(query)
@@ -162,9 +168,11 @@ class SimulationFunctions:
         # check if forcefields end in .xml
         if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
             forcefield = ForceField(Forcefield, Water_model)
+        # adding forcefield to registry
 
-            # Load the PDB file
-        pdbfile = _extract_path(params["File Path"])
+        # Load the PDB file
+        cleantools = CleaningTools()
+        pdbfile = cleantools._extract_path(params["File Path"])
         print("Starting pdb/cis file :", pdbfile)
         name = pdbfile.split(".")[0]
         end = pdbfile.split(".")[1]
@@ -254,6 +262,17 @@ class SimulationFunctions:
         )
 
         simulation.step(int(params["Number of Steps"].split(" ")[0].strip()))
+
+        # add filenames to registry
+        file_name1 = "simulation_trajectory.pdb"
+        file_description1 = "Simulation PDB, containing the simulation trajectory"
+        PathRegistry.map_path(file_name1, f"{name}.pdb", file_description1)
+        file_name2 = "simulation_data.csv"
+        file_description2 = (
+            "Simulation Data, containing step, potential energy, and temperature"
+        )
+        PathRegistry.map_path(file_name2, f"{name}.csv", file_description2)
+
         return simulation
 
     def _extract_parameters_path(self):
@@ -279,11 +298,21 @@ class SetUpAndRunTool(BaseTool):
                     It will ask for the parameters path.
                     input:  json file
                     """
+    path_registry: Optional[PathRegistry]
+
+    def __init__(
+        self,
+        path_registry: Optional[PathRegistry],
+    ):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, query: str) -> str:
         """Use the tool"""
         # find the parameters in the directory
         try:
+            if self.path_registry is None:  # this should not happen
+                return "Registry not initialized"
             sim_fxns = SimulationFunctions()
             parameters = sim_fxns._extract_parameters_path()
 
@@ -303,10 +332,10 @@ class SetUpAndRunTool(BaseTool):
         self.log("Are you sure you want to run the simulation? (y/n)")
         response = input("yes or no: ")
         if response.lower() in ["yes", "y"]:
-            sim_fxns._setup_and_run_simulation(parameters)
+            sim_fxns._setup_and_run_simulation(parameters, self.path_registry)
         else:
             return "Simulation interrupted due to human input"
-        return "Simulation Completed, saved as .pdb and .csv files"
+        return "Simulation Completed, simulation trajectory and data files saved."
 
     def log(self, text, color="blue"):
         if color == "blue":
@@ -327,10 +356,20 @@ class InstructionSummary(BaseTool):
        which case you have to download one first.
      Input: Instructions or original query.
      Output: Summary of instructions"""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(
+        self,
+        path_registry: Optional[PathRegistry],
+    ):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, query: str) -> str:
         # first check if there is any .cif or .pdb files in the directory
         # if there is, then ask for instructions
+        if self.path_registry is None:  # this should not happen
+            return "Registry not initialized"
         files = os.listdir(".")
         pdb_cif_files = [f for f in files if f.endswith(".pdb") or f.endswith(".cif")]
         pdb_cif_files_tidy = [
@@ -342,9 +381,11 @@ class InstructionSummary(BaseTool):
             path = pdb_cif_files_tidy[0]
         else:
             path = pdb_cif_files[0]
-        sim_fxns = SimulationFunctions()
-        summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
-        sim_fxns._save_to_file(summary, "simulation_parameters_summary.json")
+            sim_fxns = SimulationFunctions()
+            summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
+            sim_fxns._save_to_file(
+                summary, "simulation_parameters_summary.json", self.path_registry
+            )
         return summary
 
     async def _arun(self, query: str) -> str:

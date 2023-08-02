@@ -1,8 +1,11 @@
 import os
 import subprocess
+from typing import Optional
 
 import nbformat as nbf
 from langchain.tools import BaseTool
+
+from .registry import PathRegistry
 
 
 class VisFunctions:
@@ -31,7 +34,7 @@ class VisFunctions:
         else:
             print(f"Output: {result.stdout}")
 
-    def create_notebook(sellf, query):
+    def create_notebook(self, query, PathRegistry):
         """This is for plan B
         tool, it will create
         a notebook
@@ -61,6 +64,11 @@ class VisFunctions:
         # Write the notebook to a file
         with open("Visualization.ipynb", "w") as f:
             nbf.write(nb, f)
+        # add filename to registry
+        file_description = "Notebook to visualize cif/pdb files"
+        PathRegistry.map_path(
+            "visualize_notebook", "Visualization.ipynb", file_description
+        )
         return "Visualization Complete"
 
 
@@ -70,7 +78,7 @@ class VisualizationToolRender(BaseTool):
     to instal molrender
     https://github.com/molstar/molrender/tree/master"""
 
-    name = "Visualization of PDB files"
+    name = "PDBVisualization"
     description = """This tool will create
                     a visualization of a cif
                     file as a png file in
@@ -94,7 +102,7 @@ class VisualizationToolRender(BaseTool):
 
 
 class CheckDirectoryFiles(BaseTool):
-    name = "List files in directory"
+    name = "ListDirectoryFiles"
     description = """This tool will
     give you a list of comma
     separated files in the
@@ -102,8 +110,11 @@ class CheckDirectoryFiles(BaseTool):
 
     def _run(self, query: str) -> str:
         """use the tool."""
-        vis = VisFunctions()
-        return vis.list_files_in_directory(".")
+        try:
+            vis = VisFunctions()
+            return vis.list_files_in_directory(".")
+        except Exception:
+            return "An error occurred while listing files in directory"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -118,23 +129,34 @@ class PlanBVisualizationTool(BaseTool):
     to be used only
     if VisualizationToolRender fails"""
 
-    name = "Plan B for Visualization of PDB or cif files"
+    name = "PlanBVisualizationTool"
     description = """This tool will create a .ipynb
                     file with the visualization
                     of the file. It is intended
                     to be used only if
                     VisualizationToolRender fails.
-                    Give this tool the path to
-                    the file and the output
+                    Give this tool the saved
+                    name of the file
+                    and the output
                     will be a notebook the
                     user can use to visualize
                     the file."""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, query: str) -> str:
         """use the tool."""
-        vis = VisFunctions()
-        vis.create_notebook(query)
-        return "Visualization Complete"
+        try:
+            if self.path_registry is None:  # this should not happen
+                return "Path registry not initialized"
+            vis = VisFunctions()
+            vis.create_notebook(query, self.path_registry)
+            return "Visualization Complete"
+        except Exception:
+            return "An error occurred while creating the notebook"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
