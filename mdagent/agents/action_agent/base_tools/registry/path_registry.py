@@ -78,14 +78,14 @@ class PathRegistry:
             return f"Path {name} removed from registry"
         return f"Path {name} not found in registry"
 
-    def list_path_names(self, description=False):
+    def list_path_names(self, descriptions=False):
         if not self._check_for_json():
             return "JSON file does not exist"
         
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
         
-        if description:
+        if descriptions:
             name_descriptions = [(key, value['description']) for key, value in data.items()]
             if name_descriptions:
                 name_descriptions_str = "\n".join([f"Name: {name}, Description: {desc}" for name, desc in name_descriptions])

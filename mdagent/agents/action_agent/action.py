@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
-from .prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
-from .tools import make_tools
+from prompts import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
+from tools import make_tools
 
 load_dotenv()
 
@@ -30,7 +30,7 @@ def _make_llm(model, temp, verbose):
     return llm
 
 
-class MDAgent:
+class ActionAgent:
     def __init__(
         self,
         tools=None,

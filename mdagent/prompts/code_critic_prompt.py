@@ -1,4 +1,4 @@
-critic_format = """
+code_critic_format = """
 You should only respond in JSON format as described below:
 {
     "code_quality": "code_quality",
@@ -10,7 +10,7 @@ You should only respond in JSON format as described below:
 Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
 """
 
-critic_prefix = """
+code_critic_prefix = """
 You are an assistant that assesses the quality of my code 
 and the validity of its output for my molecular dynamics project, 
 and provides useful guidance. 
@@ -28,7 +28,7 @@ Task: The objective that the code needs to accomplish
 Context: The context of the task (optional, if applicable)
 """
 
-critic_prompt = """
+code_critic_prompt = """
 INPUT: 
 code: {code},
 output: {code_output},

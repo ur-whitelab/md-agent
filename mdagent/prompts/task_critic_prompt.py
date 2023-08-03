@@ -1,4 +1,4 @@
-critic_format = """
+task_critic_format = """
 You should only respond in JSON format as described below:
 {
     "success": boolean,
@@ -8,7 +8,7 @@ Ensure the response can be parsed by Python `json.loads`,
 e.g.: no trailing commas, no single quotes, etc.
 """
 
-critic_prefix = """
+task_critic_prefix = """
 You are an assistant that assesses my progress on my molecular 
 dynamics project and provides useful guidance. 
 
@@ -32,7 +32,7 @@ Context: The context of the task
 Additional Information: Any additional information, in case you cause an error.
 """
 
-critic_prompt = """
+task_critic_prompt = """
 INPUT: 
 files: {files},
 code: {code},

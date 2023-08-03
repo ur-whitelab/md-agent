@@ -15,8 +15,10 @@ from .vis_tools import (
     VisFunctions,
     VisualizationToolRender,
 )
+from tools import make_tools
 
 __all__ = [
+    "make_tools",
     "Scholar2ResultLLM",
     "VisFunctions",
     "CleaningTools",
