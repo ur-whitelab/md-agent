@@ -7,17 +7,13 @@ solve the problem to the best of your ability using the provided tools.
 
 FORMAT_INSTRUCTIONS = """
 You can only respond with a single complete
-"Thought, Action, Action Input" format
-OR a single "Final Answer" format.
+"Thought, Action, Action Input, "Final Answer" format.
 
 Complete format:
 
 Thought: (reflect on your progress and decide what to do next)
 Action: (the action name, should be one of [{tool_names}])
 Action Input: (the input string to the action)
-
-OR
-
 Final Answer: (the final answer to the original input question)
 """
 
@@ -26,10 +22,7 @@ Answer the question below using the following tools:
 
 {tool_strings}
 
-Use the tools provided, using the most specific tool available for each action.
-Once you map a path to a short name, you may only use that short name in future actions.
-Your final answer should contain all information necessary to answer the question and subquestions.
-Your thought process should be clean and clear, and you must explicitly state the actions you are taking.
+Use the most specific tool available for your task.
 Question: {input}
 """
 

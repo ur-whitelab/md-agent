@@ -105,11 +105,11 @@ class Iterator:
         return task_success, code, code_output, context, task, critique, task_critique
     
     
-    def _run_iteration(self, task, context, skills):
+    def _run_iteration(self, run, task, context, skills):
         
         #task is from curriculum
         #context is from curriculum
-        
+        self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
         skill = False

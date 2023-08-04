@@ -1,5 +1,4 @@
 import os
-
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel

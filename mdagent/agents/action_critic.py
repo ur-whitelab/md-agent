@@ -1,4 +1,4 @@
-from prompts import code_critic_format, code_critic_prefix, code_critic_prompt
+from prompts import action_critic_format, action_critic_prefix, action_critic_prompt
 from action_agent import _make_llm
 from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
@@ -13,7 +13,8 @@ from langchain.prompts.chat import (
 
 load_dotenv()
 
-class CodeCriticAgent:
+
+class ActionCritic:
     def __init__(
     self,
     model="gpt-4",
@@ -27,16 +28,16 @@ class CodeCriticAgent:
     def _create_prompt(self):
         suffix = ""
         human_prompt = PromptTemplate(
-            template = code_critic_prompt,
-            input_variables = ["code", "code_output", "task", "context"],
+            template = action_critic_prompt,
+            input_variables = ["task", "skills", "output"],
         )
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
         system_message_prompt = SystemMessagePromptTemplate.from_template(
             '\n\n'.join(
                 [
-                    code_critic_prefix,
-                    code_critic_format
+                    action_critic_prefix,
+                    action_critic_format
                 ]
             )
         )
@@ -54,8 +55,11 @@ class CodeCriticAgent:
         self.llm_ = llm_chain
         return None
 
-    def _run_(self, src, task, context, code_output):
+    def _run_(self,task, output):
         self._create_llm()
-        output = self.llm.run({"code": src, "code_output": code_output, "task": task, "context": context})
+        #get skills
+        skills = None
+        output = self.llm.run({"task": task, "output": output, "skills": skills})
         return output
     
+    #write function to parse output from _run

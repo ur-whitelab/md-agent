@@ -43,7 +43,6 @@ class CodeAgent:
                 input_variables = ["files", "task", "context", "skills"],
             )
             prefix = code_prefix_1
-        suffix = code_format
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
         system_message_prompt = SystemMessagePromptTemplate.from_template(
