@@ -23,7 +23,6 @@ class MDAgent:
             api_key=api_key,
             verbose=verbose,
         )
-        
         self.action_agent = agents.ActionAgent(
             model=model,
             temp=temp,
@@ -31,7 +30,6 @@ class MDAgent:
             api_key=api_key,
             verbose=verbose,
         )
-        
         self.action_agent = agents.ActionCritic(
             model=model,
             temp=temp,
@@ -39,7 +37,15 @@ class MDAgent:
             api_key=api_key,
             verbose=verbose,
         )
-    
+        self.task_critic = agents.TaskCriticAgent(
+            path_registry=path_registry,
+            model=model,
+            temp=temp,
+            max_iterations=max_iterations,
+            api_key=api_key,
+            verbose=verbose,
+        )
+
     def _run(self):
         N = 0 #goal number of learned skills ? 
         M = 0 #max iterations
@@ -47,16 +53,17 @@ class MDAgent:
             #run curriculum to get task and context
             #then put task into action agent
             task = None
-            failed, action_out = self.action_agent.run(task)
-            if failed:
-                #run critic v3
-                output = self.action_critic.run(action_out)
             context = None
-            skills = None
-            files = self.path_registry.list_path_names(True)
-            #get skills
-            
-            skill, output = self.iterator._run_iteration(self, M, task=task, context=context, skills=skills)
+            try:
+                failed, action_out = self.action_agent.run(task)
+                if failed: #if action agent failed, run action critic
+                    skill_failed, explain = self.action_critic.run_action_critic(task, action_out)
+                    #run iterator from critic
+                    skill, iter_history =self.iterator.iterator._run_iteration(self, M, task, context, failed=skill_failed, explanation=explain)   
+                else: #if action agent succeeded, continue to next curriculum
+                    continue
+            except Exception:
+                skill, iter_history = self.iterator._run_iteration(self, M, task=task, context=context)
             if not skill:
                 msg_curr = "max iterations reached, please adjust task or context and try again"
             M += 1

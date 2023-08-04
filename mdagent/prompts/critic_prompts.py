@@ -27,6 +27,12 @@ Code: The source code
 Code Output: The output of the executed code (if applicable, including execution errors)
 Task: The objective that the code needs to accomplish
 Context: The context of the task (optional, if applicable)
+
+You should only respond in the format as described below:
+
+RESPONSE FORMAT:
+{code_critic_format}
+
 """
 
 code_critic_prompt = """
@@ -70,6 +76,11 @@ Output: The execution output of the code I have written
 Task: The objective I need to accomplish
 Context: The context of the task
 Additional Information: Any additional information, in case you cause an error.
+
+You should only respond in the format as described below:
+
+RESPONSE FORMAT:
+{code_format}
 """
 
 task_critic_prompt = """
@@ -115,11 +126,20 @@ True or False to the following:
 5. The chosen skill is not the best skill to execute the code
 
 You must also give me suggestions on how to fix the problem.
+
+You should only respond in the format as described below:
+
+RESPONSE FORMAT:
+{code_format}
+
+If you get an error message in the input variable called errors, 
+please adjust your response accordingly.
 """
 
 action_critic_prompt = """
 INPUT: 
 task: {task}
-skills: {code}
+skills: {skills}
 output: {output}
+errors: {errors}
 """

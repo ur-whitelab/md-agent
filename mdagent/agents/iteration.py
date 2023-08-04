@@ -104,8 +104,7 @@ class Iterator:
         critique = self.code_critic_agent._run(code, code_output, task, context)
         return task_success, code, code_output, context, task, critique, task_critique
     
-    
-    def _run_iteration(self, run, task, context, skills):
+    def _run_iteration(self, run, task, context, iterations=5, failed=None, explanation=None):
         
         #task is from curriculum
         #context is from curriculum
@@ -115,12 +114,17 @@ class Iterator:
         skill = False
         full_history = None
         recent_history = None
-        while iter < 5 and success == False:
-            if iter > 0:
-                full_history = self._add_to_history(full_history, iter, task, context, code, output, critique, task_critique)
-                recent_history = full_history[-1]
-            success, code, output, context, task, critique, task_critique = self._run_loop(task, context, skills, recent_history, full_history)
+        while iter < iterations and success == False:
+            if failed != None:
+                success, code, code_output = self.code_agent._run_code(None, None, task, context, failed, explanation, "resume")
+                full_history = self._add_to_history(None, iter, task, context, code, code_output, explanation, None)
+            else:
+                if iter > 0:
+                    full_history = self._add_to_history(full_history, iter, task, context, code, output, critique, task_critique)
+                    recent_history = full_history[-1]
+                success, code, output, context, task, critique, task_critique = self._run_loop(task, context, recent_history, full_history)
             iter += 1
+            failed = None
             #save to history
             if success:
                 #update variables and save to file

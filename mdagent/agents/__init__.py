@@ -5,12 +5,13 @@ from action_critic import ActionCritic
 from iteration import Iterator
 import prompts
 import action_agent
-from action_agent import PathRegistry
+from action_agent import PathRegistry, ActionAgent
 
 __all__ = [
     "ActionCritic",
     "CodeAgent", 
     "action_agent",
+    "ActionAgent",
     "ActionAgent",
     "CodeCriticAgent", 
     "TaskCriticAgent", 

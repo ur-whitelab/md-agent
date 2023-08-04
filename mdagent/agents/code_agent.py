@@ -1,4 +1,5 @@
 from prompts import code_format, code_prefix, code_prompt, code_prefix_1, code_prompt_1
+from prompts import code_prefix_act, code_prompt_act
 from . import PathRegistry
 from action_agent import _make_llm
 import json, sys, re
@@ -29,20 +30,26 @@ class CodeAgent:
         self.llm = _make_llm(model, temp, max_iterations)
         self.path_registry = path_registry
         
-    def _create_prompt(self, resume):
+    def _create_prompt(self, version):
         suffix = ""
-        if resume: #if resume
+        if version == "resume": #if resume
             human_prompt = PromptTemplate(
                 template = code_prompt,
                 input_variables = ["recent_history", "full_history", "skills"],
             )
             prefix = code_prefix
-        else: #if first iteration
+        elif version == "first": #if first iteration
             human_prompt = PromptTemplate(
                 template = code_prompt_1,
                 input_variables = ["files", "task", "context", "skills"],
             )
             prefix = code_prefix_1
+        else: #version == "action"
+            human_prompt = PromptTemplate(
+                template = code_prompt_act,
+                input_variables = ["task", "context", "skills", "failed", "explanation"],
+            )
+            prefix = code_prefix_act
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
         system_message_prompt = SystemMessagePromptTemplate.from_template(
@@ -58,8 +65,8 @@ class CodeAgent:
             [system_message_prompt, human_message_prompt, ai_message_prompt]
             )
         
-    def _create_llm(self, resume):
-        prompt = self._create_prompt(resume)
+    def _create_llm(self, version):
+        prompt = self._create_prompt(version)
         llm_chain = LLMChain(
             llm=self.llm,
             prompt=prompt,
@@ -68,14 +75,17 @@ class CodeAgent:
         self.llm_ = llm_chain
         return None
 
-    def _run(self, recent_history, full_history, task, context):
+    def _run(self, version, recent_history, full_history, task, context, failed, explanation):
         #get files
         files = self.path_registry.list_path_names(True)
         #get skills
         skills = None
-        if full_history is None: #if first iteration
+        if version == "resume": #if resume
+            return self.llm.run({"recent_history": recent_history, "full_history": full_history, "skills": skills})
+        elif version == "first": #if first iteration
             return self.llm.run({"files": files, "task": task, "context": context, "skills": skills})
-        return self.llm.run({"recent_history": recent_history, "full_history": full_history, "skills": skills})
+        else: #version == "action"
+            return self.llm.run({"task": task, "context": context, "skills": skills, "failed": failed, "explanation": explanation})
 
     #function that runs the code
     def _exec_code(self, code):
@@ -112,12 +122,13 @@ class CodeAgent:
         else:
             return None
         
-    def _run_code(self, recent_history, full_history, task, context):
+    def _run_code(self, recent_history, full_history, task, context, failed=None, explanation=None, version="resume"):
+        if failed is None and recent_history is None:
+            version = "first"
         #create llm
-        resume = full_history is not None
-        self._create_llm(resume)
+        self._create_llm(version)
         #run agent
-        output = self._run(recent_history, full_history, task, context)
+        output = self._run(self, version, recent_history, full_history, task, context, failed, explanation)
         #extract code part
         code = self._extract_code(output)
         #run code
