@@ -1,6 +1,4 @@
-import prompts
-import agents
-from agents import PathRegistry
-from mdagent import MDAgent
+from .agent import MDAgent
+from .tools import PathRegistry, make_llm
 
-__all__ = ["prompts", "agents", "PathRegistry", "MDAgent"]
+__all__ = ["make_llm", "PathRegistry", "MDAgent"]

@@ -1,4 +1,5 @@
 import os
+
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
@@ -6,6 +7,7 @@ from langchain.base_language import BaseLanguageModel
 from . import (
     AddHydrogensCleaningTool,
     CheckDirectoryFiles,
+    GetNewTool,
     ListRegistryPaths,
     MapPath2Name,
     Name2PDBTool,
@@ -42,6 +44,7 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         PlanBVisualizationTool(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
         SpecializedCleanTool(path_registry=path_instance),
+        GetNewTool(path_registry=path_instance),
         RemoveWaterCleaningTool(path_registry=path_instance),
         AddHydrogensCleaningTool(path_registry=path_instance),
     ]

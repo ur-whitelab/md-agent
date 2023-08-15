@@ -1,34 +1,14 @@
-import langchain
 from dotenv import load_dotenv
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from rmrkl import ChatZeroShotAgent
 from langchain import agents
+from rmrkl import ChatZeroShotAgent
 
-from prompts import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
+from . import make_llm
+from .agent_prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
 
 load_dotenv()
 
-def _make_llm(model, temp, verbose):
-    if model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
-        llm = langchain.chat_models.ChatOpenAI(
-            temperature=temp,
-            model_name=model,
-            request_timeout=1000,
-            streaming=True if verbose else False,
-            callbacks=[StreamingStdOutCallbackHandler()] if verbose else [None],
-        )
-    elif model.startswith("text-"):
-        llm = langchain.OpenAI(
-            temperature=temp,
-            model_name=model,
-            streaming=True if verbose else False,
-            callbacks=[StreamingStdOutCallbackHandler()] if verbose else [None],
-        )
-    else:
-        raise ValueError(f"Invalid model name: {model}")
-    return llm
 
-class ActionAgent:
+class MDAgent:
     def __init__(
         self,
         tools=None,
@@ -39,15 +19,16 @@ class ActionAgent:
         api_key=None,
         verbose=True,
     ):
-        self.llm = _make_llm(model, temp, verbose)
-        
+        self.llm = make_llm(model, temp, verbose)
+
     def make_tools(self):
-        tools_llm = _make_llm(self.tools_model, self.temp, self.verbose)
+        tools_llm = make_llm(self.tools_model, self.temp, self.verbose)
         all_tools = agents.load_tools(["python_repl", "human", "llm-math"], tools_llm)
-        #add in tools from tool library
+        # add in tools from tool library
         return all_tools
 
         # Initialize agent
+
     def init_agent(self, tools):
         self.agent = ChatZeroShotAgent.from_llm_and_tools(
             self.llm,
@@ -59,7 +40,7 @@ class ActionAgent:
         return None
 
     def run(self, prompt):
-        #get tools
+        # get tools
         status = False
         tools = self.make_tools()
         self.init_agent(tools)

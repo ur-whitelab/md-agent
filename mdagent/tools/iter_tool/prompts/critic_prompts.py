@@ -1,4 +1,4 @@
-#code critic
+# code critic
 code_critic_format = """
 You should only respond in JSON format as described below:
 {
@@ -8,18 +8,20 @@ You should only respond in JSON format as described below:
     "critique": "critique",
     "suggestions": "suggestions"
 }
-Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
+Ensure the response can be parsed by Python `json.loads`,
+e.g.: no trailing commas, no single quotes, etc.
 """
 
 code_critic_prefix = """
-You are an assistant that assesses the quality of my code 
-and the validity of its output for my molecular dynamics project, 
-and provides useful guidance. 
+You are an assistant that assesses the quality of my code
+and the validity of its output for my molecular dynamics project,
+and provides useful guidance.
 
-You are required to evaluate the quality of my code, 
-the correctness of its output and if it meets the task requirements. 
-Exceeding the requirements is also considered a success, 
-while failing to meet them requires you to provide critique and suggestions to help me improve. 
+You are required to evaluate the quality of my code,
+the correctness of its output and if it meets the task requirements.
+Exceeding the requirements is also considered a success,
+while failing to meet them requires you to
+provide critique and suggestions to help me improve.
 
 I will give you the following information.
 
@@ -36,40 +38,40 @@ RESPONSE FORMAT:
 """
 
 code_critic_prompt = """
-INPUT: 
+INPUT:
 code: {code},
 output: {code_output},
 task: {task},
 context: {context}
 """
 
-#task critic
+# task critic
 task_critic_format = """
 You should only respond in JSON format as described below:
 {
     "success": boolean,
     "critique": "critique",
 }
-Ensure the response can be parsed by Python `json.loads`, 
+Ensure the response can be parsed by Python `json.loads`,
 e.g.: no trailing commas, no single quotes, etc.
 """
 
 task_critic_prefix = """
-You are an assistant that assesses my progress on my molecular 
-dynamics project and provides useful guidance. 
+You are an assistant that assesses my progress on my molecular
+dynamics project and provides useful guidance.
 
-You are required to evaluate if I have succesfully met 
-all of the task requirements. 
-If I have met or exceeded the requirements, 
-your response should be True. 
-However, if I have failed to meet the requirements, 
-your response should be False, 
-accompanied by critique to help me improve. 
+You are required to evaluate if I have succesfully met
+all of the task requirements.
+If I have met or exceeded the requirements,
+your response should be True.
+However, if I have failed to meet the requirements,
+your response should be False,
+accompanied by critique to help me improve.
 
 I will give you the following information.
 
 
-Files: All files created in the current directory, 
+Files: All files created in the current directory,
 along with descriptions when applicable.
 Code: The code I have written
 Output: The execution output of the code I have written
@@ -84,7 +86,7 @@ RESPONSE FORMAT:
 """
 
 task_critic_prompt = """
-INPUT: 
+INPUT:
 files: {files},
 code: {code},
 output: {code_output},
@@ -93,7 +95,7 @@ context: {context},
 additional_information: {additional_information}
 """
 
-#action critic
+# action critic --> not currently used.. do we need this?
 action_critic_format = """
 You should only respond in JSON format as described below:
 {
@@ -104,11 +106,12 @@ You should only respond in JSON format as described below:
     "wrong_choice": boolean,
     "suggestions": "suggestions"
 }
-Ensure the response can be parsed by Python `json.loads`, e.g.: no trailing commas, no single quotes, etc.
+Ensure the response can be parsed by Python `json.loads`,
+e.g.: no trailing commas, no single quotes, etc.
 """
 
 action_critic_prefix = """
-You are an assistant that assesses the quality of my code 
+You are an assistant that assesses the quality of my code
 and provides useful guidance on why my code failed to execute.
 I will give you the following information:
 
@@ -116,7 +119,7 @@ Task: The objective that the code needs to accomplish
 Skills (list): All skills available to me
 Output: The output of the executed code (if applicable, including execution errors)
 
-You are required to tell me why my code did not execute by answering 
+You are required to tell me why my code did not execute by answering
 True or False to the following:
 
 1. The code is syntactically or semantically incorrect
@@ -132,12 +135,12 @@ You should only respond in the format as described below:
 RESPONSE FORMAT:
 {code_format}
 
-If you get an error message in the input variable called errors, 
+If you get an error message in the input variable called errors,
 please adjust your response accordingly.
 """
 
 action_critic_prompt = """
-INPUT: 
+INPUT:
 task: {task}
 skills: {skills}
 output: {output}

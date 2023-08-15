@@ -1,5 +1,8 @@
 import json
 import os
+from typing import Optional
+
+from langchain.tools import BaseTool
 
 
 class PathRegistry:
@@ -81,20 +84,32 @@ class PathRegistry:
     def list_path_names(self, descriptions=False):
         if not self._check_for_json():
             return "JSON file does not exist"
-        
+
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        
+
         if descriptions:
-            name_descriptions = [(key, value['description']) for key, value in data.items()]
+            name_descriptions = [
+                (key, value["description"]) for key, value in data.items()
+            ]
             if name_descriptions:
-                name_descriptions_str = "\n".join([f"Name: {name}, Description: {desc}" for name, desc in name_descriptions])
-                return "Names and descriptions in path registry:\n" + name_descriptions_str
+                name_descriptions_str = "\n".join(
+                    [
+                        f"""Name: {name},
+                        Description: {desc}"""
+                        for name, desc in name_descriptions
+                    ]
+                )
+                return (
+                    """Names and descriptions
+                    in path registry:\n"""
+                    + name_descriptions_str
+                )
             else:
                 return """No names found.
-                        The JSON file is empty or doesn't 
+                        The JSON file is empty or doesn't
                         contain name mappings."""
-        
+
         names = [key for key in data.keys()]
         return (
             "Names in path registry: " + ", ".join(names)
@@ -104,3 +119,62 @@ class PathRegistry:
             contain name mappings."""
         )
 
+
+class MapPath2Name(BaseTool):
+    name = "MapPath2Name"
+    description = """Input the desired filename
+    followed by the file's path, separated by a comma.
+    Make sure the name is first, then the path.
+    Your path should look something like: name.pdb
+    Stores the path in the registry with the
+    name provided in the filename.
+    If the output says Path mapped to name,
+    then it was successful.
+    You do not need to check that file was created."""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, file_and_path: str) -> str:
+        """Use the tool"""
+        try:
+            if self.path_registry is None:
+                return "Path registry not initialized"
+            if "," not in file_and_path:
+                return "Please separate filename and path with a comma"
+            file, path = file_and_path.split(",")
+            map_name = self.path_registry.map_path(file, path)
+            return map_name
+        except Exception:
+            return "Error writing paths to file"
+
+    async def _arun(self, file_name: str) -> str:
+        """Use the tool asynchronously"""
+        raise NotImplementedError
+
+
+class ListRegistryPaths(BaseTool):
+    name = "ListRegistryPaths"
+    description = """Use this tool to list all paths saved in memory.
+    Input the word 'paths' and the tool will return a list of all names
+    in the registry that are mapped to paths."""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, paths: str) -> str:
+        """Use the tool"""
+        try:
+            if self.path_registry is None:
+                return "Path registry not initialized"
+            return self.path_registry.list_path_names()
+        except Exception:
+            return "Error listing paths"
+
+    async def _arun(self, paths: str) -> str:
+        """Use the tool asynchronously"""
+        raise NotImplementedError
