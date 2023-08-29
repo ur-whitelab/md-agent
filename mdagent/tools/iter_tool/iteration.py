@@ -96,10 +96,6 @@ class Iterator:
         """
         this function just runs the iteration 1 time
         """
-        # implement memory and get list of files
-        # todo: implement memory
-
-        # get files from memory, with descriptions
         code_success, code, code_output = self.action_agent._run_code(
             recent_history, full_history, task, context
         )
