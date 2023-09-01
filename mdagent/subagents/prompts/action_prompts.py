@@ -1,4 +1,4 @@
-code_format = """
+action_format = """
 You should only respond the following format:
 
 
@@ -19,7 +19,7 @@ def yourMainFunctionName(query):
 ```
 """
 
-code_inputs = """
+action_inputs = """
 Recent History:
 1. The most recent completed iteration
 2. The task you must complete
@@ -46,11 +46,11 @@ You may reuse them in your code or use them to help you write your code if neede
 The Skills will be a dictionary of name and function pairs.
 """
 
-code_prefix = """
+action_prefix = """
 You are a helpful assistant that writes python code to complete any
 OpenMM or other molecular dynamics related task specified by me.
 
-I will give you the following: {code_inputs}
+I will give you the following: {action_inputs}
 
 You should then respond to me with
 Explain (if applicable):
@@ -85,10 +85,10 @@ Code:
 You should only respond in the format as described below:
 
 RESPONSE FORMAT:
-{code_format}
+{action_format}
 """
 
-code_prompt = """
+action_prompt = """
 INPUT:
 recent_history: {recent_history},
 full_history: {full_history},
@@ -97,7 +97,7 @@ skills: {skills}
 
 # if first iteration:
 
-code_prefix_1 = """
+action_prefix_1 = """
 You are a helpful assistant that writes python code to complete any
 OpenMM or other molecular dynamics related task specified by me.
 
@@ -137,10 +137,10 @@ Code:
 You should only respond in the format as described below:
 
 RESPONSE FORMAT:
-{code_format}
+{action_format}
 """
 
-code_prompt_1 = """
+action_prompt_1 = """
 INPUT:
 files: {files},
 task: {task},

@@ -9,7 +9,11 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from . import code_critic_format, code_critic_prefix, code_critic_prompt, make_llm
+from mdagent.subagents import (
+    code_critic_format, 
+    code_critic_prefix, 
+    code_critic_prompt)
+from mdagent.mainagent import _make_llm
 
 load_dotenv()
 
@@ -23,7 +27,7 @@ class CodeCritic:
         api_key=None,
         verbose=True,
     ):
-        self.llm = make_llm(model, temp, max_iterations)
+        self.llm = _make_llm(model, temp, max_iterations)
 
     def _create_prompt(self):
         suffix = ""
