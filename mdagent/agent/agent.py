@@ -4,7 +4,8 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
 from .prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
-from .tools import make_tools
+from mdagent.tools import make_tools
+from mdagent.subagents.agents import SubAgents
 
 load_dotenv()
 
@@ -40,11 +41,23 @@ class MDAgent:
         max_iterations=40,
         api_key=None,
         verbose=True,
+        subagents_model="gpt-3.5",
+        ckpt_dir = "ckpt",
+        resume = False,
     ):
         self.llm = _make_llm(model, temp, verbose)
+        self.subagents = SubAgents(
+            subagents_model=subagents_model,
+            temp=temp,
+            max_iterations=max_iterations,
+            api_key=api_key,
+            verbose=verbose,
+            ckpt_dir=ckpt_dir,
+            resume=resume,
+        )
         if tools is None:
             tools_llm = _make_llm(tools_model, temp, verbose)
-            tools = make_tools(tools_llm, verbose=verbose)
+            tools = make_tools(tools_llm, self.subagents, verbose=verbose)
 
         # Initialize agent
         self.agent_executor = RetryAgentExecutor.from_agent_and_tools(

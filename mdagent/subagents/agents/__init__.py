@@ -23,7 +23,7 @@ class SubAgents:
             api_key=api_key,
             verbose=verbose,
         )
-        self.codecritic = CodeCritic(
+        self.code_critic = CodeCritic(
             model=subagents_model,
             temp=temp,
             max_iterations=max_iterations,
@@ -48,7 +48,7 @@ class SubAgents:
             ckpt_dir=ckpt_dir,
             resume=resume,
         )
-        self.taskcritic = TaskCritic(
+        self.task_critic = TaskCritic(
             model=subagents_model,
             temp=temp,
             max_iterations=max_iterations,

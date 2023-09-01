@@ -1,35 +1,37 @@
 # Organization Plan
+```
 ├── .github
 ├── mdagent
 │   ├── _init_.py
-│   ├── agent
-│   │   ├── iteration.py
-|   ├── mdagent_prompt.py
+│   ├── mainagent
+|   |   ├── __init__.py
+│   │   ├── agent.py
+|   |   ├── mdagent_prompt.py
 │   ├── subagents
-│   │   ├── iteration.py
 │   │   ├── agents
-│   │   │   ├── _init_.py
+│   │   │   ├── __init__.py
 │   │   │   ├── skill.py
 │   │   │   ├── currciulum.py
 │   │   │   ├── action
 │   │   │   ├── task_critic
 │   │   │   ├── code_critic
 │   │   ├── prompts
-│   │   │   ├── _init_.py
+│   │   │   ├── __init__.py
 │   │   │   ├── action_prompts.py
 │   │   │   ├── critic_prompts.py
 │   │   │   ├── curriculum_prompts.py
 │   │   │   ├── skill_prompts.py
 │   ├── tools
-|   |   ├── _init_.py
+|   |   ├── __init__.py
 │   │   ├── base_tools
 |   |   ├── subagent_tools
+│   │   |   ├── iteration.py
 └── notebooks
 │   │   ├── ...
 └── tests
 │   │   ├── ...
 ├── ...
-
+```
 
 # Agent Cheat Sheet - for development
 

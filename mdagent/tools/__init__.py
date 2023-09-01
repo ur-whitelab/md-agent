@@ -1,4 +1,4 @@
-from .make_tools import _make_tools
+from .maketools import make_tools
 from .base_tools import (
     CheckDirectoryFiles,
     CleaningTools,
@@ -17,11 +17,11 @@ from .base_tools import (
 )
 
 __all__ = [
-    "_make_tools",
+    "make_tools",
     "Scholar2ResultLLM",
     "Name2PDBTool",
     "SimulationFunctions",
-    "make_tools",
+    "maketools",
     "VisFunctions",
     "CleaningTools",
     "VisualizationToolRender",
