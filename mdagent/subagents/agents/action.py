@@ -14,15 +14,15 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from . import (
-    PathRegistry,
-    code_format,
-    code_prefix,
-    code_prefix_1,
-    code_prompt,
-    code_prompt_1,
-    make_llm,
-)
+
+from mdagent.subagents import (
+    action_prefix, 
+    action_prefix_1, 
+    action_prompt, 
+    action_prompt_1, 
+    action_format)
+from mdagent.agent import _make_llm
+from mdagent.tools import PathRegistry
 
 load_dotenv()
 
@@ -37,27 +37,27 @@ class Action:
         api_key=None,
         verbose=True,
     ):
-        self.llm = make_llm(model, temp, max_iterations)
+        self.llm = _make_llm(model, temp, max_iterations)
         self.path_registry = path_registry
 
     def _create_prompt(self, version):
         suffix = ""
         if version == "resume":  # if resume
             human_prompt = PromptTemplate(
-                template=code_prompt,
+                template=action_prompt,
                 input_variables=["recent_history", "full_history", "skills"],
             )
-            prefix = code_prefix
+            prefix = action_prefix
         elif version == "first":  # if first iteration
             human_prompt = PromptTemplate(
-                template=code_prompt_1,
+                template=action_prompt_1,
                 input_variables=["files", "task", "context", "skills"],
             )
-            prefix = code_prefix_1
+            prefix = action_prefix_1
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
         system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([prefix, code_format])
+            "\n\n".join([prefix, action_format])
         )
 
         return ChatPromptTemplate.from_messages(

@@ -12,13 +12,13 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from . import (
-    PathRegistry,
-    make_llm,
-    task_critic_format,
-    task_critic_prefix,
-    task_critic_prompt,
-)
+from mdagent.subagents import (
+    task_critic_format, 
+    task_critic_prefix, 
+    task_critic_prompt)
+from mdagent.agent import _make_llm
+
+from mdagent.tools import PathRegistry
 
 load_dotenv()
 
@@ -33,7 +33,7 @@ class TaskCritic:
         api_key=None,
         verbose=True,
     ):
-        self.llm = make_llm(model, temp, max_iterations)
+        self.llm = _make_llm(model, temp, max_iterations)
         self.path_regisry = path_registry
 
     def _create_prompt(self):

@@ -1,5 +1,6 @@
-from .agent import MDAgent, make_tools
+from .agent import MDAgent
 from .tools import (
+    make_tools,
     CheckDirectoryFiles,
     CleaningTools,
     ListRegistryPaths,
