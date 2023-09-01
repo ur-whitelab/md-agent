@@ -1,4 +1,5 @@
-from .agent import MDAgent, make_tools
+from .agent import MDAgent 
+from .tools import _make_tools
 from .tools import (
     CheckDirectoryFiles,
     CleaningTools,
@@ -16,15 +17,16 @@ from .tools import (
     get_pdb,
 )
 
+
 __all__ = [
     "MDAgent",
+    "_make_tools",
     "Scholar2ResultLLM",
     "Name2PDBTool",
     "SimulationFunctions",
     "make_tools",
     "VisFunctions",
     "CleaningTools",
-    "MDAgent",
     "VisualizationToolRender",
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",

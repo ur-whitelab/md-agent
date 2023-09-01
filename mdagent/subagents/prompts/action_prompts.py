@@ -147,4 +147,3 @@ task: {task},
 context: {context},
 skills: {skills},
 """
-

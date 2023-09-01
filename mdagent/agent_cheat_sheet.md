@@ -5,7 +5,7 @@
 │   ├── agent
 │   │   ├── iteration.py
 |   ├── mdagent_prompt.py
-│   ├── subagents 
+│   ├── subagents
 │   │   ├── iteration.py
 │   │   ├── agents
 │   │   │   ├── _init_.py
@@ -23,7 +23,7 @@
 │   ├── tools
 |   |   ├── _init_.py
 │   │   ├── base_tools
-|   |   ├── subagent_tools?
+|   |   ├── subagent_tools
 └── notebooks
 │   │   ├── ...
 └── tests
@@ -33,7 +33,7 @@
 
 # Agent Cheat Sheet - for development
 
-We are working with multiple agents, who interact with each other in various ways. To make this process more seamless, here is an agent cheat sheet. 
+We are working with multiple agents, who interact with each other in various ways. To make this process more seamless, here is an agent cheat sheet.
 
 For each agent, please use the following guide:
 
@@ -44,7 +44,7 @@ AGENT NAME
 -place within agent framework
 -how to call
 
-For example, curriculum's "place within agent framework" might be first step in iteration, after 1st iteration and as a tool within mrkl. This is a rather complex example, but you get the point. 
+For example, curriculum's "place within agent framework" might be first step in iteration, after 1st iteration and as a tool within mrkl. This is a rather complex example, but you get the point.
 
 ## Action - 1st
 - runs code, executes code
@@ -81,7 +81,7 @@ For example, curriculum's "place within agent framework" might be first step in 
     - task (from curriculum or MRKL)
     - context (user prompt)
 - outputs:
-    - critique includes: 
+    - critique includes:
         - code quality, validity, success (boolean), critique, suggestions
 - Lives after action in iteration
     - if success = True --> call task critic
@@ -96,19 +96,19 @@ For example, curriculum's "place within agent framework" might be first step in 
     - code output (from action)
     - task (from curriculum or MRKL)
     - context (user prompt)
-    - additional information (optional) 
+    - additional information (optional)
         - used only if invalid formatting on 1st attempt
 - outputs:
-    - success (boolean) 
+    - success (boolean)
     - task critique (if success = False)
-- Lives after code critic & is only envoked if code critic deems code successful. 
+- Lives after code critic & is only envoked if code critic deems code successful.
     - if successful task critic, add to skill library
     - if unsuccessful, continue
 - TaskCritic._run_task_critic
 
 ## Skill Agent (for creating a new tool)
 - creates tool_name and description for new code, wraps it into Python function and Langchain tool
-- input: 
+- input:
     - code
 - output:
     - langchain tool name (in case we can use right away. If not, it doesn't need to pass anything for the current ReAct prompt?)
@@ -136,7 +136,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - inputs:
     - original
 - output(s)
-- 
+-
 
 ### SkillQuery tool
 - just call skill agent to query tools/skill library
