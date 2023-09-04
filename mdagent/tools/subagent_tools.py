@@ -1,7 +1,10 @@
 from typing import Optional
 
 from langchain.tools import BaseTool
-from . import PathRegistry, Iterator
+
+from . import Iterator, PathRegistry
+from mdagent.subagents import SubAgentSettings
+
 
 class GetNewTool(BaseTool):
     name = "GetNewTool"
@@ -19,12 +22,17 @@ class GetNewTool(BaseTool):
         Tool: [tool description, input and output should be 1 string each]
         Context: [the full user prompt from the beginning, 1 string]
     """
-
     path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(
+        self, 
+        path_registry: Optional[PathRegistry], 
+        subagent_settings: Optional[SubAgentSettings]
+    ):
         super().__init__()
         self.path_registry = path_registry
+        self.subagent_settings = subagent_settings
 
     def _run(self, query: str) -> str:
         """use the tool."""
@@ -40,6 +48,10 @@ class GetNewTool(BaseTool):
             return "Incorrect input format. Please try again."
 
         try:
+            if self.path_registry is None:
+                return "Path registry not initialized"
+            if self.subagent_settings is None:
+                return "Settings for subagents yet to be defined"
             # run iterator
             iterator = Iterator(self.path_registry)
             success, history = iterator._run_iteration(1, task, context)
@@ -54,6 +66,92 @@ class GetNewTool(BaseTool):
         except Exception as e:
             return f"Something went wrong. {e}"
 
+        #     newtool_result = NewToolIterator.run(self.agents, query)
+        #     tool_name = newtool_result["tool_name"]
+        #     return f"""The new code is now stored as a new tool for next
+        #         MD-Agent prompt: {tool_name}"""
+
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
+        raise NotImplementedError("this tool does not support async")
+
+
+def add_new_skill(skillagent, code):
+    #  similar to add_new_tool fxn from newtoolcreation.py
+    # only difference is this looks at tools used during the entire ReAct's CoT
+    # and create a consolidated tool & update skill library
+    return ""
+
+class SkillUpdate(BaseTool):
+    name = "SkillUpdate"
+    description = """
+
+    ADD DESCRIPTION HERE
+
+    """
+    path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
+
+    def __init__(
+        self, 
+        path_registry: 
+        Optional[PathRegistry], subagent_settings: Optional[SubAgentSettings]
+    ):
+        super().__init__()
+        self.path_registry = path_registry
+        self.subagent_settings = subagent_settings
+
+    def _run(self, code: str) -> str:
+        """use the tool"""
+        try:
+            if self.path_registry is None:  # this should not happen
+                return "Path registry not initialized"
+            if self.agent is None:
+                return "Agent for this tool not initialized"
+            skill_result = add_new_skill(self.agent, code)
+            return skill_result
+        except Exception as e:
+            return f"Something went wrong. {e}"
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously"""
+        raise NotImplementedError("This tool does not support async")
+
+
+def code_retrieval():
+    return ""
+
+class SkillQuery(BaseTool):
+    name = "SkillQuery"
+    description = """
+
+    ADD DESCRIPTION HERE
+
+    """
+    path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
+
+    def __init__(
+        self, 
+        path_registry: Optional[PathRegistry], 
+        subagent_settings: Optional[SubAgentSettings]
+    ):
+        super().__init__()
+        self.path_registry = path_registry
+        self.subagent_settings = subagent_settings
+
+    def _run(self, query: str) -> str:
+        """use the tool"""
+        try:
+            if self.path_registry is None:  # this should not happen
+                return "Path registry not initialized"
+            if self.agent is None:
+                return "Agent for this tool not initialized"
+            query_result = code_retrieval(self.agent, query)
+            return query_result
+        except Exception as e:
+            return f"Something went wrong. {e}"
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously"""
+        raise NotImplementedError("This tool does not support async")
