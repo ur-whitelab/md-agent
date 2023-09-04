@@ -14,11 +14,13 @@ from langchain.prompts.chat import (
 
 from ..mdagent.agent import _make_llm
 from ..mdagent.prompts import SkillPrompts
+from mdagent.tools import PathRegistry
 
 
 class Skill:
     def __init__(
         self,
+        path_registry: Optional[PathRegistry],
         model="gpt-3.5",
         temp=0.1,
         max_iterations=40,

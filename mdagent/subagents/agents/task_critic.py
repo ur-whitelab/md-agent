@@ -12,12 +12,8 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.subagents import (
-    task_critic_format, 
-    task_critic_prefix, 
-    task_critic_prompt)
 from mdagent.mainagent import _make_llm
-
+from mdagent.subagents import task_critic_format, task_critic_prefix, task_critic_prompt
 from mdagent.tools import PathRegistry
 
 load_dotenv()

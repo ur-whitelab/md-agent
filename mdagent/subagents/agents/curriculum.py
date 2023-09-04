@@ -14,11 +14,13 @@ from langchain.prompts.chat import (
 
 from ...mdagent.agent import _make_llm
 from ...prompts import ExplorePrompts, QAStep1Prompts, QAStep2Prompts, RefinePrompts
+from mdagent.tools import PathRegistry
 
 
 class Explorer:
     def __init__(
         self,
+        path_registry: Optional[PathRegistry],
         model="gpt-3.5-turbo",
         temp=0.1,
         max_iterations=120,
@@ -185,6 +187,7 @@ class QAStep2Agent:
 class RefiningCurriculum:
     def __init__(
         self,
+        path_registry: Optional[PathRegistry],
         model="gpt-3.5-turbo",
         temp=0.1,
         max_iterations=120,

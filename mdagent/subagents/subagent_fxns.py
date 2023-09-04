@@ -1,14 +1,24 @@
 import json
 from typing import Optional
 
-from mdagent.subagents import Action, CodeCritic, PathRegistry, TaskCritic
 from mdagent.mainagent import _make_llm
+from mdagent.subagents import (
+    Action, 
+    CodeCritic, 
+    PathRegistry,
+    RefiningCurriculum,
+    Skill,
+    SubAgents,
+    SubAgentSettings, 
+    TaskCritic
+)
 
 
 class Iterator:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
+        subagent_settings: Optional[SubAgentSettings],
         model="gpt-4",
         temp=0.1,
         max_iterations=120,
@@ -19,6 +29,7 @@ class Iterator:
         self.path_registry = path_registry
 
         # init agents
+        subagents = SubAgents(SubAgentSettings)
         self.action_agent = Action(
             path_registry=path_registry,
             model=model,
@@ -171,4 +182,21 @@ class Iterator:
         self._save_failures(full_failed, None)
         return success, full_failed
 
+    def propose_refined_task(
+        self,
+        original_prompt,
+        recent_history,
+        full_history,
+        skills,
+        files,
+        max_retries=5,
+    ):
+        # ask curriculum agent to refine task in case the coder kept failing to produce
+        # a working code
+        # manual mode is also available to manually enter task
 
+        return "<NEW_TASK>"
+
+    def add_new_tool(self, code):
+        # skill agent store a new code in skill library & write new Langchain tool
+        return "<TOOL_NAME>"
