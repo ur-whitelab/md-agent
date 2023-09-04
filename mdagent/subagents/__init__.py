@@ -24,6 +24,13 @@ from .prompts.critic_prompts import (
     task_critic_prefix,
     task_critic_prompt,
 )
+from .prompts.curriculum_prompts import (
+    ExplorePrompts, 
+    RefinePrompts, 
+    QAStep1Prompts, 
+    QAStep2Prompts,
+)
+from .prompts.skill_prompts import SkillPrompts
 from .subagent_fxns import Iterator
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
@@ -50,4 +57,9 @@ __all__ = [
     "task_critic_format",
     "task_critic_prefix",
     "task_critic_prompt",
+    "ExplorePrompts",
+    "RefinePrompts", 
+    "QAStep1Prompts", 
+    "QAStep2Prompts",
+    "SkillPrompts",
 ]
