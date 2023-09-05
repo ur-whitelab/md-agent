@@ -1,5 +1,7 @@
-import json
 import os
+import json
+import re, sys, select
+from typing import Optional
 
 from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
@@ -12,8 +14,13 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from ...mdagent.agent import _make_llm
-from ...prompts import ExplorePrompts, QAStep1Prompts, QAStep2Prompts, RefinePrompts
+from mdagent.mainagent import _make_llm
+from mdagent.subagents.prompts import (
+    ExplorePrompts, 
+    RefinePrompts,
+    QAStep1Prompts, 
+    QAStep2Prompts,
+) 
 from mdagent.tools import PathRegistry
 
 
@@ -35,22 +42,20 @@ class Explorer:
 
         # initialize agent
         self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(),
-            callback_manager=StreamingStdOutCallbackHandler,
-        )
+        self.llm_chain = self._initialize_llm()
+
         assert mode in ["auto", "manual"], f"mode {mode} not supported"
         self.mode = mode
         self.confirm_on = confirm_on
 
         self.ckpt_dir = ckpt_dir
+        #self.path_registry = path_registry
         if not os.path.exists(f"{ckpt_dir}/curriculum/"):
             os.mkdir(f"{ckpt_dir}/curriculum/")
 
         # can remove this if we decide to use history from full_history instead
         if resume:
-            print(f"\033[35mLoading Curriculum Agent from {ckpt_dir}/curriculum\033[0m")
+            print(f"Loading Curriculum Agent from {ckpt_dir}/curriculum")
 
             with open(f"{ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
                 self.completed_tasks = json.load(f1)
@@ -82,57 +87,13 @@ class Explorer:
         )
         return messages
 
-    def run_llm(self, recent_history, full_history, skills, files):
-        output = self.llm_chain(
-            {
-                "recent_history": {recent_history},
-                "full_history": {full_history},
-                "skills": {skills},
-                "files": {files},
-            }
-        )
-        return output
-
-
-class QAStep1Agent:
-    def __init__(
-        self,
-        model="gpt-3.5-turbo",
-        temp=0.1,
-        max_iterations=120,
-        api_key=None,
-        verbose=True,
-    ):
-        load_dotenv()
-
-        # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = LLMChain(
+    def _initialize_llm(self):
+        llm_chain = LLMChain(
             llm=self.llm,
             prompt=self._create_prompt(),
             callback_manager=StreamingStdOutCallbackHandler,
         )
-
-    def _create_prompt(self):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=QAStep1Prompts.PROMPT,
-            input_variables=[
-                "recent_history",
-                "full_history",
-                "skills",
-                "files",
-            ],
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([QAStep1Prompts.PREFIX, QAStep1Prompts.FORMAT])
-        )
-        messages = ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-        return messages
+        return llm_chain
 
     def run_llm(self, recent_history, full_history, skills, files):
         output = self.llm_chain(
@@ -144,44 +105,6 @@ class QAStep1Agent:
             }
         )
         return output
-
-
-class QAStep2Agent:
-    def __init__(
-        self,
-        model="gpt-3.5-turbo",
-        temp=0.1,
-        max_iterations=120,
-        api_key=None,
-        verbose=True,
-    ):
-        load_dotenv()
-
-        # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(),
-            callback_manager=StreamingStdOutCallbackHandler,
-        )
-
-    def _create_prompt(self):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=QAStep2Prompts.PROMPT, input_variables=["question"]
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([QAStep2Prompts.PREFIX, QAStep2Prompts.FORMAT])
-        )
-        messages = ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-        return messages
-
-    def run_llm(self, question):
-        return self.llm_chain({"question": {question}})
 
 
 class RefiningCurriculum:
@@ -197,16 +120,17 @@ class RefiningCurriculum:
         resume=False,
         confirm_on=True,
         mode="auto",
+        qa_model="gpt-3.5-turbo",
     ):
         load_dotenv()
 
         # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(),
-            callback_manager=StreamingStdOutCallbackHandler,
-        )
+        llm = _make_llm(model, temp, verbose)
+        qa_llm = _make_llm(qa_model, temp, verbose)
+        self.llm_chain = self._initialize_llm(llm, RefinePrompts)
+        self.qa_llm_step1 = self._initialize_llm(qa_llm, QAStep1Prompts)
+        self.qa_llm_step2 = self._initialize_llm(qa_llm, QAStep2Prompts)
+
         assert mode in ["auto", "manual"], f"mode {mode} not supported"
         self.mode = mode
         self.confirm_on = confirm_on
@@ -214,7 +138,7 @@ class RefiningCurriculum:
         os.makedirs(f"{ckpt_dir}/curriculum/", exist_ok=True)
 
         # can remove below if we decide to use history from full_history instead
-        # it makes more sense if curriculum handles files of successes/failures tho
+        # it makes more sense if curriculum handles files of successes/failures thou
         if resume:
             with open(f"{ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
                 self.completed_tasks = json.load(f1)
@@ -225,10 +149,10 @@ class RefiningCurriculum:
             self.completed_tasks = []
             self.failed_tasks = []
 
-    def _create_prompt(self):
+    def _create_prompt(self, prompts):
         suffix = ""
         human_prompt = PromptTemplate(
-            template=RefinePrompts.PROMPT,
+            template=prompts.PROMPT,
             input_variables=[
                 "qa_list",
                 "recent_history",
@@ -240,241 +164,148 @@ class RefiningCurriculum:
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
         system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([RefinePrompts.PREFIX, RefinePrompts.FORMAT])
+            "\n\n".join([prompts.PREFIX, prompts.FORMAT])
         )
         messages = ChatPromptTemplate.from_messages(
             [system_message_prompt, human_message_prompt, ai_message_prompt]
         )
         return messages
 
-    def run_llm(self, qa_list, recent_history, full_history, skills, files):
-        output = self.llm_chain(
+    def _initialize_llm(self, llm, prompts):
+        llm_chain = LLMChain(
+            llm=llm,
+            prompt=self._create_prompt(prompts),
+            callback_manager=StreamingStdOutCallbackHandler,
+        )
+        return llm_chain
+
+    def run_qa(self, recent_history, full_history, skills, files):
+        files = ", ".join(files)
+        questions = [
+            f"What molecular dynamics tasks can I do with these files: {files}?",
+            # add other must-have questions here; do consider context length
+        ]
+
+        # Step 1: get questions
+        q_response = self.qa_llm_step1(
             {
-                "qa_list": {qa_list},
                 "recent_history": {recent_history},
                 "full_history": {full_history},
                 "skills": {skills},
                 "files": {files},
             }
         )
-        return output
+        try:
+            pattern = r'Question \d+: (.*?[.?])'
+            questions = re.findall(pattern, q_response)
+        except Exception as e:
+            return f"something went wrong. {e}"
+        
+        # Step 2: get answer for questions
+        answers = []
+        for question in questions:
+            print(f"Curriculum Agent Question: {question}")
+            answer = self.qa_llm_step2({"question": question})
+            print(f"Curriculum Agent {answer}")
+            answers.append(answer)
+        
+        qa_list = ""
+        for question, answer in zip(questions, answers):
+                if "Answer: Unknown" in answer or "language model" in answer:
+                    continue
+                qa_list += f"Question {i}: {question}\n"
+                qa_list += f"{answer}\n\n"
+                i += 1
+
+        return qa_list
 
 
-# class CurriculumAgent:
-#     def __init__(
-#         self,
-#         tools=None,
-#         model="gpt-4",
-#         tools_model="gpt-4",
-#         temp=0.1,
-#         max_iterations=40,
-#         qa_model_name="gpt-3.5-turbo",
-#         qa_temperature=0,
-#         request_timout=120,
-#         api_key=None,
-#         verbose=True,
-#         ckpt_dir="ckpt",
-#         resume=False,
-#         mode="auto",
-#         confirm_on=True,
-#     ):
-#         # create llm
-#         llm = _make_llm(model, temp, verbose)
-#         human_prompt = PromptTemplate(
-#             template=curriculum_prompt,
-#             input_variables=["recent_history", "full_history", "skills", "files"],
-#         )
-#         suffix = curriculum_format
-#         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-#         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-#         system_message_prompt = SystemMessagePromptTemplate.from_template(
-#             "\n\n".join([curriculum_prefix, curriculum_format])
-#         )
-#         prompt = ChatPromptTemplate.from_messages(
-#             [system_message_prompt, human_message_prompt, ai_message_prompt]
-#         )
-#         self.llm = LLMChain(
-#             llm=llm,
-#             prompt=prompt,
-#             callback_manager=StreamingStdOutCallbackHandler,
-#         )
+    def propose_refined_task(
+        self, original_prompt, qa_list, recent_history, full_history, skills, files,
+    ):
+        # ask curriculum agent to refine task if action agent keeps failing
+        # manual mode is also available to manually enter task
 
-#         # may add hybrid mode later
-#         assert mode in ["auto", "manual"], f"mode {mode} not supported"
-#         self.mode = mode
+        confirm_on = self.confirm_on
+        mode = self.mode
 
-#         self.ckpt_dir = ckpt_dir
-#         if not os.path.exists(f"{ckpt_dir}/curriculum/"):
-#             os.mkdir(f"{ckpt_dir}/curriculum/")
+        if mode == "manual":
+            task = input("please enter the new task: ")
+            assert task,""
+        elif mode == "auto":
+            response = self.llm_chain(
+                {
+                    "original_task": original_prompt,
+                    "qa_list": qa_list,
+                    "recent_history": recent_history,
+                    "full_history": full_history,
+                    "skills": skills,
+                    "files": files,
 
-#         if resume:
-#             print(
-#                 f"\033[35mLoading Curriculum Agent from {ckpt_dir}/curriculum\033[0m")
-#             )
-#             with open(f"{self.ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
-#                 self.completed_tasks = json.load(f1)
+                }
+            )
+            # parse ai message
+            try:
+                task = ""
+                for line in response.split("\n"):
+                    if line.startswith("Task:"):
+                        task = line[5:].replace(".","").strip()
+                assert task, "Task not found in Curriculum Agent response"
+            except Exception as e:
+                print(
+                    f"""Error parsing refining curriculum response: {e}.
+                Trying again!"""
+                )
+        else: 
+            raise ValueError(f"Invalid curriculum agent mode: {mode}")
 
-#             with open(f"{self.ckpt_dir}/curriculum/failed_tasks.json", "w") as f2:
-#                 self.failed_tasks = json.load(f2)
-#         else:
-#             self.completed_tasks = []
-#             self.failed_tasks = []
+        if task == None:
+            return None
+        else:      
+            if confirm_on:
+                # have the user confirm the refined task by typing
+                print(f"Task: {task}")
+                print("Confirm? (y/n): ",end="",flush=True)
+                timeout=10 #sec
+                inputs, _, _ = select.select([sys.stdin], [], [], timeout)
+                if not inputs:
+                    print(
+                        f"{timeout} seconds has passed. Proceeding with this task."
+                    )
+                elif sys.stdin.readline().strip().lower() not in ["y", ""]:
+                    print("Recommended task denied. Trying again.")
+                    return None
+                
+                # alternative: no timeout
+                #if input("Confirm? (y/n)").lower() not in ["y", ""]:
+                    # retries += 1
+                    # continue
+            return task
+    
+    def run(
+        self, 
+        original_prompt, 
+        recent_history, 
+        full_history, 
+        skills, 
+        files, 
+        max_retries=5
+    ):
+        qa_list = self.run_qa(recent_history, full_history, skills, files)
+        retries = 0
+        while retries < max_retries:
+            task = self.propose_refined_task(
+                original_prompt, qa_list, recent_history, full_history, skills, files,
+            )
+            if task:
+                return task
+            retries += 1
+            
+        return RuntimeError("Max retries reached, failed to propose a task.")
 
-#     def render_observation(self, recent_history, files):
-#         """
-#         The observation of current event:
-#         As of now, it only renders files, completed, and failed tasks.
+    #def update_progress():
+    
+    #def clean_up_tasks():
+    
+    #def decompose_tasks():
 
-#         """
-#         files = ", ".join(files) if files else "None"
-#         completed_tasks = (
-#             ", ".join(self.completed_tasks) if self.completed_tasks else "None"
-#         )
-#         failed_tasks = ", ".join(self.failed_tasks) if self.failed_tasks else "None"
-
-#         observation = {
-#             # add other "recent_history" items
-#             "files": f"Current list of files: {files}\n\n",
-#             "completed_tasks": f"Completed tasks so far: {completed_tasks}\n\n",
-#             "failed_tasks": f"Failed tasks that are too hard: {failed_tasks}\n\n",
-#         }
-#         return observation
-
-# def propose_next_task(
-#     self, recent_history, full_history, skills, files, max_retries=5
-# ):
-#         """
-#         Given event, return task & context for the next step.
-
-#         AUTO mode: the Curriculum agent will suggest next task.
-#         If it's the first task, it will obtain PDB file for protein
-#         specified by user
-
-#         MANUAL mode: The user decides the next task
-
-#         """
-
-#         if len(self.completed_tasks) == 0 and self.mode == "auto":
-#             print("Enter protein: ", end="", flush=True)
-# timeout=10
-# inputs, _, _ = select.select( [sys.stdin], [], [], timeout )
-# if not inputs:
-#     print(
-#         f""" {timeout}-second timeout has passed. Proceeding
-#         with fibronectin.
-#         """
-#     )
-#     proteinname = "fibronectin"
-# else:
-#     proteinname = sys.stdin.readline().strip()
-
-#             task = f"""Obtain PDB file for {proteinname} and map it to the
-#             same name to be accessed later. Clean the PDB file as needed."""
-#             return task
-
-#         retries = 0
-#         while retries < max_retries:
-#             task = ""
-
-#             if self.mode == "manual":
-#                 task = input("Please enter task: ")
-
-#             elif self.mode == "auto":
-#                 response = self.llm.run(
-#                     {
-#                          "recent_history": recent_history,
-#                         "full_history": full_history,
-#                         "skills": skills,
-#                         "files": files,
-#                     }
-#                 ).content
-
-#                 # parse ai message
-#                 try:
-#                     task = ""
-#                     for line in response.split("\n"):
-#                         if line.startswith("Task:"):
-#                             task = line[5:].replace(".", "").strip()
-#                     assert task, "Task not found in Curriculum Agent response"
-#                 except Exception as e:
-#                     print(
-#                         f"""\033[35mError parsing curriculum response: {e}.
-#                         Trying again!\033[0m"""
-#                     )
-#             else:
-#                 raise ValueError(f"Invalid curriculum agent mode: {self.mode}")
-
-#             if task: # <- doesn't need this; we have assert check earlier
-#                 if self.confirm_on:
-#                     print(f"Task: {task}")
-#                     #if input("Confirm? (y/n)").lower() not in ["y", ""]:
-#                         # retries += 1
-#                         # continue
-
-#                     print("Confirm? (y/n): ",end="", flush=True)
-#                     timeout=10 #seconds
-#                     inputs, _, _ = select.select( [sys.stdin], [], [], timeout )
-#                     if not inputs:
-#                         print(
-#                             f"""{timeout}-second timeout has passed. Proceeding
-#                             with the task above."""
-#                         )
-#                     elif sys.stdin.readline().strip().lower() not in ["y", ""]:
-#                         retries += 1
-#                         continue
-
-#                 return task
-
-#             retries += 1
-
-#         raise RuntimeError("Max retries reached, failed to propose a task.")
-
-#     def update_progress(self, recent_history):
-#         task = recent_history["task"]
-#         if recent_history["success"]:
-#             print(f"\033[35mCompleted task {task}.\033[0m")
-#             self.completed_tasks.append(task)
-#         else:
-#             print(
-#                 f"Failed to complete task {task}. Skipping to next task."
-#             )
-#             self.failed_tasks.append(task)
-
-#         # clean up tasks and dump json files
-#         self.clean_up_tasks()
-
-#     def clean_up_tasks(self):
-#         """
-#         to remove any duplicates in completed tasks and
-#         remove failed tasks that are already completed
-
-#         dump json files of completed tasks, failed tasks, and
-#         summary of failed tasks
-#         """
-#         updated_completed_tasks = []
-#         updated_failed_tasks = self.failed_tasks
-
-#         # dedupilcate but keep order
-#         for task in self.completed_tasks:
-#             if task not in updated_completed_tasks:
-#                 updated_completed_tasks.append(task)
-
-#         # remove completed tasks from failed tasks
-#         for task in updated_completed_tasks:
-#             while task in updated_failed_tasks:
-#                 updated_failed_tasks.remove(task)
-
-#         # get a summary of failed tasks & frequency
-#         fail_summary = Counter(updated_failed_tasks)
-
-#         self.completed_tasks = updated_completed_tasks
-#         self.failed_tasks = updated_failed_tasks
-
-#         with open(f"{self.ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
-#             json.dump(self.completed_tasks, f1)
-
-#         with open(f"{self.ckpt_dir}/curriculum/failed_tasks.json", "w") as f2:
-#             json.dump(self.failed_tasks, f2)
-
-#         with open(f"{self.ckpt_dir}/curriculum/failed_tasks_summary.json", "w") as f3:
-#             json.dump(fail_summary, f3)

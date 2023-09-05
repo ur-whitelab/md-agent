@@ -4,10 +4,13 @@
 ├── mdagent
 │   ├── _init_.py
 │   ├── mainagent
-|   |   ├── __init__.py
+│   │   ├── __init__.py
 │   │   ├── agent.py
-|   |   ├── mdagent_prompt.py
+│   │   ├── mdagent_prompt.py
 │   ├── subagents
+│   │   ├── __init__.py
+│   │   ├── subagent_fxns.py    # contains multiagent functions
+│   │   ├── subagent_setup.py   # contains SubAgentInitializer 
 │   │   ├── agents
 │   │   │   ├── __init__.py
 │   │   │   ├── skill.py
@@ -22,10 +25,11 @@
 │   │   │   ├── curriculum_prompts.py
 │   │   │   ├── skill_prompts.py
 │   ├── tools
-|   |   ├── __init__.py
+│   │   ├── __init__.py
+│   │   ├── maketools.py
+│   │   ├── subagent_tools.py
 │   │   ├── base_tools
-|   |   ├── subagent_tools
-│   │   |   ├── iteration.py
+│   │   │   └── ...
 └── notebooks
 │   │   ├── ...
 └── tests
@@ -113,9 +117,10 @@ For example, curriculum's "place within agent framework" might be first step in 
 - input:
     - code
 - output:
-    - langchain tool name (in case we can use right away. If not, it doesn't need to pass anything for the current ReAct prompt?)
-    - (created .py file with python function & langchain tool)
-- place within agent framework
+    - langchain tool name
+    - (created .py file containing python function & langchain tool)
+- Lives whenever new code is successful and needs to store as a tool
+- SkillAgent.run
 
 ## Refining Curriculum Agent (to refine task if code keeps failing)
 - proposes a new, refined task closely aligned to the 'spirit' of user prompt as much as possible
@@ -128,10 +133,10 @@ For example, curriculum's "place within agent framework" might be first step in 
 - output:
     - a new task
 - Lives after action keeps failing to create successful code
-- RefiningCurriculumAgent._run
+- RefiningCurriculumAgent.run
 
 
-## Outside 'Iteration' tool (for exploring, storing skill library)
+## Outside 'Iteration' tool (for exploring, storing skill library with no new tools)
 
 ### Skill Agent (for creating a new SKILL)
 - creates tool_name and description for a 'new' user input and a collection of tools, store it as a skill (and wrap it into Langchain tool)

@@ -181,9 +181,10 @@ encountered.
 else.
 4. Ensure that the revised task remains stay relevant and aligned with the 
 spirit of the original task.
-5. I should not be doing the same thing over and over again. I may 
-sometimes need to repeat some tasks if I need to rerun simulations 
-or visualize again. Only repeat tasks if necessary.
+5. You should not be doing the same thing over and over again. You may 
+sometimes need to repeat some tasks if you need to rerun simulations 
+or visualization. Only repeat tasks if necessary.
+6. Only give 3 to 5 unique questions; don't go over 5. 
 """
 
 question_inputs = """
@@ -219,8 +220,6 @@ Examples include protein structure-containing PDB or CIF files (with .pdb or
 from simulations.
 """
 
-
-
 QUESTION_FORMAT = """
 You should only respond in the format as described below:
 RESPONSE FORMAT:
@@ -228,8 +227,6 @@ Reasoning: ...
 Question 1: ...
 Question 2: ...
 Question 3: ...
-Question 4: ...
-Question 5: ...
 ...
 """
 

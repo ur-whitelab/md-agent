@@ -3,7 +3,7 @@ from typing import Optional
 from langchain.tools import BaseTool
 
 from . import Iterator, PathRegistry
-from mdagent.subagents import SubAgentSettings
+from mdagent.subagents import SubAgentSettings, Iterator
 
 
 class GetNewTool(BaseTool):
@@ -52,29 +52,27 @@ class GetNewTool(BaseTool):
                 return "Path registry not initialized"
             if self.subagent_settings is None:
                 return "Settings for subagents yet to be defined"
+            
+            # need to get the original_prompt; can MRKL provide it? 
             # run iterator
             iterator = Iterator(self.path_registry)
-            success, history = iterator._run_iteration(1, task, context)
-            if success is True:
-                # we should get tool name,
-                # description, and
-                # input type from skills manager
-                return """Tool created successfully.
-            You can now use the tool in subsequent steps."""
+            tool_name = iterator.run(original_prompt)
+            if tool_name:
+                return f"""Tool created successfully: {tool_name}
+                You can now use the tool in subsequent steps."""
             else:
-                return "Tool creation failed. Try again with a different description."
+                return "Failed to build a new tool."
         except Exception as e:
             return f"Something went wrong. {e}"
-
-        #     newtool_result = NewToolIterator.run(self.agents, query)
-        #     tool_name = newtool_result["tool_name"]
-        #     return f"""The new code is now stored as a new tool for next
-        #         MD-Agent prompt: {tool_name}"""
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("this tool does not support async")
 
+
+
+
+# below are other subagent-based tools (to be completed)
 
 def add_new_skill(skillagent, code):
     #  similar to add_new_tool fxn from newtoolcreation.py

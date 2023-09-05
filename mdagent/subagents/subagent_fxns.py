@@ -8,7 +8,7 @@ from mdagent.subagents import (
     PathRegistry,
     RefiningCurriculum,
     Skill,
-    SubAgents,
+    SubAgentInitializer,
     SubAgentSettings, 
     TaskCritic
 )
@@ -29,32 +29,39 @@ class Iterator:
         self.path_registry = path_registry
 
         # init agents
-        subagents = SubAgents(SubAgentSettings)
-        self.action_agent = Action(
-            path_registry=path_registry,
-            model=model,
-            temp=temp,
-            max_iterations=max_iterations,
-            api_key=api_key,
-            verbose=verbose,
-        )
+        initializer = SubAgentInitializer(SubAgentSettings)
+        subagents = initializer.create_iteration_agents()
+        self.action_agent = subagents['action']
+        self.code_critic_agent = subagents['code_critic']
+        self.curriculum_agent = subagents['refining_curriculum']
+        self.skill_agent = subagents['skill']
+        self.task_critic_agent = subagents['task_critic']
 
-        self.code_critic_agent = CodeCritic(
-            model=model,
-            temp=temp,
-            max_iterations=max_iterations,
-            api_key=api_key,
-            verbose=verbose,
-        )
+        # self.action_agent = Action(
+        #     path_registry=path_registry,
+        #     model=model,
+        #     temp=temp,
+        #     max_iterations=max_iterations,
+        #     api_key=api_key,
+        #     verbose=verbose,
+        # )
 
-        self.task_critic_agent = TaskCritic(
-            path_registry=path_registry,
-            model=model,
-            temp=temp,
-            max_iterations=max_iterations,
-            api_key=api_key,
-            verbose=verbose,
-        )
+        # self.code_critic_agent = CodeCritic(
+        #     model=model,
+        #     temp=temp,
+        #     max_iterations=max_iterations,
+        #     api_key=api_key,
+        #     verbose=verbose,
+        # )
+
+        # self.task_critic_agent = TaskCritic(
+        #     path_registry=path_registry,
+        #     model=model,
+        #     temp=temp,
+        #     max_iterations=max_iterations,
+        #     api_key=api_key,
+        #     verbose=verbose,
+        # )
 
     def _add_to_history(
         self,
@@ -182,21 +189,59 @@ class Iterator:
         self._save_failures(full_failed, None)
         return success, full_failed
 
-    def propose_refined_task(
+    def _propose_task(
         self,
         original_prompt,
         recent_history,
         full_history,
         skills,
         files,
+        resume=True,
         max_retries=5,
     ):
-        # ask curriculum agent to refine task in case the coder kept failing to produce
-        # a working code
-        # manual mode is also available to manually enter task
+        if resume==False: # first task
+            return original_prompt
+        
+        try: 
+            task = self.curriculum_agent.run(
+                original_prompt, 
+                recent_history, 
+                full_history, 
+                skills, 
+                files, 
+                max_retries=max_retries
+            )
+            return task
+        except Exception as e:
+            print(f"Curriculum Agent failed to propose a task: {e}")
+            return None
 
-        return "<NEW_TASK>"
+    def _add_new_tool(self, code, max_retries=5):
+        return self.skill_agent.run(code, max_retries=max_retries)
 
-    def add_new_tool(self, code):
-        # skill agent store a new code in skill library & write new Langchain tool
-        return "<TOOL_NAME>"
+    # run da whole thing
+    def run(self, original_prompt, max_iterations=5):
+        task = original_prompt
+        context = "" 
+
+        for i in range(max_iterations):
+            success, history = self._run_iteration(i, task, context)
+
+            # need recent_history, full_history, skills, files
+            if not success:
+                task = self._propose_task(
+                    original_prompt,
+                    recent_history,
+                    full_history,
+                    skills,
+                    files,
+                    max_retries=5,
+                )
+                context = ""
+
+            else:
+                # need code
+                tool_name = self._add_new_tool(code, max_retries=5)
+                return tool_name
+        
+        return None
