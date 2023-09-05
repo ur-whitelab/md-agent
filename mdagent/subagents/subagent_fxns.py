@@ -3,14 +3,14 @@ from typing import Optional
 
 from mdagent.mainagent import _make_llm
 from mdagent.subagents import (
-    Action, 
-    CodeCritic, 
+    ActionAgent, 
+    CodeCriticAgent, 
     PathRegistry,
-    RefiningCurriculum,
-    Skill,
+    RefiningCurriculumAgent,
+    SkillAgent,
     SubAgentInitializer,
     SubAgentSettings, 
-    TaskCritic
+    TaskCriticAgent,
 )
 
 
@@ -37,7 +37,7 @@ class Iterator:
         self.skill_agent = subagents['skill']
         self.task_critic_agent = subagents['task_critic']
 
-        # self.action_agent = Action(
+        # self.action_agent = ActionAgent(
         #     path_registry=path_registry,
         #     model=model,
         #     temp=temp,
@@ -46,7 +46,7 @@ class Iterator:
         #     verbose=verbose,
         # )
 
-        # self.code_critic_agent = CodeCritic(
+        # self.code_critic_agent = CodeCriticAgent(
         #     model=model,
         #     temp=temp,
         #     max_iterations=max_iterations,
@@ -54,7 +54,7 @@ class Iterator:
         #     verbose=verbose,
         # )
 
-        # self.task_critic_agent = TaskCritic(
+        # self.task_critic_agent = TaskCriticAgent(
         #     path_registry=path_registry,
         #     model=model,
         #     temp=temp,

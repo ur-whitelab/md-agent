@@ -24,7 +24,7 @@ from mdagent.subagents.prompts import (
 from mdagent.tools import PathRegistry
 
 
-class Explorer:
+class ExplorerAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
@@ -107,7 +107,7 @@ class Explorer:
         return output
 
 
-class RefiningCurriculum:
+class RefiningCurriculumAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
