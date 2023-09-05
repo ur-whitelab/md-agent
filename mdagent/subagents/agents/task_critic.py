@@ -19,7 +19,7 @@ from mdagent.tools import PathRegistry
 load_dotenv()
 
 
-class TaskCritic:
+class TaskCriticAgent:
     def __init__(
         self,
         path_registry=Optional[PathRegistry],

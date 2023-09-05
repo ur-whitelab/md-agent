@@ -19,7 +19,7 @@ from mdagent.subagents.prompts import SkillStep1Prompts, SkillStep2Prompts
 from mdagent.tools import PathRegistry
 
 
-class Skill:
+class SkillAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],

@@ -15,7 +15,7 @@ from mdagent.subagents import code_critic_format, code_critic_prefix, code_criti
 load_dotenv()
 
 
-class CodeCritic:
+class CodeCriticAgent:
     def __init__(
         self,
         model="gpt-4",

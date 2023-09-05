@@ -27,7 +27,7 @@ from mdagent.tools import PathRegistry
 load_dotenv()
 
 
-class Action:
+class ActionAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],

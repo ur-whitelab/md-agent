@@ -1,14 +1,14 @@
-from .action import Action
-from .code_critic import CodeCritic
-from .curriculum import Explorer, RefiningCurriculum
-from .skill import Skill
-from .task_critic import TaskCritic
+from .action import ActionAgent
+from .code_critic import CodeCriticAgent
+from .curriculum import ExplorerAgent, RefiningCurriculumAgent
+from .skill import SkillAgent
+from .task_critic import TaskCriticAgent
 
 __all__ = [
-    "Action",
-    "CodeCritic",
-    "Explorer",
-    "RefiningCurriculum",
-    "Skill",
-    "TaskCritic",
+    "ActionAgent",
+    "CodeCriticAgent",
+    "ExplorerAgent",
+    "RefiningCurriculumAgent",
+    "SkillAgent",
+    "TaskCriticAgent",
 ]
