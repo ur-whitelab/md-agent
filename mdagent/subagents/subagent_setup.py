@@ -1,13 +1,16 @@
 from typing import Optional
-from mdagent.tools import PathRegistry
+
+from mdagent.tools.base_tools.registry_tools import PathRegistry
+
 from .agents import (
-    ActionAgent, 
-    CodeCriticAgent, 
-    ExplorerAgent, 
-    RefiningCurriculumAgent, 
-    SkillAgent, 
-    TaskCriticAgent
+    ActionAgent,
+    CodeCriticAgent,
+    ExplorerAgent,
+    RefiningCurriculumAgent,
+    SkillAgent,
+    TaskCriticAgent,
 )
+
 
 class SubAgentSettings:
     def __init__(
@@ -22,13 +25,14 @@ class SubAgentSettings:
         resume=False,
     ):
         self.path_registry = path_registry
-        self.subagents_model=subagents_model
-        self.temp=temp
-        self.max_iterations=max_iterations
-        self.api_key=api_key
-        self.verbose=verbose
-        self.ckpt_dir=ckpt_dir
-        self.resume=resume
+        self.subagents_model = subagents_model
+        self.temp = temp
+        self.max_iterations = max_iterations
+        self.api_key = api_key
+        self.verbose = verbose
+        self.ckpt_dir = ckpt_dir
+        self.resume = resume
+
 
 class SubAgentInitializer:
     def __init__(self, settings: SubAgentSettings):
@@ -69,7 +73,7 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_refining_curriculum(self):
@@ -81,7 +85,7 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_skill(self):
@@ -93,7 +97,7 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_task_critic(self):

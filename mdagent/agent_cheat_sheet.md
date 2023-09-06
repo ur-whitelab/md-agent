@@ -10,7 +10,7 @@
 │   ├── subagents
 │   │   ├── __init__.py
 │   │   ├── subagent_fxns.py    # contains multiagent functions
-│   │   ├── subagent_setup.py   # contains SubAgentInitializer 
+│   │   ├── subagent_setup.py   # contains SubAgentInitializer
 │   │   ├── agents
 │   │   │   ├── __init__.py
 │   │   │   ├── skill.py

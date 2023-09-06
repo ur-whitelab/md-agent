@@ -3,7 +3,7 @@ from typing import Optional
 import requests
 from langchain.tools import BaseTool
 
-from .registry import PathRegistry
+from .registry_tools import PathRegistry
 
 
 def get_pdb(query_string, PathRegistry):

@@ -1,17 +1,10 @@
 import json
 from typing import Optional
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents import (
-    ActionAgent, 
-    CodeCriticAgent, 
-    PathRegistry,
-    RefiningCurriculumAgent,
-    SkillAgent,
-    SubAgentInitializer,
-    SubAgentSettings, 
-    TaskCriticAgent,
-)
+from mdagent.mainagent.agent import _make_llm
+from mdagent.tools.base_tools.registry_tools import PathRegistry
+
+from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 
 class Iterator:
@@ -31,11 +24,11 @@ class Iterator:
         # init agents
         initializer = SubAgentInitializer(SubAgentSettings)
         subagents = initializer.create_iteration_agents()
-        self.action_agent = subagents['action']
-        self.code_critic_agent = subagents['code_critic']
-        self.curriculum_agent = subagents['refining_curriculum']
-        self.skill_agent = subagents['skill']
-        self.task_critic_agent = subagents['task_critic']
+        self.action_agent = subagents["action"]
+        self.code_critic_agent = subagents["code_critic"]
+        self.curriculum_agent = subagents["refining_curriculum"]
+        self.skill_agent = subagents["skill"]
+        self.task_critic_agent = subagents["task_critic"]
 
         # self.action_agent = ActionAgent(
         #     path_registry=path_registry,
@@ -199,17 +192,17 @@ class Iterator:
         resume=True,
         max_retries=5,
     ):
-        if resume==False: # first task
+        if resume is False:  # first task
             return original_prompt
-        
-        try: 
+
+        try:
             task = self.curriculum_agent.run(
-                original_prompt, 
-                recent_history, 
-                full_history, 
-                skills, 
-                files, 
-                max_retries=max_retries
+                original_prompt,
+                recent_history,
+                full_history,
+                skills,
+                files,
+                max_retries=max_retries,
             )
             return task
         except Exception as e:
@@ -222,7 +215,7 @@ class Iterator:
     # run da whole thing
     def run(self, original_prompt, max_iterations=5):
         task = original_prompt
-        context = "" 
+        context = ""
 
         for i in range(max_iterations):
             success, history = self._run_iteration(i, task, context)
@@ -243,5 +236,5 @@ class Iterator:
                 # need code
                 tool_name = self._add_new_tool(code, max_retries=5)
                 return tool_name
-        
+
         return None

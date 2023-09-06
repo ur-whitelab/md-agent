@@ -5,7 +5,7 @@ from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
 
-from .registry import PathRegistry
+from .registry_tools import PathRegistry
 
 
 class CleaningTools:

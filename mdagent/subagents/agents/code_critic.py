@@ -9,8 +9,12 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents import code_critic_format, code_critic_prefix, code_critic_prompt
+from mdagent.mainagent.agent import _make_llm
+from mdagent.subagents.prompts.critic_prompts import (
+    code_critic_format,
+    code_critic_prefix,
+    code_critic_prompt,
+)
 
 load_dotenv()
 

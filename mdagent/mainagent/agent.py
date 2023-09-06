@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
-from mdagent.subagents import SubAgentSettings
-from mdagent.tools import make_tools
+from mdagent.subagents.subagent_setup import SubAgentSettings
+from mdagent.tools.maketools import make_tools
 
 from .prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
 
