@@ -1,17 +1,8 @@
 import json
 from typing import Optional
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents import (
-    Action, 
-    CodeCritic, 
-    PathRegistry,
-    RefiningCurriculum,
-    Skill,
-    SubAgentInitializer,
-    SubAgentSettings, 
-    TaskCritic
-)
+from ..tools import PathRegistry 
+from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 
 class Iterator:
@@ -25,17 +16,16 @@ class Iterator:
         api_key=None,
         verbose=True,
     ):
-        self.llm = _make_llm(model, temp, max_iterations)
         self.path_registry = path_registry
 
         # init agents
         initializer = SubAgentInitializer(SubAgentSettings)
         subagents = initializer.create_iteration_agents()
-        self.action_agent = subagents['action']
-        self.code_critic_agent = subagents['code_critic']
-        self.curriculum_agent = subagents['refining_curriculum']
-        self.skill_agent = subagents['skill']
-        self.task_critic_agent = subagents['task_critic']
+        self.action_agent = subagents["action"]
+        self.code_critic_agent = subagents["code_critic"]
+        self.curriculum_agent = subagents["refining_curriculum"]
+        self.skill_agent = subagents["skill"]
+        self.task_critic_agent = subagents["task_critic"]
 
     def _add_to_history(
         self,
@@ -166,24 +156,24 @@ class Iterator:
     def _propose_task(
         self,
         original_prompt,
-       # recent_history,
+        recent_history, # can remove this
         full_history, # from full_failed
         skills,
         files,
         resume=True,
         max_retries=5,
     ):
-        if resume==False: # first task
+        if resume is False:  # first task
             return original_prompt
-        
-        try: 
+
+        try:
             task = self.curriculum_agent.run(
-                original_prompt, 
-                recent_history, 
-                full_history, 
-                skills, 
-                files, 
-                max_retries=max_retries
+                original_prompt,
+                recent_history,
+                full_history,
+                skills,
+                files,
+                max_retries=max_retries,
             )
             return task
         except Exception as e:
@@ -196,7 +186,7 @@ class Iterator:
     # run da whole thing
     def run(self, original_prompt, max_iterations=5):
         task = original_prompt
-        context = "" 
+        context = ""
 
         for i in range(max_iterations):
             success, history = self._run_iteration(i, task, context)
@@ -206,10 +196,10 @@ class Iterator:
             if not success:
                 task = self._propose_task(
                     original_prompt,
-                    recent_history,
-                    full_history, # pull from file?
-                    skills,  # get within this function
-                    files,      # pull within this function
+                    # recent_history,
+                    # full_history, # pull from file?
+                    # skills,  # get within this function
+                    # files,      # pull within this function
                     max_retries=5,
                 )
                 context = ""

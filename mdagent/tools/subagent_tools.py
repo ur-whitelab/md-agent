@@ -2,8 +2,9 @@ from typing import Optional
 
 from langchain.tools import BaseTool
 
-from . import Iterator, PathRegistry
-from mdagent.subagents import SubAgentSettings, Iterator
+from mdagent.subagents.subagent_fxns import Iterator
+from mdagent.subagents.subagent_setup import SubAgentSettings
+from mdagent.tools.base_tools.registry_tools import PathRegistry
 
 
 class GetNewTool(BaseTool):
@@ -28,9 +29,9 @@ class GetNewTool(BaseTool):
     subagent_settings: Optional[SubAgentSettings]
 
     def __init__(
-        self, 
-        path_registry: Optional[PathRegistry], 
-        subagent_settings: Optional[SubAgentSettings]
+        self,
+        path_registry: Optional[PathRegistry],
+        subagent_settings: Optional[SubAgentSettings],
     ):
         super().__init__()
         self.path_registry = path_registry
@@ -54,8 +55,8 @@ class GetNewTool(BaseTool):
                 return "Path registry not initialized"
             if self.subagent_settings is None:
                 return "Settings for subagents yet to be defined"
-            
-            # need to get the original_prompt; can MRKL provide it? 
+
+            # need to get the original_prompt; can MRKL provide it?
             # run iterator
             iterator = Iterator(self.path_registry)
             tool_name = iterator.run(task, original_prompt) # update naming
@@ -72,15 +73,15 @@ class GetNewTool(BaseTool):
         raise NotImplementedError("this tool does not support async")
 
 
-
-
 # below are other subagent-based tools (to be completed)
+
 
 def add_new_skill(skillagent, code):
     #  similar to add_new_tool fxn from newtoolcreation.py
     # only difference is this looks at tools used during the entire ReAct's CoT
     # and create a consolidated tool & update skill library
     return ""
+
 
 class SkillUpdate(BaseTool):
     name = "SkillUpdate"
@@ -93,9 +94,9 @@ class SkillUpdate(BaseTool):
     subagent_settings: Optional[SubAgentSettings]
 
     def __init__(
-        self, 
-        path_registry: 
-        Optional[PathRegistry], subagent_settings: Optional[SubAgentSettings]
+        self,
+        path_registry: Optional[PathRegistry],
+        subagent_settings: Optional[SubAgentSettings],
     ):
         super().__init__()
         self.path_registry = path_registry
@@ -121,6 +122,7 @@ class SkillUpdate(BaseTool):
 def code_retrieval():
     return ""
 
+
 class SkillQuery(BaseTool):
     name = "SkillQuery"
     description = """
@@ -132,9 +134,9 @@ class SkillQuery(BaseTool):
     subagent_settings: Optional[SubAgentSettings]
 
     def __init__(
-        self, 
-        path_registry: Optional[PathRegistry], 
-        subagent_settings: Optional[SubAgentSettings]
+        self,
+        path_registry: Optional[PathRegistry],
+        subagent_settings: Optional[SubAgentSettings],
     ):
         super().__init__()
         self.path_registry = path_registry

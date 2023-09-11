@@ -14,20 +14,20 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents import (
+from ...mainagent import _make_llm
+from ..prompts import (
     action_format,
     action_prefix,
     action_prefix_1,
     action_prompt,
     action_prompt_1,
 )
-from mdagent.tools import PathRegistry
+from ...tools import PathRegistry
 
 load_dotenv()
 
 
-class Action:
+class ActionAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],

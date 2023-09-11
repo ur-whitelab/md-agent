@@ -1,6 +1,8 @@
-import os
 import json
-import re, sys, select
+import os
+import re
+import select
+import sys
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -14,17 +16,17 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents.prompts import (
-    ExplorePrompts, 
-    RefinePrompts,
-    QAStep1Prompts, 
+from ...mainagent import _make_llm
+from ..prompts import (
+    ExplorePrompts,
+    QAStep1Prompts,
     QAStep2Prompts,
-) 
-from mdagent.tools import PathRegistry
+    RefinePrompts,
+)
+from ...tools import PathRegistry
 
 
-class Explorer:
+class ExplorerAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
@@ -49,7 +51,7 @@ class Explorer:
         self.confirm_on = confirm_on
 
         self.ckpt_dir = ckpt_dir
-        #self.path_registry = path_registry
+        # self.path_registry = path_registry
         if not os.path.exists(f"{ckpt_dir}/curriculum/"):
             os.mkdir(f"{ckpt_dir}/curriculum/")
 
@@ -107,7 +109,7 @@ class Explorer:
         return output
 
 
-class RefiningCurriculum:
+class RefiningCurriculumAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
@@ -196,11 +198,11 @@ class RefiningCurriculum:
             }
         )
         try:
-            pattern = r'Question \d+: (.*?[.?])'
+            pattern = r"Question \d+: (.*?[.?])"
             questions = re.findall(pattern, q_response)
         except Exception as e:
             return f"something went wrong. {e}"
-        
+
         # Step 2: get answer for questions
         answers = []
         for question in questions:
@@ -208,20 +210,25 @@ class RefiningCurriculum:
             answer = self.qa_llm_step2({"question": question})
             print(f"Curriculum Agent {answer}")
             answers.append(answer)
-        
+
         qa_list = ""
         for question, answer in zip(questions, answers):
-                if "Answer: Unknown" in answer or "language model" in answer:
-                    continue
-                qa_list += f"Question {i}: {question}\n"
-                qa_list += f"{answer}\n\n"
-                i += 1
+            if "Answer: Unknown" in answer or "language model" in answer:
+                continue
+            qa_list += f"Question {i}: {question}\n"
+            qa_list += f"{answer}\n\n"
+            i += 1
 
         return qa_list
 
-
     def propose_refined_task(
-        self, original_prompt, qa_list, recent_history, full_history, skills, files,
+        self,
+        original_prompt,
+        qa_list,
+        recent_history,
+        full_history,
+        skills,
+        files,
     ):
         # ask curriculum agent to refine task if action agent keeps failing
         # manual mode is also available to manually enter task
@@ -231,7 +238,7 @@ class RefiningCurriculum:
 
         if mode == "manual":
             task = input("please enter the new task: ")
-            assert task,""
+            assert task, ""
         elif mode == "auto":
             response = self.llm_chain(
                 {
@@ -241,7 +248,6 @@ class RefiningCurriculum:
                     "full_history": full_history,
                     "skills": skills,
                     "files": files,
-
                 }
             )
             # parse ai message
@@ -249,63 +255,65 @@ class RefiningCurriculum:
                 task = ""
                 for line in response.split("\n"):
                     if line.startswith("Task:"):
-                        task = line[5:].replace(".","").strip()
+                        task = line[5:].replace(".", "").strip()
                 assert task, "Task not found in Curriculum Agent response"
             except Exception as e:
                 print(
                     f"""Error parsing refining curriculum response: {e}.
                 Trying again!"""
                 )
-        else: 
+        else:
             raise ValueError(f"Invalid curriculum agent mode: {mode}")
 
-        if task == None:
+        if task is None:
             return None
-        else:      
+        else:
             if confirm_on:
                 # have the user confirm the refined task by typing
                 print(f"Task: {task}")
-                print("Confirm? (y/n): ",end="",flush=True)
-                timeout=10 #sec
+                print("Confirm? (y/n): ", end="", flush=True)
+                timeout = 10  # sec
                 inputs, _, _ = select.select([sys.stdin], [], [], timeout)
                 if not inputs:
-                    print(
-                        f"{timeout} seconds has passed. Proceeding with this task."
-                    )
+                    print(f"{timeout} seconds has passed. Proceeding with this task.")
                 elif sys.stdin.readline().strip().lower() not in ["y", ""]:
                     print("Recommended task denied. Trying again.")
                     return None
-                
+
                 # alternative: no timeout
-                #if input("Confirm? (y/n)").lower() not in ["y", ""]:
-                    # retries += 1
-                    # continue
+                # if input("Confirm? (y/n)").lower() not in ["y", ""]:
+                # retries += 1
+                # continue
             return task
-    
+
     def run(
-        self, 
-        original_prompt, 
-        recent_history, 
-        full_history, 
-        skills, 
-        files, 
-        max_retries=5
+        self,
+        original_prompt,
+        recent_history,
+        full_history,
+        skills,
+        files,
+        max_retries=5,
     ):
         qa_list = self.run_qa(recent_history, full_history, skills, files)
         retries = 0
         while retries < max_retries:
             task = self.propose_refined_task(
-                original_prompt, qa_list, recent_history, full_history, skills, files,
+                original_prompt,
+                qa_list,
+                recent_history,
+                full_history,
+                skills,
+                files,
             )
             if task:
                 return task
             retries += 1
-            
+
         return RuntimeError("Max retries reached, failed to propose a task.")
 
-    #def update_progress():
-    
-    #def clean_up_tasks():
-    
-    #def decompose_tasks():
+    # def update_progress():
 
+    # def clean_up_tasks():
+
+    # def decompose_tasks():

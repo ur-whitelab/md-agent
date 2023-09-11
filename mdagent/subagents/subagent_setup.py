@@ -1,12 +1,13 @@
 from typing import Optional
-from mdagent.tools import PathRegistry
+
+from ..tools import PathRegistry
 from .agents import (
-    Action, 
-    CodeCritic, 
-    Explorer, 
-    RefiningCurriculum, 
-    Skill, 
-    TaskCritic
+    ActionAgent,
+    CodeCriticAgent,
+    ExplorerAgent,
+    RefiningCurriculumAgent,
+    SkillAgent,
+    TaskCriticAgent,
 )
 
 class SubAgentSettings:
@@ -22,16 +23,17 @@ class SubAgentSettings:
         resume=False,
     ):
         self.path_registry = path_registry
-        self.subagents_model=subagents_model
-        self.temp=temp
-        self.max_iterations=max_iterations
-        self.api_key=api_key
-        self.verbose=verbose
-        self.ckpt_dir=ckpt_dir
-        self.resume=resume
+        self.subagents_model = subagents_model
+        self.temp = temp
+        self.max_iterations = max_iterations
+        self.api_key = api_key
+        self.verbose = verbose
+        self.ckpt_dir = ckpt_dir
+        self.resume = resume
+
 
 class SubAgentInitializer:
-    def __init__(self, settings: SubAgentSettings):
+    def __init__(self, settings:  Optional[SubAgentSettings]):
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp
@@ -42,7 +44,7 @@ class SubAgentInitializer:
         self.resume = settings.resume
 
     def create_action(self):
-        return Action(
+        return ActionAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
@@ -52,7 +54,7 @@ class SubAgentInitializer:
         )
 
     def create_code_critic(self):
-        return CodeCritic(
+        return CodeCriticAgent(
             model=self.subagents_model,
             temp=self.temp,
             max_iterations=self.max_iterations,
@@ -61,7 +63,7 @@ class SubAgentInitializer:
         )
 
     def create_explorer(self):
-        return Explorer(
+        return ExplorerAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
@@ -69,11 +71,11 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_refining_curriculum(self):
-        return RefiningCurriculum(
+        return RefiningCurriculumAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
@@ -81,11 +83,11 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_skill(self):
-        return Skill(
+        return SkillAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
@@ -93,11 +95,11 @@ class SubAgentInitializer:
             api_key=self.api_key,
             verbose=self.verbose,
             ckpt_dir=self.ckpt_dir,
-            resume=self.resume
+            resume=self.resume,
         )
 
     def create_task_critic(self):
-        return TaskCritic(
+        return TaskCriticAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,

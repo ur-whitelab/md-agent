@@ -1,6 +1,6 @@
+import json
 import os
 import re
-import json
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -14,12 +14,13 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents.prompts import SkillStep1Prompts, SkillStep2Prompts
-from mdagent.tools import PathRegistry
+
+from ...mainagent import _make_llm
+from ..prompts import SkillStep1Prompts, SkillStep2Prompts
+from ...tools import PathRegistry
 
 
-class Skill:
+class SkillAgent:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
@@ -33,7 +34,7 @@ class Skill:
     ):
         load_dotenv()
         self.ckpt_dir = ckpt_dir
-        #self.path_registry = path_registry
+        # self.path_registry = path_registry
 
         # initialize agent
         self.llm = _make_llm(model, temp, verbose)
@@ -82,17 +83,17 @@ class Skill:
             [system_message_prompt, human_message_prompt, ai_message_prompt]
         )
 
-    def _initialize_llm(self,prompts):
+    def _initialize_llm(self, prompts):
         llm_chain = LLMChain(
             llm=self.llm,
             prompt=self._create_prompt(prompts),
             callback_manager=StreamingStdOutCallbackHandler,
         )
         return llm_chain
-    
+
     def generate_tool_description_step1(self, fxn_code):
         """
-        Given the code snippet, it asks the agent to provide 
+        Given the code snippet, it asks the agent to provide
         1. Python function name
         2. name for Langchain BaseTool
         3. tool description
@@ -102,18 +103,17 @@ class Skill:
         tool_name_match = re.search(r"Tool name:\s*(\w+)", response)
         description_match = re.search(r"Description:\s*(.*)", response, re.DOTALL)
 
-
         if fxn_name_match and tool_name_match and description_match:
             fxn_name = fxn_name_match.group(1)
             tool_name = tool_name_match.group(1)
             description = description_match.group(1).strip()
             extracted_info = {
-                "fxn_name": fxn_name, 
-                "tool_name": tool_name, 
-                "description": description, 
+                "fxn_name": fxn_name,
+                "tool_name": tool_name,
+                "description": description,
             }
             return extracted_info
-        else: 
+        else:
             return None
 
     def generate_full_code_step2(self, code, info):
@@ -121,12 +121,14 @@ class Skill:
         tool_name = info["tool_name"]
         description = info["description"]
         response = self.llm_step2(
-            {"code": code, 
-            "fxn_name": fxn_name, 
-            "tool_name": tool_name, 
-            "description": description}
+            {
+                "code": code,
+                "fxn_name": fxn_name,
+                "tool_name": tool_name,
+                "description": description,
+            }
         )
-        match = re.search(r'Full Code: (.+)', response, re.DOTALL)
+        match = re.search(r"Full Code: (.+)", response, re.DOTALL)
         if match:
             return match.group(1)
         else:
@@ -134,18 +136,18 @@ class Skill:
 
     def add_new_tool(self, code):
         info = self.generate_tool_description_step1(code)
-        if info == None:
+        if info is None:
             print("Skill agent failed to provide tool description.")
             return None
-        print(f"Skill agent generated tool description for the new tool.")
+        print("Skill agent generated tool description for the new tool.")
         full_code = self.generate_full_code_step2(code, info)
-        if full_code == None:
+        if full_code is None:
             print("Skill agent failed to provide full code.")
             return None
-        print(f"Skill agent generated full code for the new LangChain tool.")
+        print("Skill agent generated full code for the new LangChain tool.")
         tool_name = info["tool_name"]
         description = info["tool_description"]
-        if tool_name in self.learnedtools: # imperfect way to check
+        if tool_name in self.learnedtools:  # imperfect way to check
             print(f"Tool with similar name already exists: {tool_name}. Rewriting!")
             i = 2
             while f"{tool_name}V{i}.py" in os.listdir(f"{self.ckpt_dir}/skill/code"):
@@ -178,8 +180,3 @@ class Skill:
                 return tool_name
         print(f"Skill agent failed to add a new tool {max_retries} times. Move on.")
         return None
-        
-
-
-        
-

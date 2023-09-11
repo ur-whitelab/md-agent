@@ -9,13 +9,17 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from mdagent.mainagent import _make_llm
-from mdagent.subagents import code_critic_format, code_critic_prefix, code_critic_prompt
+from ...mainagent import _make_llm
+from ..prompts import (
+    code_critic_format,
+    code_critic_prefix,
+    code_critic_prompt,
+)
 
 load_dotenv()
 
 
-class CodeCritic:
+class CodeCriticAgent:
     def __init__(
         self,
         model="gpt-4",

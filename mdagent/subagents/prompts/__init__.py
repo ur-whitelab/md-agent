@@ -20,7 +20,10 @@ from .curriculum_prompts import (
     QAStep1Prompts, 
     QAStep2Prompts,
 )
-from .skill_prompts import SkillStep1Prompts, SkillStep2Prompts
+from .skill_prompts import (
+    SkillStep1Prompts,
+    SkillStep2Prompts,
+)
 
 __all__ = [
     "action_prefix",

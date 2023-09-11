@@ -1,10 +1,10 @@
 from .agents import (
-    Action, 
-    CodeCritic, 
-    Explorer, 
-    RefiningCurriculum, 
-    Skill, 
-    TaskCritic
+    ActionAgent, 
+    CodeCriticAgent, 
+    ExplorerAgent, 
+    RefiningCurriculumAgent, 
+    SkillAgent, 
+    TaskCriticAgent,
 )
 from .prompts import (
     action_format,
@@ -30,15 +30,15 @@ from .subagent_fxns import Iterator
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 __all__ = [
-    "Action",
-    "CodeCritic",
-    "Explorer",
+    "ActionAgent",
+    "CodeCriticAgent",
+    "ExplorerAgent",
+    "RefiningCurriculumAgent",
+    "SkillAgent",
+    "TaskCriticAgent",
     "Iterator",
-    "RefiningCurriculum",
-    "Skill",
     "SubAgentInitializer",
     "SubAgentSettings",
-    "TaskCritic",
     "action_prefix",
     "action_inputs",
     "action_format",

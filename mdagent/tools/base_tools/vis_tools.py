@@ -5,7 +5,7 @@ from typing import Optional
 import nbformat as nbf
 from langchain.tools import BaseTool
 
-from .registry import PathRegistry
+from .registry_tools import PathRegistry
 
 
 class VisFunctions:

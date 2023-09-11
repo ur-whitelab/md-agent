@@ -10,14 +10,14 @@
 │   ├── subagents
 │   │   ├── __init__.py
 │   │   ├── subagent_fxns.py    # contains multiagent functions
-│   │   ├── subagent_setup.py   # contains SubAgentInitializer 
+│   │   ├── subagent_setup.py   # contains SubAgentInitializer
 │   │   ├── agents
 │   │   │   ├── __init__.py
 │   │   │   ├── skill.py
 │   │   │   ├── currciulum.py
-│   │   │   ├── action
-│   │   │   ├── task_critic
-│   │   │   ├── code_critic
+│   │   │   ├── action.py
+│   │   │   ├── task_critic.py
+│   │   │   ├── code_critic.py
 │   │   ├── prompts
 │   │   │   ├── __init__.py
 │   │   │   ├── action_prompts.py
@@ -52,7 +52,7 @@ AGENT NAME
 
 For example, curriculum's "place within agent framework" might be first step in iteration, after 1st iteration and as a tool within mrkl. This is a rather complex example, but you get the point.
 
-## Action - 1st
+## ActionAgent - 1st
 - runs code, executes code
 - inputs:
     - files
@@ -66,7 +66,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - first step in first iteration only
 - Action._run_code
 
-## Action - resume
+## ActionAgent - resume
 - runs code, executes code
 - inputs:
     - recent history
@@ -79,7 +79,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - lives after curriculum, before code critic in iteration (then action <> critics)
 - Action._run_code
 
-## Code Critic
+## Code Critic Agent
 - critique code & determine if pass/fail and how to improve
 - inputs:
     - code (from action)
@@ -94,7 +94,7 @@ For example, curriculum's "place within agent framework" might be first step in 
     - if success = False --> back to action or curriculum (if max iter)
 - CodeCritic._run
 
-## Task Critic
+## Task Critic Agent
 - critique whether valid code addresses prompt
 - inputs:
     - files
