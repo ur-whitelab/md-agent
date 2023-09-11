@@ -20,8 +20,10 @@ class GetNewTool(BaseTool):
         You can then use the tool in subsequent steps.
         Follow this format for your input:
         Tool: [tool description, input and output should be 1 string each]
-        Context: [the full user prompt from the beginning, 1 string]
+        Context: [the full user prompt from the beginning, 1 string]  
     """
+
+    # change line 23
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
 
@@ -40,8 +42,8 @@ class GetNewTool(BaseTool):
         # check formatting
         try:
             lower_input = query.lower()
-            task = lower_input.split("tool:", 1)[-1].split("context:", 1)[0].strip()
-            context = lower_input.split("context:", 1)[-1].strip()
+            task = lower_input.split("tool:", 1)[-1].split("context:", 1)[0].strip() ####
+            context = lower_input.split("context:", 1)[-1].strip() ####
             if any(item in (None, "") for item in (task, context)):
                 raise ValueError("incorrect input")
         except Exception:
@@ -56,7 +58,7 @@ class GetNewTool(BaseTool):
             # need to get the original_prompt; can MRKL provide it? 
             # run iterator
             iterator = Iterator(self.path_registry)
-            tool_name = iterator.run(original_prompt)
+            tool_name = iterator.run(task, original_prompt) # update naming
             if tool_name:
                 return f"""Tool created successfully: {tool_name}
                 You can now use the tool in subsequent steps."""

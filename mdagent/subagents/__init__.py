@@ -1,5 +1,3 @@
-from mdagent.tools import PathRegistry
-
 from .agents import (
     Action, 
     CodeCritic, 
@@ -8,23 +6,19 @@ from .agents import (
     Skill, 
     TaskCritic
 )
-from .prompts.action_prompts import (
+from .prompts import (
     action_format,
     action_inputs,
     action_prefix,
     action_prefix_1,
     action_prompt,
     action_prompt_1,
-)
-from .prompts.critic_prompts import (
     code_critic_format,
     code_critic_prefix,
     code_critic_prompt,
     task_critic_format,
     task_critic_prefix,
     task_critic_prompt,
-)
-from .prompts import (
     ExplorePrompts, 
     RefinePrompts, 
     QAStep1Prompts, 
@@ -40,7 +34,6 @@ __all__ = [
     "CodeCritic",
     "Explorer",
     "Iterator",
-    "PathRegistry",
     "RefiningCurriculum",
     "Skill",
     "SubAgentInitializer",

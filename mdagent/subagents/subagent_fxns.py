@@ -37,32 +37,6 @@ class Iterator:
         self.skill_agent = subagents['skill']
         self.task_critic_agent = subagents['task_critic']
 
-        # self.action_agent = Action(
-        #     path_registry=path_registry,
-        #     model=model,
-        #     temp=temp,
-        #     max_iterations=max_iterations,
-        #     api_key=api_key,
-        #     verbose=verbose,
-        # )
-
-        # self.code_critic_agent = CodeCritic(
-        #     model=model,
-        #     temp=temp,
-        #     max_iterations=max_iterations,
-        #     api_key=api_key,
-        #     verbose=verbose,
-        # )
-
-        # self.task_critic_agent = TaskCritic(
-        #     path_registry=path_registry,
-        #     model=model,
-        #     temp=temp,
-        #     max_iterations=max_iterations,
-        #     api_key=api_key,
-        #     verbose=verbose,
-        # )
-
     def _add_to_history(
         self,
         existing_history,
@@ -192,8 +166,8 @@ class Iterator:
     def _propose_task(
         self,
         original_prompt,
-        recent_history,
-        full_history,
+       # recent_history,
+        full_history, # from full_failed
         skills,
         files,
         resume=True,
@@ -227,14 +201,15 @@ class Iterator:
         for i in range(max_iterations):
             success, history = self._run_iteration(i, task, context)
 
+
             # need recent_history, full_history, skills, files
             if not success:
                 task = self._propose_task(
                     original_prompt,
                     recent_history,
-                    full_history,
-                    skills,
-                    files,
+                    full_history, # pull from file?
+                    skills,  # get within this function
+                    files,      # pull within this function
                     max_retries=5,
                 )
                 context = ""
@@ -245,3 +220,5 @@ class Iterator:
                 return tool_name
         
         return None
+
+    # def _pull_information()
