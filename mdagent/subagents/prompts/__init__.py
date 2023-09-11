@@ -15,15 +15,12 @@ from .critic_prompts import (
     task_critic_prompt,
 )
 from .curriculum_prompts import (
-    ExplorePrompts, 
-    RefinePrompts, 
-    QAStep1Prompts, 
+    ExplorePrompts,
+    QAStep1Prompts,
     QAStep2Prompts,
+    RefinePrompts,
 )
-from .skill_prompts import (
-    SkillStep1Prompts,
-    SkillStep2Prompts,
-)
+from .skill_prompts import SkillStep1Prompts, SkillStep2Prompts
 
 __all__ = [
     "action_prefix",
@@ -39,8 +36,8 @@ __all__ = [
     "task_critic_prefix",
     "task_critic_prompt",
     "ExplorePrompts",
-    "RefinePrompts", 
-    "QAStep1Prompts", 
+    "RefinePrompts",
+    "QAStep1Prompts",
     "QAStep2Prompts",
     "SkillStep1Prompts",
     "SkillStep2Prompts",

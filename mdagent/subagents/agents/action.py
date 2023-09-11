@@ -15,6 +15,7 @@ from langchain.prompts.chat import (
 )
 
 from ...mainagent import _make_llm
+from ...tools import PathRegistry
 from ..prompts import (
     action_format,
     action_prefix,
@@ -22,7 +23,6 @@ from ..prompts import (
     action_prompt,
     action_prompt_1,
 )
-from ...tools import PathRegistry
 
 load_dotenv()
 

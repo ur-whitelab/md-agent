@@ -10,11 +10,7 @@ from langchain.prompts.chat import (
 )
 
 from ...mainagent import _make_llm
-from ..prompts import (
-    code_critic_format,
-    code_critic_prefix,
-    code_critic_prompt,
-)
+from ..prompts import code_critic_format, code_critic_prefix, code_critic_prompt
 
 load_dotenv()
 

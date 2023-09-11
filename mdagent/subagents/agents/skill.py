@@ -14,10 +14,9 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-
 from ...mainagent import _make_llm
-from ..prompts import SkillStep1Prompts, SkillStep2Prompts
 from ...tools import PathRegistry
+from ..prompts import SkillStep1Prompts, SkillStep2Prompts
 
 
 class SkillAgent:
@@ -46,7 +45,7 @@ class SkillAgent:
             print(f"Loading Skills from {ckpt_dir}/skill")
             # retrieve skill library for query
             with open(f"{ckpt_dir}/skill/skills.json", "w") as f1:
-                self.skill_library = json.load(f1)
+                self.skills = json.load(f1)
 
             # retrieve existing learned LangChain tools
             with open(f"{ckpt_dir}/skill/tools.json", "w") as f2:

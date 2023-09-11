@@ -13,12 +13,8 @@ from langchain.prompts.chat import (
 )
 
 from ...mainagent import _make_llm
-from ..prompts import (
-    task_critic_format,
-    task_critic_prefix,
-    task_critic_prompt,
-)
 from ...tools import PathRegistry
+from ..prompts import task_critic_format, task_critic_prefix, task_critic_prompt
 
 load_dotenv()
 

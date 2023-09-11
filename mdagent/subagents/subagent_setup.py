@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 from ..tools import PathRegistry
@@ -9,6 +10,7 @@ from .agents import (
     SkillAgent,
     TaskCriticAgent,
 )
+
 
 class SubAgentSettings:
     def __init__(
@@ -33,7 +35,14 @@ class SubAgentSettings:
 
 
 class SubAgentInitializer:
-    def __init__(self, settings:  Optional[SubAgentSettings]):
+    def __init__(self, settings: Optional[SubAgentSettings]):
+        if settings is None:
+            raise ValueError("Settings cannot be None")
+        if settings.path_registry is None:
+            warnings.warn(
+                "path_registry is None, some agents may fail to be created.",
+                UserWarning,
+            )
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp
@@ -43,7 +52,7 @@ class SubAgentInitializer:
         self.ckpt_dir = settings.ckpt_dir
         self.resume = settings.resume
 
-    def create_action(self):
+    def create_action_agent(self):
         return ActionAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
@@ -62,7 +71,7 @@ class SubAgentInitializer:
             verbose=self.verbose,
         )
 
-    def create_explorer(self):
+    def create_explorer_agent(self):
         return ExplorerAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
@@ -74,7 +83,7 @@ class SubAgentInitializer:
             resume=self.resume,
         )
 
-    def create_refining_curriculum(self):
+    def create_refining_curriculum_agent(self):
         return RefiningCurriculumAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
@@ -86,7 +95,7 @@ class SubAgentInitializer:
             resume=self.resume,
         )
 
-    def create_skill(self):
+    def create_skill_agent(self):
         return SkillAgent(
             path_registry=self.path_registry,
             model=self.subagents_model,
@@ -110,9 +119,9 @@ class SubAgentInitializer:
 
     def create_iteration_agents(self):
         return {
-            "action": self.create_action(),
+            "action": self.create_action_agent(),
             "code_critic": self.create_code_critic(),
-            "refining_curriculum": self.create_refining_curriculum(),
-            "skill": self.create_skill(),
+            "refining_curriculum": self.create_refining_curriculum_agent(),
+            "skill": self.create_skill_agent(),
             "task_critic": self.create_task_critic(),
         }

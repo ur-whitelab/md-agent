@@ -17,13 +17,8 @@ from langchain.prompts.chat import (
 )
 
 from ...mainagent import _make_llm
-from ..prompts import (
-    ExplorePrompts,
-    QAStep1Prompts,
-    QAStep2Prompts,
-    RefinePrompts,
-)
 from ...tools import PathRegistry
+from ..prompts import ExplorePrompts, QAStep1Prompts, QAStep2Prompts, RefinePrompts
 
 
 class ExplorerAgent:
@@ -212,6 +207,7 @@ class RefiningCurriculumAgent:
             answers.append(answer)
 
         qa_list = ""
+        i = 1
         for question, answer in zip(questions, answers):
             if "Answer: Unknown" in answer or "language model" in answer:
                 continue

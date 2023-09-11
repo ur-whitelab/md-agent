@@ -1,29 +1,21 @@
-from .base_tools import (
-    # cleaning tools
+from .base_tools import (  # cleaning tools; registry; vis tools; others
     AddHydrogensCleaningTool,
-    CleaningTools,
-    RemoveWaterCleaningTool,
-    SpecializedCleanTool,
-
-    # registry
-    ListRegistryPaths, 
-    MapPath2Name, 
-    PathRegistry,
-
-    # vis tools
     CheckDirectoryFiles,
+    CleaningTools,
+    ListRegistryPaths,
+    MapPath2Name,
+    Name2PDBTool,
+    PathRegistry,
     PlanBVisualizationTool,
+    RemoveWaterCleaningTool,
+    Scholar2ResultLLM,
+    SetUpAndRunTool,
+    SimulationFunctions,
+    SimulationOutputFigures,
+    SpecializedCleanTool,
     VisFunctions,
     VisualizationToolRender,
-
-    # others
-    Name2PDBTool, 
     get_pdb,
-    SimulationOutputFigures,
-    Scholar2ResultLLM,
-    SetUpAndRunTool, 
-    SimulationFunctions,
-
 )
 from .maketools import make_tools
 from .subagent_tools import GetNewTool, SkillQuery, SkillUpdate

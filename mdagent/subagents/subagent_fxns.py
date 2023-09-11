@@ -1,7 +1,7 @@
 import json
 from typing import Optional
 
-from ..tools import PathRegistry 
+from ..tools import PathRegistry
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 
@@ -19,7 +19,7 @@ class Iterator:
         self.path_registry = path_registry
 
         # init agents
-        initializer = SubAgentInitializer(SubAgentSettings)
+        initializer = SubAgentInitializer(subagent_settings)
         subagents = initializer.create_iteration_agents()
         self.action_agent = subagents["action"]
         self.code_critic_agent = subagents["code_critic"]
@@ -156,8 +156,8 @@ class Iterator:
     def _propose_task(
         self,
         original_prompt,
-        recent_history, # can remove this
-        full_history, # from full_failed
+        recent_history,  # can remove this
+        full_history,  # from full_failed
         skills,
         files,
         resume=True,
@@ -184,31 +184,28 @@ class Iterator:
         return self.skill_agent.run(code, max_retries=max_retries)
 
     # run da whole thing
-    def run(self, original_prompt, max_iterations=5):
-        task = original_prompt
-        context = ""
-
+    def run(self, task, user_prompt, max_iterations=5):
         for i in range(max_iterations):
-            success, history = self._run_iteration(i, task, context)
-
+            success, history = self._run_iteration(i, task, user_prompt)
 
             # need recent_history, full_history, skills, files
             if not success:
                 task = self._propose_task(
-                    original_prompt,
+                    task,
+                    user_prompt,
                     # recent_history,
                     # full_history, # pull from file?
                     # skills,  # get within this function
                     # files,      # pull within this function
                     max_retries=5,
                 )
-                context = ""
 
             else:
-                # need code
+                # need code from _run_iteration above
+                code = ""
                 tool_name = self._add_new_tool(code, max_retries=5)
                 return tool_name
-        
+
         return None
 
     # def _pull_information()

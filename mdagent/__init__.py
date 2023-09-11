@@ -1,14 +1,14 @@
 from .mainagent import MDAgent
 from .subagents import (
-    ActionAgent, 
-    CodeCriticAgent, 
-    ExplorerAgent, 
-    RefiningCurriculumAgent, 
-    SkillAgent, 
-    TaskCriticAgent,
+    ActionAgent,
+    CodeCriticAgent,
+    ExplorerAgent,
     Iterator,
-    SubAgentInitializer, 
+    RefiningCurriculumAgent,
+    SkillAgent,
+    SubAgentInitializer,
     SubAgentSettings,
+    TaskCriticAgent,
 )
 from .tools import (
     CheckDirectoryFiles,

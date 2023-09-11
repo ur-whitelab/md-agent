@@ -51,11 +51,11 @@ def make_tools(llm: BaseLanguageModel, subagent_settings, verbose=False):
     ]
 
     # add 'learned' tools here
-    learned_tools = [
-        # load from pickle file or VDB
-    ]
+    # learned_tools = [
+    #      # load from pickle file or VDB
+    # ]
 
-    all_tools += base_tools + subagents_tools + learned_tools
+    all_tools += base_tools + subagents_tools  # + learned_tools
 
     # add other tools depending on api keys
     pqa_key = os.getenv("PQA_API_KEY")

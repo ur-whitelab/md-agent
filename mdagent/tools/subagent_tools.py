@@ -2,9 +2,8 @@ from typing import Optional
 
 from langchain.tools import BaseTool
 
-from mdagent.subagents.subagent_fxns import Iterator
-from mdagent.subagents.subagent_setup import SubAgentSettings
-from mdagent.tools.base_tools.registry_tools import PathRegistry
+from ..subagents import Iterator, SubAgentInitializer, SubAgentSettings
+from .base_tools import PathRegistry
 
 
 class GetNewTool(BaseTool):
@@ -19,12 +18,11 @@ class GetNewTool(BaseTool):
         input description. If you receive a success, you will
         recieve the tool name, description, and input type.
         You can then use the tool in subsequent steps.
+
         Follow this format for your input:
         Tool: [tool description, input and output should be 1 string each]
-        Context: [the full user prompt from the beginning, 1 string]  
+        Prompt: [the full user prompt from the beginning, 1 string]
     """
-
-    # change line 23
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
 
@@ -43,9 +41,9 @@ class GetNewTool(BaseTool):
         # check formatting
         try:
             lower_input = query.lower()
-            task = lower_input.split("tool:", 1)[-1].split("context:", 1)[0].strip() ####
-            context = lower_input.split("context:", 1)[-1].strip() ####
-            if any(item in (None, "") for item in (task, context)):
+            task = lower_input.split("Tool:", 1)[-1].split("Prompt:", 1)[0].strip()
+            original_prompt = lower_input.split("Prompt:", 1)[-1].strip()
+            if any(item in (None, "") for item in (task, original_prompt)):
                 raise ValueError("incorrect input")
         except Exception:
             return "Incorrect input format. Please try again."
@@ -56,10 +54,9 @@ class GetNewTool(BaseTool):
             if self.subagent_settings is None:
                 return "Settings for subagents yet to be defined"
 
-            # need to get the original_prompt; can MRKL provide it?
             # run iterator
-            iterator = Iterator(self.path_registry)
-            tool_name = iterator.run(task, original_prompt) # update naming
+            iterator = Iterator(self.path_registry, self.subagent_settings)
+            tool_name = iterator.run(task, original_prompt)
             if tool_name:
                 return f"""Tool created successfully: {tool_name}
                 You can now use the tool in subsequent steps."""
@@ -100,16 +97,17 @@ class SkillUpdate(BaseTool):
     ):
         super().__init__()
         self.path_registry = path_registry
-        self.subagent_settings = subagent_settings
+        agent_initializer = SubAgentInitializer(subagent_settings)
+        self.skill_agent = agent_initializer.create_skill_agent()
 
     def _run(self, code: str) -> str:
         """use the tool"""
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            if self.agent is None:
+            if self.skill_agent is None:
                 return "Agent for this tool not initialized"
-            skill_result = add_new_skill(self.agent, code)
+            skill_result = add_new_skill(self.skill_agent, code)
             return skill_result
         except Exception as e:
             return f"Something went wrong. {e}"
@@ -119,7 +117,7 @@ class SkillUpdate(BaseTool):
         raise NotImplementedError("This tool does not support async")
 
 
-def code_retrieval():
+def code_retrieval(skill_agent, query):
     return ""
 
 
@@ -140,16 +138,17 @@ class SkillQuery(BaseTool):
     ):
         super().__init__()
         self.path_registry = path_registry
-        self.subagent_settings = subagent_settings
+        agent_initializer = SubAgentInitializer(subagent_settings)
+        self.skill_agent = agent_initializer.create_skill_agent()
 
     def _run(self, query: str) -> str:
         """use the tool"""
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            if self.agent is None:
+            if self.skill_agent is None:
                 return "Agent for this tool not initialized"
-            query_result = code_retrieval(self.agent, query)
+            query_result = code_retrieval(self.skill_agent, query)
             return query_result
         except Exception as e:
             return f"Something went wrong. {e}"
