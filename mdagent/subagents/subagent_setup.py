@@ -1,8 +1,7 @@
 import warnings
 from typing import Optional
 
-from ..tools import PathRegistry
-from .agents import (
+from mdagent.subagents.agents import (
     ActionAgent,
     CodeCriticAgent,
     ExplorerAgent,
@@ -10,13 +9,14 @@ from .agents import (
     SkillAgent,
     TaskCriticAgent,
 )
+from mdagent.utils import PathRegistry
 
 
 class SubAgentSettings:
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
-        subagents_model="gpt-3.5",
+        path_registry: Optional[PathRegistry] = None,
+        subagents_model="gpt-3.5-turbo",
         temp=0.1,
         max_iterations=40,
         api_key=None,
@@ -85,7 +85,6 @@ class SubAgentInitializer:
 
     def create_refining_curriculum_agent(self):
         return RefiningCurriculumAgent(
-            path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
             max_iterations=self.max_iterations,

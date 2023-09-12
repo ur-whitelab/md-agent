@@ -4,13 +4,15 @@ from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
+from mdagent.utils import PathRegistry
+
 from .base_tools.clean_tools import (
     AddHydrogensCleaningTool,
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
 )
 from .base_tools.md_util_tools import Name2PDBTool
-from .base_tools.registry_tools import ListRegistryPaths, MapPath2Name, PathRegistry
+from .base_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .base_tools.search_tools import Scholar2ResultLLM
 from .base_tools.setup_and_run import SetUpAndRunTool
 from .base_tools.vis_tools import (

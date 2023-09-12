@@ -12,8 +12,8 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from ...mainagent import _make_llm
-from ..prompts import SkillStep1Prompts, SkillStep2Prompts
+from mdagent.subagents.prompts import SkillStep1Prompts, SkillStep2Prompts
+from mdagent.utils import _make_llm
 
 
 class SkillAgent:
@@ -75,7 +75,7 @@ class SkillAgent:
         )
         return llm_chain
 
-    def generate_tool_description_step1(self, fxn_code):
+    def _generate_tool_description_step1(self, fxn_code):
         """
         Given the code snippet, it asks the agent to provide
         1. Python function name
@@ -100,7 +100,7 @@ class SkillAgent:
         else:
             return None
 
-    def generate_full_code_step2(self, code, info):
+    def _generate_full_code_step2(self, code, info):
         fxn_name = info["fxn_name"]
         tool_name = info["tool_name"]
         description = info["description"]
@@ -125,7 +125,7 @@ class SkillAgent:
         while retry <= max_retries:
             # step 1: generate tool description & tool name
             if tool_info is None:
-                tool_info = self.generate_tool_description_step1(code)
+                tool_info = self._generate_tool_description_step1(code)
                 if tool_info is None:
                     print("Skill agent failed to provide tool description. Retrying...")
                     retry += 1
@@ -133,7 +133,7 @@ class SkillAgent:
                 print("Tool description for the new tool is successfully created.")
 
             # step 2: generate the full code script for new LangChain tool
-            full_code = self.generate_full_code_step2(code, tool_info)
+            full_code = self._generate_full_code_step2(code, tool_info)
             if full_code is None:
                 print("Skill agent failed to provide full code. Retrying...")
                 retry += 1
@@ -188,3 +188,6 @@ class SkillAgent:
 
     def get_skills(self):
         return self.skills
+
+    def run(self, code, max_retries=3):
+        self.add_new_tool(code, max_retries)

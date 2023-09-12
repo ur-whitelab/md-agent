@@ -2,8 +2,8 @@ from typing import Optional
 
 from langchain.tools import BaseTool
 
-from ..subagents import Iterator, SubAgentInitializer, SubAgentSettings
-from .base_tools import PathRegistry
+from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
+from mdagent.utils import PathRegistry
 
 
 class GetNewTool(BaseTool):

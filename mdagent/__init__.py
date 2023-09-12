@@ -16,7 +16,6 @@ from .tools import (
     ListRegistryPaths,
     MapPath2Name,
     Name2PDBTool,
-    PathRegistry,
     PlanBVisualizationTool,
     Scholar2ResultLLM,
     SetUpAndRunTool,
@@ -27,6 +26,7 @@ from .tools import (
     get_pdb,
     make_tools,
 )
+from .utils import PathRegistry
 
 __all__ = [
     "MDAgent",

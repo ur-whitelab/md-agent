@@ -1,10 +1,10 @@
 from dotenv import load_dotenv
 from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 
-from ..subagents import SubAgentSettings
-from ..tools import make_tools
-from .llm import _make_llm
-from .prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
+from mdagent.mainagent.prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
+from mdagent.subagents import SubAgentSettings
+from mdagent.tools import make_tools
+from mdagent.utils import _make_llm
 
 load_dotenv()
 

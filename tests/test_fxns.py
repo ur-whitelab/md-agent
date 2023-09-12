@@ -6,9 +6,9 @@ import pytest
 
 from mdagent.tools.base_tools.clean_tools import CleaningTools
 from mdagent.tools.base_tools.md_util_tools import get_pdb
-from mdagent.tools.base_tools.registry_tools import PathRegistry
 from mdagent.tools.base_tools.setup_and_run import SimulationFunctions
 from mdagent.tools.base_tools.vis_tools import VisFunctions
+from mdagent.utils import PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
 
@@ -112,4 +112,4 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 
 def test_getpdb(fibronectin, get_registry):
     name = get_pdb(fibronectin, get_registry)
-    assert name == "1X3D.cif"
+    assert name == "1X3D.cif"  # sometimes it gives 3pqr.cif, sometimes 1x3d.cif

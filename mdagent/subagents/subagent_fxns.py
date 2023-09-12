@@ -2,7 +2,8 @@ import json
 import os
 from typing import Optional
 
-from ..tools import PathRegistry
+from mdagent.utils import PathRegistry
+
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 

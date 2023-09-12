@@ -6,7 +6,6 @@ import sys
 from typing import Optional
 
 from dotenv import load_dotenv
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import (
@@ -16,9 +15,13 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
 )
 
-from ...mainagent import _make_llm
-from ...tools import PathRegistry
-from ..prompts import ExplorePrompts, QAStep1Prompts, QAStep2Prompts, RefinePrompts
+from mdagent.subagents.prompts import (
+    ExplorePrompts,
+    QAStep1Prompts,
+    QAStep2Prompts,
+    RefinePrompts,
+)
+from mdagent.utils import PathRegistry, _make_llm
 
 
 class ExplorerAgent:
@@ -40,13 +43,11 @@ class ExplorerAgent:
         # initialize agent
         self.llm = _make_llm(model, temp, verbose)
         self.llm_chain = self._initialize_llm()
-
         assert mode in ["auto", "manual"], f"mode {mode} not supported"
         self.mode = mode
         self.confirm_on = confirm_on
-
+        self.path_registry = path_registry
         self.ckpt_dir = ckpt_dir
-        # self.path_registry = path_registry
         if not os.path.exists(f"{ckpt_dir}/curriculum/"):
             os.mkdir(f"{ckpt_dir}/curriculum/")
 
@@ -83,7 +84,6 @@ class ExplorerAgent:
         llm_chain = LLMChain(
             llm=self.llm,
             prompt=self._create_prompt(),
-            callback_manager=StreamingStdOutCallbackHandler,
         )
         return llm_chain
 
@@ -102,7 +102,6 @@ class ExplorerAgent:
 class RefiningCurriculumAgent:
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
         model="gpt-3.5-turbo",
         temp=0.1,
         max_iterations=120,
@@ -163,7 +162,7 @@ class RefiningCurriculumAgent:
         )
         return llm_chain
 
-    def run_qa(self, info):
+    def _run_qa(self, info):
         questions = [
             f"What molecular dynamics tasks can I do with the files: {info['files']}?",
             # add other must-have questions here; do consider context length
@@ -261,7 +260,7 @@ class RefiningCurriculumAgent:
             return task
 
     def run(self, task, original_prompt, info, max_retries=3):
-        qa_list = self.run_qa(info)
+        qa_list = self._run_qa(info)
         retries = 0
         while retries < max_retries:
             task = self.propose_refined_task(task, original_prompt, qa_list, info)
