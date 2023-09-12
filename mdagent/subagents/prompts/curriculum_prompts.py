@@ -73,6 +73,13 @@ skills: {skills}
 files: {files}
 """
 
+EXPLORE_INPUT_VARIABLES = [
+    "recent_history",
+    "full_history",
+    "skills",
+    "files",
+]
+
 REFINE_PREFIX = """
 You are an automatic curriculum adjuster focused on optimizing the
 progression of tasks within a Molecular Dynamics project. Your primary
@@ -106,6 +113,7 @@ Task: The refined task.
 """
 
 refine_inputs = """
+Task: latest task that failed
 Original Task: the original task prompted by user
 
 Q&A List:
@@ -155,6 +163,7 @@ from simulations.
 
 REFINE_PROMPT = """
 INPUT:
+task: {task}
 original_task: {original_task}
 qa_list: {qa_list},
 recent_history: {recent_history},
@@ -162,6 +171,16 @@ full_history: {full_history},
 skills: {skills},
 files: {files}
 """
+
+REFINE_INPUT_VARIABLES = [
+    "task",
+    "original_task",
+    "qa_list",
+    "recent_history",
+    "full_history",
+    "skills",
+    "files",
+]
 
 QUESTION_PREFIX = """
 You are an automatic curriculum adjuster focused on optimizing the
@@ -238,6 +257,13 @@ skills: {skills},
 files: {files}
 """
 
+QUESTION_INPUT_VARIABLES = [
+    "recent_history",
+    "full_history",
+    "skills",
+    "files",
+]
+
 ANSWER_PREFIX = """
 You are a helpful assistant that answer my question about Minecraft.
 
@@ -263,26 +289,32 @@ INPUT:
 question: {question}
 """
 
+ANSWER_INPUT_VARIABLES = ["question"]
+
 
 class ExplorePrompts:
     PREFIX = EXPLORE_PREFIX
     FORMAT = EXPLORE_FORMAT
     PROMPT = EXPLORE_PROMPT
+    INPUT_VARS = EXPLORE_INPUT_VARIABLES
 
 
 class RefinePrompts:
     PREFIX = REFINE_PREFIX
     FORMAT = REFINE_FORMAT
     PROMPT = REFINE_PROMPT
+    INPUT_VARS = REFINE_INPUT_VARIABLES
 
 
 class QAStep1Prompts:
     PREFIX = QUESTION_PREFIX
     FORMAT = QUESTION_FORMAT
     PROMPT = QUESTION_PROMPT
+    INPUT_VARS = QUESTION_INPUT_VARIABLES
 
 
 class QAStep2Prompts:
     PREFIX = ANSWER_PREFIX
     FORMAT = ANSWER_FORMAT
     PROMPT = ANSWER_PROMPT
+    INPUT_VARS = ANSWER_INPUT_VARIABLES

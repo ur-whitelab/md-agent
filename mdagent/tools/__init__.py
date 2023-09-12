@@ -1,4 +1,4 @@
-from .base_tools import (  # cleaning tools; registry; vis tools; others
+from .base_tools import (
     AddHydrogensCleaningTool,
     CheckDirectoryFiles,
     CleaningTools,

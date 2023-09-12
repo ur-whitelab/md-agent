@@ -67,12 +67,7 @@ class ExplorerAgent:
         suffix = ""
         human_prompt = PromptTemplate(
             template=ExplorePrompts.PROMPT,
-            input_variables=[
-                "recent_history",
-                "full_history",
-                "skills",
-                "files",
-            ],
+            input_variables=ExplorePrompts.INPUT_VARS,
         )
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
@@ -149,14 +144,7 @@ class RefiningCurriculumAgent:
     def _create_prompt(self, prompts):
         suffix = ""
         human_prompt = PromptTemplate(
-            template=prompts.PROMPT,
-            input_variables=[
-                "qa_list",
-                "recent_history",
-                "full_history",
-                "skills",
-                "files",
-            ],
+            template=prompts.PROMPT, input_variables=prompts.INPUT_VARS
         )
         human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
         ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
@@ -172,24 +160,22 @@ class RefiningCurriculumAgent:
         llm_chain = LLMChain(
             llm=llm,
             prompt=self._create_prompt(prompts),
-            callback_manager=StreamingStdOutCallbackHandler,
         )
         return llm_chain
 
-    def run_qa(self, recent_history, full_history, skills, files):
-        files = ", ".join(files)
+    def run_qa(self, info):
         questions = [
-            f"What molecular dynamics tasks can I do with these files: {files}?",
+            f"What molecular dynamics tasks can I do with the files: {info['files']}?",
             # add other must-have questions here; do consider context length
         ]
 
         # Step 1: get questions
         q_response = self.qa_llm_step1(
             {
-                "recent_history": {recent_history},
-                "full_history": {full_history},
-                "skills": {skills},
-                "files": {files},
+                "recent_history": info["recent_history"],
+                "full_history": info["full_history"],
+                "skills": info["skills"],
+                "files": info["files"],
             }
         )
         try:
@@ -206,6 +192,7 @@ class RefiningCurriculumAgent:
             print(f"Curriculum Agent {answer}")
             answers.append(answer)
 
+        # put together into a string
         qa_list = ""
         i = 1
         for question, answer in zip(questions, answers):
@@ -214,36 +201,27 @@ class RefiningCurriculumAgent:
             qa_list += f"Question {i}: {question}\n"
             qa_list += f"{answer}\n\n"
             i += 1
-
         return qa_list
 
-    def propose_refined_task(
-        self,
-        original_prompt,
-        qa_list,
-        recent_history,
-        full_history,
-        skills,
-        files,
-    ):
-        # ask curriculum agent to refine task if action agent keeps failing
+    def propose_refined_task(self, task, original_prompt, qa_list, info):
+        # ask curriculum agent to refine task (if action agent keeps failing)
         # manual mode is also available to manually enter task
 
         confirm_on = self.confirm_on
         mode = self.mode
-
         if mode == "manual":
             task = input("please enter the new task: ")
             assert task, ""
         elif mode == "auto":
             response = self.llm_chain(
                 {
+                    "task": task,
                     "original_task": original_prompt,
                     "qa_list": qa_list,
-                    "recent_history": recent_history,
-                    "full_history": full_history,
-                    "skills": skills,
-                    "files": files,
+                    "recent_history": info["recent_history"],
+                    "full_history": info["full_history"],
+                    "skills": info["skills"],
+                    "files": info["files"],
                 }
             )
             # parse ai message
@@ -282,31 +260,15 @@ class RefiningCurriculumAgent:
                 # continue
             return task
 
-    def run(
-        self,
-        original_prompt,
-        recent_history,
-        full_history,
-        skills,
-        files,
-        max_retries=5,
-    ):
-        qa_list = self.run_qa(recent_history, full_history, skills, files)
+    def run(self, task, original_prompt, info, max_retries=3):
+        qa_list = self.run_qa(info)
         retries = 0
         while retries < max_retries:
-            task = self.propose_refined_task(
-                original_prompt,
-                qa_list,
-                recent_history,
-                full_history,
-                skills,
-                files,
-            )
+            task = self.propose_refined_task(task, original_prompt, qa_list, info)
             if task:
                 return task
             retries += 1
-
-        return RuntimeError("Max retries reached, failed to propose a task.")
+        raise RuntimeError("Max retries reached, failed to propose a task.")
 
     # def update_progress():
 

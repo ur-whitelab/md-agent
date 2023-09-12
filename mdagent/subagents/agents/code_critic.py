@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import (
@@ -46,7 +45,7 @@ class CodeCriticAgent:
         llm_chain = LLMChain(
             llm=self.llm,
             prompt=prompt,
-            callback_manager=StreamingStdOutCallbackHandler,
+            # callbacks=StreamingStdOutCallbackHandler,
         )
         self.llm_ = llm_chain
         return None

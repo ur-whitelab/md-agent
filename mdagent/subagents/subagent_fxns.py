@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Optional
 
 from ..tools import PathRegistry
@@ -10,15 +11,14 @@ class Iterator:
         self,
         path_registry: Optional[PathRegistry],
         subagent_settings: Optional[SubAgentSettings],
-        model="gpt-4",
-        temp=0.1,
-        max_iterations=120,
-        api_key=None,
-        verbose=True,
     ):
         self.path_registry = path_registry
+        if subagent_settings is None:
+            raise ValueError("Subagent settings cannot be None")  # shouldn't happen
+        self.ckpt_dir = subagent_settings.ckpt_dir
+        os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
 
-        # init agents
+        # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
         subagents = initializer.create_iteration_agents()
         self.action_agent = subagents["action"]
@@ -62,12 +62,13 @@ class Iterator:
     def _save_failures(self, history, msg):
         if msg is None:
             # save to file
-            with open("failed_history.json", "a") as f:
-                f.write("\n", history, "\n")
+            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
+                history_string = json.dumps(history)
+                f.write("\n", history_string, "\n")
             return "failed history saved to file"
         else:
             # save to file
-            with open("failed_history.json", "a") as f:
+            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
                 f.write("\n", msg, "\n")
             return None
 
@@ -96,11 +97,9 @@ class Iterator:
         critique = self.code_critic_agent._run(code, code_output, task, context)
         return task_success, code, code_output, context, task, critique, task_critique
 
-    def _run_iteration(
+    def _run_iterations(
         self, run, task, context, iterations=5, failed=None, explanation=None
     ):
-        # task is from curriculum
-        # context is from curriculum
         self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
@@ -143,69 +142,55 @@ class Iterator:
             if success:
                 # update variables and save to file
                 self._save_failures(full_history, None)
-                # give successful code to tool manager
-                return success, None
+
+                # give successful code to tool/skill manager
+                tool_name = self.skill_agent.add_new_tool(code, max_retries=5)
+                return success, tool_name
+
         # if max iterations reached without success, save failures to file
         print("max iterations reached, saving failed history to file")
         full_failed = self._add_to_history(
             full_history, iter, task, context, code, output, critique, task_critique
         )
         self._save_failures(full_failed, None)
-        return success, full_failed
-
-    def _propose_task(
-        self,
-        original_prompt,
-        recent_history,  # can remove this
-        full_history,  # from full_failed
-        skills,
-        files,
-        resume=True,
-        max_retries=5,
-    ):
-        if resume is False:  # first task
-            return original_prompt
-
-        try:
-            task = self.curriculum_agent.run(
-                original_prompt,
-                recent_history,
-                full_history,
-                skills,
-                files,
-                max_retries=max_retries,
-            )
-            return task
-        except Exception as e:
-            print(f"Curriculum Agent failed to propose a task: {e}")
-            return None
-
-    def _add_new_tool(self, code, max_retries=5):
-        return self.skill_agent.run(code, max_retries=max_retries)
+        return success, tool_name
 
     # run da whole thing
-    def run(self, task, user_prompt, max_iterations=5):
-        for i in range(max_iterations):
-            success, history = self._run_iteration(i, task, user_prompt)
+    def run(self, task, user_prompt, max_task_refinement=1):
+        for i in range(max_task_refinement + 1):
+            if i > 0:
+                # refine and propose a new task
+                info = self._pull_information()
+                task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
 
-            # need recent_history, full_history, skills, files
-            if not success:
-                task = self._propose_task(
-                    task,
-                    user_prompt,
-                    # recent_history,
-                    # full_history, # pull from file?
-                    # skills,  # get within this function
-                    # files,      # pull within this function
-                    max_retries=5,
-                )
-
-            else:
-                # need code from _run_iteration above
-                code = ""
-                tool_name = self._add_new_tool(code, max_retries=5)
+            # run iterations to get the new code
+            success, tool_name = self._run_iterations(
+                i, task, user_prompt, iterations=5
+            )
+            if success:
                 return tool_name
-
         return None
 
-    # def _pull_information()
+    def _pull_information(self):
+        # pull info of strings to pass to llm agents
+        recent_history_string = ""
+        full_history_string = ""
+        if os.path.exists(f"{self.ckpt_dir}/history/failed_history.json"):
+            with open(f"{self.ckpt_dir}/history/failed_history.json", "r") as f:
+                full_history_string = f.read()
+                lines = full_history_string.splitlines()
+                recent_history_string = lines[-1] if lines else None
+
+        skills = self.skill_agent.get_skills()
+        skills_string = json.dumps(skills)
+
+        files = self.path_registry.list_path_names(True)
+        files_string = json.dumps(files)
+
+        info = {
+            "recent_history": recent_history_string,
+            "full_history": full_history_string,
+            "skills": skills_string,
+            "files": files_string,
+        }
+        return info

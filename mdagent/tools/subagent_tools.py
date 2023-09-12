@@ -55,13 +55,13 @@ class GetNewTool(BaseTool):
                 return "Settings for subagents yet to be defined"
 
             # run iterator
-            iterator = Iterator(self.path_registry, self.subagent_settings)
-            tool_name = iterator.run(task, original_prompt)
+            newcode_iterator = Iterator(self.path_registry, self.subagent_settings)
+            tool_name = newcode_iterator.run(task, original_prompt)
             if tool_name:
                 return f"""Tool created successfully: {tool_name}
                 You can now use the tool in subsequent steps."""
             else:
-                return "Failed to build a new tool."
+                return "The 'GetNewTool' tool failed to build a new tool."
         except Exception as e:
             return f"Something went wrong. {e}"
 

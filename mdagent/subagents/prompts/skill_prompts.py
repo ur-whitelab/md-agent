@@ -29,6 +29,8 @@ INPUT:
 python code: {code}
 """
 
+STEP1_INPUT_VARIABLES = ["code"]
+
 STEP2_PREFIX = '''
 You are a helpful assistant that writes a full code, the contents in a
 complete python script for the given basic code & other essential pieces of
@@ -102,14 +104,18 @@ tool_name: {tool_name},
 description: {description},
 """
 
+STEP2_INPUT_VARIABLES = ["code", "fxn_name", "tool_name", "description"]
+
 
 class SkillStep1Prompts:
     PREFIX = STEP1_PREFIX
     FORMAT = STEP1_FORMAT
     PROMPT = STEP1_PROMPT
+    INPUT_VARS = STEP1_INPUT_VARIABLES
 
 
 class SkillStep2Prompts:
     PREFIX = STEP2_PREFIX
     FORMAT = STEP2_FORMAT
     PROMPT = STEP2_PROMPT
+    INPUT_VARS = STEP2_INPUT_VARIABLES
