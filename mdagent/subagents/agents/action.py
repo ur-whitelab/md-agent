@@ -1,3 +1,4 @@
+import io
 import json
 import re
 import sys
@@ -102,7 +103,7 @@ class ActionAgent:
         # Redirect stdout and stderr to capture the output
         original_stdout = sys.stdout
         original_stderr = sys.stderr
-        sys.stdout = captured_stdout = sys.stderr = sys.StringIO()
+        sys.stdout = captured_stdout = sys.stderr = io.StringIO()
         success = True
         try:
             exec(python_code)

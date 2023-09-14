@@ -82,7 +82,7 @@ class SkillAgent:
         2. name for Langchain BaseTool
         3. tool description
         """
-        response = self.llm_step1({"code": fxn_code})
+        response = self.llm_step1({"code": fxn_code})["text"]
         fxn_name_match = re.search(r"Function name:\s*(\w+)", response)
         tool_name_match = re.search(r"Tool name:\s*(\w+)", response)
         description_match = re.search(r"Description:\s*(.*)", response, re.DOTALL)
@@ -111,7 +111,7 @@ class SkillAgent:
                 "tool_name": tool_name,
                 "description": description,
             }
-        )
+        )["text"]
         match = re.search(r"Full Code: (.+)", response, re.DOTALL)
         if match:
             return match.group(1)
