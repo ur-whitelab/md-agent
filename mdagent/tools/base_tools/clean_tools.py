@@ -1,3 +1,4 @@
+import os
 import re
 from typing import Optional
 
@@ -9,7 +10,7 @@ from mdagent.utils import PathRegistry
 
 
 class CleaningTools:
-    def _extract_path(self, user_input: str) -> str:
+    def _extract_path(self, user_input: str, path_registry: PathRegistry) -> str:
         """Extract file path from user input."""
 
         # Remove any leading or trailing white space
@@ -19,20 +20,23 @@ class CleaningTools:
         user_input = user_input.replace("'", "")
         user_input = user_input.replace('"', "")
 
-        # Use a regex to find a sequence
-        # of non-space characters ending
-        # with .pdb or .cif
-        match = re.search(r"\b[\w/\\:.]+\.(?:pdb|cif)\b", user_input)
+        # First check the path registry
+        mapped_path = path_registry.get_mapped_path(user_input)
+        if mapped_path != "Name not found in path registry.":
+            return mapped_path
+
+        # If not found in registry, check if it is a valid path
+        match = re.search(r"[a-zA-Z0-9_\-/\\:.]+(?:\.pdb|\.cif)", user_input)
 
         if match:
             return match.group(0)
         else:
             raise ValueError("No valid file path found in user input.")
 
-    def _standard_cleaning(self, pdbfile: str, PathRegistry):
-        pdbfile = self._extract_path(pdbfile)
-        name = pdbfile.split(".")[0]
-        end = pdbfile.split(".")[1]
+    def _standard_cleaning(self, pdbfile: str, path_registry: PathRegistry):
+        pdbfile = self._extract_path(pdbfile, path_registry)
+        name, end = os.path.splitext(os.path.basename(pdbfile))
+        end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
         fixer.findMissingResidues()
         fixer.findNonstandardResidues()
@@ -41,80 +45,77 @@ class CleaningTools:
         fixer.findMissingAtoms()
         fixer.addMissingAtoms()
         fixer.addMissingHydrogens(7.0)
+        tidy_filename = f"tidy_{name}.{end}"
         if end == "pdb":
-            PDBFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "a")
-            )
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tidy_filename, "a"))
         elif end == "cif":
             PDBxFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
+                fixer.topology, fixer.positions, open(tidy_filename, "a")
             )
         # add filename to registry
-        file_name = f"tidy_{name}.pdb"
-        file_description = "Cleaned File"
-        PathRegistry.map_path(file_name, file_name, file_description)
-        return f"{file_description} written to {file_name}"
-
-    def _remove_water(self, pdbfile: str, PathRegistry):
-        pdbfile = self._extract_path(pdbfile)
-        name = pdbfile.split(".")[0]
-        end = pdbfile.split(".")[1]
-        fixer = PDBFixer(filename=pdbfile)
-        fixer.removeHeterogens(False)
-        if end == "pdb":
-            PDBFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "a")
-            )
-        elif end == "cif":
-            PDBxFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
-            )
-        # add filename to registry
-        file_name = f"tidy_{name}.pdb"
+        short_name = f"tidy_{name}"
         file_description = "Cleaned File. Standard cleaning."
-        PathRegistry.map_path(file_name, file_name, file_description)
-        return f"{file_description} Written to tidy_{name}.pdb"
+        path_registry.map_path(short_name, tidy_filename, file_description)
+        return f"{file_description} Written to {tidy_filename}"
 
-    def _add_hydrogens_and_remove_water(self, pdbfile: str, PathRegistry):
-        pdbfile = self._extract_path(pdbfile)
-        name = pdbfile.split(".")[0]
-        end = pdbfile.split(".")[1]
+    def _remove_water(self, pdbfile: str, path_registry: PathRegistry):
+        pdbfile = self._extract_path(pdbfile, path_registry)
+        name, end = os.path.splitext(os.path.basename(pdbfile))
+        end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
         fixer.removeHeterogens(False)
-        fixer.addMissingHydrogens(7.0)
+        tidy_filename = f"tidy_{name}.{end}"
         if end == "pdb":
-            PDBFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "w")
-            )
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tidy_filename, "a"))
         elif end == "cif":
             PDBxFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "w")
+                fixer.topology, fixer.positions, open(tidy_filename, "a")
             )
         # add filename to registry
-        file_name = f"tidy_{name}.pdb"
-        file_description = "Cleaned File. Missing Hydrogens added and water removed."
-        PathRegistry.map_path(file_name, file_name, file_description)
-        return f"""{file_description} Written to tidy_{name}.pdb"""
+        short_name = f"tidy_{name}"
+        file_description = "Cleaned File. Removed water."
+        path_registry.map_path(short_name, tidy_filename, file_description)
+        return f"{file_description} Written to {tidy_filename}"
 
-    def _add_hydrogens(self, pdbfile: str, PathRegistry):
-        pdbfile = self._extract_path(pdbfile)
-        name = pdbfile.split(".")[0]
-        end = pdbfile.split(".")[1]
+    def _add_hydrogens_and_remove_water(
+        self, pdbfile: str, path_registry: PathRegistry
+    ):
+        pdbfile = self._extract_path(pdbfile, path_registry)
+        name, end = os.path.splitext(os.path.basename(pdbfile))
+        end = end.lstrip(".")
+        fixer = PDBFixer(filename=pdbfile)
+        fixer.removeHeterogens(False)
+        tidy_filename = f"tidy_{name}.{end}"
+        if end == "pdb":
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tidy_filename, "a"))
+        elif end == "cif":
+            PDBxFile.writeFile(
+                fixer.topology, fixer.positions, open(tidy_filename, "a")
+            )
+        # add filename to registry
+        short_name = f"tidy_{name}"
+        file_description = "Cleaned File. Missing Hydrogens added and water removed."
+        path_registry.map_path(short_name, tidy_filename, file_description)
+        return f"{file_description} Written to {tidy_filename}"
+
+    def _add_hydrogens(self, pdbfile: str, path_registry: PathRegistry):
+        pdbfile = self._extract_path(pdbfile, path_registry)
+        name, end = os.path.splitext(os.path.basename(pdbfile))
+        end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
         fixer.addMissingHydrogens(7.0)
+        tidy_filename = f"tidy_{name}.{end}"
         if end == "pdb":
-            PDBFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.pdb", "a")
-            )
+            PDBFile.writeFile(fixer.topology, fixer.positions, open(tidy_filename, "a"))
         elif end == "cif":
             PDBxFile.writeFile(
-                fixer.topology, fixer.positions, open(f"tidy_{name}.cif", "a")
+                fixer.topology, fixer.positions, open(tidy_filename, "a")
             )
         # add filename to registry
-        file_name = f"tidy_{name}.pdb"
+        short_name = f"tidy_{name}"
         file_description = "Cleaned File. Missing Hydrogens added."
-        PathRegistry.map_path(file_name, file_name, file_description)
-        return f"{file_description} Written to tidy_{name}.pdb"
+        path_registry.map_path(short_name, tidy_filename, file_description)
+        return f"{file_description} Written to {tidy_filename}"
 
 
 class SpecializedCleanTool(BaseTool):

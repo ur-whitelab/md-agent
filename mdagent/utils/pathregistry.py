@@ -62,7 +62,7 @@ class PathRegistry:
     def _clear_json(self):
         if self._check_for_json():
             with open(self.json_file_path, "w") as json_file:
-                json_file.truncate(0)
+                json.dump({}, json_file)  # Writing an empty JSON object to the file
             return "JSON file cleared"
         return "JSON file does not exist"
 
