@@ -73,12 +73,16 @@ class Iterator:
                 f.write("\n", msg, "\n")
             return None
 
-    def _run_loop(self, task, context, recent_history, full_history):
+    def _run_loop(self, task, context, recent_history, full_history, skills):
         """
         this function just runs the iteration 1 time
         """
         code_success, code, code_output = self.action_agent._run_code(
-            recent_history, full_history, task, context
+            recent_history,
+            full_history,
+            task,
+            context,
+            skills,
         )
         if code_success is True:
             print("code succeeded, running task critic")
@@ -106,10 +110,11 @@ class Iterator:
         success = False
         full_history = None
         recent_history = None
+        skills = self._pull_information()["skills"]
         while iter < iterations and success is False:
             if failed is not None:
                 success, code, code_output = self.action_agent._run_code(
-                    None, None, task, context, failed, explanation, "resume"
+                    None, None, task, context, skills, failed, explanation, "resume"
                 )
                 full_history = self._add_to_history(
                     None, iter, task, context, code, code_output, explanation, None
@@ -123,7 +128,7 @@ class Iterator:
                         context,
                         code,
                         code_output,
-                        # todo: add these properly
+                        # TODO: add these properly
                         # critique,
                         # task_critique,
                     )
@@ -136,7 +141,7 @@ class Iterator:
                     task,
                     critique,
                     task_critique,
-                ) = self._run_loop(task, context, recent_history, full_history)
+                ) = self._run_loop(task, context, recent_history, full_history, skills)
             iter += 1
             failed = None
             # save to history
@@ -160,11 +165,10 @@ class Iterator:
     def run(self, task, user_prompt, max_task_refinement=1):
         for i in range(max_task_refinement + 1):
             if i > 0:
-                # refine and propose a new task
+                # if not first step, propose a new task
                 info = self._pull_information()
                 task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
 
-            # run iterations to get the new code
             success, tool_name = self._run_iterations(
                 i, task, user_prompt, iterations=5
             )

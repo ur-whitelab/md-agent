@@ -74,12 +74,19 @@ class ActionAgent:
         return None
 
     def _run(
-        self, version, recent_history, full_history, task, context, failed, explanation
+        self,
+        version,
+        recent_history,
+        full_history,
+        task,
+        context,
+        skills,
+        failed,
+        explanation,
     ):
         # get files
         files = self.path_registry.list_path_names(True)
         # get skills
-        skills = None
         if version == "resume":  # if resume
             return self.llm.run(
                 {
@@ -131,6 +138,7 @@ class ActionAgent:
         full_history,
         task,
         context,
+        skills,
         failed=None,
         explanation=None,
         version="resume",
@@ -147,6 +155,7 @@ class ActionAgent:
             full_history,
             task,
             context,
+            skills,
             failed,
             explanation,
         )

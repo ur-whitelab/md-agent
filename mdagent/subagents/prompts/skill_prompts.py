@@ -45,17 +45,20 @@ the given function name.
 with the given tool name. Basetool object must has the following exact
 functions: __init__, _run, and _async
 3) the full code must contain all imports.
-4) the full code must follow closely to the following example format
+4) the full code must contain the full description of the tool in docstrings.
+Do not modify or shorten the given description.
+5) PathRegistry must be added as an argument in the class initialization.
+6) the full code must follow closely to the following example format
 as much as possible, <FIELDS> tells you where you can place the given
 inputs.
 
 Example format of the full code:
-`from typing import Optional
+Full Code: ```from typing import Optional
 
 <ANY OTHER IMPORTS HERE>
 from langchain.tools import BaseTool
 
-from .registry import PathRegistry
+from mdagent.utils import PathRegistry
 
 
 def <FXN_NAME>(<FXN_INPUTS>, PathRegistry):
@@ -63,7 +66,7 @@ def <FXN_NAME>(<FXN_INPUTS>, PathRegistry):
 
 class <TOOL_NAME>(BaseTool):
     name = <TOOL_NAME>
-    description = <DESCRIPTION>
+    description = <INSERT FULL GIVEN DESCRIPTION HERE>
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):
@@ -85,8 +88,8 @@ class <TOOL_NAME>(BaseTool):
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
-        raise NotImplementedError("Name2PDB does not support async")
-`
+        raise NotImplementedError("This tool does not support async")
+```
 '''
 
 STEP2_FORMAT = """

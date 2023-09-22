@@ -1,4 +1,5 @@
 import os
+import pickle
 
 from dotenv import load_dotenv
 from langchain import agents
@@ -53,11 +54,20 @@ def make_tools(llm: BaseLanguageModel, subagent_settings, verbose=False):
     ]
 
     # add 'learned' tools here
-    # learned_tools = [
-    #      # load from pickle file or VDB
-    # ]
+    # disclaimer: assume every learned tool has path_registry as an argument
+    learned_tools = []
+    pickle_file = f"{subagent_settings.ckpt_dir}/skill_library/langchain_tools.pkl"
+    if (
+        subagent_settings.resume
+        and os.path.exists(pickle_file)
+        and os.path.getsize(pickle_file) > 0
+    ):
+        with open(pickle_file, "rb") as f:
+            loaded_tools = pickle.load(f)
+        for tool in loaded_tools:
+            learned_tools.append(tool(path_registry=path_instance))
 
-    all_tools += base_tools + subagents_tools  # + learned_tools
+    all_tools += base_tools + subagents_tools + learned_tools
 
     # add other tools depending on api keys
     pqa_key = os.getenv("PQA_API_KEY")

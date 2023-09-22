@@ -96,6 +96,7 @@ class SubAgentInitializer:
 
     def create_skill_agent(self):
         return SkillAgent(
+            path_registry=self.path_registry,
             model=self.subagents_model,
             temp=self.temp,
             max_iterations=self.max_iterations,
