@@ -155,7 +155,7 @@ class SkillAgent:
         ) as f1:
             f1.write(description)
 
-        tool_path = f"{self.ckpt_dir}/skill_library/langchain_tool/{filename}.py"
+        tool_path = f"{self.ckpt_dir}/skill_library/langchain_tool/{filename}_tool.py"
         with open(tool_path, "w") as f2:
             f2.write(full_code)
 

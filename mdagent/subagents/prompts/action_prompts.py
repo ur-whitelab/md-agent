@@ -84,6 +84,8 @@ Code:
     9) Include all imports necessary for your code to run. If possible, include these
         imports in the function itself.
     10) At the end of your code, call the function you defined with the input.
+    11) Don't use ... in any of your code. It should be complete and ready
+        for execution.
 """
 
 action_prompt = """
@@ -134,6 +136,8 @@ Code:
     9) Include all imports necessary for your code to run. If possible, include these
         imports in the function itself.
     10) At the end of your code, call the function you defined with the input.
+    11) Don't use ... in any of your code. It should be complete and ready
+        for execution.
 """
 
 action_prompt_1 = """

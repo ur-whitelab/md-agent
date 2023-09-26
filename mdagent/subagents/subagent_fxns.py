@@ -77,6 +77,8 @@ class Iterator:
         """
         this function just runs the iteration 1 time
         """
+        critique = None
+        print("\n\033[46m action agent is running, writing code\033[0m")
         code_success, code, code_output = self.action_agent._run_code(
             recent_history,
             full_history,
@@ -84,6 +86,7 @@ class Iterator:
             context,
             skills,
         )
+        print("Code Output: ", code_output)
         if code_success is True:
             print("\n\033[46mcode succeeded, running task critic\033[0m")
             # run task critic
@@ -94,11 +97,21 @@ class Iterator:
             task_critique = None
             task_success = False
 
-            # check if task is complete
-            if task_success is True:
-                print("\n\033[46mtask complete\033[0m")
-                return task_success, code, code_output, context, task, task_critique
-            # otherwise, run code critic
+        # check if task is complete
+        if task_success is True:
+            print("\n\033[46mtask complete\033[0m")
+            return (
+                task_success,
+                code,
+                code_output,
+                context,
+                task,
+                critique,
+                task_critique,
+            )
+
+        # otherwise, run code critic
+        print("\n\033[46mcode failed, running code critic\033[0m")
         critique = self.code_critic_agent._run(code, code_output, task, context)
         return task_success, code, code_output, context, task, critique, task_critique
 
@@ -160,12 +173,14 @@ class Iterator:
                 self._save_failures(full_history, None)
 
                 # give successful code to tool/skill manager
+                print("\n\033[46mThe new code is complete, running skill agent\033[0m")
                 tool_name = self.skill_agent.add_new_tool(code, max_retries=5)
                 return success, tool_name
             iter += 1
 
         # if max iterations reached without success, save failures to file
         print("\n\033[46m Max iterations reached, saving failed history to file\033[0m")
+        tool_name = None
         full_failed = self._add_to_history(
             full_history,
             iter,
@@ -185,6 +200,7 @@ class Iterator:
             if i > 0:
                 # if not first step, propose a new task
                 info = self._pull_information()
+                print("\n\033[46mtask failed, running curriculum agent\033[0m")
                 task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
 
             success, tool_name = self._run_iterations(

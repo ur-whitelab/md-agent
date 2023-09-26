@@ -4,7 +4,7 @@ from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
 from mdagent.mainagent.prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
 from mdagent.subagents import SubAgentSettings
 from mdagent.tools import make_tools
-from mdagent.utils import _make_llm
+from mdagent.utils import PathRegistry, _make_llm
 
 load_dotenv()
 
@@ -19,12 +19,16 @@ class MDAgent:
         max_iterations=40,
         api_key=None,
         verbose=True,
-        subagents_model="gpt-3.5",
+        path_registry=None,
+        subagents_model="gpt-3.5-turbo",
         ckpt_dir="ckpt",
         resume=False,
     ):
         self.llm = _make_llm(model, temp, verbose)
+        if path_registry is None:
+            path_registry = PathRegistry.get_instance()
         self.subagents_settings = SubAgentSettings(
+            path_registry=path_registry,
             subagents_model=subagents_model,
             temp=temp,
             max_iterations=max_iterations,
