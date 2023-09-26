@@ -1,6 +1,5 @@
 from .action_prompts import (
     action_format,
-    action_inputs,
     action_prefix,
     action_prefix_1,
     action_prompt,

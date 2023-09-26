@@ -1,26 +1,3 @@
-EXPLORE_PREFIX = """
-You are a helpful assistant that tells me the next immediate task to do in a
-Molecular Dynamics project. The ultimate goal is to discover explore different
-scenarios of cleaning input files, running molecular dynamics simulations, and
-analyzing the output files, to be the best expert at running molecular dynamics.
-
-I will give you the following: {explore_inputs}
-
-You must follow the following criteria:
-1. You should act as a mentor and guide me to the next task based on
-my current learning progress.
-2. Please be very specific about what tools I should to use.
-3. Do not propose multiple tasks at the same time. Do not mention anything
-else.
-4) The next task should not be too hard since I may not have learned enough
-tools to complete it yet.
-5) The next task should be novel and interesting. I should look for
-opportunities to learn new tools and discover new things. I should not
-be doing the same thing over and over again.
-6) I may sometimes need to repeat some tasks if I need to rerun simulations
-or visualize again. Only repeat tasks if necessary.
-"""
-
 explore_inputs = """
 Recent History:
 1. The most recent completed iteration
@@ -56,7 +33,28 @@ Energy)
 3. images that render protein or molecular structures from PDB files
 4. output files from openMM simulations
 """
+EXPLORE_PREFIX = f"""
+You are a helpful assistant that tells me the next immediate task to do in a
+Molecular Dynamics project. The ultimate goal is to discover explore different
+scenarios of cleaning input files, running molecular dynamics simulations, and
+analyzing the output files, to be the best expert at running molecular dynamics.
 
+I will give you the following: {explore_inputs}
+
+You must follow the following criteria:
+1. You should act as a mentor and guide me to the next task based on
+my current learning progress.
+2. Please be very specific about what tools I should to use.
+3. Do not propose multiple tasks at the same time. Do not mention anything
+else.
+4) The next task should not be too hard since I may not have learned enough
+tools to complete it yet.
+5) The next task should be novel and interesting. I should look for
+opportunities to learn new tools and discover new things. I should not
+be doing the same thing over and over again.
+6) I may sometimes need to repeat some tasks if I need to rerun simulations
+or visualize again. Only repeat tasks if necessary.
+"""
 EXPLORE_FORMAT = """
 You should only respond in the format as described below:
 
@@ -64,7 +62,6 @@ RESPONSE FORMAT:
 Reasoning: Provide the reasoning behind the proposal of the new task.
 Task: The next task.
 """
-
 EXPLORE_PROMPT = """
 INPUT:
 recent_history: {recent_history},
@@ -72,45 +69,12 @@ full_history: {full_history},
 skills: {skills}
 files: {files}
 """
-
 EXPLORE_INPUT_VARIABLES = [
     "recent_history",
     "full_history",
     "skills",
     "files",
 ]
-
-REFINE_PREFIX = """
-You are an automatic curriculum adjuster focused on optimizing the
-progression of tasks within a Molecular Dynamics project. Your primary
-responsibility is to enhance the learning experience by adjusting tasks
-in response to failures and challenges encountered during the code
-development process.
-
-The following information will be provided to you: {refine_inputs}
-
-Your role involves the following guidelines:
-1. Analyze the history of failures and challenges to identify areas
-requiring refinement.
-2. Tailor the existing task to address the specific points of difficulty
-encountered.
-3. Do not propose multiple tasks at the same time. Do not mention anything
-else.
-4. Ensure that the revised task remains stay relevant and aligned with the
-spirit of the original task.
-5. I should not be doing the same thing over and over again. I may
-sometimes need to repeat some tasks if I need to rerun simulations
-or visualize again. Only repeat tasks if necessary.
-"""
-
-REFINE_FORMAT = """
-Structure your response according to the following format:
-
-RESPONSE FORMAT:
-Adjustment: Describe the adjustments to the task based on past failures.
-Reasoning: Provide the reasoning behind the adjustments made.
-Task: The refined task.
-"""
 
 refine_inputs = """
 Task: latest task that failed
@@ -160,7 +124,35 @@ Examples include protein structure-containing PDB or CIF files (with .pdb or
 .cif extensions), plot images illustrating property trends, and output files
 from simulations.
 """
+REFINE_PREFIX = f"""
+You're an experienced Molecular Dynamics researcher. You've seen
+many projects and understand the common pitfalls, complexities, and nuances.
+Your primary responsibility is to propose a new & refined task based on
+the past task and original prompt from user.
 
+The following information will be provided to you: {refine_inputs}
+
+- Do not propose multiple tasks at the same time. Do not mention anything
+else.
+- Ensure that the revised task remains stay relevant and aligned with the
+spirit of the original task.
+- You should not be doing the same thing over and over again. You may
+sometimes need to repeat some tasks if you need to rerun simulations
+or visualization. Only repeat tasks if necessary.
+- The new task should be close to the spirit of the previous task and
+entire user prompt as much as possible.
+
+If you don't have enough information to propose a new task, don't include
+'Task: ...' in your response.
+"""
+REFINE_FORMAT = """
+Your response must be according to the following format:
+
+RESPONSE FORMAT:
+Adjustment: Describe the refinements to the new task.
+Reasoning: Provide the reasoning behind the refinements made.
+Task: The new task you propose.
+"""
 REFINE_PROMPT = """
 INPUT:
 task: {task}
@@ -171,7 +163,6 @@ full_history: {full_history},
 skills: {skills},
 files: {files}
 """
-
 REFINE_INPUT_VARIABLES = [
     "task",
     "original_task",
@@ -182,29 +173,6 @@ REFINE_INPUT_VARIABLES = [
     "files",
 ]
 
-QUESTION_PREFIX = """
-You are an automatic curriculum adjuster focused on optimizing the
-progression of tasks within a Molecular Dynamics project. Your primary
-responsibility is to enhance the learning experience by adjusting tasks
-in response to failures and challenges encountered during the code
-development process.
-
-The following information will be provided to you: {question_inputs}
-
-Your role involves the following guidelines:
-1. Analyze the history of failures and challenges to identify areas
-requiring refinement.
-2. Tailor the existing task to address the specific points of difficulty
-encountered.
-3. Do not propose multiple tasks at the same time. Do not mention anything
-else.
-4. Ensure that the revised task remains stay relevant and aligned with the
-spirit of the original task.
-5. You should not be doing the same thing over and over again. You may
-sometimes need to repeat some tasks if you need to rerun simulations
-or visualization. Only repeat tasks if necessary.
-6. Only give 3 to 5 unique questions; don't go over 5.
-"""
 
 question_inputs = """
 Recent History:
@@ -238,7 +206,21 @@ Examples include protein structure-containing PDB or CIF files (with .pdb or
 .cif extensions), plot images illustrating property trends, and output files
 from simulations.
 """
+QUESTION_PREFIX = f"""
+You're an experienced Molecular Dynamics researcher. You've seen
+many projects and understand the common pitfalls, complexities, and nuances.
+You are tasked with refining the progression of tasks within a Molecular
+Dynamics project based on past challenges and failures. To do so, you need
+to analyze the project's history and formulate questions that uncover
+potential areas of difficulty or ambiguity. If no history is given, don't
+ask questions about previous iterations.
 
+The following information will be provided to you: {question_inputs}
+
+With this expertise in mind, please provide 3 to 5 specific questions
+that would help in identifying challenges, refining tasks, and ensuring
+smoother progress in future iterations.
+"""
 QUESTION_FORMAT = """
 You should only respond in the format as described below:
 RESPONSE FORMAT:
@@ -246,9 +228,8 @@ Reasoning: ...
 Question 1: ...
 Question 2: ...
 Question 3: ...
-...
+(rest of questions)
 """
-
 QUESTION_PROMPT = """
 INPUT:
 recent_history: {recent_history},
@@ -256,7 +237,6 @@ full_history: {full_history},
 skills: {skills},
 files: {files}
 """
-
 QUESTION_INPUT_VARIABLES = [
     "recent_history",
     "full_history",
@@ -265,30 +245,26 @@ QUESTION_INPUT_VARIABLES = [
 ]
 
 ANSWER_PREFIX = """
-You are a helpful assistant that answer my question about Minecraft.
+You are a helpful assistant that answer my question about molecular dynamics.
 
 I will give you the following information:
 Question: ...
 
 You will answer the question based on the context (only if available and helpful) and
-your own knowledge of Minecraft.
+your own knowledge of molecular dynamics.
 1) Start your answer with "Answer: ".
-2) Answer "Answer: Unknown" if you don't know the answer.
+2) Answer "Answer: Unknown" if you don't know or cannot answer as an AI assistant.
 """
-
 ANSWER_FORMAT = """
 You should only respond in the format as described below:
 
 RESPONSE FORMAT:
 Answer: ...
 """
-
-
 ANSWER_PROMPT = """
 INPUT:
 question: {question}
 """
-
 ANSWER_INPUT_VARIABLES = ["question"]
 
 

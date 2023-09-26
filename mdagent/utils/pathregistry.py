@@ -85,9 +85,8 @@ class PathRegistry:
             data = json.load(json_file)
         names = [key for key in data.keys()]
         return (
-            "Names in path registry: " + ", ".join(names)
+            "Names found in registry: " + ", ".join(names)
             if names
-            else """No names found.
-            The JSON file is empty or doesn't
-            contain name mappings."""
+            else "No names found. The JSON file is empty or does not"
+            "contain name mappings."
         )

@@ -162,6 +162,22 @@ class SkillAgent:
         with open(f"{self.ckpt_dir}/skill_library/skills.json", "w") as f3:
             json.dump(self.skills, f3)
 
+        try:
+            self._create_LangChain_tool(tool_name, tool_path)
+        except Exception as e:
+            print(
+                f"\n\033[42mFailed to load LangChain tool: {e}"
+                "Though the tool is not loaded, the code is saved.\033[0m"
+            )
+
+        # add tool file to the registry
+        self.path_registry.map_path(
+            name=tool_name,
+            path=tool_path,
+            description=f"Learned tool called {tool_name}",
+        )
+
+    def _create_LangChain_tool(self, tool_name, tool_path):
         # load the LangChain BaseTool class from file
         # convert the file path to module name, removing .py and replacing / with .
         module_name = tool_path[:-3].replace("/", ".")
@@ -183,13 +199,6 @@ class SkillAgent:
         tools.append(langchain_tool)
         with open(pickle_file, "wb") as f:
             pickle.dump(tools, f)
-
-        # add tool file to the registry
-        self.path_registry.map_path(
-            name=tool_name,
-            path=tool_path,
-            description=f"Learned tool called {tool_name}",
-        )
 
     def add_new_tool(self, code, max_retries=3):
         retry = 0
@@ -227,8 +236,8 @@ class SkillAgent:
                 break
         if full_code is None:
             print(
-                f"\n\033[42mSkill agent failed to add a new tool "
-                f"{max_retries} times. Saved the code and move on.\033[0m"
+                f"\n\033[42mSkill agent failed to write and add the new tool"
+                f" after {max_retries} times. Saved the code and move on.\033[0m"
             )
             with open(f"{self.ckpt_dir}/skill_library/failed.txt", "a") as f:
                 f.write("\n\nFAILED TO ADD THE CODE BELOW AS A NEW TOOL: \n")
@@ -241,6 +250,7 @@ class SkillAgent:
 
     def get_skills(self):
         return self.skills
+        # TODO: also add base tools here
 
     def run(self, code, max_retries=3):
         self.add_new_tool(code, max_retries)

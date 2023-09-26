@@ -43,7 +43,7 @@ You must follow the following criteria:
 the given function name.
 2) below the function code, create a class as BaseTool object, naming it
 with the given tool name. Basetool object must has the following exact
-functions: __init__, _run, and _async
+functions: __init__, _run, and _async.
 3) the full code must contain all imports.
 4) the full code must contain the full description of the tool in docstrings.
 Do not modify or shorten the given description.
@@ -51,6 +51,8 @@ Do not modify or shorten the given description.
 6) the full code must follow closely to the following example format
 as much as possible, <FIELDS> tells you where you can place the given
 inputs.
+7) Don't add anything after BaseTool class definition. Async _async function
+must be the last part in the file.
 
 Example format of the full code:
 Full Code: ```from typing import Optional

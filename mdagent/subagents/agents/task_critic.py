@@ -31,8 +31,8 @@ class TaskCriticAgent:
         api_key=None,
         verbose=True,
     ):
-        self.llm = _make_llm(model, temp, max_iterations)
-        self.path_regisry = path_registry
+        self.llm = _make_llm(model, temp, verbose)
+        self.path_registry = path_registry
 
     def _create_prompt(self):
         suffix = ""
@@ -63,13 +63,13 @@ class TaskCriticAgent:
             prompt=prompt,
             # callbacks=StreamingStdOutCallbackHandler,
         )
-        self.llm_ = llm_chain
+        self.llm_chain = llm_chain
         return None
 
     def _run(self, code, code_output, task, context, additional_information):
         # get files
-        files = self.path_registry.list_path_names(True)
-        output = self.llm.run(
+        files = self.path_registry.list_path_names()
+        output = self.llm_chain(
             {
                 "files": files,
                 "code": code,
@@ -78,7 +78,7 @@ class TaskCriticAgent:
                 "context": context,
                 "additional_information": additional_information,
             }
-        )
+        )["text"]
         return output
 
     def _parse_critic_output(self, critic_output):

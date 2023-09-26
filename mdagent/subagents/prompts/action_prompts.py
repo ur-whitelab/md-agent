@@ -46,7 +46,7 @@ You may reuse them in your code or use them to help you write your code if neede
 The Skills will be a dictionary of name and function pairs.
 """
 
-action_prefix = """
+action_prefix = f"""
 You are a helpful assistant that writes python code to complete any
 OpenMM or other molecular dynamics related task specified by me.
 
@@ -81,11 +81,9 @@ Code:
         and return the path to the file as a string.
     7) Do not write infinite loops or recursive functions.
     8) Name your function in a meaningful way (can infer the task from the name).
-
-You should only respond in the format as described below:
-
-RESPONSE FORMAT:
-{action_format}
+    9) Include all imports necessary for your code to run. If possible, include these
+        imports in the function itself.
+    10) At the end of your code, call the function you defined with the input.
 """
 
 action_prompt = """
@@ -133,11 +131,9 @@ Code:
         return the path to the file as a string.
     7) Do not write infinite loops or recursive functions.
     8) Name your function in a meaningful way (can infer the task from the name).
-
-You should only respond in the format as described below:
-
-RESPONSE FORMAT:
-{action_format}
+    9) Include all imports necessary for your code to run. If possible, include these
+        imports in the function itself.
+    10) At the end of your code, call the function you defined with the input.
 """
 
 action_prompt_1 = """

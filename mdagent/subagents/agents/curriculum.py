@@ -1,8 +1,6 @@
 import json
 import os
 import re
-import select
-import sys
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -116,6 +114,7 @@ class RefiningCurriculumAgent:
         load_dotenv()
 
         # initialize agent
+        self.verbose = verbose
         llm = _make_llm(model, temp, verbose)
         qa_llm = _make_llm(qa_model, temp, verbose)
         self.llm_chain = self._initialize_llm(llm, RefinePrompts)
@@ -128,8 +127,7 @@ class RefiningCurriculumAgent:
         self.ckpt_dir = ckpt_dir
         os.makedirs(f"{ckpt_dir}/curriculum/", exist_ok=True)
 
-        # can remove below if we decide to use history from full_history instead
-        # it makes more sense if curriculum handles files of successes/failures thou
+        # TODO: clean up/manage history files between action, curriculum, and critics
         if resume:
             with open(f"{ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
                 self.completed_tasks = json.load(f1)
@@ -163,12 +161,18 @@ class RefiningCurriculumAgent:
         return llm_chain
 
     def _run_qa(self, info):
-        questions = [
-            f"What molecular dynamics tasks can I do with the files: {info['files']}?",
-            # add other must-have questions here; do consider context length
-        ]
-
         # Step 1: get questions
+        questions = []
+        if info["files"]:  # if not empty
+            questions += [
+                "What molecular dynamics tasks can I do with the following"
+                f" files: {info['files']}?"
+            ]
+        if info["skills"]:
+            questions += [
+                "What molecular dynamics tasks can I do with the following"
+                f" skills: {info['skills']}?"
+            ]
         q_response = self.qa_llm_step1(
             {
                 "recent_history": info["recent_history"],
@@ -176,26 +180,27 @@ class RefiningCurriculumAgent:
                 "skills": info["skills"],
                 "files": info["files"],
             }
-        )
+        )["text"]
         try:
             pattern = r"Question \d+: (.*?[.?])"
-            questions = re.findall(pattern, q_response)
+            questions.extend(re.findall(pattern, q_response))
         except Exception as e:
             return f"something went wrong. {e}"
 
         # Step 2: get answer for questions
         answers = []
         for question in questions:
-            print(f"Curriculum Agent Question: {question}")
-            answer = self.qa_llm_step2({"question": question})
-            print(f"Curriculum Agent {answer}")
+            print(f"\n\nQuestion: {question}")
+            answer = self.qa_llm_step2({"question": question})["text"]
+            if not self.verbose:
+                print(f"\n{answer}")
             answers.append(answer)
 
         # put together into a string
         qa_list = ""
         i = 1
         for question, answer in zip(questions, answers):
-            if "Answer: Unknown" in answer or "language model" in answer:
+            if "Answer: Unknown" in answer or "As an AI assistant" in answer:
                 continue
             qa_list += f"Question {i}: {question}\n"
             qa_list += f"{answer}\n\n"
@@ -222,7 +227,7 @@ class RefiningCurriculumAgent:
                     "skills": info["skills"],
                     "files": info["files"],
                 }
-            )
+            )["text"]
             # parse ai message
             try:
                 task = ""
@@ -243,20 +248,19 @@ class RefiningCurriculumAgent:
         else:
             if confirm_on:
                 # have the user confirm the refined task by typing
-                print(f"Task: {task}")
-                print("Confirm? (y/n): ", end="", flush=True)
-                timeout = 10  # sec
-                inputs, _, _ = select.select([sys.stdin], [], [], timeout)
-                if not inputs:
-                    print(f"{timeout} seconds has passed. Proceeding with this task.")
-                elif sys.stdin.readline().strip().lower() not in ["y", ""]:
-                    print("Recommended task denied. Trying again.")
+                print(f"\n\033[1;34mTask: {task}\033[00m")
+                if input("Confirm? (y/n)").lower() not in ["y", ""]:
                     return None
 
-                # alternative: no timeout
-                # if input("Confirm? (y/n)").lower() not in ["y", ""]:
-                # retries += 1
-                # continue
+                # alternative: with timeout ---> currently doesn't work
+                # print("Confirm? (y/n): ", end="", flush=True)
+                # timeout = 10  # sec
+                # inputs, _, _ = select.select([sys.stdin], [], [], timeout)
+                # if not inputs:
+                #     print(f"{timeout} seconds has passed. Proceeding with this task.")
+                # elif sys.stdin.readline().strip().lower() not in ["y", ""]:
+                #     print("Recommended task denied. Trying again.")
+                #     return None
             return task
 
     def run(self, task, original_prompt, info, max_retries=3):
