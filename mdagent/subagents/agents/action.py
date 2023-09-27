@@ -1,5 +1,4 @@
 import io
-import json
 import re
 import sys
 from typing import Optional
@@ -36,7 +35,7 @@ class ActionAgent:
         api_key=None,
         verbose=True,
     ):
-        self.llm = _make_llm(model, temp, max_iterations)
+        self.llm = _make_llm(model, temp, verbose)
         self.path_registry = path_registry
 
     def _create_prompt(self, version):
@@ -70,7 +69,7 @@ class ActionAgent:
             prompt=prompt,
             # callbacks=StreamingStdOutCallbackHandler,
         )
-        self.llm_ = llm_chain
+        self.llm_chain = llm_chain
         return None
 
     def _run(
@@ -85,35 +84,36 @@ class ActionAgent:
         explanation,
     ):
         # get files
-        files = self.path_registry.list_path_names(True)
+        files = self.path_registry.list_path_names()
         # get skills
         if version == "resume":  # if resume
-            return self.llm.run(
+            return self.llm_chain(
                 {
                     "recent_history": recent_history,
                     "full_history": full_history,
                     "skills": skills,
                 }
-            )
+            )["text"]
         elif version == "first":  # if first iter
-            return self.llm.run(
+            return self.llm_chain(
                 {"files": files, "task": task, "context": context, "skills": skills}
-            )
+            )["text"]
 
     # function that runs the code
-    def _exec_code(self, code):
+    def _exec_code(self, python_code):
         # incoming code should be a json string
         # Load the JSON string and extract the Python code
-        data = json.loads(code)
-        python_code = data["code"]
+        # data = json.loads(code)
+        # python_code = data["code"]
 
         # Redirect stdout and stderr to capture the output
         original_stdout = sys.stdout
         original_stderr = sys.stderr
         sys.stdout = captured_stdout = sys.stderr = io.StringIO()
+        exec_context = {**globals(), **locals()}  # to allow for imports
         success = True
         try:
-            exec(python_code)
+            exec(python_code, exec_context, exec_context)
             output = captured_stdout.getvalue()
         except Exception as e:
             success = False
@@ -125,7 +125,7 @@ class ActionAgent:
         return success, output
 
     def _extract_code(self, output):
-        match = re.search(r"Code:\n```\n(.+?)\n```\n", output, re.DOTALL)
+        match = re.search(r"Code:\n```.+?\n(.+?)\n```", output, re.DOTALL)
         if match:
             code = match.group(1)
             return code
@@ -149,7 +149,6 @@ class ActionAgent:
         self._create_llm(version)
         # run agent
         output = self._run(
-            self,
             version,
             recent_history,
             full_history,

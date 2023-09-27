@@ -51,12 +51,12 @@ class CodeCriticAgent:
             prompt=prompt,
             # callbacks=StreamingStdOutCallbackHandler,
         )
-        self.llm_ = llm_chain
+        self.llm_chain = llm_chain
         return None
 
     def _run(self, src, task, context, code_output):
         self._create_llm()
-        output = self.llm.run(
+        output = self.llm_chain(
             {"code": src, "code_output": code_output, "task": task, "context": context}
-        )
+        )["text"]
         return output
