@@ -21,10 +21,10 @@ from .base_tools.vis_tools import (
     PlanBVisualizationTool,
     VisualizationToolRender,
 )
-from .subagent_tools import GetNewTool
+from .subagent_tools import ExecuteSkillCode, GetNewTool
 
 
-def make_tools(llm: BaseLanguageModel, subagent_settings, verbose=False):
+def make_tools(llm: BaseLanguageModel, subagent_settings):
     load_dotenv()
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
@@ -49,23 +49,21 @@ def make_tools(llm: BaseLanguageModel, subagent_settings, verbose=False):
     # base tools using sub agents
     subagents_tools = [
         GetNewTool(path_registry=path_instance, subagent_settings=subagent_settings),
-        # SkillUpdate(path_registry=path_instance, subagent_settings=subagent_settings),
-        # SkillQuery(path_registry=path_instance, subagent_settings=subagent_settings),
+        ExecuteSkillCode(
+            path_registry=path_instance, subagent_settings=subagent_settings
+        ),
     ]
 
     # add 'learned' tools here
     # disclaimer: assume every learned tool has path_registry as an argument
     learned_tools = []
-    pickle_file = f"{subagent_settings.ckpt_dir}/skill_library/langchain_tools.pkl"
-    if (
-        subagent_settings.resume
-        and os.path.exists(pickle_file)
-        and os.path.getsize(pickle_file) > 0
-    ):
-        with open(pickle_file, "rb") as f:
-            loaded_tools = pickle.load(f)
-        for tool in loaded_tools:
-            learned_tools.append(tool(path_registry=path_instance))
+    if subagent_settings.resume:
+        pickle_file = f"{subagent_settings.ckpt_dir}/skill_library/langchain_tools.pkl"
+        if os.path.exists(pickle_file) and os.path.getsize(pickle_file) > 0:
+            with open(pickle_file, "rb") as f:
+                loaded_tools = pickle.load(f)
+            for tool in loaded_tools:
+                learned_tools.append(tool(path_registry=path_instance))
 
     all_tools += base_tools + subagents_tools + learned_tools
 

@@ -52,75 +52,93 @@ class SubAgentInitializer:
         self.ckpt_dir = settings.ckpt_dir
         self.resume = settings.resume
 
-    def create_action_agent(self):
-        return ActionAgent(
-            path_registry=self.path_registry,
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-        )
+    def create_action_agent(self, **overrides):
+        params = {
+            "path_registry": self.path_registry,
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return ActionAgent(**params)
 
-    def create_code_critic(self):
-        return CodeCriticAgent(
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-        )
+    def create_code_critic(self, **overrides):
+        params = {
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return CodeCriticAgent(**params)
 
-    def create_explorer_agent(self):
-        return ExplorerAgent(
-            path_registry=self.path_registry,
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-            ckpt_dir=self.ckpt_dir,
-            resume=self.resume,
-        )
+    def create_explorer_agent(self, **overrides):
+        params = {
+            "path_registry": self.path_registry,
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+            "ckpt_dir": self.ckpt_dir,
+            "resume": self.resume,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return ExplorerAgent(**params)
 
-    def create_refining_curriculum_agent(self):
-        return RefiningCurriculumAgent(
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-            ckpt_dir=self.ckpt_dir,
-            resume=self.resume,
-        )
+    def create_refining_curriculum_agent(self, **overrides):
+        params = {
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+            "ckpt_dir": self.ckpt_dir,
+            "resume": self.resume,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return RefiningCurriculumAgent(**params)
 
-    def create_skill_agent(self):
-        return SkillAgent(
-            path_registry=self.path_registry,
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-            ckpt_dir=self.ckpt_dir,
-            resume=self.resume,
-        )
+    def create_skill_agent(self, **overrides):
+        params = {
+            "path_registry": self.path_registry,
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+            "ckpt_dir": self.ckpt_dir,
+            "resume": self.resume,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return SkillAgent(**params)
 
-    def create_task_critic(self):
-        return TaskCriticAgent(
-            path_registry=self.path_registry,
-            model=self.subagents_model,
-            temp=self.temp,
-            max_iterations=self.max_iterations,
-            api_key=self.api_key,
-            verbose=self.verbose,
-        )
+    def create_task_critic(self, **overrides):
+        params = {
+            "path_registry": self.path_registry,
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "max_iterations": self.max_iterations,
+            "api_key": self.api_key,
+            "verbose": self.verbose,
+        }
+        # Update params with any overrides
+        params.update(overrides)
+        return TaskCriticAgent(**params)
 
-    def create_iteration_agents(self):
+    def create_iteration_agents(self, **overrides):
         return {
-            "action": self.create_action_agent(),
-            "code_critic": self.create_code_critic(),
-            "refining_curriculum": self.create_refining_curriculum_agent(),
-            "skill": self.create_skill_agent(),
-            "task_critic": self.create_task_critic(),
+            "action": self.create_action_agent(**overrides),
+            "code_critic": self.create_code_critic(**overrides),
+            "refining_curriculum": self.create_refining_curriculum_agent(**overrides),
+            "skill": self.create_skill_agent(**overrides),
+            "task_critic": self.create_task_critic(**overrides),
         }

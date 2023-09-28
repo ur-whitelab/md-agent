@@ -39,7 +39,7 @@ class MDAgent:
         )
         if tools is None:
             tools_llm = _make_llm(tools_model, temp, verbose)
-            tools = make_tools(tools_llm, self.subagents_settings, verbose=verbose)
+            tools = make_tools(tools_llm, self.subagents_settings)
 
         # Initialize agent
         self.agent_executor = RetryAgentExecutor.from_agent_and_tools(

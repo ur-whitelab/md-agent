@@ -1,3 +1,6 @@
+import io
+import os
+import sys
 from typing import Optional
 
 from langchain.tools import BaseTool
@@ -70,25 +73,92 @@ class GetNewTool(BaseTool):
         raise NotImplementedError("this tool does not support async")
 
 
-# below are other subagent-based tools (to be completed)
+def execute_skill_code(tool_name, skill_agent, path_registry):
+    skills = skill_agent.get_skills()
+    code = skills.get(tool_name, {}).get("code", None)
+
+    if not code:
+        raise ValueError(
+            f"Code for {tool_name} not found. Make sure to use correct tool name."
+        )
+
+    # capture initial state
+    initial_files = set(os.listdir("."))
+    initial_registry = path_registry.list_path_names()
+
+    # Redirect stdout and stderr to capture the output
+    original_stdout = sys.stdout
+    original_stderr = sys.stderr
+    sys.stdout = captured_stdout = sys.stderr = io.StringIO()
+    exec_context = {**globals(), **locals()}  # to allow for imports
+
+    try:
+        exec(code, exec_context, exec_context)
+        output = captured_stdout.getvalue()
+    except Exception as e:
+        # Restore stdout and stderr
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+        error_type = type(e).__name__
+        raise type(e)(f"Error executing code for {tool_name}: {error_type} - {e}")
+    finally:
+        # Ensure that stdout and stderr are always restored
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
+
+    # capture final state
+    new_files = list(set(os.listdir(".")) - initial_files)
+    new_registry = list(set(path_registry.list_path_names()) - set(initial_registry))
+
+    success_message = "Successfully executed code."
+    files_message = f"New Files Created: {', '.join(new_files)}"
+    registry_message = f"Files added to Path Registry: {', '.join(new_registry)}"
+    output_message = f"Code Output: {output}"
+
+    return "\n".join([success_message, files_message, registry_message, output_message])
 
 
-def add_new_skill(skillagent, code):
-    #  similar to add_new_tool fxn from newtoolcreation.py
-    # only difference is this looks at tools used during the entire ReAct's CoT
-    # and create a consolidated tool & update skill library
-    return ""
+class ExecuteSkillCode(BaseTool):
+    name = "ExecuteSkill"
+    description = """Executes the code for a new tool that has been
+    recently added during the current iteration.
 
+    Inputs:
+    - tool_name: a string representing the name of the tool for which
+        the code needs to be executed.
 
-class SkillUpdate(BaseTool):
-    name = "SkillUpdate"
-    description = """
+    Outputs:
+    - If the code for the specified tool is found, it is executed
+    successfully and a success message is returned.
+    - If there is an error while executing the code, an error message
+    along with the error details is returned.
+    - If the code for the specified tool is not found, a message
+    indicating that the code was not found is returned.
 
-    ADD DESCRIPTION HERE
+    The function retrieves the skills from the skill agent and then
+    retrieves the code for the specified tool from the skills dictionary.
+    If the code is found, it is executed using the exec() function. If
+    there is an error during execution, the error message is returned.
+    If the code is not found, a message indicating that the code was not
+    found is returned."""
 
+    """Execute the code for a new tool that has been recently added
+    during the current iteration. The function retrieves the code for
+    the specified tool from skill library.
+    If the code is not found, a ValueError is raised.
+    If an exception occurs during code execution, the exception is raised.
+
+    Inputs:
+    - tool_name: a string representing the name of the tool for which
+        the code needs to be executed.
+
+    Returns:
+    - the function returns a string containing a success message, a list
+    of new files created, a list of files added to the path registry,
+    and the output of the executed code.
     """
-    path_registry: Optional[PathRegistry]
-    subagent_settings: Optional[SubAgentSettings]
+    path_registry: Optional[PathRegistry] = None
+    skill_agent: Optional[SubAgentSettings] = None
 
     def __init__(
         self,
@@ -98,48 +168,7 @@ class SkillUpdate(BaseTool):
         super().__init__()
         self.path_registry = path_registry
         agent_initializer = SubAgentInitializer(subagent_settings)
-        self.skill_agent = agent_initializer.create_skill_agent()
-
-    def _run(self, code: str) -> str:
-        """use the tool"""
-        try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            if self.skill_agent is None:
-                return "Agent for this tool not initialized"
-            skill_result = add_new_skill(self.skill_agent, code)
-            return skill_result
-        except Exception as e:
-            return f"Something went wrong. {e}"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously"""
-        raise NotImplementedError("This tool does not support async")
-
-
-def code_retrieval(skill_agent, query):
-    return ""
-
-
-class SkillQuery(BaseTool):
-    name = "SkillQuery"
-    description = """
-
-    ADD DESCRIPTION HERE
-
-    """
-    path_registry: Optional[PathRegistry]
-    subagent_settings: Optional[SubAgentSettings]
-
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-        subagent_settings: Optional[SubAgentSettings],
-    ):
-        super().__init__()
-        self.path_registry = path_registry
-        agent_initializer = SubAgentInitializer(subagent_settings)
-        self.skill_agent = agent_initializer.create_skill_agent()
+        self.skill_agent = agent_initializer.create_skill_agent(resume=True)
 
     def _run(self, query: str) -> str:
         """use the tool"""
@@ -148,8 +177,10 @@ class SkillQuery(BaseTool):
                 return "Path registry not initialized"
             if self.skill_agent is None:
                 return "Agent for this tool not initialized"
-            query_result = code_retrieval(self.skill_agent, query)
-            return query_result
+            code_result = execute_skill_code(
+                query, self.skill_agent, self.path_registry
+            )
+            return code_result
         except Exception as e:
             return f"Something went wrong. {e}"
 

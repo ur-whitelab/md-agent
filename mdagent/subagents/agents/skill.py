@@ -41,14 +41,20 @@ class SkillAgent:
         self.llm_step1 = self._initialize_llm(SkillStep1Prompts)
         self.llm_step2 = self._initialize_llm(SkillStep2Prompts)
 
+        self.skills = {}
         # retrieve past skills & tools
         if resume:
-            print(f"\033[42mLoading Skills from {ckpt_dir}/skill_library\033[42m")
-            # retrieve skill library for query
-            with open(f"{ckpt_dir}/skill_library/skills.json", "w") as f1:
-                self.skills = json.load(f1)
-        else:
-            self.skills = {}
+            print(f"\033[42mLoading Skills from {ckpt_dir}/skill_library\033[0m")
+            skill_file_path = f"{ckpt_dir}/skill_library/skills.json"
+            if os.path.exists(skill_file_path):
+                with open(skill_file_path, "r") as f1:
+                    content = f1.read().strip()
+                    if content:
+                        self.skills = json.loads(content)
+                    else:
+                        print(f"\033[42mSkill file {skill_file_path} is empty\033[0m")
+            else:
+                print(f"\033[42mNo skill file found at {skill_file_path}\033[0m")
 
         # to store individual codes - for developers/users to look at
         os.makedirs(f"{ckpt_dir}/skill_library/code", exist_ok=True)
@@ -142,11 +148,7 @@ class SkillAgent:
         else:
             filename = tool_name
 
-        self.skills[tool_name] = {
-            "code": code,
-            "description": description,
-            "full_code": full_code,
-        }
+        # dump codes and description
         with open(f"{self.ckpt_dir}/skill_library/code/{filename}.py", "w") as f0:
             f0.write(code)
 
@@ -159,11 +161,20 @@ class SkillAgent:
         with open(tool_path, "w") as f2:
             f2.write(full_code)
 
+        # save tool to skill library
+        self.skills[tool_name] = {
+            "code": code,
+            "description": description,
+            "full_code": full_code,
+        }
         with open(f"{self.ckpt_dir}/skill_library/skills.json", "w") as f3:
-            json.dump(self.skills, f3)
+            json.dump(self.skills, f3, indent=4)
 
+        # create LangChain BaseTool object by loading it from tool file
+        # TODO: move below to iterator code and have critcs check it
         try:
             self._create_LangChain_tool(tool_name, tool_path)
+            print(f"LangChain BaseTool object for {tool_name} is successfully created.")
         except Exception as e:
             print(
                 f"\n\033[42mFailed to load LangChain tool: {e}"
@@ -199,6 +210,7 @@ class SkillAgent:
         tools.append(langchain_tool)
         with open(pickle_file, "wb") as f:
             pickle.dump(tools, f)
+        return langchain_tool
 
     def add_new_tool(self, code, max_retries=3):
         retry = 0
@@ -250,7 +262,22 @@ class SkillAgent:
 
     def get_skills(self):
         return self.skills
-        # TODO: also add base tools here
+
+    # TODO: add base tools here
+    # def get_base_tools(self):
+    #
+    #     return [
+    #         "VisualizationToolRender",
+    #         "CheckDirectoryFiles",
+    #         "SetUpAndRunTool",
+    #         "ListRegistryPaths",
+    #         "MapPath2Name",
+    #         "PlanBVisualizationTool",
+    #         "Name2PDBTool",
+    #         "SpecializedCleanTool",
+    #         "RemoveWaterCleaningTool",
+    #         "AddHydrogensCleaningTool",
+    #     ]
 
     def run(self, code, max_retries=3):
         self.add_new_tool(code, max_retries)
