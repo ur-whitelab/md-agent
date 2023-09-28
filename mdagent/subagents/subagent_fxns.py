@@ -111,7 +111,7 @@ class Iterator:
             )
 
         # otherwise, run code critic
-        print("\n\033[46mcode failed, running code critic\033[0m")
+        print("\n\033[46mtask failed, running code critic\033[0m")
         critique = self.code_critic_agent._run(code, code_output, task, context)
         return task_success, code, code_output, context, task, critique, task_critique
 

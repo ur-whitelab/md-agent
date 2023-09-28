@@ -44,7 +44,7 @@ class SkillAgent:
         self.skills = {}
         # retrieve past skills & tools
         if resume:
-            print(f"\033[42mLoading Skills from {ckpt_dir}/skill_library\033[0m")
+            print(f"\n\033[42mLoading Skills from {ckpt_dir}/skill_library\033[0m")
             skill_file_path = f"{ckpt_dir}/skill_library/skills.json"
             if os.path.exists(skill_file_path):
                 with open(skill_file_path, "r") as f1:
@@ -141,7 +141,7 @@ class SkillAgent:
             )
             i = 2
             while f"{tool_name}V{i}.py" in os.listdir(
-                f"{self.ckpt_dir}/skill_library/code"
+                f"{self.ckpt_dir}/skill_library/code/"
             ):
                 i += 1
             filename = f"{tool_name}V{i}.py"
@@ -167,7 +167,14 @@ class SkillAgent:
             "description": description,
             "full_code": full_code,
         }
-        with open(f"{self.ckpt_dir}/skill_library/skills.json", "w") as f3:
+        skill_file_path = f"{self.ckpt_dir}/skill_library/skills.json"
+        if os.path.exists(skill_file_path):
+            with open(skill_file_path, "r") as f:
+                existing_data = json.load(f)
+        else:
+            existing_data = {}
+        existing_data.update(self.skills)
+        with open(skill_file_path, "w") as f3:
             json.dump(self.skills, f3, indent=4)
 
         # create LangChain BaseTool object by loading it from tool file

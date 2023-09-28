@@ -35,7 +35,7 @@ class PathRegistry:
                 existing_data = json.load(json_file)
                 existing_data.update(path_dict)
         with open(self.json_file_path, "w") as json_file:
-            json.dump(existing_data, json_file)
+            json.dump(existing_data, json_file, indent=4)
 
     def _check_json_content(self, name):
         if not self._check_for_json():
@@ -74,7 +74,7 @@ class PathRegistry:
         if name in data:
             del data[name]
             with open(self.json_file_path, "w") as json_file:
-                json.dump(data, json_file)
+                json.dump(data, json_file, indent=4)
             return f"Path {name} removed from registry"
         return f"Path {name} not found in registry"
 

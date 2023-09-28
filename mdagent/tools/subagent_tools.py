@@ -157,29 +157,28 @@ class ExecuteSkillCode(BaseTool):
     of new files created, a list of files added to the path registry,
     and the output of the executed code.
     """
-    path_registry: Optional[PathRegistry] = None
-    skill_agent: Optional[SubAgentSettings] = None
+    path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
 
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
-        subagent_settings: Optional[SubAgentSettings],
+        path_registry: Optional[PathRegistry] = None,
+        subagent_settings: Optional[SubAgentSettings] = None,
     ):
         super().__init__()
         self.path_registry = path_registry
-        agent_initializer = SubAgentInitializer(subagent_settings)
-        self.skill_agent = agent_initializer.create_skill_agent(resume=True)
+        self.subagent_settings = subagent_settings
 
     def _run(self, query: str) -> str:
         """use the tool"""
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            if self.skill_agent is None:
+            agent_initializer = SubAgentInitializer(self.subagent_settings)
+            skill_agent = agent_initializer.create_skill_agent(resume=True)
+            if skill_agent is None:
                 return "Agent for this tool not initialized"
-            code_result = execute_skill_code(
-                query, self.skill_agent, self.path_registry
-            )
+            code_result = execute_skill_code(query, skill_agent, self.path_registry)
             return code_result
         except Exception as e:
             return f"Something went wrong. {e}"
