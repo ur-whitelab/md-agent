@@ -4,6 +4,7 @@ from .clean_tools import (
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
 )
+from .git_issues_tool import SerpGitTool
 from .md_util_tools import Name2PDBTool, get_pdb
 from .plot_tools import SimulationOutputFigures
 from .registry import ListRegistryPaths, MapPath2Name, PathRegistry
@@ -36,4 +37,5 @@ __all__ = [
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
     "SimulationOutputFigures",
+    "SerpGitTool",
 ]
