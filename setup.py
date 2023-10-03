@@ -26,7 +26,7 @@ setup(
         "requests",
         "python-dotenv",
         "matplotlib",
-        "serpapi",
+        "google-search-results",
         "tiktoken",
         "openai",
     ],
