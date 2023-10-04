@@ -14,6 +14,7 @@ from ..tools import (
     PlanBVisualizationTool,
     RemoveWaterCleaningTool,
     Scholar2ResultLLM,
+    SerpGitTool,
     SetUpAndRunTool,
     SpecializedCleanTool,
     VisualizationToolRender,
@@ -46,6 +47,10 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         RemoveWaterCleaningTool(path_registry=path_instance),
         AddHydrogensCleaningTool(path_registry=path_instance),
     ]
+    # add serpapi tool
+    serp_key = os.getenv("SERP_API_KEY")
+    if serp_key:
+        all_tools.append(SerpGitTool(serp_key))
 
     # add literature search tool
     # Get the api keys
