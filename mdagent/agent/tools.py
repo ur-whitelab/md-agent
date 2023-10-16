@@ -10,15 +10,15 @@ from ..tools import (
     ListRegistryPaths,
     MapPath2Name,
     Name2PDBTool,
-    PathRegistry,
+    PackMolTool,
     PlanBVisualizationTool,
     RemoveWaterCleaningTool,
     Scholar2ResultLLM,
-    SerpGitTool,
     SetUpAndRunTool,
     SpecializedCleanTool,
     VisualizationToolRender,
 )
+from ..utils import PathRegistry
 
 
 def make_tools(llm: BaseLanguageModel, verbose=False):
@@ -46,11 +46,12 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
         SpecializedCleanTool(path_registry=path_instance),
         RemoveWaterCleaningTool(path_registry=path_instance),
         AddHydrogensCleaningTool(path_registry=path_instance),
+        PackMolTool(path_registry=path_instance),
     ]
     # add serpapi tool
-    serp_key = os.getenv("SERP_API_KEY")
-    if serp_key:
-        all_tools.append(SerpGitTool(serp_key))
+    # serp_key = os.getenv("SERP_API_KEY")
+    # if serp_key:
+    #    all_tools.append(SerpGitTool(serp_key))
 
     # add literature search tool
     # Get the api keys

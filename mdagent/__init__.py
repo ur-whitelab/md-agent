@@ -2,10 +2,6 @@ from .agent import MDAgent, make_tools
 from .tools import (
     CheckDirectoryFiles,
     CleaningTools,
-    ListRegistryPaths,
-    MapPath2Name,
-    Name2PDBTool,
-    PathRegistry,
     PlanBVisualizationTool,
     Scholar2ResultLLM,
     SetUpAndRunTool,
@@ -15,6 +11,7 @@ from .tools import (
     VisualizationToolRender,
     get_pdb,
 )
+from .utils import PathRegistry
 
 __all__ = [
     "MDAgent",
@@ -29,9 +26,7 @@ __all__ = [
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
     "SetUpAndRunTool",
-    "ListRegistryPaths",
     "PathRegistry",
-    "MapPath2Name",
     "SimulationOutputFigures",
     "get_pdb",
 ]
