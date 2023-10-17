@@ -17,7 +17,7 @@ from .base_tools import (
     get_pdb,
 )
 from .maketools import make_tools
-from .subagent_tools import ExecuteSkillCode, GetNewTool
+from .subagent_tools import ExecuteSkillCode, GetNewTool, SkillRetrieval
 
 __all__ = [
     "Scholar2ResultLLM",
@@ -39,4 +39,5 @@ __all__ = [
     "make_tools",
     "GetNewTool",
     "ExecuteSkillCode",
+    "SkillRetrieval",
 ]

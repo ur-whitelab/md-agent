@@ -186,3 +186,41 @@ class ExecuteSkillCode(BaseTool):
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously"""
         raise NotImplementedError("This tool does not support async")
+
+
+class SkillRetrieval(BaseTool):
+    name = "SkillRetrieval"
+    description = """Use this tool to retrieve a list of skills relevant
+    to the task at hand. Useful if the base tools you have are insufficient
+    for the task or to check before creating a new tool."""
+    path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
+
+    def __init__(
+        self,
+        path_registry: Optional[PathRegistry] = None,
+        subagent_settings: Optional[SubAgentSettings] = None,
+    ):
+        super().__init__()
+        self.path_registry = path_registry
+        self.subagent_settings = subagent_settings
+
+    def _run(self, query: str) -> str:
+        """use the tool"""
+        try:
+            if self.path_registry is None:  # this should not happen
+                return "Path registry not initialized"
+            agent_initializer = SubAgentInitializer(self.subagent_settings)
+            skill_agent = agent_initializer.create_skill_agent(resume=True)
+            if skill_agent is None:
+                return "SubAgent for this tool not initialized"
+            tool_list = skill_agent.retrieve_tools(query)
+            if not tool_list:
+                return "No tools found for this query"
+            return f"{len(tool_list)} skills found: {tool_list}"
+        except Exception as e:
+            return f"Something went wrong. {e}"
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously"""
+        raise NotImplementedError("This tool does not support async")

@@ -8,6 +8,7 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from langchain.chains import LLMChain
+from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.prompts import PromptTemplate
 from langchain.prompts.chat import (
     AIMessagePromptTemplate,
@@ -15,6 +16,7 @@ from langchain.prompts.chat import (
     HumanMessagePromptTemplate,
     SystemMessagePromptTemplate,
 )
+from langchain.vectorstores import Chroma
 
 from mdagent.subagents.prompts import SkillStep1Prompts, SkillStep2Prompts
 from mdagent.utils import PathRegistry, _make_llm
@@ -28,6 +30,7 @@ class SkillAgent:
         temp=0.1,
         max_iterations=40,
         api_key=None,
+        retrieval_top_k=5,
         verbose=True,
         ckpt_dir="ckpt",
         resume=False,
@@ -35,6 +38,7 @@ class SkillAgent:
         load_dotenv()
         self.ckpt_dir = ckpt_dir
         self.path_registry = path_registry
+        self.retrieval_top_k = retrieval_top_k
 
         # initialize agent
         self.llm = _make_llm(model, temp, verbose)
@@ -56,14 +60,15 @@ class SkillAgent:
             else:
                 print(f"\033[42mNo skill file found at {skill_file_path}\033[0m")
 
-        # to store individual codes - for developers/users to look at
         os.makedirs(f"{ckpt_dir}/skill_library/code", exist_ok=True)
-
-        # to store individual tool descriptions - for langchain tools
         os.makedirs(f"{ckpt_dir}/skill_library/description", exist_ok=True)
-
-        # to store individual tools - for langchain tools
+        os.makedirs(f"{ckpt_dir}/skill_library/vectordb", exist_ok=True)
         os.makedirs(f"{ckpt_dir}/skill_library/langchain_tool", exist_ok=True)
+        self.vectordb = Chroma(
+            collection_name="skill_vectordb",
+            embedding_function=OpenAIEmbeddings(),
+            persist_directory=f"{ckpt_dir}/skill_library/vectordb",
+        )
 
     def _create_prompt(self, prompts):
         suffix = ""
@@ -161,6 +166,28 @@ class SkillAgent:
         with open(tool_path, "w") as f2:
             f2.write(full_code)
 
+        # save to vectordb for tool retrieval
+        self.vectordb.add_texts(
+            texts=[description], ids=[tool_name], metadatas=[{"name": tool_name}]
+        )
+        self.vectordb.persist()
+
+        # create LangChain BaseTool object by loading it from tool file
+        # TODO: move below to iterator code and have critcs check it
+        try:
+            self._create_LangChain_tool(tool_name, tool_path)
+            print(f"LangChain BaseTool object for {tool_name} is successfully created.")
+        except Exception as e:
+            print(
+                f"\n\033[42mFailed to load LangChain tool: {e}"
+                "Though the tool is not loaded, the code is saved.\033[0m"
+            )
+        # add tool file to the registry
+        self.path_registry.map_path(
+            name=tool_name,
+            path=tool_path,
+            description=f"Learned tool called {tool_name}",
+        )
         # save tool to skill library
         self.skills[tool_name] = {
             "code": code,
@@ -176,24 +203,6 @@ class SkillAgent:
         existing_data.update(self.skills)
         with open(skill_file_path, "w") as f3:
             json.dump(self.skills, f3, indent=4)
-
-        # create LangChain BaseTool object by loading it from tool file
-        # TODO: move below to iterator code and have critcs check it
-        try:
-            self._create_LangChain_tool(tool_name, tool_path)
-            print(f"LangChain BaseTool object for {tool_name} is successfully created.")
-        except Exception as e:
-            print(
-                f"\n\033[42mFailed to load LangChain tool: {e}"
-                "Though the tool is not loaded, the code is saved.\033[0m"
-            )
-
-        # add tool file to the registry
-        self.path_registry.map_path(
-            name=tool_name,
-            path=tool_path,
-            description=f"Learned tool called {tool_name}",
-        )
 
     def _create_LangChain_tool(self, tool_name, tool_path):
         # load the LangChain BaseTool class from file
@@ -271,6 +280,8 @@ class SkillAgent:
         return self.skills
 
     # TODO: add base tools here
+    # after more thoughts - this needs to be moved to iterator, add 'base_tools' as arg
+    # for CreateNewTool_iterator
     # def get_base_tools(self):
     #
     #     return [
@@ -285,6 +296,20 @@ class SkillAgent:
     #         "RemoveWaterCleaningTool",
     #         "AddHydrogensCleaningTool",
     #     ]
+
+    def retrieve_tools(self, query):
+        k = min(self.retrieval_top_k, self.vectordb._collection.count())
+        if k == 0:
+            return []
+        docs_and_scores = self.vectordb.similarity_search_with_score(query, k=k)
+        tools = []
+        string = ""
+        for doc, score in docs_and_scores:
+            tool_name = doc.metadata["name"]
+            tools.append(self.skills[tool_name]["code"])
+            string += tool_name + ", Score: " + str(score) + "\n"
+        print(f"\n\033[42mSkill agent retrieved {len(tools)} tools.\033[0m\n{string}")
+        return tools
 
     def run(self, code, max_retries=3):
         self.add_new_tool(code, max_retries)

@@ -26,6 +26,7 @@ setup(
         "requests",
         "python-dotenv",
         "matplotlib",
+        "chromadb",
     ],
     test_suite="tests",
     long_description=long_description,
