@@ -15,7 +15,7 @@ from .prompts import skill_describe_template, skill_wrapper_template
 from mdagent.utils import PathRegistry
 
 
-class SkillAgent:
+class SkillManager:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
