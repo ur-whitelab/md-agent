@@ -8,16 +8,11 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-    AIMessagePromptTemplate,
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.chat_models import ChatOpenAI
 
-from mdagent.subagents.prompts import SkillStep1Prompts, SkillStep2Prompts
-from mdagent.utils import PathRegistry, _make_llm
+from .prompts import skill_describe_template, skill_wrapper_template
+from mdagent.utils import PathRegistry
 
 
 class SkillAgent:
@@ -26,20 +21,24 @@ class SkillAgent:
         path_registry: Optional[PathRegistry],
         model="gpt-3.5",
         temp=0.1,
-        max_iterations=40,
         api_key=None,
-        verbose=True,
         ckpt_dir="ckpt",
         resume=False,
     ):
         load_dotenv()
         self.ckpt_dir = ckpt_dir
         self.path_registry = path_registry
-
-        # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_step1 = self._initialize_llm(SkillStep1Prompts)
-        self.llm_step2 = self._initialize_llm(SkillStep2Prompts)
+        
+        llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        
+        self.llm_chain_step1 = LLMChain(llm=llm, prompt=skill_describe_template)
+        self.llm_chain_step2 = LLMChain(llm=llm, prompt=skill_wrapper_template)
 
         self.skills = {}
         # retrieve past skills & tools
@@ -65,28 +64,6 @@ class SkillAgent:
         # to store individual tools - for langchain tools
         os.makedirs(f"{ckpt_dir}/skill_library/langchain_tool", exist_ok=True)
 
-    def _create_prompt(self, prompts):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=prompts.PROMPT,
-            input_variables=prompts.INPUT_VARS,
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([prompts.PREFIX, prompts.FORMAT])
-        )
-        return ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-
-    def _initialize_llm(self, prompts):
-        llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(prompts),
-        )
-        return llm_chain
-
     def _generate_tool_description_step1(self, fxn_code):
         """
         Given the code snippet, it asks the agent to provide
@@ -94,7 +71,7 @@ class SkillAgent:
         2. name for Langchain BaseTool
         3. tool description
         """
-        response = self.llm_step1({"code": fxn_code})["text"]
+        response = self.llm_chain_step1({"code": fxn_code})["text"]
         fxn_name_match = re.search(r"Function name:\s*(\w+)", response)
         tool_name_match = re.search(r"Tool name:\s*(\w+)", response)
         description_match = re.search(r"Tool description:\s*(.*)", response, re.DOTALL)
@@ -116,7 +93,7 @@ class SkillAgent:
         fxn_name = info["fxn_name"]
         tool_name = info["tool_name"]
         description = info["description"]
-        response = self.llm_step2(
+        response = self.llm_chain_step2(
             {
                 "code": code,
                 "fxn_name": fxn_name,
