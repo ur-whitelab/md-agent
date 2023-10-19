@@ -1,110 +1,18 @@
 from langchain.prompts import PromptTemplate
 
-action_template_1 = PromptTemplate(
-    inputs=["files", "task", "context", "skills"],
-    template="""
-    You are a helpful assistant that writes python code to complete any
-    OpenMM or other molecular dynamics related task specified by me.
-
-    I will give you a task and context.
-    You should then write a python function that completes the task in the context.
-
-    You will also have access to all skills you have learned so far.
-    You may reuse them in your code or use them to help you write your code if needed.
-    The skills will be a dictionary of name and function pairs.
-
-    You should then respond to me with
-    Explain (if applicable):
-        1. Are there any steps missing in your plan?
-        2. Why does the code not complete the task?
-        3. What does the code and execution error imply?
-    Plan: How to complete the task step by step.
-        If there was an execution error, you should try to solve it.
-        You should pay attention to files since it tells what you files you have created.
-        The task completeness check partially depends on your final files list.
-    Code:
-        1) Write a function taking a string as the only argument.
-        3) Your function will be reused for building more complex functions.
-            Therefore, you should make it generic and reusable.
-            You should always check whether you have the required files before using them.
-        4) Functions in the given history summary
-            section will not be saved or executed.
-            Do not reuse functions listed there.
-        5) Anything defined outside a function will be ignored,
-            define all your variables inside your functions.
-        6) Your function input and output MUST be a string.
-            If you need to pass in an object, you should convert it to a string first.
-            If you need to pass in a file, you should pass in the
-            path to the file as a string.
-            If you need to output a file, you should instead save the file
-            and return the path to the file as a string.
-        7) Do not write infinite loops or recursive functions.
-        8) Name your function in a meaningful way (can infer the task from the name).
-        9) Include all imports necessary for your code to run. If possible, include these
-            imports in the function itself.
-        10) At the end of your code, call the function you defined with the input.
-        11) Don't use ... in any of your code. It should be complete and ready
-            for execution.
-            
-    You should only respond the following format:
-
-
-    Explain: ...
-    Plan:
-    1) ...
-    2) ...
-    3) ...
-    ...
-    Code:
-    ```
-    # helper functions (only if needed, try to avoid them)
-    ...
-    # main function after the helper functions
-    def yourMainFunctionName(query):
-    # ...
-
-    ```
-            
-    Here is the input:
-    files: {files}
-    task: {task}
-    context: {context}
-    skills: {skills}
-        """
-)
-
 action_template = PromptTemplate(
-    inputs=["recent_history", "full_history", "skills"],
+    inputs=["files", "task", "history", "skills"],
     template="""
     You are a helpful assistant that writes python code to complete any
     OpenMM or other molecular dynamics related task specified by me.
-    
+
     I will give you the following:
-    Recent History:
-        1. The most recent completed iteration
-        2. The task you must complete
-        3. The context of the task
-        4. The code written in the last iteration
-        5. The output of the code written in the last iteration
-        6. All available files from the last iteration
-        7. The code critique from the last iteration
-        8. The task critique from the last iteration, if applicable
+    1. The files you may access in your code
+    2. The task you must complete
+    3. The previous iterations in the conversation. You should learn from these.
+    4. The skills you have learned so far. You may reuse them in your code or use them
+        to help you write your code if needed.
 
-    I will also give you all data from the beginning of the conversation,
-    the Full History
-        1. Each Iteration Number
-        2. The tasks
-        3. The context of the tasks
-        4. The code written in each iteration
-        5. The output of the code written in the each iteration
-        6. All available files from the each iteration
-        7. The code critique from the each iteration
-        8. The task critique from the each iteration, if applicable
-
-    You will also have access to all Skills you have learned so far.
-    You may reuse them in your code or use them to help you write your code if needed.
-    The Skills will be a dictionary of name and function pairs.
-    
     You should then respond to me with
     Explain (if applicable):
         1. Are there any steps missing in your plan?
@@ -139,8 +47,10 @@ action_template = PromptTemplate(
         10) At the end of your code, call the function you defined with the input.
         11) Don't use ... in any of your code. It should be complete and ready
             for execution.
-    
+
     You should only respond the following format:
+
+
     Explain: ...
     Plan:
     1) ...
@@ -156,12 +66,13 @@ action_template = PromptTemplate(
     # ...
 
     ```
-    
+
     Here is the input:
-    recent_history: {recent_history}
-    full_history: {full_history}
+    files: {files}
+    task: {task}
+    history: {history}
     skills: {skills}
-    """
+        """,
 )
 
 code_critic_template = PromptTemplate(
@@ -182,7 +93,7 @@ code_critic_template = PromptTemplate(
     Code: The source code
     Code Output: The output of the executed code
     Task: The objective that the code needs to accomplish
-    
+
     You should only respond in JSON format as described below:
     {{
         "code_quality": "code_quality",
@@ -193,17 +104,24 @@ code_critic_template = PromptTemplate(
     }}
     Ensure the response can be parsed by Python `json.loads`,
     e.g.: no trailing commas, no single quotes, etc.
-    
+
     Here is the input:
     code: {code}
     code_output: {code_output}
     task: {task}
     context: {context}
-    """
+    """,
 )
 
 task_critic_template = PromptTemplate(
-    inputs=["files", "code", "code_output", "task", "context", "additional_information"],
+    inputs=[
+        "files",
+        "code",
+        "code_output",
+        "task",
+        "context",
+        "additional_information",
+    ],
     template="""
     You are an assistant that assesses my progress on my molecular
     dynamics project and provides useful guidance.
@@ -243,7 +161,7 @@ task_critic_template = PromptTemplate(
     task: {task},
     context: {context},
     additional_information: {additional_information}
-    """
+    """,
 )
 
 skill_describe_template = PromptTemplate(
@@ -263,17 +181,17 @@ skill_describe_template = PromptTemplate(
     clearly what the code does.
     4) Description should be in docstrings with up to 80 characters per line.
     5) Function name, tool name, and description must be in separate lines.
-    
+
     You should only respond in the format as described below:
 
     RESPONSE FORMAT:
     Function name: this should be Python function name
     Tool name: this should be Python name for class.
     Tool description: this should be tool description in format of docstrings.
-    
-    Here is the code: 
+
+    Here is the code:
     {code}
-    """
+    """,
 )
 
 skill_wrapper_template = PromptTemplate(
@@ -338,11 +256,11 @@ skill_wrapper_template = PromptTemplate(
             raise NotImplementedError("This tool does not support async")
     ```
     You must only respond with the full code in the format as described above.
-    
+
     Here is the input:
     code: {code},
     fxn_name: {fxn_name},
     tool_name: {tool_name},
     description: {description}
-    """
+    """,
 )
