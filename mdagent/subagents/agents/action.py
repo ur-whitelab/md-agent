@@ -4,22 +4,23 @@ import sys
 from typing import Optional
 
 from dotenv import load_dotenv
-from langchain.chains import LLMChain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 
-from .prompts import action_template
 from mdagent.utils import PathRegistry
+
+from .prompts import action_template
+
 load_dotenv()
 
 
-class ActionAgent:
+class Action:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
         model="gpt-4",
         temp=0.1,
-        max_iterations=120,
         api_key=None,
     ):
         llm = ChatOpenAI(
@@ -42,10 +43,7 @@ class ActionAgent:
         files = self.path_registry.list_path_names()
         # get skills
         return self.llm_chain(
-            {"files": files,
-             "task": task,
-             "history": history,
-             "skills": skills}
+            {"files": files, "task": task, "history": history, "skills": skills}
         )["text"]
 
     def _exec_code(self, python_code):
