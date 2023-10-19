@@ -1,20 +1,15 @@
 from dotenv import load_dotenv
-from langchain.chains import LLMChain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 
 from .prompts import critic_template
-
 
 load_dotenv()
 
 
 class Critic:
-    def __init__(
-        self,
-        model="gpt-4",
-        temp=0.1
-    ):
+    def __init__(self, model="gpt-4", temp=0.1):
         llm = ChatOpenAI(
             temperature=temp,
             model=model,

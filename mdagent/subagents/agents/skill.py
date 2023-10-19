@@ -7,12 +7,13 @@ import sys
 from typing import Optional
 
 from dotenv import load_dotenv
-from langchain.chains import LLMChain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 
-from .prompts import skill_describe_template, skill_wrapper_template
 from mdagent.utils import PathRegistry
+
+from .prompts import skill_describe_template, skill_wrapper_template
 
 
 class SkillManager:
@@ -27,7 +28,7 @@ class SkillManager:
         load_dotenv()
         self.ckpt_dir = ckpt_dir
         self.path_registry = path_registry
-        
+
         llm = ChatOpenAI(
             temperature=temp,
             model=model,
@@ -35,7 +36,7 @@ class SkillManager:
             streaming=True,
             callbacks=[StreamingStdOutCallbackHandler()],
         )
-        
+
         self.llm_chain_step1 = LLMChain(llm=llm, prompt=skill_describe_template)
         self.llm_chain_step2 = LLMChain(llm=llm, prompt=skill_wrapper_template)
 

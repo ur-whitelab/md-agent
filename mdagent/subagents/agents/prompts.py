@@ -20,15 +20,15 @@ action_template = PromptTemplate(
         3. What does the code and execution error imply?
     Plan: How to complete the task step by step.
         If there was an execution error, you should try to solve it.
-        You should pay attention to files since it tells what you files you have created.
+        You should pay attention to files since it tells
+        what you files you have access to.
         The task completeness check partially depends on your final files list.
     Code:
         1) Write a function taking a string as the only argument.
         3) Your function will be reused for building more complex functions.
             Therefore, you should make it generic and reusable.
-            You should always check whether you have the required files before using them.
-            If not, you should first collect the required files and reuse
-            the given pre-existing skills.
+            You should always check whether you have
+            the required files before using them.
         4) Functions in the given history summary
             section will not be saved or executed.
             Do not reuse functions listed there.
@@ -42,7 +42,8 @@ action_template = PromptTemplate(
             and return the path to the file as a string.
         7) Do not write infinite loops or recursive functions.
         8) Name your function in a meaningful way (can infer the task from the name).
-        9) Include all imports necessary for your code to run. If possible, include these
+        9) Include all imports necessary for your code to run.
+            If possible, include these
             imports in the function itself.
         10) At the end of your code, call the function you defined with the input.
         11) Don't use ... in any of your code. It should be complete and ready
@@ -75,7 +76,7 @@ action_template = PromptTemplate(
         """,
 )
 
-critic_template=PromptTemplate(
+critic_template = PromptTemplate(
     inputs=["code", "code_output", "task"],
     template="""
     You are an assistant that assesses the quality of my code
@@ -83,31 +84,31 @@ critic_template=PromptTemplate(
     and provides useful guidance.
 
     I will give you the following information:
-    
+
     Code: The source code
     Code Output: The output of the executed code
     Task: The objective that the code needs to accomplish
-    
+
     Your job is to evaluate the following:
     task relevance: whether the code meets the task requirements (note,
         this is not the same as whether the code is syntactically correct, but rather
         whether it is written to accomplish the task)
     critique: you should always provide a critique of the code, even if it is successful
-    suggestions: you should provide suggestions for how to improve the code, 
+    suggestions: you should provide suggestions for how to improve the code,
         even if it is successful
-    
+
     You should only respond in JSON format as described below:
     {{
         "task_relevance": boolean,
         "critique": "critique",
         "suggestions": "suggestions"
     }}
-    
+
     Here is the input:
     code: {code},
     code_output: {code_output},
     task: {task}
-    """
+    """,
 )
 
 

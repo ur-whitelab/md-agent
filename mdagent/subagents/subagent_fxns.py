@@ -76,43 +76,33 @@ class Iterator:
         """
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
-        success, code, code_output = self.action._run_code(
-            full_history,
-            task,
-            skills
-        )
+        success, code, code_output = self.action._run_code(full_history, task, skills)
         print("Code Output: ", code_output)
-        #run critic
+        # run critic
         print("\n\033[46m critic agent is running, critiquing code\033[0m")
         critique = self.critic._run(code, code_output, task)
-        #load critique
+        # load critique
         critique_full = json.loads(critique)
         task_relevance = critique_full["task_relevance"]
         critique = critique_full["critique"]
         suggestions = critique_full["suggestions"]
         if task_relevance and success:
-            success=True
+            success = True
         else:
-            success=False
-        
+            success = False
+
         return success, code, code_output, task, critique, suggestions
 
-    def _run_iterations(
-        self, run, task, context, iterations=5):
+    def _run_iterations(self, run, task, context, iterations=5):
         self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
         full_history = None
         skills = self._pull_information()["skills"]
         while iter < iterations and success is False:
-            (
-                success,
-                code,
-                code_output,
-                task,
-                critique,
-                suggestions
-            ) = self._run_loop(task, full_history, skills)
+            (success, code, code_output, task, critique, suggestions) = self._run_loop(
+                task, full_history, skills
+            )
 
             # save to history
             full_history = self._add_to_history(

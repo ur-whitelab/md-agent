@@ -55,7 +55,7 @@ class SubAgentInitializer:
         params = {
             "path_registry": self.path_registry,
             "model": self.subagents_model,
-            "temp": self.temp
+            "temp": self.temp,
         }
         # Update params with any overrides
         params.update(overrides)

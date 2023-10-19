@@ -73,8 +73,8 @@ class GetNewTool(BaseTool):
         raise NotImplementedError("this tool does not support async")
 
 
-def execute_skill_code(tool_name, skill_agent, path_registry):
-    skills = skill_agent.get_skills()
+def execute_skill_code(tool_name, skill_manager, path_registry):
+    skills = skill_manager.get_skills()
     code = skills.get(tool_name, {}).get("code", None)
 
     if not code:
@@ -175,10 +175,10 @@ class ExecuteSkillCode(BaseTool):
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            skill_agent = agent_initializer.create_skill_agent(resume=True)
-            if skill_agent is None:
-                return "Agent for this tool not initialized"
-            code_result = execute_skill_code(query, skill_agent, self.path_registry)
+            skill_manager = agent_initializer.create_skill_manager(resume=True)
+            if skill_manager is None:
+                return "skill manager for this tool not initialized"
+            code_result = execute_skill_code(query, skill_manager, self.path_registry)
             return code_result
         except Exception as e:
             return f"Something went wrong. {e}"

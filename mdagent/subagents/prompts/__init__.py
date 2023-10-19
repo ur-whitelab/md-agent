@@ -4,6 +4,7 @@ from .curriculum_prompts import (
     QAStep2Prompts,
     RefinePrompts,
 )
+
 __all__ = [
     "ExplorePrompts",
     "RefinePrompts",
