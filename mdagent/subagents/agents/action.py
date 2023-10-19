@@ -21,7 +21,6 @@ class Action:
         path_registry: Optional[PathRegistry],
         model="gpt-4",
         temp=0.1,
-        api_key=None,
     ):
         llm = ChatOpenAI(
             temperature=temp,

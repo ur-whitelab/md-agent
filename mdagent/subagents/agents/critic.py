@@ -13,8 +13,7 @@ class Critic:
     def __init__(
         self,
         model="gpt-4",
-        temp=0.1,
-        api_key=None,
+        temp=0.1
     ):
         llm = ChatOpenAI(
             temperature=temp,

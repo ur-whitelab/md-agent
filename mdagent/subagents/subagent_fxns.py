@@ -22,11 +22,10 @@ class Iterator:
         # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
         subagents = initializer.create_iteration_agents()
-        self.action_agent = subagents["action"]
-        self.code_critic_agent = subagents["code_critic"]
+        self.action = subagents["action"]
+        self.critic = subagents["critic"]
         self.curriculum_agent = subagents["refining_curriculum"]
-        self.skill_agent = subagents["skill"]
-        self.task_critic_agent = subagents["task_critic"]
+        self.skill = subagents["skill_manager"]
 
     def _add_to_history(
         self,
@@ -53,7 +52,6 @@ class Iterator:
             "output": output_history,
             "files": files_history,
             "code critique": code_critique_history,
-            "task_critique": task_critique_history,
         }
         # Append to the existing history
         output_json_string = json.dumps(output_dict, indent=4)

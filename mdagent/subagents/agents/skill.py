@@ -21,7 +21,6 @@ class SkillManager:
         path_registry: Optional[PathRegistry],
         model="gpt-3.5",
         temp=0.1,
-        api_key=None,
         ckpt_dir="ckpt",
         resume=False,
     ):
