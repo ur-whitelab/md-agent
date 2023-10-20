@@ -2,7 +2,8 @@ import os
 import re
 import subprocess
 import sys
-from typing import Any, Dict, List, Optional, Type, Union
+import typing
+from typing import Any, Dict, List, Type, Union
 
 from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
@@ -291,13 +292,13 @@ def packmol_wrapper(
 
 
 class PackmolInput(BaseModel):
-    pdbfiles: Optional[List[str]] = Field(
+    pdbfiles: typing.Optional[typing.List[str]] = Field(
         ..., description="List of PDB files to pack into a box"
     )
-    number_of_molecules: Optional[List[int]] = Field(
+    number_of_molecules: typing.Optional[typing.List[int]] = Field(
         ..., description="List of number of molecules to pack into a box"
     )
-    instructions: Optional[List[List[str]]] = Field(
+    instructions: typing.Optional[typing.List[List[str]]] = Field(
         ...,
         description="""List of instructions for each molecule.
         One List per Molecule.
@@ -370,9 +371,9 @@ class PackMolTool(BaseTool):
 
     args_schema: Type[BaseModel] = PackmolInput
 
-    path_registry: Optional[PathRegistry]
+    path_registry: typing.Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: typing.Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
@@ -1289,19 +1290,19 @@ def apply_fixes(pdbfile, query):
 
 class PDBFilesFixInp(BaseModel):
     pdbfile: str = Field(..., description="PDB file to be fixed")
-    ElemColum: Optional[bool] = Field(
+    ElemColum: typing.Optional[bool] = Field(
         False,
         description="""List of fixes to be applied. If None, a
         validation of what fixes are needed is performed.""",
     )
-    tempFactor: Optional[tuple[float, bool]] = Field(
+    tempFactor: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
         description="""Tuple of     ( float, bool)
                     first arg is the
                     value to be set as the tempFill, and third arg indicates
                     if only empty TempFactor columns have to be filled""",
     )
-    Occupancy: Optional[tuple[float, bool]] = Field(
+    Occupancy: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
         description="""Tuple of (bool, float, bool)
                         where first arg indicates if Occupancy
@@ -1358,9 +1359,9 @@ class FixPDBFile(BaseTool):
     description: str = "Fixes PDB files columns if needed"
     args_schema = PDBFilesFixInp
 
-    path_registry: Optional[PathRegistry]
+    path_registry: typing.Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: typing.Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
