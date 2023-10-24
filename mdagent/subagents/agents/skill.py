@@ -48,7 +48,7 @@ class SkillAgent:
         self.skills = {}
         # retrieve past skills & tools
         if resume:
-            print(f"\n\033[42mLoading Skills from {ckpt_dir}/skill_library\033[0m")
+            print(f"\n\033[43mLoading Skills from {ckpt_dir}/skill_library\033[0m")
             skill_file_path = f"{ckpt_dir}/skill_library/skills.json"
             if os.path.exists(skill_file_path):
                 with open(skill_file_path, "r") as f1:
@@ -56,9 +56,9 @@ class SkillAgent:
                     if content:
                         self.skills = json.loads(content)
                     else:
-                        print(f"\033[42mSkill file {skill_file_path} is empty\033[0m")
+                        print(f"\033[43mSkill file {skill_file_path} is empty\033[0m")
             else:
-                print(f"\033[42mNo skill file found at {skill_file_path}\033[0m")
+                print(f"\033[43mNo skill file found at {skill_file_path}\033[0m")
 
         os.makedirs(f"{ckpt_dir}/skill_library/code", exist_ok=True)
         os.makedirs(f"{ckpt_dir}/skill_library/description", exist_ok=True)
@@ -136,12 +136,12 @@ class SkillAgent:
         else:
             return None
 
-    def _dump_tool(self, tool_info, code, full_code):
+    def _dump_tool(self, tool_info, code, full_code, create_tool=True):
         tool_name = tool_info["tool_name"]
         description = tool_info["description"]
         if tool_name in self.skills:  # TODO: do a better way to check for duplicates
             print(
-                f"\n\033[42mTool with similar name already exists: "
+                f"\n\033[43mTool with similar name already exists: "
                 f"{tool_name}. Rewriting!\033[0m"
             )
             i = 2
@@ -172,22 +172,25 @@ class SkillAgent:
         )
         self.vectordb.persist()
 
-        # create LangChain BaseTool object by loading it from tool file
-        # TODO: move below to iterator code and have critcs check it
-        try:
-            self._create_LangChain_tool(tool_name, tool_path)
-            print(f"LangChain BaseTool object for {tool_name} is successfully created.")
-        except Exception as e:
-            print(
-                f"\n\033[42mFailed to load LangChain tool: {e}"
-                "Though the tool is not loaded, the code is saved.\033[0m"
+        if create_tool:
+            # create LangChain BaseTool object by loading it from tool file
+            # TODO: move below to iterator code and have critcs check it
+            try:
+                self._create_LangChain_tool(tool_name, tool_path)
+                print(
+                    f"Successfully created LangChain BaseTool object for {tool_name}."
+                )
+            except Exception as e:
+                print(
+                    f"\n\033[43mFailed to load LangChain tool: {e}"
+                    "\nThough the tool is not loaded, the code is saved.\033[0m"
+                )
+            # add tool file to the registry
+            self.path_registry.map_path(
+                name=tool_name,
+                path=tool_path,
+                description=f"Learned tool called {tool_name}",
             )
-        # add tool file to the registry
-        self.path_registry.map_path(
-            name=tool_name,
-            path=tool_path,
-            description=f"Learned tool called {tool_name}",
-        )
         # save tool to skill library
         self.skills[tool_name] = {
             "code": code,
@@ -238,13 +241,13 @@ class SkillAgent:
                 tool_info = self._generate_tool_description_step1(code)
                 if tool_info is None:
                     print(
-                        "\n\033[42mSkill agent failed to provide tool "
+                        "\n\033[43mSkill agent failed to provide tool "
                         "description. Retrying...\033[0m"
                     )
                     retry += 1
                     continue
                 print(
-                    "\n\033[42mTool description for the new tool is "
+                    "\n\033[43mTool description for the new tool is "
                     "successfully created.\033[0m"
                 )
 
@@ -252,19 +255,19 @@ class SkillAgent:
             full_code = self._generate_full_code_step2(code, tool_info)
             if full_code is None:
                 print(
-                    "\n\033[42mSkill agent failed to provide full "
+                    "\n\033[43mSkill agent failed to provide full "
                     "code. Retrying...\033[0m"
                 )
                 retry += 1
                 continue
             else:
                 print(
-                    "\n\033[42mFull code for the new LangChain tool is created.\033[0m"
+                    "\n\033[43mFull code for the new LangChain tool is created.\033[0m"
                 )
                 break
         if full_code is None:
             print(
-                f"\n\033[42mSkill agent failed to write and add the new tool"
+                f"\n\033[43mSkill agent failed to write and add the new tool"
                 f" after {max_retries} times. Saved the code and move on.\033[0m"
             )
             with open(f"{self.ckpt_dir}/skill_library/failed.txt", "a") as f:
@@ -284,6 +287,7 @@ class SkillAgent:
     # for CreateNewTool_iterator
     # def get_base_tools(self):
     #
+    #
     #     return [
     #         "VisualizationToolRender",
     #         "CheckDirectoryFiles",
@@ -297,19 +301,21 @@ class SkillAgent:
     #         "AddHydrogensCleaningTool",
     #     ]
 
-    def retrieve_tools(self, query):
-        k = min(self.retrieval_top_k, self.vectordb._collection.count())
+    def retrieve_skills(self, query, k=None):
+        if k is None:
+            k = self.retrieval_top_k
+        k = min(k, self.vectordb._collection.count())
         if k == 0:
-            return []
+            return None
         docs_and_scores = self.vectordb.similarity_search_with_score(query, k=k)
-        tools = []
+        retrieved_skills = {}
         string = ""
         for doc, score in docs_and_scores:
             tool_name = doc.metadata["name"]
-            tools.append(self.skills[tool_name]["code"])
+            retrieved_skills[tool_name] = self.skills[tool_name]["code"]
             string += tool_name + ", Score: " + str(score) + "\n"
-        print(f"\n\033[42mSkill agent retrieved {len(tools)} tools.\033[0m\n{string}")
-        return tools
+        print(f"\n\033[43m{string}\033[0m")
+        return retrieved_skills
 
     def run(self, code, max_retries=3):
         self.add_new_tool(code, max_retries)

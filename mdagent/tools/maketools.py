@@ -21,7 +21,7 @@ from .base_tools.vis_tools import (
     PlanBVisualizationTool,
     VisualizationToolRender,
 )
-from .subagent_tools import ExecuteSkillCode, GetNewTool
+from .subagent_tools import CreateNewTool, ExecuteSkill, SkillRetrieval
 
 
 def make_tools(llm: BaseLanguageModel, subagent_settings):
@@ -48,8 +48,9 @@ def make_tools(llm: BaseLanguageModel, subagent_settings):
 
     # base tools using sub agents
     subagents_tools = [
-        GetNewTool(path_registry=path_instance, subagent_settings=subagent_settings),
-        ExecuteSkillCode(
+        CreateNewTool(path_registry=path_instance, subagent_settings=subagent_settings),
+        ExecuteSkill(path_registry=path_instance, subagent_settings=subagent_settings),
+        SkillRetrieval(
             path_registry=path_instance, subagent_settings=subagent_settings
         ),
     ]

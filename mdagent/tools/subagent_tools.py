@@ -1,16 +1,17 @@
 import io
 import os
 import sys
-from typing import Optional
+from typing import Optional, Type
 
 from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
 from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry
 
 
-class GetNewTool(BaseTool):
-    name = "GetNewTool"
+class CreateNewTool(BaseTool):
+    name = "CreateNewTool"
     description = """
         This tool is used to create a new tool.
         Given a description of the tool needed,
@@ -118,7 +119,7 @@ def execute_skill_code(tool_name, skill_agent, path_registry):
     return "\n".join([success_message, files_message, registry_message, output_message])
 
 
-class ExecuteSkillCode(BaseTool):
+class ExecuteSkill(BaseTool):
     name = "ExecuteSkill"
     description = """Executes the code for a new tool that has been
     recently added during the current iteration.
@@ -188,13 +189,19 @@ class ExecuteSkillCode(BaseTool):
         raise NotImplementedError("This tool does not support async")
 
 
+class SkillRetrievalInput(BaseModel):
+    """Input for Skill Retrieval"""
+
+    query: str = Field(..., description="Query or task to retrieve skills as tools for")
+
+
 class SkillRetrieval(BaseTool):
     name = "SkillRetrieval"
     description = """Use this tool to retrieve a list of skills relevant
-    to the task at hand. Useful if the base tools you have are insufficient
-    for the task or to check before creating a new tool."""
+    Check this before creating a new tool. Enter task as query input."""
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
+    args_schema: Optional[Type[BaseModel]] = SkillRetrievalInput
 
     def __init__(
         self,
@@ -214,10 +221,10 @@ class SkillRetrieval(BaseTool):
             skill_agent = agent_initializer.create_skill_agent(resume=True)
             if skill_agent is None:
                 return "SubAgent for this tool not initialized"
-            tool_list = skill_agent.retrieve_tools(query)
-            if not tool_list:
-                return "No tools found for this query"
-            return f"{len(tool_list)} skills found: {tool_list}"
+            skills = skill_agent.retrieve_skills(query)
+            if skills is None:
+                return "No skills found for this query"
+            return f"\nFound {len(skills)} skills.\033[0m\n{list(skills.keys())}"
         except Exception as e:
             return f"Something went wrong. {e}"
 
