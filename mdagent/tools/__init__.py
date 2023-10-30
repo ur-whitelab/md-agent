@@ -16,7 +16,7 @@ from .base_tools import (
     VisualizationToolRender,
     get_pdb,
 )
-from .maketools import make_tools
+from .maketools import get_tools, make_tools
 from .subagent_tools import CreateNewTool, ExecuteSkill, SkillRetrieval
 
 __all__ = [
@@ -37,6 +37,7 @@ __all__ = [
     "PlanBVisualizationTool",
     "SimulationOutputFigures",
     "make_tools",
+    "get_tools",
     "CreateNewTool",
     "ExecuteSkill",
     "SkillRetrieval",

@@ -1,10 +1,14 @@
 import os
 import pickle
+from typing import Optional
 
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
 
+from mdagent.subagents import SubAgentSettings
 from mdagent.utils import PathRegistry
 
 from .base_tools.clean_tools import (
@@ -24,7 +28,9 @@ from .base_tools.vis_tools import (
 from .subagent_tools import CreateNewTool, ExecuteSkill, SkillRetrieval
 
 
-def make_tools(llm: BaseLanguageModel, subagent_settings):
+def make_tools(
+    llm: BaseLanguageModel, subagent_settings: Optional[SubAgentSettings] = None
+):
     load_dotenv()
 
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
@@ -47,6 +53,8 @@ def make_tools(llm: BaseLanguageModel, subagent_settings):
     ]
 
     # base tools using sub agents
+    if subagent_settings is None:
+        subagent_settings = SubAgentSettings(path_registry=path_instance)
     subagents_tools = [
         CreateNewTool(path_registry=path_instance, subagent_settings=subagent_settings),
         ExecuteSkill(path_registry=path_instance, subagent_settings=subagent_settings),
@@ -74,3 +82,37 @@ def make_tools(llm: BaseLanguageModel, subagent_settings):
         all_tools.append(Scholar2ResultLLM(pqa_key))  # literature search
 
     return all_tools
+
+
+def get_tools(
+    query,
+    llm: BaseLanguageModel,
+    subagent_settings: Optional[SubAgentSettings] = None,
+    ckpt_dir="ckpt",
+    retrieval_top_k=10,
+):
+    all_tools = make_tools(llm, subagent_settings)
+
+    # create vector DB for all tools
+    vectordb = Chroma(
+        collection_name="all_tools_vectordb",
+        embedding_function=OpenAIEmbeddings(),
+        persist_directory=f"{ckpt_dir}/all_tools_vectordb",
+    )
+    for i, tool in enumerate(all_tools):
+        vectordb.add_texts(
+            texts=[tool.description],
+            ids=[tool.name],
+            metadatas=[{"tool_name": tool.name, "index": i}],
+        )
+        vectordb.persist()
+
+    # retrieve 'k' tools
+    k = min(retrieval_top_k, vectordb._collection.count())
+    if k == 0:
+        return None
+    docs = vectordb.similarity_search(query, k=k)
+    retrieved_tools = []
+    for d in docs:
+        retrieved_tools.append(all_tools[d.metadata["index"]])
+    return retrieved_tools
