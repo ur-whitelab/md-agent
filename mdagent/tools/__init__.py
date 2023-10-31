@@ -6,8 +6,9 @@ from .clean_tools import (
 )
 from .git_issues_tool import SerpGitTool
 from .md_util_tools import Name2PDBTool, get_pdb
+from .pdb_tools import PackMolTool
 from .plot_tools import SimulationOutputFigures
-from .registry import ListRegistryPaths, MapPath2Name, PathRegistry
+from .registry_tools import ListRegistryPaths, MapPath2Name
 from .search_tools import Scholar2ResultLLM
 from .setup_and_run import SetUpAndRunTool, SimulationFunctions
 from .vis_tools import (
@@ -25,10 +26,6 @@ __all__ = [
     "VisualizationToolRender",
     "CheckDirectoryFiles",
     "PlanBVisualizationTool",
-    "ListRegistryPaths",
-    "PathRegistry",
-    "MapPath2Name",
-    "Name2PDBTool",
     "get_pdb",
     "SpecializedCleanTool",
     "RemoveWaterCleaningTool",
@@ -38,4 +35,8 @@ __all__ = [
     "PlanBVisualizationTool",
     "SimulationOutputFigures",
     "SerpGitTool",
+    "PackMolTool",
+    "ListRegistryPaths",
+    "MapPath2Name",
+    "Name2PDBTool",
 ]

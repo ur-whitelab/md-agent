@@ -25,8 +25,9 @@ from openmm.app import (
 )
 from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 
+from mdagent.utils import PathRegistry
+
 from .clean_tools import CleaningTools
-from .registry import PathRegistry
 
 
 class SimulationFunctions:

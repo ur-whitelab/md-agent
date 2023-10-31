@@ -44,6 +44,7 @@ class PathRegistry:
             data = json.load(json_file)
             return name in data
 
+    # we use this fxn to "save" files (paths) to the json file
     def map_path(self, name, path, description=None):
         description = description or "No description provided"
         full_path = self._get_full_path(path)
@@ -52,6 +53,7 @@ class PathRegistry:
         saved = self._check_json_content(name)
         return f"Path {'successfully' if saved else 'not'} mapped to name: {name}"
 
+    # this if we want to get the path. not use as often
     def get_mapped_path(self, name):
         if not self._check_for_json():
             return "The JSON file does not exist."
