@@ -109,4 +109,4 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 
 def test_getpdb(fibronectin, get_registry):
     name = get_pdb(fibronectin, get_registry)
-    assert name == "1X5Y.cif"
+    assert name == "1X5Y.pdb"
