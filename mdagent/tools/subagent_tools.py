@@ -1,6 +1,3 @@
-import io
-import os
-import sys
 from typing import Optional, Type
 
 from langchain.tools import BaseTool
@@ -67,47 +64,6 @@ class CreateNewTool(BaseTool):
         raise NotImplementedError("This tool does not support async")
 
 
-def execute_skill_code(tool_name, skill_agent, path_registry, **kwargs):
-    skills = skill_agent.get_skills()
-    code = skills.get(tool_name, {}).get("code", None)
-    if not code:
-        raise ValueError(
-            f"Code for {tool_name} not found. Make sure to use correct tool name."
-        )
-    # capture initial state
-    initial_files = set(os.listdir("."))
-    initial_registry = path_registry.list_path_names()
-
-    # Redirect stdout and stderr to capture the output
-    original_stdout = sys.stdout
-    original_stderr = sys.stderr
-    sys.stdout = captured_stdout = sys.stderr = io.StringIO()
-    exec_context = {**kwargs, **globals()}  # spread and set kwargs as variables in env
-    try:
-        exec(code, exec_context)
-        output = captured_stdout.getvalue()
-    except Exception as e:
-        # Restore stdout and stderr
-        sys.stdout = original_stdout
-        sys.stderr = original_stderr
-        error_type = type(e).__name__
-        raise type(e)(f"Error executing code for {tool_name}. {error_type}: {e}")
-    finally:
-        # Ensure that stdout and stderr are always restored
-        sys.stdout = original_stdout
-        sys.stderr = original_stderr
-
-    # capture final state
-    new_files = list(set(os.listdir(".")) - initial_files)
-    new_registry = list(set(path_registry.list_path_names()) - set(initial_registry))
-
-    success_message = "Successfully executed code."
-    files_message = f"New Files Created: {', '.join(new_files)}"
-    registry_message = f"Files added to Path Registry: {', '.join(new_registry)}"
-    output_message = f"Code Output: {output}"
-    return "\n".join([success_message, files_message, registry_message, output_message])
-
-
 class ExecuteSkillInput(BaseModel):
     """Input for Execute Skill"""
 
@@ -143,15 +99,15 @@ class ExecuteSkill(BaseTool):
             if self.subagent_settings is None:
                 return "Settings for subagents yet to be defined"
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            skill_agent = agent_initializer.create_skill_agent(resume=True)
+            skill_agent = agent_initializer.create_skill_manager(resume=True)
             if skill_agent is None:
                 return "Agent for this tool not initialized"
             if args is not None:
-                code_result = execute_skill_code(
+                code_result = skill_agent.execute_skill_code(
                     tool_name, skill_agent, self.path_registry, **args
                 )
             else:
-                code_result = execute_skill_code(
+                code_result = skill_agent.execute_skill_code(
                     tool_name, skill_agent, self.path_registry
                 )
             return code_result
@@ -195,7 +151,7 @@ class SkillRetrieval(BaseTool):
             if self.subagent_settings is None:
                 return "Settings for subagents yet to be defined"
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            skill_agent = agent_initializer.create_skill_agent(resume=True)
+            skill_agent = agent_initializer.create_skill_manager(resume=True)
             if skill_agent is None:
                 return "SubAgent for this tool not initialized"
             skills = skill_agent.retrieve_skills(query)

@@ -6,7 +6,7 @@ from mdagent.subagents.agents import (
     CodeCriticAgent,
     ExplorerAgent,
     RefiningCurriculumAgent,
-    SkillAgent,
+    SkillManager,
     TaskCriticAgent,
 )
 from mdagent.utils import PathRegistry
@@ -23,6 +23,7 @@ class SubAgentSettings:
         verbose=True,
         ckpt_dir="ckpt",
         resume=False,
+        retrieval_top_k=5,
     ):
         self.path_registry = path_registry
         self.subagents_model = subagents_model
@@ -32,6 +33,7 @@ class SubAgentSettings:
         self.verbose = verbose
         self.ckpt_dir = ckpt_dir
         self.resume = resume
+        self.retrieval_top_k = retrieval_top_k
 
 
 class SubAgentInitializer:
@@ -51,6 +53,7 @@ class SubAgentInitializer:
         self.verbose = settings.verbose
         self.ckpt_dir = settings.ckpt_dir
         self.resume = settings.resume
+        self.retrieval_top_k = settings.retrieval_top_k
 
     def create_action_agent(self, **overrides):
         params = {
@@ -106,7 +109,7 @@ class SubAgentInitializer:
         params.update(overrides)
         return RefiningCurriculumAgent(**params)
 
-    def create_skill_agent(self, **overrides):
+    def create_skill_manager(self, **overrides):
         params = {
             "path_registry": self.path_registry,
             "model": self.subagents_model,
@@ -116,10 +119,11 @@ class SubAgentInitializer:
             "verbose": self.verbose,
             "ckpt_dir": self.ckpt_dir,
             "resume": self.resume,
+            "retrieval_top_k": self.retrieval_top_k,
         }
         # Update params with any overrides
         params.update(overrides)
-        return SkillAgent(**params)
+        return SkillManager(**params)
 
     def create_task_critic(self, **overrides):
         params = {
@@ -139,6 +143,6 @@ class SubAgentInitializer:
             "action": self.create_action_agent(**overrides),
             "code_critic": self.create_code_critic(**overrides),
             "refining_curriculum": self.create_refining_curriculum_agent(**overrides),
-            "skill": self.create_skill_agent(**overrides),
+            "skill": self.create_skill_manager(**overrides),
             "task_critic": self.create_task_critic(**overrides),
         }

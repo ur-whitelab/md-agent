@@ -41,6 +41,7 @@ class MDAgent:
             verbose=verbose,
             ckpt_dir=ckpt_dir,
             resume=resume,
+            retrieval_top_k=top_k_tools,
         )
 
     def run(self, prompt):

@@ -19,7 +19,7 @@ from .curriculum_prompts import (
     QAStep2Prompts,
     RefinePrompts,
 )
-from .skill_prompts import SkillStep1Prompts, SkillStep2Prompts
+from .skill_prompts import SkillPrompts
 
 __all__ = [
     "action_prefix",
@@ -38,6 +38,5 @@ __all__ = [
     "RefinePrompts",
     "QAStep1Prompts",
     "QAStep2Prompts",
-    "SkillStep1Prompts",
-    "SkillStep2Prompts",
+    "SkillPrompts",
 ]
