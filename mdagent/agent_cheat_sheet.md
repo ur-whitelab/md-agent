@@ -37,6 +37,18 @@
 ├── ...
 ```
 
+# Import Chain
+Top-level to lower-level dependencies to prevent circular imports
+```
+mainagent   - depends on everything below
+  ↑
+tools       - depends on subagents, utils
+  ↑
+subagents   - depends on utils
+  ↑
+utils       - depends on nothing
+```
+
 # Agent Cheat Sheet - for development
 
 We are working with multiple agents, who interact with each other in various ways. To make this process more seamless, here is an agent cheat sheet.
@@ -123,7 +135,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - Lives whenever new code is successful and needs to store as a tool
 - SkillManager.add_new_tool(fxn_name, code)
 
-### OUTDATED: will revamp curriculum agent
+OUTDATED: will revamp curriculum agents into one agent
 ## Refining Curriculum Agent (to refine task if code keeps failing)
 - proposes a new, refined task closely aligned to the 'spirit' of user prompt as much as possible
 - inputs:

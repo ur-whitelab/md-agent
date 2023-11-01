@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -6,12 +6,15 @@ from pydantic import BaseModel, Field
 from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry
 
+from .maketools import get_all_tools_string
+
 
 class CreateNewToolInput(BaseModel):
     """Input for Create New Tool"""
 
     task: str = Field(..., description="Description of task the tool should perform")
-    original_prompt: str = Field(..., description="Full user prompt from the beginning")
+    orig_prompt: str = Field(..., description="Full user prompt from the beginning")
+    curr_tools: List[str] = Field(..., description="List of tools the agent has")
 
 
 class CreateNewTool(BaseTool):
@@ -40,7 +43,7 @@ class CreateNewTool(BaseTool):
         self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
-    def _run(self, task: str, original_prompt: str) -> str:
+    def _run(self, task: str, orig_prompt: str, curr_tools: List[str]) -> str:
         """use the tool."""
         # check formatting
         try:
@@ -50,7 +53,8 @@ class CreateNewTool(BaseTool):
                 return "Settings for subagents yet to be defined"
             # run iterator
             newcode_iterator = Iterator(self.path_registry, self.subagent_settings)
-            tool_name = newcode_iterator.run(task, original_prompt)
+            all_tools = get_all_tools_string()
+            tool_name = newcode_iterator.run(task, orig_prompt, curr_tools, all_tools)
             if tool_name:
                 return f"""Tool created successfully: {tool_name}
                 You can now use the tool in subsequent steps."""
@@ -59,7 +63,7 @@ class CreateNewTool(BaseTool):
         except Exception as e:
             return f"Something went wrong. {type(e).__name__}: {e}"
 
-    async def _arun(self, task: str, original_prompt: str) -> str:
+    async def _arun(self, task: str, orig_prompt: str, curr_tools: List[str]) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("This tool does not support async")
 

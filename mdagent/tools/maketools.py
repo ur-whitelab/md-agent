@@ -9,7 +9,7 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 
 from mdagent.subagents import SubAgentSettings
-from mdagent.utils import PathRegistry
+from mdagent.utils import PathRegistry, _make_llm
 
 from .base_tools.clean_tools import (
     AddHydrogensCleaningTool,
@@ -28,14 +28,25 @@ from .base_tools.vis_tools import (
 from .subagent_tools import CreateNewTool, ExecuteSkill, SkillRetrieval
 
 
-def make_tools(
+def get_all_tools_string():
+    llm = _make_llm(model="gpt-3.5-turbo", temp=0.1, verbose=True)
+    all_tools = make_all_tools(llm)
+    all_tools_string = ""
+    for tool in all_tools:
+        all_tools_string += f"{tool.name}: {tool.description}\n"
+    return all_tools_string
+
+
+def make_all_tools(
     llm: BaseLanguageModel, subagent_settings: Optional[SubAgentSettings] = None
 ):
     load_dotenv()
+    all_tools = []
 
-    all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
+    if llm:
+        all_tools += agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
-    # add registry tools
+    # get path registry
     path_instance = PathRegistry.get_instance()  # get instance first
 
     # add base tools
@@ -91,7 +102,7 @@ def get_tools(
     ckpt_dir="ckpt",
     retrieval_top_k=10,
 ):
-    all_tools = make_tools(llm, subagent_settings)
+    all_tools = make_all_tools(llm, subagent_settings)
 
     # create vector DB for all tools
     vectordb = Chroma(

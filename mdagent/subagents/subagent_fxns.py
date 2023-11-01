@@ -205,11 +205,11 @@ class Iterator:
         return success, tool_name
 
     # run da whole thing
-    def run(self, task, user_prompt, max_task_refinement=1):
+    def run(self, task, user_prompt, current_tools, all_tools, max_task_refinement=1):
         for i in range(max_task_refinement + 1):
             if i > 0:
                 # if not first step, propose a new task
-                info = self._pull_information()
+                info = self._pull_information(current_tools, all_tools)
                 print("\n\033[46mtask failed, running curriculum agent\033[0m")
                 task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
 
@@ -220,7 +220,7 @@ class Iterator:
                 return tool_name
         return None
 
-    def _pull_information(self):
+    def _pull_information(self, current_tools, all_tools):
         # pull info of strings to pass to llm agents
         recent_history_string = ""
         full_history_string = ""
@@ -230,7 +230,6 @@ class Iterator:
                 lines = full_history_string.splitlines()
                 recent_history_string = lines[-1] if lines else None
 
-        # TODO: do include base tools
         skills = self.skill_agent.get_skills()
         if skills:
             skills_string = json.dumps(skills)
@@ -243,6 +242,8 @@ class Iterator:
         else:
             files_string = ""
 
+        if current_tools:
+            current_tools_string = json.dumps(current_tools)
         # TODO: include a list of packages we currently have/support
 
         info = {
@@ -250,5 +251,7 @@ class Iterator:
             "full_history": full_history_string,
             "skills": skills_string,
             "files": files_string,
+            "current_tools": current_tools_string,
+            "all_tools": all_tools,
         }
         return info

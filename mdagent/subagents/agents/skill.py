@@ -118,7 +118,7 @@ class SkillManager:
             description=description,
         )
         self._update_skill_library(function, code, description, langchain_tool)
-        return langchain_tool
+        return fxn_name
 
     def _update_skill_library(self, function, code_script, description, langchain_tool):
         tool_name = function.__name__
@@ -179,6 +179,35 @@ class SkillManager:
         tools.append(langchain_tool)
         with open(pickle_file, "wb") as f:
             pickle.dump(tools, f)
+
+    def execute_skill_function(self, tool_name, path_registry, **kwargs):
+        tool_function = self.skills.get(tool_name, {}).get("function", None)
+        if not tool_function:
+            raise ValueError(
+                f"Function for {tool_name} not found. Ensure tool name"
+                f"is correct and its key 'function' isn't 'None'."
+            )
+        # capture initial state
+        initial_files = set(os.listdir("."))
+        initial_registry = path_registry.list_path_names()
+
+        try:
+            output = tool_function(**kwargs)
+        except Exception as e:
+            raise e
+
+        # capture final state
+        new_files = list(set(os.listdir(".")) - initial_files)
+        new_registry = list(
+            set(path_registry.list_path_names()) - set(initial_registry)
+        )
+        success_message = "Successfully executed code."
+        files_message = f"New Files Created: {', '.join(new_files)}"
+        registry_message = f"Files added to Path Registry: {', '.join(new_registry)}"
+        output_message = f"Code Output: {output}"
+        return "\n".join(
+            [success_message, files_message, registry_message, output_message]
+        )
 
     def execute_skill_code(self, tool_name, path_registry, **kwargs):
         code = self.skills.get(tool_name, {}).get("code", None)
