@@ -17,6 +17,7 @@ def yourMainFunctionName(query):
   # ...
 
 ```
+Function Name: yourMainFunctionName
 """
 
 action_inputs = """
@@ -61,8 +62,10 @@ Plan: How to complete the task step by step.
     If there was an execution error, you should try to solve it.
     You should pay attention to files since it tells what you files you have created.
     The task completeness check partially depends on your final files list.
+    What example inputs you plan to use to test your code.
 Code:
-    1) Write a function taking a string as the only argument.
+    1) Include all imports necessary for your code to run.
+    2) Your function MUST have doc_strings with a clear description when to use it.
     3) Your function will be reused for building more complex functions.
         Therefore, you should make it generic and reusable.
         You should always check whether you have the required files before using them.
@@ -73,19 +76,20 @@ Code:
         Do not reuse functions listed there.
     5) Anything defined outside a function will be ignored,
         define all your variables inside your functions.
-    6) Your function input and output MUST be a string.
-        If you need to pass in an object, you should convert it to a string first.
+    6) Your function output MUST be a string.
         If you need to pass in a file, you should pass in the
         path to the file as a string.
         If you need to output a file, you should instead save the file
         and return the path to the file as a string.
     7) Do not write infinite loops or recursive functions.
     8) Name your function in a meaningful way (can infer the task from the name).
-    9) Include all imports necessary for your code to run. If possible, include these
-        imports in the function itself.
-    10) At the end of your code, call the function you defined with the input.
-    11) Don't use ... in any of your code. It should be complete and ready
-        for execution.
+    9) At the end of your code, call the function you defined with
+        inputs using your own examples.
+    10) Don't use ... in any of your code. It should be complete and
+        ready for execution.
+    11) Don't use input() or any user inputs. Your entire code should be
+        complete and ready.
+Function Name: The name of the main function you wrote.
 """
 
 action_prompt = """
@@ -114,30 +118,34 @@ Explain (if applicable):
 Plan: How to complete the task step by step.
     You should pay attention to files since it tells what you files you have access to.
     The task completeness check partially depends on your final files list.
+    What example inputs you plan to use to test your code.
 Code:
-    1) Write a function taking a string as the only argument.
+    1) Include all imports necessary for your code to run.
+    2) Your function MUST have doc_strings with a clear description when to use it.
     3) Your function will be reused for building more complex functions.
         Therefore, you should make it generic and reusable.
         You should always check whether you have the required files before using them.
-        If not, you should first collect the required files
-        and reuse the above useful programs.
-    4) Functions in the iteration history will not be saved or executed.
+        If not, you should first collect the required files and reuse
+        the given pre-existing skills.
+    4) Functions in the given history summary
+        section will not be saved or executed.
         Do not reuse functions listed there.
     5) Anything defined outside a function will be ignored,
         define all your variables inside your functions.
-    6) Your function input and output MUST be a string.
-        If you need to pass in an object, you should convert it to a string first.
+    6) Your function output MUST be a string.
         If you need to pass in a file, you should pass in the
         path to the file as a string.
-        If you need to output a file, you should instead save the file and
-        return the path to the file as a string.
+        If you need to output a file, you should instead save the file
+        and return the path to the file as a string.
     7) Do not write infinite loops or recursive functions.
     8) Name your function in a meaningful way (can infer the task from the name).
-    9) Include all imports necessary for your code to run. If possible, include these
-        imports in the function itself.
-    10) At the end of your code, call the function you defined with the input.
-    11) Don't use ... in any of your code. It should be complete and ready
-        for execution.
+    9) At the end of your code, call the function you defined with
+        inputs using your own examples.
+    10) Don't use ... in any of your code. It should be complete and
+        ready for execution.
+    11) Don't use input() or any user inputs. Your entire code should be
+        complete and ready.
+Function Name: The name of the main function you wrote.
 """
 
 action_prompt_1 = """
