@@ -12,11 +12,15 @@ class Iterator:
         self,
         path_registry: Optional[PathRegistry],
         subagent_settings: Optional[SubAgentSettings],
+        all_tools_string: Optional[str] = None,
+        current_tools: Optional[dict] = None,
     ):
         self.path_registry = path_registry
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
         self.ckpt_dir = subagent_settings.ckpt_dir
+        self.all_tools_string = all_tools_string
+        self.current_tools = current_tools
         os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
 
         # initialize agents
@@ -86,7 +90,7 @@ class Iterator:
             context,
             skills,
         )
-        print("Code Output: ", code_output)
+        print("\nCode Output: ", code_output)
         if code_success is True:
             print("\n\033[46mcode succeeded, running task critic\033[0m")
             # run task critic
@@ -108,6 +112,7 @@ class Iterator:
                 task,
                 critique,
                 task_critique,
+                fxn_name,
             )
 
         # otherwise, run code critic
@@ -205,11 +210,11 @@ class Iterator:
         return success, tool_name
 
     # run da whole thing
-    def run(self, task, user_prompt, current_tools, all_tools, max_task_refinement=1):
+    def run(self, task, user_prompt, max_task_refinement=1):
         for i in range(max_task_refinement + 1):
             if i > 0:
                 # if not first step, propose a new task
-                info = self._pull_information(current_tools, all_tools)
+                info = self._pull_information()
                 print("\n\033[46mtask failed, running curriculum agent\033[0m")
                 task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
 
@@ -220,7 +225,7 @@ class Iterator:
                 return tool_name
         return None
 
-    def _pull_information(self, current_tools, all_tools):
+    def _pull_information(self):
         # pull info of strings to pass to llm agents
         recent_history_string = ""
         full_history_string = ""
@@ -242,8 +247,9 @@ class Iterator:
         else:
             files_string = ""
 
-        if current_tools:
-            current_tools_string = json.dumps(current_tools)
+        current_tools_string = ""
+        if self.current_tools:
+            current_tools_string = json.dumps(self.current_tools)
         # TODO: include a list of packages we currently have/support
 
         info = {
@@ -252,6 +258,6 @@ class Iterator:
             "skills": skills_string,
             "files": files_string,
             "current_tools": current_tools_string,
-            "all_tools": all_tools,
+            "all_tools": self.all_tools_string,
         }
         return info

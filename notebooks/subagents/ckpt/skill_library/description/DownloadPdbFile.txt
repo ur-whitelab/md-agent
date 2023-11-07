@@ -1,6 +1,0 @@
-This tool downloads a PDB file from the RCSB Protein Data Bank (PDB) website.
-The function takes a PDB ID as input and checks if a JSON file containing the PDB IDs exists.
-If the JSON file does not exist, it prompts the user to enter a PDB ID.
-The function then uses the PDB ID to construct a URL and sends a GET request to download the PDB file.
-The downloaded file is saved with the same name as the PDB ID and returned as the output.
-Finally, the function prints the path to the downloaded file.

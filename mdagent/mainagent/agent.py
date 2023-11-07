@@ -1,12 +1,27 @@
 from dotenv import load_dotenv
-from rmrkl import ChatZeroShotAgent, RetryAgentExecutor
+from langchain.agents import AgentExecutor, AgentType, initialize_agent
+from langchain.agents.openai_functions_agent.base import OpenAIFunctionsAgent
+from langchain.prompts import PromptTemplate
 
 from mdagent.mainagent.prompt import FORMAT_INSTRUCTIONS, QUESTION_PROMPT, SUFFIX
 from mdagent.subagents import SubAgentSettings
-from mdagent.tools import get_tools
+from mdagent.tools import get_tools, make_all_tools
 from mdagent.utils import PathRegistry, _make_llm
 
 load_dotenv()
+
+main_prompt = PromptTemplate(
+    input_variables=["input"],
+    template="""
+    You are an expert molecular dynamics scientist and your
+    task is to respond to the question or
+    solve the problem to the best of your ability using
+    the provided tools. Once you map a path to a short name,
+    you may only use that short name in future actions.
+    Here is the input:
+    input: {input}
+    """,
+)
 
 
 class MDAgent:
@@ -43,6 +58,34 @@ class MDAgent:
             resume=resume,
             retrieval_top_k=top_k_tools,
         )
+        if tools is None:
+            tools_llm = _make_llm(tools_model, temp, verbose)
+            tools = make_all_tools(tools_llm, self.subagents_settings)
+
+        # Initialize agent
+        # self.agent_executor = RetryAgentExecutor.from_agent_and_tools(
+        #     tools=tools,
+        #     agent=ChatZeroShotAgent.from_llm_and_tools(
+        #         self.llm,
+        #         tools=tools,
+        #         suffix=SUFFIX,
+        #         format_instructions=FORMAT_INSTRUCTIONS,
+        #         question_prompt=QUESTION_PROMPT,
+        #     ),
+        #     verbose=True,
+        #     max_iterations=max_iterations,
+        #     return_intermediate_steps=True,
+        # )
+        self.agent_executor = initialize_agent(
+            tools,
+            self.llm,
+            agent=AgentType.OPENAI_FUNCTIONS,
+            suffix=SUFFIX,
+            format_instructions=FORMAT_INSTRUCTIONS,
+            question_prompt=QUESTION_PROMPT,
+            return_intermediate_steps=True,
+            max_iterations=self.subagents_settings.max_iterations,
+        )
 
     def run(self, prompt):
         # get necessary tools based on prompt
@@ -58,27 +101,58 @@ class MDAgent:
             tools = self.tools
 
         # initialize agent
-        self.agent_executor = RetryAgentExecutor.from_agent_and_tools(
+        # self.agent_executor = RetryAgentExecutor.from_agent_and_tools(
+        #     tools=tools,
+        #     agent=ChatZeroShotAgent.from_llm_and_tools(
+        #         self.llm,
+        #         tools=tools,
+        #         suffix=SUFFIX,
+        #         format_instructions=FORMAT_INSTRUCTIONS,
+        #         question_prompt=QUESTION_PROMPT,
+        #     ),
+        #     verbose=True,
+        #     max_iterations=self.subagents_settings.max_iterations,
+        #     return_intermediate_steps=True,
+        # )
+        # self.agent_executor = initialize_agent(
+        #     tools,
+        #     self.llm,
+        #     agent=AgentType.OPENAI_FUNCTIONS,
+        #     suffix=SUFFIX,
+        #     format_instructions=FORMAT_INSTRUCTIONS,
+        #     question_prompt=QUESTION_PROMPT,
+        #     return_intermediate_steps=True,
+        #     max_iterations=self.subagents_settings.max_iterations,
+        # )
+
+        # # run the agent
+        # outputs = self.agent_executor({"input": prompt})
+        # # Parse long output (with intermediate steps)
+        # intermed = outputs["intermediate_steps"]
+        # final = ""
+        # for step in intermed:
+        #     final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
+        # final += f"Final Answer: {outputs['output']}"
+
+        # return final
+        self.agent_executor = AgentExecutor.from_agent_and_tools(
             tools=tools,
-            agent=ChatZeroShotAgent.from_llm_and_tools(
-                self.llm,
-                tools=tools,
-                suffix=SUFFIX,
-                format_instructions=FORMAT_INSTRUCTIONS,
-                question_prompt=QUESTION_PROMPT,
-            ),
+            agent=OpenAIFunctionsAgent.from_llm_and_tools(self.llm, tools),
+            # agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+            handle_parsing_errors=True,
             verbose=True,
-            max_iterations=self.subagents_settings.max_iterations,
             return_intermediate_steps=True,
         )
-
-        # run the agent
-        outputs = self.agent_executor({"input": prompt})
+        outputs = self.agent_executor(main_prompt.format(input=prompt))
         # Parse long output (with intermediate steps)
         intermed = outputs["intermediate_steps"]
         final = ""
         for step in intermed:
-            final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
+            final += (
+                f"Action: {step[0].tool}\n"
+                f"Action Input: {step[0].tool_input}\n"
+                f"Observation: {step[1]}\n"
+            )
+            # final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
         final += f"Final Answer: {outputs['output']}"
-
         return final
