@@ -1,10 +1,10 @@
-from typing import Any, Dict, Optional, Type
+from typing import Optional, Type
 
 import MDAnalysis as mda
 import MDAnalysis.analysis.distances as mda_dist
 import numpy as np
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 
 def ppi_distance(pdb_file, binding_site="protein"):
@@ -44,15 +44,6 @@ class PPIDistanceInputSchema(BaseModel):
         of the protein using MDAnalysis selection syntax."""
     )
 
-    @root_validator
-    def validate_query(cls, values: Dict[str, Any]) -> Dict:
-        pdb_file = values.get("pdb_file")
-        if not pdb_file:
-            values["error"] = "PDB file must be provided"
-        elif not pdb_file.endswith(".pdb"):
-            values["error"] = "PDB file must have .pdb extension"
-        return values
-
 
 class PPIDistance(BaseTool):
     name: str = "ppi_distance"
@@ -61,11 +52,9 @@ class PPIDistance(BaseTool):
     any protein-protein interaction."""
     args_schema: Type[BaseModel] = PPIDistanceInputSchema
 
-    def _run(
-        self, pdb_file: str, binding_site: str = "protein", error: Optional[str] = ""
-    ):
-        if error:  # this doesn't work
-            return f"error: {error}"
+    def _run(self, pdb_file: str, binding_site: str = "protein"):
+        if not pdb_file.endswith(".pdb"):
+            return "Error with input: PDB file must have .pdb extension"
         try:
             avg_dist = ppi_distance(pdb_file, binding_site=binding_site)
         except ValueError as e:
