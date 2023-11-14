@@ -1,10 +1,10 @@
-from typing import Type
+from typing import Any, Dict, Optional, Type
 
 import MDAnalysis as mda
 import MDAnalysis.analysis.distances as mda_dist
 import numpy as np
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
 
 def ppi_distance(pdb_file, binding_site="protein"):
@@ -37,22 +37,45 @@ def ppi_distance(pdb_file, binding_site="protein"):
 
 class PPIDistanceInputSchema(BaseModel):
     pdb_file: str = Field(
-        description="name of PDB file containing protein-protein interaction"
+        description="file with .pdb extension containing protein-protein interaction"
     )
-    binding_site: str = Field(
-        description="a list of residues as the binding site of the protein"
+    binding_site: Optional[str] = Field(
+        description="""a list of selected residues as the binding site
+        of the protein using MDAnalysis selection syntax."""
     )
+
+    @root_validator
+    def validate_query(cls, values: Dict[str, Any]) -> Dict:
+        pdb_file = values.get("pdb_file")
+        if not pdb_file:
+            values["error"] = "PDB file must be provided"
+        elif not pdb_file.endswith(".pdb"):
+            values["error"] = "PDB file must have .pdb extension"
+        return values
 
 
 class PPIDistance(BaseTool):
     name: str = "ppi_distance"
-    description: str = """Use to calculate minimum heavy-atom distance between
-    peptide and protein. Can use any PDB file with protein-protein interaction."""
-    arg_schema: Type[BaseModel] = PPIDistanceInputSchema
+    description: str = """Useful for calculating minimum heavy-atom distance
+    between peptide and protein. First, make sure you have valid PDB file with
+    any protein-protein interaction."""
+    args_schema: Type[BaseModel] = PPIDistanceInputSchema
 
-    def _run(self, pdb_file: str, binding_site: str = "protein"):
-        avg_dist = ppi_distance(pdb_file, binding_site=binding_site)
-        return avg_dist
+    def _run(
+        self, pdb_file: str, binding_site: str = "protein", error: Optional[str] = ""
+    ):
+        if error:  # this doesn't work
+            return f"error: {error}"
+        try:
+            avg_dist = ppi_distance(pdb_file, binding_site=binding_site)
+        except ValueError as e:
+            return (
+                f"ValueError: {e}. \nMake sure to provide valid PBD "
+                "file and binding site using MDAnalysis selection syntax."
+            )
+        except Exception as e:
+            return f"Something went wrong. {type(e).__name__}: {e}"
+        return f"{avg_dist}\n"
 
     def _arun(self, pdb_file: str, binding_site: str = "protein"):
         raise NotImplementedError("This tool does not support async")
