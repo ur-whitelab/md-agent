@@ -8,7 +8,9 @@ from .git_issues_tool import SerpGitTool
 from .md_util_tools import Name2PDBTool, get_pdb
 from .pdb_tools import PackMolTool
 from .plot_tools import SimulationOutputFigures
+from .ppi_tools import PPIDistance
 from .registry_tools import ListRegistryPaths, MapPath2Name
+
 # from .postanalysis_tools import (
 #     AvgRmsdTrajectoryTool,
 #     PPIDistanceTool,
@@ -45,6 +47,7 @@ __all__ = [
     "ListRegistryPaths",
     "MapPath2Name",
     "Name2PDBTool",
+    "PPIDistance",
     # "PPIDistanceTool",
     # "RmsdCompareTool",
     # "RmsdTrajectoryTool",

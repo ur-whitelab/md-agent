@@ -5,6 +5,8 @@ channels:
 dependencies:
   - openmm >= 7.6
   - pdbfixer >= 1.5
+  - mdanalysis
+  - nglview
   - pip
   - pip:
     - flake8

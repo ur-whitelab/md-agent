@@ -8,7 +8,7 @@ from MDAnalysis.analysis import rms
 def ppi_distance(pdb_file, binding_site="protein"):
     """
     Calculates minimum heavy-atom distance between peptide (assumed to be
-    smallest chain) andprotein. Returns average distance between these two.
+    smallest chain) and protein. Returns average distance between these two.
 
     Can specify binding site if given (optional)
     Can work with any protein-protein interaction (PPI)
@@ -33,9 +33,14 @@ def ppi_distance(pdb_file, binding_site="protein"):
     return avg_d
 
 
+# 1D RMSD, gives one scalar value
 def rmsd_compare(
     pdbfile, ref_file, trajectory=None, ref_trajectory=None, selection="backbone"
 ):
+    """take two files (PDB or PSF) and compute RMSD to compare
+    the difference between two conformations. If trajectory files for both
+    protein of interest and reference are obtained from either user or openmm,
+    include these two trajectory files as well."""
     if trajectory is not None:
         u = mda.Universe(pdbfile, trajectory)
         ref = mda.Universe(ref_file, ref_trajectory)
@@ -52,7 +57,12 @@ def rmsd_compare(
     return rmsd
 
 
+# 1D time-dependent RMSD, gives one scalar value for each timestep
 def rmsd_overtime(pdbfile, trajectory, selection="backbone", pdbid=None):
+    """take two files: 1) topology in form of PDB or PSF file and
+    2) trajectory file from openmm simulation. It computes RMSD for each of
+    trajectory frames compared to the reference, which is the initial frame.
+    It stores RMSD array in a created file."""
     u = mda.Universe(pdbfile, trajectory)
     R = rms.RMSD(u, select=selection)
     R.run()
@@ -68,11 +78,20 @@ def rmsd_overtime(pdbfile, trajectory, selection="backbone", pdbid=None):
         header="Frame,Time,RMSD",
         comments="",
     )
-    print("Calculated RMSD for each timestep.")
+    print("Calculated RMSD for each timestep with respect to the initial frame.")
+    # avg_rmsd = np.mean(R.results.rmsd[2])  # rmsd values are in 3rd column
+    # print(f"Average RMSD is {avg_rmsd}.")
+    # final_rmsd = R.results.rmsd[2][-1]
+    # print(f"Final RMSD is {final_rmsd}.")
     return filename
 
 
+# 1D RMSD scalar value, average of the entire trajectory
 def avg_rmsd_overtime(pdbfile, trajectory, selection="backbone"):
+    """take two files: 1) topology in form of PDB or CIF file and
+    2) trajectory file from openmm simulation. It computes RMSD for each of
+    trajectory frames compared to the reference, which is the initial frame,
+    then return the average of all RMSD values over time."""
     u = mda.Universe(pdbfile, trajectory)
     R = rms.RMSD(u, select=selection)
     R.run()
