@@ -4,7 +4,12 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.tools import CleaningTools, SimulationFunctions, VisFunctions, get_pdb
+from mdagent.tools.base_tools import (
+    CleaningTools,
+    SimulationFunctions,
+    VisFunctions,
+    get_pdb,
+)
 from mdagent.utils import PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")

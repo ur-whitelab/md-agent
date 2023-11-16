@@ -2,7 +2,7 @@ import langchain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 
 
-def _make_llm(model, temp, verbose):
+def _make_llm(model, temp, verbose, max_tokens=None):
     if model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
         llm = langchain.chat_models.ChatOpenAI(
             temperature=temp,
@@ -10,6 +10,7 @@ def _make_llm(model, temp, verbose):
             request_timeout=1000,
             streaming=True if verbose else False,
             callbacks=[StreamingStdOutCallbackHandler()] if verbose else [None],
+            max_tokens=max_tokens,
         )
     elif model.startswith("text-"):
         llm = langchain.OpenAI(

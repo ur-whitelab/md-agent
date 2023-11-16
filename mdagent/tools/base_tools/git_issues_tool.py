@@ -1,6 +1,5 @@
 from typing import List, Optional
 
-import langchain
 import requests
 import tiktoken
 from langchain import LLMChain, PromptTemplate
@@ -8,17 +7,15 @@ from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 from serpapi import GoogleSearch
 
+from mdagent.utils import _make_llm
+
 
 class GitToolFunctions:
     """Class to store the functions of the tool."""
 
     """chain that can be used the tools for summarization or classification"""
-
-    llm_ = langchain.chat_models.ChatOpenAI(
-        temperature=0.05,
-        model_name="gpt-3.5-turbo-16k",
-        request_timeout=1000,
-        max_tokens=2500,
+    llm_ = _make_llm(
+        model="gpt-3.5-turbo-16k", temp=0.05, verbose=False, max_tokens=2500
     )
 
     def _prompt_summary(self, query: str, output: str, llm: BaseLanguageModel = llm_):
