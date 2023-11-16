@@ -95,7 +95,7 @@ class RMSDFunctions:
         )
         avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
         final_rmsd = R.results.rmsd[-1, 2]
-        message = f"""Calculated RMSD for each timestep with respect
+        message = f"""Calculated RMSD for each timestep with respect\
         to the initial frame. Saved to {self.filename}.csv. """
         message += f"Average RMSD is {avg_rmsd} \u212B. "
         message += f"Final RMSD is {final_rmsd} \u212B.\n"
@@ -106,7 +106,9 @@ class RMSDFunctions:
             plt.ylabel("RMSD ($\AA$)")
             plt.title("Time-Dependent RMSD")
             plt.legend()
+            plt.show()
             plt.savefig(f"{self.filename}.png")
+            # plt.close() # if you don't want to show the plot in notebooks
             message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
         return message
 
