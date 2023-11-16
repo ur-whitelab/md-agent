@@ -1,26 +1,22 @@
 import os
+from typing import Optional, Type
 
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
-import nglview as nv
 import numpy as np
+from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
-from nglview.contrib.movie import MovieMaker
+from pydantic import BaseModel, Field
 
 # all things related to RMSD as 'standard deviation'
-# 1. time-dependent RMSD of the whole trajectory with all or selected atoms
-#       (all, backbone, heavy atoms)
-# 2. pairwise RMSD
-# 3. RMSF
-
-# TO DO:
-# test the tool with all RMSD functions separately (use specific function for each)
-# test the tool with all RMSD functions together (use calculate_rmsd)
-# add brief description for each rmsd method
+# 1  RMSD between two protein conformations or trajectories (1D scalar value)
+# 2. time-dependent RMSD of the whole trajectory with all or selected atoms
+# 3. pairwise RMSD
+# 4. RMSF - root mean square fluctuation
 
 
 class RMSDFunctions:
-    def __init__(self, trajectory, pdb_file, ref_file=None, ref_trajectory=None):
+    def __init__(self, pdb_file, trajectory, ref_file=None, ref_trajectory=None):
         self.pdb_file = pdb_file
         self.trajectory = trajectory
         self.pdb_name = os.path.splitext(os.path.basename(pdb_file))[0]
@@ -31,7 +27,12 @@ class RMSDFunctions:
         else:
             self.ref_name = None
 
-    def calculate_rmsd(self, rmsd_type="rmsd", selection="backbone"):
+    def calculate_rmsd(
+        self,
+        rmsd_type="rmsd",
+        selection="backbone",
+        plot=True,
+    ):
         i = 0
         base_filename = f"{rmsd_type}_{self.pdb_name}"
         filename = base_filename
@@ -41,22 +42,44 @@ class RMSDFunctions:
         self.filename = filename
 
         if rmsd_type == "rmsd":
-            return self.compute_1d_rmsd(selection=selection)
+            if self.ref_file:
+                print("Calculating 1-D RMSD between two sets of coordinates...")
+                return self.compute_rmsd_2sets(selection=selection)
+            else:
+                print("Calculating time-dependent RMSD...")
+                return self.compute_rmsd(selection=selection, plot=plot)
         elif rmsd_type == "pairwise_rmsd":
-            return self.compute_2d_rmsd(selection)
+            print("Calculating pairwise RMSD...")
+            return self.compute_2d_rmsd(selection=selection, plot_heatmap=plot)
         elif rmsd_type == "rmsf":
-            return self.compute_rmsf(selection)
+            print("Calculating root mean square fluctuation (RMSF)...")
+            return self.compute_rmsf(selection=selection, plot=plot)
         else:
             raise ValueError(
                 "Invalid rmsd_type. Please choose from 'rmsd', 'pairwise_rmsd', 'rmsf'"
             )
 
-    def compute_1d_rmsd(self, selection="backbone", pdbid=None, plot=True):
+    def compute_rmsd_2sets(self, selection="backbone"):
+        # simple RMSD calculation between two different sets of protein coordinates
+        # returns scalar value
+        if self.trajectory and self.ref_trajectory:
+            u = mda.Universe(self.pdb_file, self.trajectory)
+            ref = mda.Universe(self.ref_file, self.ref_trajectory)
+        else:
+            u = mda.Universe(self.pdb_file)
+            ref = mda.Universe(self.ref_file)
+        rmsd_value = rms.rmsd(
+            u.select_atoms(selection).positions,  # coordinates to align
+            ref.select_atoms(selection).positions,  # reference coordinates
+            center=True,  # subtract the center of geometry
+            superposition=True,
+        )  # superimpose coordinates
+        return f"{rmsd_value}\n"
+
+    def compute_rmsd(self, selection="backbone", plot=True):
         # 1D time-dependent RMSD, gives one scalar value for each timestep
-        """take two files: 1) topology in form of PDB or PSF file and
-        2) trajectory file from openmm simulation. It computes RMSD for each of
-        trajectory frames compared to the reference, which is the initial frame.
-        It stores RMSD array in a created file."""
+        if self.trajectory is None:
+            raise ValueError("trajectory file is required for time-dependent 1D RMSD")
         u = mda.Universe(self.pdb_file, self.trajectory)
         R = rms.RMSD(u, select=selection)
         R.run()
@@ -70,26 +93,27 @@ class RMSDFunctions:
             header="Frame,Time,RMSD",
             comments="",
         )
-        print("Calculated RMSD for each timestep with respect to the initial frame.")
-        avg_rmsd = np.mean(R.results.rmsd[2])  # rmsd values are in 3rd column
-        print(f"Average RMSD is {avg_rmsd}.")
-        final_rmsd = R.results.rmsd[2][-1]
-        print(f"Final RMSD is {final_rmsd}.")
-        # if plot:
-        #     df = pd.DataFrame(R.results.rmsd, columns=["Frame", "Time", "RMSD"])
-        #     ax = df.plot(x="Frame", y="RMSD", kind="line", title="RMSD")
-        #     ax.set_
+        avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
+        final_rmsd = R.results.rmsd[-1, 2]
+        message = f"""Calculated RMSD for each timestep with respect
+        to the initial frame. Saved to {self.filename}.csv. """
+        message += f"Average RMSD is {avg_rmsd} \u212B. "
+        message += f"Final RMSD is {final_rmsd} \u212B.\n"
+
         if plot:
-            plt.plot(R.results.rmsd[0], R.results.rmsd[2], label=str(selection))
+            plt.plot(R.results.rmsd[:, 0], R.results.rmsd[:, 2], label=str(selection))
             plt.xlabel("Frame")
             plt.ylabel("RMSD ($\AA$)")
             plt.title("Time-Dependent RMSD")
             plt.legend()
-            plt.show()
             plt.savefig(f"{self.filename}.png")
-        return "SOME STRING FOR MDAGENT"
+            message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
+        return message
 
     def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):
+        # pairwise RMSD, also known as 2D RMSD, gives a matrix of RMSD values
+        if self.trajectory is None:
+            raise ValueError("trajectory file is required for pairwise RMSD")
         u = mda.Universe(self.pdb_file, self.trajectory)
         if self.ref_file and self.ref_trajectory:
             ref = mda.Universe(self.ref_file, self.ref_trajectory)
@@ -103,31 +127,32 @@ class RMSDFunctions:
             pairwise_matrix = matrix.results.dist_matrix
             x_label = y_label = "Frame"
         else:
-            pairwise_matrix = np.zeros(
-                (len(u.trajectory), len(ref.trajectory))  # y-axis
-            )  # x-axis
+            pairwise_matrix = np.zeros((len(u.trajectory), len(ref.trajectory)))
             for i, frame in enumerate(u.trajectory):
                 r = rms.RMSD(ref, u, select=selection, ref_frame=i).run()
                 pairwise_matrix[i] = r.results.rmsd[:, 2]
             x_label = f"Frame ({self.ref_name})"
-            y_label = f"Frame ({self.pdb_name}))"
+            y_label = f"Frame ({self.pdb_name})"
         np.savetxt(
             f"{self.filename}.csv",
             pairwise_matrix,
             delimiter=",",
         )
+        message = f"Saved pairwise RMSD matrix to {self.filename}.csv.\n"
         if plot_heatmap:
             plt.imshow(pairwise_matrix, cmap="viridis")
             plt.xlabel(x_label)
             plt.ylabel(y_label)
             plt.colorbar(label=r"RMSD ($\AA$)")
+            plt.show()
             plt.savefig(f"{self.filename}.png")
+            message += f"Plotted pairwise RMSD matrix. Saved to {self.filename}.png.\n"
+        return message
 
-    def compute_rmsf(self, selection="backbone", plot=True, movie=False):
-        # Load the universe
+    def compute_rmsf(self, selection="backbone", plot=True):
+        # calculate RMSF (root mean square fluctuation)
         u = mda.Universe(self.pdb_file, self.trajectory)
 
-        # Align the trajectory to the first frame for better RMSF computation
         # use averages as a reference for aligning
         average = align.AverageStructure(u, u, select=selection, ref_frame=0).run()
         align_ref = average.results.universe
@@ -147,6 +172,7 @@ class RMSDFunctions:
             header="Residue_ID,RMSF",
             comments="",
         )
+        message = f"Saved RMSF data to {self.filename}.csv.\n"
 
         # Plot RMSF
         if plot:
@@ -158,23 +184,75 @@ class RMSDFunctions:
             plt.legend()
             plt.show()
             plt.savefig(f"{self.filename}.png")
+            message += f"Plotted RMSF. Saved to {self.filename}.png.\n"
+        return message
 
-        # Create a movie with nglview
-        if movie:
-            u.add_TopologyAttr("tempfactors")  # add empty attribute for all atoms
-            protein = u.select_atoms("protein")  # select protein atoms
-            for residue, r_value in zip(protein.residues, R.results.rmsf):
-                residue.atoms.tempfactors = r_value
-            view = nv.show_mdanalysis(u)
-            view.update_representation(color_scheme="bfactor")
-            view
-            movie = MovieMaker(
-                view,
-                step=100,  # keep every 100th frame
-                output=f"images/{self.filename}.gif",
-                render_params={"factor": 3},  # set to 4 for highest quality
+
+class RMSDInputSchema(BaseModel):
+    rmsd_type: str = Field(
+        description="""type of RMSD calculation
+        to perform. Choose from 'rmsd', 'pairwise_rmsd', 'rmsf'.
+        'rmsd': any 1-D root mean square deviation calculations.
+        'pairwise_rmsd': 2D root mean square deviation calculation.
+            pairwise RMSD matrix is computed. Either
+            trajectory against itself or a given reference.
+        'rmsf': root mean square fluctuation. it computes the average
+            fluctuation for each residue for the entire trajectory.
+        """
+    )
+    pdb_file: str = Field(
+        description="file with .pdb extension contain protein of interest"
+    )
+    trajectory: Optional[str] = Field(
+        description="trajectory file for protein of interest"
+    )
+    ref_file: Optional[str] = Field(
+        description="file with .pdb extension used as reference"
+    )
+    ref_trajectory: Optional[str] = Field(
+        description="trajectory file used as reference"
+    )
+    selection: Optional[str] = Field(
+        description="""selected atoms using MDAnalysis selection syntax."""
+    )
+    plot: Optional[bool] = Field(
+        description="""Only use it to set False
+        to disable making plots if prompted."""
+    )
+
+
+class RMSDCalculator(BaseTool):
+    name: str = "RMSDCalculator"
+    description: str = """Useful for calculating RMSD from output files
+    such as PDB, PSF, DCD, etc. Types of RMSD this tool can do:
+    1. 1-D root mean square deviation (RMSD)
+    2. 2-D or pairwise root mean square deviation (RMSD) matrix
+    3. root mean square fluctuation (RMSF)
+    Make sure to provide any necessary files for a chosen RMSD type."""
+    args_schema: Type[BaseModel] = RMSDInputSchema
+
+    def _run(
+        self,
+        rmsd_type: str,
+        pdb_file: str,
+        trajectory: Optional[str] = None,
+        ref_file: Optional[str] = None,
+        ref_trajectory: Optional[str] = None,
+        selection: str = "backbone",
+        plot: bool = True,
+    ):
+        try:
+            rmsd = RMSDFunctions(pdb_file, trajectory, ref_file, ref_trajectory)
+            message = rmsd.calculate_rmsd(rmsd_type, selection, plot)
+        except ValueError as e:
+            return (
+                f"ValueError: {e}. \nMake sure to provide valid PBD "
+                "file and binding site using MDAnalysis selection syntax."
             )
-            movie.make()
-            u.atoms.write(f"{self.filename}_tempfactors.pdb")
+        except Exception as e:
+            return f"Something went wrong. {type(e).__name__}: {e}"
+        return message
 
-        return "SOME STRING FOR MDAGENT"
+    def _arun(self, **query):
+        """Use the tool asynchronously."""
+        raise NotImplementedError("This tool does not support async")

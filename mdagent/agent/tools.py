@@ -4,13 +4,6 @@ from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 
-# from ..tools import (
-#     InstructionSummary,
-#     AvgRmsdTrajectoryTool,
-#     PPIDistanceTool,
-#     RmsdCompareTool,
-#     RmsdTrajectoryTool,
-# )
 from ..tools import (
     AddHydrogensCleaningTool,
     CheckDirectoryFiles,
@@ -19,7 +12,9 @@ from ..tools import (
     Name2PDBTool,
     PackMolTool,
     PlanBVisualizationTool,
+    PPIDistance,
     RemoveWaterCleaningTool,
+    RMSDCalculator,
     Scholar2ResultLLM,
     SerpGitTool,
     SetUpAndRunTool,
@@ -36,32 +31,28 @@ def make_tools(llm: BaseLanguageModel, verbose=False):
     all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
 
     # add tools
-
     all_tools += [
         VisualizationToolRender(),
         CheckDirectoryFiles(),
         SimulationOutputFigures(),
-        # InstructionSummary(),
-        # PPIDistanceTool(),
-        # RmsdCompareTool(),
-        # RmsdTrajectoryTool(),
-        # AvgRmsdTrajectoryTool(),
+        PPIDistance(),
+        RMSDCalculator(),
     ]
 
-    # add registry tools
     # get instance first
     path_instance = PathRegistry.get_instance()
     # add tools
     all_tools += [
-        SetUpAndRunTool(path_registry=path_instance),
+        AddHydrogensCleaningTool(path_registry=path_instance),
+        # InstructionSummary(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         MapPath2Name(path_registry=path_instance),
-        PlanBVisualizationTool(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
-        SpecializedCleanTool(path_registry=path_instance),
-        RemoveWaterCleaningTool(path_registry=path_instance),
-        AddHydrogensCleaningTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
+        PlanBVisualizationTool(path_registry=path_instance),
+        RemoveWaterCleaningTool(path_registry=path_instance),
+        SetUpAndRunTool(path_registry=path_instance),
+        SpecializedCleanTool(path_registry=path_instance),
     ]
 
     # Get the api keys

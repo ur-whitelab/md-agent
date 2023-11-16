@@ -56,6 +56,10 @@ class MDAgent:
         #    format_instructions=FORMAT_INSTRUCTIONS,
         #    question_prompt=QUESTION_PROMPT,
         # ),
+        #    verbose=True,
+        #    max_iterations=max_iterations,
+        #    return_intermediate_steps=True,
+        # )
         self.agent_executor = initialize_agent(
             tools,
             self.llm,
@@ -65,20 +69,17 @@ class MDAgent:
             question_prompt=QUESTION_PROMPT,
             return_intermediate_steps=True,
             max_iterations=max_iterations,
+            verbose=verbose,
         )
-        #    verbose=True,
-        #    max_iterations=max_iterations,
-        #    return_intermediate_steps=True,
-        # )
 
     def run(self, prompt):
         outputs = self.agent_executor({"input": prompt})
         # Parse long output (with intermediate steps)
-        intermed = outputs["intermediate_steps"]
+        # intermed = outputs["intermediate_steps"]
 
-        final = ""
-        for step in intermed:
-            final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
-        final += f"Final Answer: {outputs['output']}"
+        # final = ""
+        # for step in intermed:
+        #     final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
+        final = outputs["output"]
 
         return final
