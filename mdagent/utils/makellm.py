@@ -9,7 +9,7 @@ def _make_llm(model, temp, verbose, max_tokens=None):
             model_name=model,
             request_timeout=1000,
             streaming=True if verbose else False,
-            callbacks=[StreamingStdOutCallbackHandler()] if verbose else [None],
+            callbacks=[StreamingStdOutCallbackHandler()] if verbose else None,
             max_tokens=max_tokens,
         )
     elif model.startswith("text-"):
@@ -17,7 +17,7 @@ def _make_llm(model, temp, verbose, max_tokens=None):
             temperature=temp,
             model_name=model,
             streaming=True if verbose else False,
-            callbacks=[StreamingStdOutCallbackHandler()] if verbose else [None],
+            callbacks=[StreamingStdOutCallbackHandler()] if verbose else None,
         )
     else:
         raise ValueError(f"Invalid model name: {model}")
