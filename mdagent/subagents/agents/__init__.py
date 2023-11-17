@@ -1,12 +1,12 @@
 from .action import Action
 from .critic import Critic
-from .curriculum import ExplorerAgent, RefiningCurriculumAgent
+from .curriculum import Explorer, RefiningCurriculum
 from .skill import SkillManager
 
 __all__ = [
     "Action",
     "Critic",
-    "ExplorerAgent",
-    "RefiningCurriculumAgent",
+    "Explorer",
+    "RefiningCurriculum",
     "SkillManager",
 ]

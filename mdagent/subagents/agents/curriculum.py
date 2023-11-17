@@ -4,32 +4,26 @@ import re
 from typing import Optional
 
 from dotenv import load_dotenv
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-    AIMessagePromptTemplate,
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
+from langchain.chat_models import ChatOpenAI
+
+from mdagent.utils import PathRegistry
+
+from .prompts import (
+    explore_prompt_template,
+    qa1_prompt_template,
+    qa2_prompt_template,
+    refine_prompt_template,
 )
 
-from mdagent.subagents.prompts import (
-    ExplorePrompts,
-    QAStep1Prompts,
-    QAStep2Prompts,
-    RefinePrompts,
-)
-from mdagent.utils import PathRegistry, _make_llm
 
-
-class ExplorerAgent:
+class Explorer:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
         model="gpt-3.5-turbo",
         temp=0.1,
-        max_iterations=120,
-        api_key=None,
         verbose=True,
         ckpt_dir="ckpt",
         resume=False,
@@ -39,8 +33,14 @@ class ExplorerAgent:
         load_dotenv()
 
         # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = self._initialize_llm()
+        self.llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        self.llm_chain = LLMChain(llm=self.llm, prompt=explore_prompt_template)
         assert mode in ["auto", "manual"], f"mode {mode} not supported"
         self.mode = mode
         self.confirm_on = confirm_on
@@ -62,33 +62,9 @@ class ExplorerAgent:
             self.completed_tasks = []
             self.failed_tasks = []
 
-    def _create_prompt(self):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=ExplorePrompts.PROMPT,
-            input_variables=ExplorePrompts.INPUT_VARS,
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([ExplorePrompts.PREFIX, ExplorePrompts.FORMAT])
-        )
-        messages = ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-        return messages
-
-    def _initialize_llm(self):
-        llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(),
-        )
-        return llm_chain
-
-    def run_llm(self, recent_history, full_history, skills, files):
+    def run_llm(self, full_history, skills, files):
         output = self.llm_chain(
             {
-                "recent_history": {recent_history},
                 "full_history": {full_history},
                 "skills": {skills},
                 "files": {files},
@@ -97,13 +73,11 @@ class ExplorerAgent:
         return output
 
 
-class RefiningCurriculumAgent:
+class RefiningCurriculum:
     def __init__(
         self,
         model="gpt-3.5-turbo",
         temp=0.1,
-        max_iterations=120,
-        api_key=None,
         verbose=True,
         ckpt_dir="ckpt",
         resume=False,
@@ -113,13 +87,16 @@ class RefiningCurriculumAgent:
     ):
         load_dotenv()
 
-        # initialize agent
-        self.verbose = verbose
-        llm = _make_llm(model, temp, verbose)
-        qa_llm = _make_llm(qa_model, temp, verbose)
-        self.llm_chain = self._initialize_llm(llm, RefinePrompts)
-        self.qa_llm_step1 = self._initialize_llm(qa_llm, QAStep1Prompts)
-        self.qa_llm_step2 = self._initialize_llm(qa_llm, QAStep2Prompts)
+        self.llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        self.llm_chain = LLMChain(llm=self.llm, prompt=refine_prompt_template)
+        self.qa_llm_step1 = LLMChain(llm=self.llm, prompt=qa1_prompt_template)
+        self.qa_llm_step2 = LLMChain(llm=self.llm, prompt=qa2_prompt_template)
 
         assert mode in ["auto", "manual"], f"mode {mode} not supported"
         self.mode = mode
@@ -127,7 +104,7 @@ class RefiningCurriculumAgent:
         self.ckpt_dir = ckpt_dir
         os.makedirs(f"{ckpt_dir}/curriculum/", exist_ok=True)
 
-        # TODO: clean up/manage history files between action, curriculum, and critics
+        # TODO: clean up/manage history files between action, curriculum, and critic
         if resume:
             with open(f"{ckpt_dir}/curriculum/completed_tasks.json", "w") as f1:
                 self.completed_tasks = json.load(f1)
@@ -137,28 +114,6 @@ class RefiningCurriculumAgent:
         else:
             self.completed_tasks = []
             self.failed_tasks = []
-
-    def _create_prompt(self, prompts):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=prompts.PROMPT, input_variables=prompts.INPUT_VARS
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([prompts.PREFIX, prompts.FORMAT])
-        )
-        messages = ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-        return messages
-
-    def _initialize_llm(self, llm, prompts):
-        llm_chain = LLMChain(
-            llm=llm,
-            prompt=self._create_prompt(prompts),
-        )
-        return llm_chain
 
     def _run_qa(self, info):
         # Step 1: get questions
@@ -175,7 +130,6 @@ class RefiningCurriculumAgent:
             ]
         q_response = self.qa_llm_step1(
             {
-                "recent_history": info["recent_history"],
                 "full_history": info["full_history"],
                 "skills": info["skills"],
                 "files": info["files"],
@@ -222,7 +176,6 @@ class RefiningCurriculumAgent:
                     "task": task,
                     "original_task": original_prompt,
                     "qa_list": qa_list,
-                    "recent_history": info["recent_history"],
                     "full_history": info["full_history"],
                     "skills": info["skills"],
                     "files": info["files"],

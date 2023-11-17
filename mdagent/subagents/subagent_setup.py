@@ -4,8 +4,8 @@ from typing import Optional
 from mdagent.subagents.agents import (
     Action,
     Critic,
-    ExplorerAgent,
-    RefiningCurriculumAgent,
+    Explorer,
+    RefiningCurriculum,
     SkillManager,
 )
 from mdagent.utils import PathRegistry
@@ -83,7 +83,7 @@ class SubAgentInitializer:
         }
         # Update params with any overrides
         params.update(overrides)
-        return ExplorerAgent(**params)
+        return Explorer(**params)
 
     def create_refining_curriculum_agent(self, **overrides):
         params = {
@@ -97,7 +97,7 @@ class SubAgentInitializer:
         }
         # Update params with any overrides
         params.update(overrides)
-        return RefiningCurriculumAgent(**params)
+        return RefiningCurriculum(**params)
 
     def create_skill_manager(self, **overrides):
         params = {

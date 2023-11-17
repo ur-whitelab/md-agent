@@ -133,7 +133,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - output:
     - a new task
 - Lives after action keeps failing to create successful code
-- RefiningCurriculumAgent.run
+- RefiningCurriculum.run
 
 
 ## Outside 'Iteration' tool (for exploring, storing skill library with no new tools)

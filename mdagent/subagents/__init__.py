@@ -4,8 +4,8 @@ from .subagent_setup import SubAgentInitializer, SubAgentSettings
 __all__ = [
     "ActionAgent",
     "CodeCriticAgent",
-    "ExplorerAgent",
-    "RefiningCurriculumAgent",
+    "Explorer",
+    "RefiningCurriculum",
     "SkillAgent",
     "TaskCriticAgent",
     "Iterator",

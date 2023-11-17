@@ -69,10 +69,10 @@ action_template = PromptTemplate(
     ```
 
     Here is the input:
-    files: {files}
-    task: {task}
-    history: {history}
-    skills: {skills}
+    files: {files},
+    task: {task},
+    history: {history},
+    skills: {skills},
         """,
 )
 
@@ -107,7 +107,7 @@ critic_template = PromptTemplate(
     Here is the input:
     code: {code},
     code_output: {code_output},
-    task: {task}
+    task: {task},
     """,
 )
 
@@ -209,6 +209,145 @@ skill_wrapper_template = PromptTemplate(
     code: {code},
     fxn_name: {fxn_name},
     tool_name: {tool_name},
-    description: {description}
+    description: {description},
+    """,
+)
+
+refine_prompt_template = PromptTemplate(
+    inputs=["task", "original_task", "qa_list", "full_history", "skills", "files"],
+    template="""
+    You're an experienced Molecular Dynamics researcher. You've seen
+    many projects and understand the common pitfalls, complexities, and nuances.
+    Your primary responsibility is to propose a new & refined task based on
+    the past task and original prompt from user.
+
+    I will give you the following information:
+    "task",
+    "original_task",
+    "qa_list",
+    "full_history",
+    "skills",
+    "files",
+
+    - Do not propose multiple tasks at the same time. Do not mention anything
+    else.
+    - Ensure that the revised task remains stay relevant and aligned with the
+    spirit of the original task.
+    - You should not be doing the same thing over and over again. You may
+    sometimes need to repeat some tasks if you need to rerun simulations
+    or visualization. Only repeat tasks if necessary.
+    - The new task should be close to the spirit of the previous task and
+    entire user prompt as much as possible.
+
+    If you don't have enough information to propose a new task, don't include
+    'Task: ...' in your response.
+
+    Your response must be according to the following format:
+
+    RESPONSE FORMAT:
+    Adjustment: Describe the refinements to the new task.
+    Reasoning: Provide the reasoning behind the refinements made.
+    Task: The new task you propose.
+
+    Here is the input:
+    task: {task},
+    original_task: {original_task},
+    qa_list: {qa_list},
+    full_history: {full_history},
+    skills: {skills},
+    files: {files}
+    """,
+)
+
+explore_prompt_template = PromptTemplate(
+    inputs=["full_history", "skills", "files"],
+    template="""
+    You are a helpful assistant that tells me the next immediate task to do in a
+    Molecular Dynamics project. The ultimate goal is to discover explore different
+    scenarios of cleaning input files, running molecular dynamics simulations, and
+    analyzing the output files, to be the best expert at running molecular dynamics.
+
+    I will give you the history, skills you have learned, and all files
+    you have access to.
+
+    You must follow the following criteria:
+    1. You should act as a mentor and guide me to the next task based on
+    my current learning progress.
+    2. Please be very specific about what tools I should to use.
+    3. Do not propose multiple tasks at the same time. Do not mention anything
+    else.
+    4) The next task should not be too hard since I may not have learned enough
+    tools to complete it yet.
+    5) The next task should be novel and interesting. I should look for
+    opportunities to learn new tools and discover new things. I should not
+    be doing the same thing over and over again.
+    6) I may sometimes need to repeat some tasks if I need to rerun simulations
+    or visualize again. Only repeat tasks if necessary.
+
+    You should only respond in the format as described below:
+
+    RESPONSE FORMAT:
+    Reasoning: Provide the reasoning behind the proposal of the new task.
+    Task: The next task.
+
+    Here is the input:
+    full_history: {full_history},
+    skills: {skills},
+    files: {files},
+    """,
+)
+
+qa1_prompt_template = PromptTemplate(
+    inputs=["full_history", "skills", "files"],
+    template="""
+    You're an experienced Molecular Dynamics researcher. You've seen
+    many projects and understand the common pitfalls, complexities, and nuances.
+    You are tasked with refining the progression of tasks within a Molecular
+    Dynamics project based on past challenges and failures. To do so, you need
+    to analyze the project's history and formulate questions that uncover
+    potential areas of difficulty or ambiguity. If no history is given, don't
+    ask questions about previous iterations.
+
+    The following information will be provided to you: history, skills, and files
+
+    With this expertise in mind, please provide 3 to 5 specific questions
+    that would help in identifying challenges, refining tasks, and ensuring
+    smoother progress in future iterations.
+
+    You should only respond in the format as described below:
+    RESPONSE FORMAT:
+    Reasoning: ...
+    Question 1: ...
+    Question 2: ...
+    Question 3: ...
+    (rest of questions)
+
+    Here is the input:
+    full_history: {full_history},
+    skills: {skills},
+    files: {files},
+    """,
+)
+
+qa2_prompt_template = PromptTemplate(
+    inputs=["question"],
+    template="""
+    You are a helpful assistant that answer my question about molecular dynamics.
+
+    I will give you the following information:
+    Question: ...
+
+    You will answer the question based on the context (only if available and helpful)
+    and your own knowledge of molecular dynamics.
+    1) Start your answer with "Answer: ".
+    2) Answer "Answer: Unknown" if you don't know or cannot answer as an AI assistant.
+
+    You should only respond in the format as described below:
+
+    RESPONSE FORMAT:
+    Answer: ...
+
+    Here is the question:
+    question: {question}
     """,
 )
