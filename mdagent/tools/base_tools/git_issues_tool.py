@@ -2,8 +2,9 @@ from typing import List, Optional
 
 import requests
 import tiktoken
-from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from serpapi import GoogleSearch
 
