@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
+from langchain_experimental.tools import PythonREPLTool
 
 from mdagent.utils import PathRegistry
 
@@ -30,7 +31,7 @@ from .base_tools.vis_tools import (
 def make_all_tools(llm: BaseLanguageModel, verbose=False):
     load_dotenv()
 
-    all_tools = agents.load_tools(["python_repl", "human", "llm-math"], llm)
+    all_tools = agents.load_tools(["human", "llm-math"], llm)
 
     # add tools
     all_tools += [
@@ -38,6 +39,7 @@ def make_all_tools(llm: BaseLanguageModel, verbose=False):
         CheckDirectoryFiles(),
         SimulationOutputFigures(),
         PPIDistance(),
+        PythonREPLTool(),
         RMSDCalculator(),
     ]
 
