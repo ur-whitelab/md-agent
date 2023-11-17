@@ -133,8 +133,8 @@ class MDAgent:
         # for step in intermed:
         #     final += f"Thought: {step[0].log}\n" f"Observation: {step[1]}\n"
         # final += f"Final Answer: {outputs['output']}"
-
         # return final
+
         self.agent_executor = AgentExecutor.from_agent_and_tools(
             tools=tools,
             agent=OpenAIFunctionsAgent.from_llm_and_tools(self.llm, tools),

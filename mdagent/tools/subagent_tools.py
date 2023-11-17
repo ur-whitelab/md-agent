@@ -7,12 +7,12 @@ from mdagent.subagents import SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry
 
 
-class ExecuteSkillInput(BaseModel):
+class ExecuteSkillInputSchema(BaseModel):
     """Input for Execute Skill"""
 
-    tool_name: str = Field(..., description="Name of the skill or tool to execute")
+    skill_name: str = Field(description="Name of the skill to execute")
     args: Optional[dict] = Field(
-        ..., description="Input variables as a dictionary to pass to the skill"
+        description="Input variables as a dictionary to pass to the skill"
     )
 
 
@@ -23,12 +23,12 @@ class ExecuteSkill(BaseTool):
     function name and inputs arguments.
 
     Inputs:
-    - tool_name: Name of the skill or tool to execute
+    - skill_name: Name of the skill to execute
     - args: Input variables as a dictionary to pass to the skill
     """
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
-    arg_schema: Optional[Type[BaseModel]] = ExecuteSkillInput
+    args_schema: Optional[Type[BaseModel]] = ExecuteSkillInputSchema
 
     def __init__(
         self,
@@ -39,8 +39,15 @@ class ExecuteSkill(BaseTool):
         self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
-    def _run(self, tool_name: str, args: Optional[dict] = None) -> str:
-        """use the tool"""
+    # def _run(self, query: dict) -> str:
+    #     """use the tool"""
+    #     error_msg = query.get("error")
+    #     if error_msg:
+    #         return error_msg
+    #     skill_name = query.get("skill_name")
+    #     args = query.get("args")
+
+    def _run(self, skill_name, args=None):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
@@ -49,20 +56,26 @@ class ExecuteSkill(BaseTool):
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill_agent = agent_initializer.create_skill_manager(resume=True)
             if skill_agent is None:
-                return "Agent for this tool not initialized"
+                return "SubAgent for this tool not initialized"
             if args is not None:
+                print("args: ", args)
                 code_result = skill_agent.execute_skill_function(
-                    tool_name, self.path_registry, **args
+                    skill_name, self.path_registry, **args
                 )
             else:
                 code_result = skill_agent.execute_skill_function(
-                    tool_name, self.path_registry
+                    skill_name, self.path_registry
                 )
             return code_result
+        except TypeError as e:
+            return f"""{type(e).__name__}: {e}. Please check your inputs
+            and make sure to use a dictionary.\n"""
+        except ValueError as e:
+            return f"{type(e).__name__}: {e}. Provide correct arguments of the skill.\n"
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
+            return f"Something went wrong. {type(e).__name__}: {e} \n"
 
-    async def _arun(self, query: str) -> str:
+    async def _arun(self, query) -> str:
         """Use the tool asynchronously"""
         raise NotImplementedError("This tool does not support async")
 
@@ -70,7 +83,7 @@ class ExecuteSkill(BaseTool):
 class SkillRetrievalInput(BaseModel):
     """Input for Skill Retrieval"""
 
-    query: str = Field(..., description="Query or task to retrieve skills as tools for")
+    query: str = Field(description="Query or task to retrieve skills as tools for")
 
 
 class SkillRetrieval(BaseTool):

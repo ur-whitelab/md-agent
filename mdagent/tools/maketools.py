@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Optional, Type
+from typing import Optional, Type
 
 from dotenv import load_dotenv
 from langchain import agents
@@ -171,37 +171,26 @@ def get_tools(
         else:
             print(f"Invalid index {index}.")
             print(f"Try deleting vectordb at {ckpt_dir}/all_tools_vectordb.")
-
     return retrieved_tools
 
 
-class CreateNewToolInputs(BaseModel):
-    """Input for Create New Tool"""
-
-    task: str = Field(..., description="Description of task the tool should perform")
-    orig_prompt: str = Field(..., description="Full user prompt from the beginning")
-    curr_tools: List[str] = Field(..., description="List of tools the agent has")
+class CreateNewToolInputSchema(BaseModel):
+    task: str = Field(description="Description of task the tool should perform.")
+    orig_prompt: str = Field(description="Full user prompt you got from the beginning.")
+    curr_tools: str = Field(
+        description="""List of all tools you have access to. Such as
+        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+    )
 
 
 class CreateNewTool(BaseTool):
-    name = "CreateNewTool"
-    description = """
+    name: str = "CreateNewTool"
+    description: str = """
         This tool is used to create a new tool.
-        Given a description of the tool needed,
-        it will write and test tools.
-        If this tool hits maximum iterations without suceeding
-        to create a tool, it will return a failure. If you
-        receive a failure, you can try again with a different
-        input description. If you receive a success, you will
-        recieve the tool name, description, and input type.
+        If succeeded, it will return the name of the tool.
         You can then use the tool in subsequent steps.
-
-        Args:
-            task (str): Description of task the tool should perform
-            orig_prompt (str): Full user prompt from the beginning
-            curr_tools (List[str]): List of tools the agent has
     """
-    arg_schema: Type[BaseModel] = CreateNewToolInputs
+    args_schema: Type[BaseModel] = CreateNewToolInputSchema
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
 
@@ -222,10 +211,20 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    # def _run(self, task: str, orig_prompt: str, curr_tools: List[str]) -> str:
-    def _run(self, task: str) -> str:
-        """use the tool."""
-        # check formatting
+    # def _run(self, query: dict) -> str:
+    #     """use the tool."""
+    #     if not isinstance(query, dict):
+    #         return "Input query must be a dictionary"
+
+    #     error_msg = query.get("error")
+    #     if error_msg:
+    #         return error_msg
+    #     task = query.get("task")
+    #     orig_prompt = query.get("orig_prompt")
+    #     curr_tools = query.get("curr_tools")
+
+    def _run(self, task, orig_prompt, curr_tools):
+        # def _run(self, task, orig_prompt):
         try:
             if self.path_registry is None:
                 return "Path registry not initialized"
@@ -239,11 +238,11 @@ class CreateNewTool(BaseTool):
                 self.path_registry,
                 self.subagent_settings,
                 all_tools_string=all_tools_string,
-                # current_tools=curr_tools,
+                current_tools=curr_tools,
             )
             print("running iterator")
-            # tool_name = newcode_iterator.run(task, orig_prompt)
-            tool_name = newcode_iterator.run(task, task)
+            tool_name = newcode_iterator.run(task, orig_prompt)
+            # tool_name = newcode_iterator.run(task, task)
             if tool_name:
                 return f"""Tool created successfully: {tool_name}
                 You can now use the tool in subsequent steps."""
@@ -252,6 +251,6 @@ class CreateNewTool(BaseTool):
         except Exception as e:
             return f"Something went wrong. {type(e).__name__}: {e}"
 
-    async def _arun(self, task: str, orig_prompt: str, curr_tools: List[str]) -> str:
+    async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("This tool does not support async")

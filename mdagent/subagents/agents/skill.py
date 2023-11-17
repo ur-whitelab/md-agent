@@ -1,3 +1,4 @@
+import inspect
 import json
 import os
 from typing import Optional
@@ -42,7 +43,7 @@ class SkillManager:
         self.skills = {}
         # retrieve past skills & tools
         if resume:
-            print(f"\n\033[43mLoading Skills from {self.dir_name}\033[0m")
+            # print(f"\n\033[43mLoading Skills from {self.dir_name}\033[0m")
             skill_file_path = f"{self.dir_name}/skills.json"
             if os.path.exists(skill_file_path):
                 with open(skill_file_path, "r") as f1:
@@ -107,10 +108,25 @@ class SkillManager:
                 description = self._generate_tool_description(code)
             else:
                 description = function.__doc__
-        self.update_skill_library(function, code, description)
+
+        # Get the parameters of the function
+        args = inspect.signature(function).parameters
+        arguments = []
+        for param in args.values():
+            annotation = param.annotation
+            param_type = "Any" if annotation == param.empty else str(annotation)
+            default_value = None if param.default == param.empty else param.default
+            arguments.append(
+                {
+                    "name": param.name,
+                    "type": param_type,
+                    "default": default_value,
+                }
+            )
+        self.update_skill_library(function, code, description, arguments)
         return fxn_name
 
-    def update_skill_library(self, function, code_script, description):
+    def update_skill_library(self, function, code_script, description, arguments):
         fxn_name = function.__name__
         if fxn_name in self.skills:  # TODO: a better way to check for duplicates
             print(f"\n\033[43mFunction {fxn_name} already exists. Rewriting!\033[0m")
@@ -125,6 +141,7 @@ class SkillManager:
         self.skills[fxn_name] = {
             "code": code_script,
             "description": description,
+            "arguments": arguments,
         }
         # store code
         with open(f"{self.dir_name}/code/{filename}.py", "w") as f0:
@@ -156,15 +173,6 @@ class SkillManager:
         )
         self.vectordb.persist()
 
-        # # save function to jsonpickle
-        # func_file_path = f"{self.dir_name}/functions.json"
-        # if os.path.exists(func_file_path):
-        #     with open(func_file_path, "r") as f:
-        #         existing_data = json.load(f)
-        # else:
-        #     existing_data = {}
-        # existing_data[fxn_name] = jsonpickle.encode(function)
-
     def execute_skill_function(self, tool_name, path_registry, **kwargs):
         code = self.skills.get(tool_name, {}).get("code", None)
         if not code:
@@ -177,6 +185,7 @@ class SkillManager:
         initial_registry = path_registry.list_path_names()
 
         try:
+            self._check_arguments(tool_name, **kwargs)
             namespace = {}
             exec(code, namespace)
             function = namespace[tool_name]
@@ -189,59 +198,23 @@ class SkillManager:
         new_registry = list(
             set(path_registry.list_path_names()) - set(initial_registry)
         )
-        success_message = "Successfully executed code."
-        files_message = f"New Files Created: {', '.join(new_files)}"
-        registry_message = f"Files added to Path Registry: {', '.join(new_registry)}"
-        output_message = f"Code Output: {output}"
-        return "\n".join(
-            [success_message, files_message, registry_message, output_message]
-        )
+        message = "Successfully executed code."
+        if new_files:
+            message += f"\nNew Files Created: {', '.join(new_files)}"
+        if new_registry:
+            message += f"\nFiles added to Path Registry: {', '.join(new_registry)}"
+        if output:
+            message += f"\nCode Output: {output}\n"
+        return message
 
-    # def execute_skill_code(self, tool_name, path_registry, **kwargs):
-    #     code = self.skills.get(tool_name, {}).get("code", None)
-    #     if not code:
-    #         raise ValueError(
-    #             f"Code for {tool_name} not found. Make sure to use correct tool name."
-    #         )
-    #     # capture initial state
-    #     initial_files = set(os.listdir("."))
-    #     initial_registry = path_registry.list_path_names()
-
-    #     # Redirect stdout and stderr to capture the output
-    #     original_stdout = sys.stdout
-    #     original_stderr = sys.stderr
-    #     sys.stdout = captured_stdout = sys.stderr = io.StringIO()
-    #     exec_context = {
-    #         **kwargs,
-    #         **globals(),
-    #     }  # spread and set kwargs as variables in env
-    #     try:
-    #         exec(code, exec_context)
-    #         output = captured_stdout.getvalue()
-    #     except Exception as e:
-    #         # Restore stdout and stderr
-    #         sys.stdout = original_stdout
-    #         sys.stderr = original_stderr
-    #         error_type = type(e).__name__
-    #         raise type(e)(f"Error executing code for {tool_name}. {error_type}: {e}")
-    #     finally:
-    #         # Ensure that stdout and stderr are always restored
-    #         sys.stdout = original_stdout
-    #         sys.stderr = original_stderr
-
-    #     # capture final state
-    #     new_files = list(set(os.listdir(".")) - initial_files)
-    #     new_registry = list(
-    #         set(path_registry.list_path_names()) - set(initial_registry)
-    #     )
-
-    #     success_message = "Successfully executed code."
-    #     files_message = f"New Files Created: {', '.join(new_files)}"
-    #     registry_message = f"Files added to Path Registry: {', '.join(new_registry)}"
-    #     output_message = f"Code Output: {output}"
-    #     return "\n".join(
-    #         [success_message, files_message, registry_message, output_message]
-    #     )
+    def _check_arguments(self, fxn_name, **args):
+        expected_args = self.skills.get(fxn_name, {}).get("arguments", {})
+        missing_args = []
+        for arg in expected_args:
+            if arg["name"] not in args:
+                missing_args.append(arg["name"])
+        if missing_args:
+            raise ValueError(f"Missing arguments for {fxn_name}: {missing_args}")
 
     def retrieve_skills(self, query, k=None):
         if k is None:
