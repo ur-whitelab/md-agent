@@ -12,8 +12,8 @@ class MDAgent:
     def __init__(
         self,
         tools=None,
-        model="gpt-4",
-        tools_model="gpt-4",
+        model="gpt-4-1106-preview",  # current name for gpt-4 turbo
+        tools_model="gpt-4-1106-preview",
         temp=0.1,
         max_iterations=40,
         api_key=None,
