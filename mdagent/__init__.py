@@ -14,7 +14,7 @@ from .tools import (
     VisFunctions,
     VisualizationToolRender,
     get_pdb,
-    make_tools,
+    make_all_tools,
 )
 from .utils import PathRegistry
 
@@ -37,5 +37,5 @@ __all__ = [
     "MapPath2Name",
     "SimulationOutputFigures",
     "get_pdb",
-    "make_tools",
+    "make_all_tools",
 ]

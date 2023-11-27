@@ -1,7 +1,7 @@
 from .action import ActionAgent
 from .code_critic import CodeCriticAgent
 from .curriculum import ExplorerAgent, RefiningCurriculumAgent
-from .skill import SkillAgent
+from .skill import SkillManager
 from .task_critic import TaskCriticAgent
 
 __all__ = [
@@ -9,6 +9,6 @@ __all__ = [
     "CodeCriticAgent",
     "ExplorerAgent",
     "RefiningCurriculumAgent",
-    "SkillAgent",
+    "SkillManager",
     "TaskCriticAgent",
 ]

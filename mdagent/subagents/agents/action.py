@@ -125,12 +125,14 @@ class ActionAgent:
         return success, output
 
     def _extract_code(self, output):
-        match = re.search(r"Code:\n```.+?\n(.+?)\n```", output, re.DOTALL)
-        if match:
-            code = match.group(1)
-            return code
+        code_match = re.search(r"Code:\n```.+?\n(.+?)\n```", output, re.DOTALL)
+        fxn_match = re.search(r"Function Name:\s(\w+)", output)
+        if code_match and fxn_match:
+            code = code_match.group(1)
+            fxn_name = fxn_match.group(1)
+            return code, fxn_name
         else:
-            return None
+            return None, None
 
     def _run_code(
         self,
@@ -159,7 +161,7 @@ class ActionAgent:
             explanation,
         )
         # extract code part
-        code = self._extract_code(output)
+        code, fxn_name = self._extract_code(output)
         # run code
         success, code_output = self._exec_code(code)
-        return success, code, code_output
+        return success, code, code_output, fxn_name

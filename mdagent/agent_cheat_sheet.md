@@ -37,6 +37,18 @@
 ├── ...
 ```
 
+# Import Chain
+Top-level to lower-level dependencies to prevent circular imports
+```
+mainagent   - depends on everything below
+  ↑
+tools       - depends on subagents, utils
+  ↑
+subagents   - depends on utils
+  ↑
+utils       - depends on nothing
+```
+
 # Agent Cheat Sheet - for development
 
 We are working with multiple agents, who interact with each other in various ways. To make this process more seamless, here is an agent cheat sheet.
@@ -112,16 +124,18 @@ For example, curriculum's "place within agent framework" might be first step in 
     - if unsuccessful, continue
 - TaskCritic._run_task_critic
 
-## Skill Agent (for creating a new tool)
-- creates tool_name and description for new code, wraps it into Python function and Langchain tool
+## Skill Manager
+- creates tool_name and description for new code, wraps it into Langchain tool
+- also stores everything in 'skill_library' directory
 - input:
+    - fxn_name
     - code
 - output:
     - langchain tool name
-    - (created .py file containing python function & langchain tool)
 - Lives whenever new code is successful and needs to store as a tool
-- SkillAgent.run
+- SkillManager.add_new_tool(fxn_name, code)
 
+OUTDATED: will revamp curriculum agents into one agent (probably as a separate tool)
 ## Refining Curriculum Agent (to refine task if code keeps failing)
 - proposes a new, refined task closely aligned to the 'spirit' of user prompt as much as possible
 - inputs:
@@ -135,20 +149,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - Lives after action keeps failing to create successful code
 - RefiningCurriculumAgent.run
 
-
-## Outside 'Iteration' tool (for exploring, storing skill library with no new tools)
-
-### Skill Agent (for creating a new SKILL)
-- creates tool_name and description for a 'new' user input and a collection of tools, store it as a skill (and wrap it into Langchain tool)
-- inputs:
-    - original
-- output(s)
--
-
-### SkillQuery tool
-- just call skill agent to query tools/skill library
-
-### 'Explorer' Curriculum Agent
+## 'Explorer' Curriculum Agent
 - proposes a new prompt for MKRL agent
 - inputs:
     - original_task (user prompt)

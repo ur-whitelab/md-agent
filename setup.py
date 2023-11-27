@@ -18,7 +18,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
-        "langchain",
+        "langchain==0.0.336",
+        "langchain_experimental",
         "paper-qa",
         "pqapi",
         "rmrkl",
@@ -26,6 +27,7 @@ setup(
         "requests",
         "python-dotenv",
         "matplotlib",
+        "chromadb==0.3.29",
     ],
     test_suite="tests",
     long_description=long_description,

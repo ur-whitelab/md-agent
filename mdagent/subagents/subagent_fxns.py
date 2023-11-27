@@ -12,11 +12,15 @@ class Iterator:
         self,
         path_registry: Optional[PathRegistry],
         subagent_settings: Optional[SubAgentSettings],
+        all_tools_string: Optional[str] = None,
+        current_tools: Optional[dict] = None,
     ):
         self.path_registry = path_registry
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
         self.ckpt_dir = subagent_settings.ckpt_dir
+        self.all_tools_string = all_tools_string
+        self.current_tools = current_tools
         os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
 
         # initialize agents
@@ -79,14 +83,14 @@ class Iterator:
         """
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
-        code_success, code, code_output = self.action_agent._run_code(
+        code_success, code, code_output, fxn_name = self.action_agent._run_code(
             recent_history,
             full_history,
             task,
             context,
             skills,
         )
-        print("Code Output: ", code_output)
+        print("\nCode Output: ", code_output)
         if code_success is True:
             print("\n\033[46mcode succeeded, running task critic\033[0m")
             # run task critic
@@ -108,12 +112,22 @@ class Iterator:
                 task,
                 critique,
                 task_critique,
+                fxn_name,
             )
 
         # otherwise, run code critic
         print("\n\033[46mtask failed, running code critic\033[0m")
         critique = self.code_critic_agent._run(code, code_output, task, context)
-        return task_success, code, code_output, context, task, critique, task_critique
+        return (
+            task_success,
+            code,
+            code_output,
+            context,
+            task,
+            critique,
+            task_critique,
+            fxn_name,
+        )
 
     def _run_iterations(
         self, run, task, context, iterations=5, failed=None, explanation=None
@@ -154,6 +168,7 @@ class Iterator:
                 task,
                 code_critique,
                 task_critique,
+                fxn_name,
             ) = self._run_loop(task, context, recent_history, full_history, skills)
 
             # save to history
@@ -174,7 +189,7 @@ class Iterator:
 
                 # give successful code to tool/skill manager
                 print("\n\033[46mThe new code is complete, running skill agent\033[0m")
-                tool_name = self.skill_agent.add_new_tool(code, max_retries=5)
+                tool_name = self.skill_agent.add_new_tool(fxn_name, code)
                 return success, tool_name
             iter += 1
 
@@ -220,7 +235,6 @@ class Iterator:
                 lines = full_history_string.splitlines()
                 recent_history_string = lines[-1] if lines else None
 
-        # TODO: do include base tools
         skills = self.skill_agent.get_skills()
         if skills:
             skills_string = json.dumps(skills)
@@ -233,6 +247,9 @@ class Iterator:
         else:
             files_string = ""
 
+        current_tools_string = ""
+        if self.current_tools:
+            current_tools_string = json.dumps(self.current_tools)
         # TODO: include a list of packages we currently have/support
 
         info = {
@@ -240,5 +257,7 @@ class Iterator:
             "full_history": full_history_string,
             "skills": skills_string,
             "files": files_string,
+            "current_tools": current_tools_string,
+            "all_tools": self.all_tools_string,
         }
         return info
