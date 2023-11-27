@@ -27,7 +27,6 @@ def get_pdb(query_string, PathRegistry):
         filetype = "cif"
     else:
         filetype = "pdb"
-
     if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
@@ -36,7 +35,6 @@ def get_pdb(query_string, PathRegistry):
         filename = f"{pdbid}.{filetype}"
         with open(filename, "w") as file:
             file.write(pdb.text)
-            file.close()
         print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
         PathRegistry.map_path(filename, filename, file_description)

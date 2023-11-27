@@ -3,7 +3,7 @@ from typing import Optional
 
 from langchain.tools import BaseTool
 
-from ..utils import PathRegistry
+from mdagent.utils import PathRegistry
 
 
 class MapPath2Name(BaseTool):

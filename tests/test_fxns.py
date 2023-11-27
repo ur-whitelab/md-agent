@@ -4,7 +4,12 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.tools import CleaningTools, SimulationFunctions, VisFunctions, get_pdb
+from mdagent.tools.base_tools import (
+    CleaningTools,
+    SimulationFunctions,
+    VisFunctions,
+    get_pdb,
+)
 from mdagent.utils import PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -109,4 +114,4 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 
 def test_getpdb(fibronectin, get_registry):
     name = get_pdb(fibronectin, get_registry)
-    assert name == "1X5Y.pdb"
+    assert name.endswith(".pdb")

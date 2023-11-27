@@ -1358,7 +1358,7 @@ class PDBFilesFixInp(BaseModel):
 class FixPDBFile(BaseTool):
     name: str = "PDB File Fixer"
     description: str = "Fixes PDB files columns if needed"
-    args_schema = PDBFilesFixInp
+    args_schema: Type[BaseModel] = PDBFilesFixInp
 
     path_registry: typing.Optional[PathRegistry]
 
