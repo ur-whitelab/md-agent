@@ -135,7 +135,7 @@ For example, curriculum's "place within agent framework" might be first step in 
 - Lives whenever new code is successful and needs to store as a tool
 - SkillManager.add_new_tool(fxn_name, code)
 
-OUTDATED: will revamp curriculum agents into one agent
+OUTDATED: will revamp curriculum agents into one agent (probably as a separate tool)
 ## Refining Curriculum Agent (to refine task if code keeps failing)
 - proposes a new, refined task closely aligned to the 'spirit' of user prompt as much as possible
 - inputs:

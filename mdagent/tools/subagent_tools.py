@@ -21,10 +21,6 @@ class ExecuteSkill(BaseTool):
     description = """Executes the code for a new tool or skill that has
     been recently made during the current iteration. Make sure to include
     function name and inputs arguments.
-
-    Inputs:
-    - skill_name: Name of the skill to execute
-    - args: Input variables as a dictionary to pass to the skill
     """
     path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
@@ -38,14 +34,6 @@ class ExecuteSkill(BaseTool):
         super().__init__()
         self.path_registry = path_registry
         self.subagent_settings = subagent_settings
-
-    # def _run(self, query: dict) -> str:
-    #     """use the tool"""
-    #     error_msg = query.get("error")
-    #     if error_msg:
-    #         return error_msg
-    #     skill_name = query.get("skill_name")
-    #     args = query.get("args")
 
     def _run(self, skill_name, args=None):
         try:

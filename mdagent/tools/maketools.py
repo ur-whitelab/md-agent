@@ -8,6 +8,7 @@ from langchain.base_language import BaseLanguageModel
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.tools import BaseTool, StructuredTool
 from langchain.vectorstores import Chroma
+from langchain_experimental.tools import PythonREPLTool
 from pydantic import BaseModel, Field
 
 from mdagent.subagents import Iterator, SubAgentSettings
@@ -19,6 +20,7 @@ from .base_tools.clean_tools import (
     SpecializedCleanTool,
 )
 from .base_tools.md_util_tools import Name2PDBTool
+from .base_tools.plot_tools import SimulationOutputFigures
 from .base_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .base_tools.search_tools import Scholar2ResultLLM
 from .base_tools.setup_and_run import SetUpAndRunTool
@@ -57,30 +59,33 @@ def make_all_tools(
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
     skip_subagents=False,
+    human=False,
 ):
     load_dotenv()
     all_tools = []
 
     if llm:
-        # all_tools += agents.load_tools(["python_repl", "human", "llm-math"], llm)
-        all_tools += agents.load_tools(["python_repl", "llm-math"], llm)
+        all_tools += agents.load_tools(["llm-math"], llm)
+        all_tools += [PythonREPLTool(llm=llm)]
+        if human:
+            all_tools += [agents.load_tools(["human"], llm)[0]]
 
     # get path registry
     path_instance = PathRegistry.get_instance()  # get instance first
 
     # add base tools
     base_tools = [
-        VisualizationToolRender(),
+        AddHydrogensCleaningTool(path_registry=path_instance),
         CheckDirectoryFiles(),
-        SetUpAndRunTool(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         MapPath2Name(path_registry=path_instance),
-        PlanBVisualizationTool(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
-        SpecializedCleanTool(path_registry=path_instance),
+        PlanBVisualizationTool(path_registry=path_instance),
         RemoveWaterCleaningTool(path_registry=path_instance),
-        AddHydrogensCleaningTool(path_registry=path_instance),
-        # where is plotting tool?
+        SetUpAndRunTool(path_registry=path_instance),
+        SimulationOutputFigures(),
+        SpecializedCleanTool(path_registry=path_instance),
+        VisualizationToolRender(),
     ]
 
     # tools using subagents
@@ -123,6 +128,7 @@ def get_tools(
     ckpt_dir="ckpt",
     retrieval_top_k=10,
     subagents_required=True,
+    human=False,
 ):
     retrieved_tools = []
     if subagents_required:
@@ -140,9 +146,13 @@ def get_tools(
             ),
         ]
         retrieval_top_k -= len(retrieved_tools)
-        all_tools = make_all_tools(llm, subagent_settings, skip_subagents=True)
+        all_tools = make_all_tools(
+            llm, subagent_settings, skip_subagents=True, human=human
+        )
     else:
-        all_tools = make_all_tools(llm, subagent_settings, skip_subagents=False)
+        all_tools = make_all_tools(
+            llm, subagent_settings, skip_subagents=False, human=human
+        )
 
     # create vector DB for all tools
     vectordb = Chroma(
@@ -183,6 +193,7 @@ class CreateNewToolInputSchema(BaseModel):
     )
 
 
+# move this here to avoid circular import error (since it gets a list of all tools)
 class CreateNewTool(BaseTool):
     name: str = "CreateNewTool"
     description: str = """
@@ -210,18 +221,6 @@ class CreateNewTool(BaseTool):
         for tool in all_tools:
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
-
-    # def _run(self, query: dict) -> str:
-    #     """use the tool."""
-    #     if not isinstance(query, dict):
-    #         return "Input query must be a dictionary"
-
-    #     error_msg = query.get("error")
-    #     if error_msg:
-    #         return error_msg
-    #     task = query.get("task")
-    #     orig_prompt = query.get("orig_prompt")
-    #     curr_tools = query.get("curr_tools")
 
     def _run(self, task, orig_prompt, curr_tools):
         # def _run(self, task, orig_prompt):
