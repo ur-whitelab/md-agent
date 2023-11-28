@@ -6,7 +6,9 @@ It's built using Langchain and uses a collection of tools to set up and execute 
 To use the OpenMM features in the agent, please set up a conda environment, following these steps.
 - Create conda environment: `conda env create -n mdagent -f environment.yaml`
 - Activate your environment: `conda activate mdagent`
-- Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer`
+
+If you already have a conda environment, you can install the necessary dependencies with the following steps.
+- Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer mdanalysis`
 
 
 ## Installation
