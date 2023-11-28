@@ -4,8 +4,7 @@ from typing import Optional
 from mdagent.subagents.agents import (
     ActionAgent,
     CodeCriticAgent,
-    ExplorerAgent,
-    RefiningCurriculumAgent,
+    CurriculumAgent,
     SkillManager,
     TaskCriticAgent,
 )
@@ -80,34 +79,16 @@ class SubAgentInitializer:
         params.update(overrides)
         return CodeCriticAgent(**params)
 
-    def create_explorer_agent(self, **overrides):
+    def create_curriculum_agent(self, **overrides):
         params = {
+            "model": self.subagents_model,
+            "temp": self.temp,
+            "verbose": self.verbose,
             "path_registry": self.path_registry,
-            "model": self.subagents_model,
-            "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
-            "ckpt_dir": self.ckpt_dir,
-            "resume": self.resume,
         }
         # Update params with any overrides
         params.update(overrides)
-        return ExplorerAgent(**params)
-
-    def create_refining_curriculum_agent(self, **overrides):
-        params = {
-            "model": self.subagents_model,
-            "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
-            "ckpt_dir": self.ckpt_dir,
-            "resume": self.resume,
-        }
-        # Update params with any overrides
-        params.update(overrides)
-        return RefiningCurriculumAgent(**params)
+        return CurriculumAgent(**params)
 
     def create_skill_manager(self, **overrides):
         params = {
@@ -142,7 +123,6 @@ class SubAgentInitializer:
         return {
             "action": self.create_action_agent(**overrides),
             "code_critic": self.create_code_critic(**overrides),
-            "refining_curriculum": self.create_refining_curriculum_agent(**overrides),
             "skill": self.create_skill_manager(**overrides),
             "task_critic": self.create_task_critic(**overrides),
         }

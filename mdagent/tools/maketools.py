@@ -33,7 +33,7 @@ from .base_tools import (
     SpecializedCleanTool,
     VisualizationToolRender,
 )
-from .subagent_tools import ExecuteSkill, SkillRetrieval
+from .subagent_tools import ExecuteSkill, SkillRetrieval, WorkflowPlan
 
 
 def get_learned_tools(ckpt_dir="ckpt"):
@@ -111,6 +111,9 @@ def make_all_tools(
             SkillRetrieval(
                 path_registry=path_instance, subagent_settings=subagent_settings
             ),
+            WorkflowPlan(
+                path_registry=path_instance, subagent_settings=subagent_settings
+            ),
         ]
 
     # add 'learned' tools here
@@ -128,7 +131,6 @@ def make_all_tools(
         all_tools.append(SerpGitTool(serp_key))  # github issues search
     if pqa_key:
         all_tools.append(Scholar2ResultLLM(pqa_key))  # literature search
-
     return all_tools
 
 

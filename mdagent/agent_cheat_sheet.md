@@ -135,27 +135,17 @@ For example, curriculum's "place within agent framework" might be first step in 
 - Lives whenever new code is successful and needs to store as a tool
 - SkillManager.add_new_tool(fxn_name, code)
 
-OUTDATED: will revamp curriculum agents into one agent (probably as a separate tool)
-## Refining Curriculum Agent (to refine task if code keeps failing)
-- proposes a new, refined task closely aligned to the 'spirit' of user prompt as much as possible
+## Curriculum Agent
+- proposes a curriculum of subtasks to achieve the original prompt. Useful
+at the beginning of MDAgent's cycle or whenever MDAgent gets stuck. Also
+useful when the user wants to explore.
 - inputs:
     - original_task (user prompt)
-    - recent history
-    - full history (key info: failed/completed tasks)
-    - current list of tools/skills (from MRKL and skill library)
+    - current list of tools/skills (from MDAgent and skill library)
     - files
+    - failed tasks, if any
 - output:
-    - a new task
-- Lives after action keeps failing to create successful code
-- RefiningCurriculumAgent.run
-
-## 'Explorer' Curriculum Agent
-- proposes a new prompt for MKRL agent
-- inputs:
-    - original_task (user prompt)
-    - recent history (latest task)
-    - full history (key info: failed/completed tasks)
-    - current list of tools/skills (from MRKL and skill library)
-    - files
-- output:
-    - a new task
+    - the rationale for the plan of subtasks
+    - a list of subtasks
+- Lives outside iterator code, as a separate tool.
+- CurriculumAgent.run(original_task, tools, files, failed_tasks)

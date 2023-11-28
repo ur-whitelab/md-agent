@@ -28,7 +28,6 @@ class Iterator:
         subagents = initializer.create_iteration_agents()
         self.action_agent = subagents["action"]
         self.code_critic_agent = subagents["code_critic"]
-        self.curriculum_agent = subagents["refining_curriculum"]
         self.skill_agent = subagents["skill"]
         self.task_critic_agent = subagents["task_critic"]
 
@@ -210,20 +209,18 @@ class Iterator:
         return success, tool_name
 
     # run da whole thing
-    def run(self, task, user_prompt, max_task_refinement=1):
-        for i in range(max_task_refinement + 1):
-            if i > 0:
-                # if not first step, propose a new task
-                info = self._pull_information()
-                print("\n\033[46mtask failed, running curriculum agent\033[0m")
-                task = self.curriculum_agent.run(task, user_prompt, info, max_retries=3)
-
-            success, tool_name = self._run_iterations(
-                i, task, user_prompt, iterations=5
-            )
-            if success:
-                return tool_name
-        return None
+    def run(self, task, user_prompt):
+        # info = self._pull_information() # if you want to pass any of these info
+        success, tool_name = self._run_iterations(
+            0,
+            task,
+            user_prompt,
+            iterations=5,  # info,
+        )
+        if success:
+            return tool_name
+        else:
+            return None
 
     def _pull_information(self):
         # pull info of strings to pass to llm agents

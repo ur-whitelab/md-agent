@@ -113,3 +113,61 @@ class SkillRetrieval(BaseTool):
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously"""
         raise NotImplementedError("This tool does not support async")
+
+
+class WorkflowPlanInputSchema(BaseModel):
+    task: str = Field(
+        description="""The final task you want to complete, ideally full
+        user prompt you got from the beginning."""
+    )
+    curr_tools: str = Field(
+        description="""List of all tools you have access to. Such as
+        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+    )
+    files: str = Field(description="List of all files you have access to.")
+    # ^ would be nice if MDAgent could give files in case user provides unmapped files
+    #   user-provided files should be mapped though
+    failed_tasks: Optional[str] = Field(description="List of all failed tasks.")
+
+
+class WorkflowPlan(BaseTool):
+    name: str = "WorkflowPlan"
+    description: str = """
+        Useful at the beginning of solving a task. It gives you a
+        workflow plan for any Molecular Dynamics task or to explore.
+        Also useful if you're stuck and need to refine your workflow plan.
+    """
+    args_schema: Type[BaseModel] = WorkflowPlanInputSchema
+    path_registry: Optional[PathRegistry]
+    subagent_settings: Optional[SubAgentSettings]
+
+    def __init__(
+        self,
+        path_registry: Optional[PathRegistry],
+        subagent_settings: Optional[SubAgentSettings],
+    ):
+        super().__init__()
+        self.path_registry = path_registry
+        self.subagent_settings = subagent_settings
+
+    def _run(self, task, tools, files, failed_tasks=""):
+        try:
+            if self.path_registry is None:  # this should not happen
+                return "Path registry not initialized"
+            if self.subagent_settings is None:
+                return "Settings for subagents yet to be defined"
+            agent_initializer = SubAgentInitializer(self.subagent_settings)
+            curriculum_agent = agent_initializer.create_curriculum_agent()
+            if curriculum_agent is None:
+                return "Curriculum Agent is not initialized"
+            if files == "":
+                files = self.path_registry.list_path_names()
+            decomposed_tasks = curriculum_agent.run(task, tools, files, failed_tasks)
+            return f"""Here's the list of subtasks decomposed from the main task:\n
+                {decomposed_tasks}. \n Now, do these subtasks one by one."""
+        except Exception as e:
+            return f"Something went wrong. {type(e).__name__}: {e}"
+
+    async def _arun(self, query) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("This tool does not support async")

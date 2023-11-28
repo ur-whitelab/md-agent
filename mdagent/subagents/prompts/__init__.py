@@ -13,12 +13,7 @@ from .critic_prompts import (
     task_critic_prefix,
     task_critic_prompt,
 )
-from .curriculum_prompts import (
-    ExplorePrompts,
-    QAStep1Prompts,
-    QAStep2Prompts,
-    RefinePrompts,
-)
+from .curriculum_prompts import curriculum_template
 from .skill_prompts import SkillPrompts
 
 __all__ = [
@@ -34,9 +29,6 @@ __all__ = [
     "task_critic_format",
     "task_critic_prefix",
     "task_critic_prompt",
-    "ExplorePrompts",
-    "RefinePrompts",
-    "QAStep1Prompts",
-    "QAStep2Prompts",
+    "curriculum_template",
     "SkillPrompts",
 ]

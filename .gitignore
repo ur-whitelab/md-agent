@@ -139,7 +139,8 @@ dmypy.json
 # output files
 *.csv
 *.png
+ckpt/
 
-# generated files for testing
+# path registry files
 *registry.json
 *paths_registry.json
