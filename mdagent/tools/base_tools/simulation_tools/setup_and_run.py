@@ -28,7 +28,7 @@ from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picos
 
 from mdagent.utils import PathRegistry
 
-from .clean_tools import CleaningTools
+from ..preprocess_tools.clean_tools import CleaningTools
 
 
 class SimulationFunctions:

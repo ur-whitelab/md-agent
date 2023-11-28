@@ -136,6 +136,10 @@ dmypy.json
 *.cif
 !3pqr.cif
 
+# output files
+*.csv
+*.png
+
 # generated files for testing
 *registry.json
 *paths_registry.json
