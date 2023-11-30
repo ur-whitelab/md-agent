@@ -130,3 +130,12 @@ dmypy.json
 
 # testing files generated
 *.txt.json
+
+# pdb cif files
+*.pdb
+*.cif
+!3pqr.cif
+
+# generated files for testing
+*registry.json
+*paths_registry.json

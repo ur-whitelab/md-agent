@@ -5,7 +5,6 @@ on:
     branches:
       - '*'
 
-
 jobs:
   test:
 
@@ -24,10 +23,10 @@ jobs:
         environment-file: environment.yaml
         python-version: ${{ matrix.python-version }}
         auto-activate-base: true
-    - name: Install [openmm pdbfixer] with conda
+    - name: Install openmm pdbfixer mdanalysis with conda
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge openmm pdbfixer
+        conda install -c conda-forge openmm pdbfixer mdanalysis
     - name: Install dependencies
       shell: bash -l {0}
       run: |

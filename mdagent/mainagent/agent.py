@@ -8,7 +8,7 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
 
 from mdagent.subagents import SubAgentSettings
-from mdagent.tools import make_tools
+from mdagent.tools import make_all_tools
 from mdagent.utils import PathRegistry
 
 load_dotenv()
@@ -57,7 +57,7 @@ class MDAgent:
             resume=resume,
         )
 
-        tools = make_tools(llm, self.subagents_settings)
+        tools = make_all_tools(llm, self.subagents_settings)
         self.agent_instance = AgentExecutor.from_agent_and_tools(
             tools=tools,
             agent=OpenAIFunctionsAgent.from_llm_and_tools(llm, tools),
