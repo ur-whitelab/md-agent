@@ -4,7 +4,6 @@ from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
 from mdagent.subagents import SubAgentInitializer, SubAgentSettings
-from mdagent.utils import PathRegistry
 
 
 class ExecuteSkillInputSchema(BaseModel):
@@ -22,25 +21,16 @@ class ExecuteSkill(BaseTool):
     been recently made during the current iteration. Make sure to include
     function name and inputs arguments.
     """
-    path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = ExecuteSkillInputSchema
 
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry] = None,
-        subagent_settings: Optional[SubAgentSettings] = None,
-    ):
+    def __init__(self, subagent_settings: Optional[SubAgentSettings] = None):
         super().__init__()
-        self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
     def _run(self, skill_name, args=None):
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            if self.subagent_settings is None:
-                return "Settings for subagents yet to be defined"
+            path_registry = self.subagent_settings.path_registry
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill_agent = agent_initializer.create_skill_manager(resume=True)
             if skill_agent is None:
@@ -48,11 +38,11 @@ class ExecuteSkill(BaseTool):
             if args is not None:
                 print("args: ", args)
                 code_result = skill_agent.execute_skill_function(
-                    skill_name, self.path_registry, **args
+                    skill_name, path_registry, **args
                 )
             else:
                 code_result = skill_agent.execute_skill_function(
-                    skill_name, self.path_registry
+                    skill_name, path_registry
                 )
             return code_result
         except TypeError as e:
@@ -79,26 +69,16 @@ class SkillRetrieval(BaseTool):
     description = """Only use this tool to retrieve skills that have been
     made during the current iteration. Use this tool less than other tools.
     """
-    path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = SkillRetrievalInput
 
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry] = None,
-        subagent_settings: Optional[SubAgentSettings] = None,
-    ):
+    def __init__(self, subagent_settings: Optional[SubAgentSettings] = None):
         super().__init__()
-        self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
     def _run(self, query: str) -> str:
         """use the tool"""
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            if self.subagent_settings is None:
-                return "Settings for subagents yet to be defined"
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill_agent = agent_initializer.create_skill_manager(resume=True)
             if skill_agent is None:
@@ -133,36 +113,29 @@ class WorkflowPlanInputSchema(BaseModel):
 class WorkflowPlan(BaseTool):
     name: str = "WorkflowPlan"
     description: str = """
-        Useful at the beginning of solving a task. It gives you a
-        workflow plan for any Molecular Dynamics task or to explore.
+        Useful at the beginning of solving a task, especially when it
+        requires running simulations. It gives you a workflow plan for
+        any Molecular Dynamics task or to explore.
         Also useful if you're stuck and need to refine your workflow plan.
     """
     args_schema: Type[BaseModel] = WorkflowPlanInputSchema
-    path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
 
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-        subagent_settings: Optional[SubAgentSettings],
-    ):
+    def __init__(self, subagent_settings: Optional[SubAgentSettings] = None):
         super().__init__()
-        self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
-    def _run(self, task, tools, files, failed_tasks=""):
+    def _run(self, task, curr_tools, files, failed_tasks=""):
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            if self.subagent_settings is None:
-                return "Settings for subagents yet to be defined"
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             curriculum_agent = agent_initializer.create_curriculum_agent()
             if curriculum_agent is None:
                 return "Curriculum Agent is not initialized"
             if files == "":
                 files = self.path_registry.list_path_names()
-            decomposed_tasks = curriculum_agent.run(task, tools, files, failed_tasks)
+            rationale, decomposed_tasks = curriculum_agent.run(
+                task, curr_tools, files, failed_tasks
+            )
             return f"""Here's the list of subtasks decomposed from the main task:\n
                 {decomposed_tasks}. \n Now, do these subtasks one by one."""
         except Exception as e:

@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -31,5 +32,12 @@ class CurriculumAgent:
                 "failed_tasks": failed_tasks,
             }
         )["text"]
-        # TODO: parse a list of subtasks from the message
-        return message
+
+        if message.startswith("```json"):
+            # Remove the triple backticks and 'json'
+            message = message.strip("`").replace("json\n", "")
+
+        parsed_message = json.loads(message)
+        rationale = parsed_message.get("Rationale", "")
+        subtasks = parsed_message.get("Plan", [])
+        return rationale, subtasks

@@ -1,4 +1,3 @@
-import warnings
 from typing import Optional
 
 from mdagent.subagents.agents import (
@@ -36,14 +35,15 @@ class SubAgentSettings:
 
 
 class SubAgentInitializer:
-    def __init__(self, settings: Optional[SubAgentSettings]):
+    def __init__(self, settings: Optional[SubAgentSettings] = None):
         if settings is None:
-            raise ValueError("Settings cannot be None")
+            settings = SubAgentSettings()
         if settings.path_registry is None:
-            warnings.warn(
-                "path_registry is None, some agents may fail to be created.",
-                UserWarning,
-            )
+            # warnings.warn(
+            #     "'path_registry' isn't specified. Use current directory by default.",
+            #     UserWarning,
+            # )
+            settings.path_registry = PathRegistry.get_instance()
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp

@@ -85,13 +85,13 @@ class MDAgent:
         )
         outputs = self.agent_executor(main_prompt.format(input=user_prompt))
         # Parse long output (with intermediate steps)
-        intermed = outputs["intermediate_steps"]
+        outputs["intermediate_steps"]
         final = ""
-        for step in intermed:
-            final += (
-                f"Action: {step[0].tool}\n"
-                f"Action Input: {step[0].tool_input}\n"
-                f"Observation: {step[1]}\n"
-            )
+        # for step in intermed:
+        #     final += (
+        #         f"Action: {step[0].tool}\n"
+        #         f"Action Input: {step[0].tool_input}\n"
+        #         f"Observation: {step[1]}\n"
+        #     )
         final += f"Final Answer: {outputs['output']}"
         return final

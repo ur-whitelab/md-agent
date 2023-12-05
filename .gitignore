@@ -140,6 +140,7 @@ dmypy.json
 *.csv
 *.png
 ckpt/
+Visualization.ipynb
 
 # path registry files
 *registry.json

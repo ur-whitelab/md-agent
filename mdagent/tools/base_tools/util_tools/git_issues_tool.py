@@ -65,7 +65,7 @@ class GitToolFunctions:
 
 
 class SerpGitTool(BaseTool):
-    name = "Openmm Github Issues Search"
+    name = "Openmm_Github_Issues_Search"
     description = """ Tool that searches inside
                     github issues in openmm. Make
                     your query as if you were googling something.
@@ -90,8 +90,12 @@ class SerpGitTool(BaseTool):
         encoding = fxns.make_encoding()
         search = GoogleSearch(params)
         results = search.get_dict()
-
-        organic_results = results["organic_results"]
+        organic_results = results.get("organic_results")
+        if organic_results is None:
+            if results.get("error"):
+                return "error: " + results.get("error")
+            else:
+                return "Error: No 'organic_results' found"
         issues_numbers: List = (
             []
         )  # list that will contain issue id numbers retrieved from the google search

@@ -13,11 +13,13 @@ from pydantic import BaseModel, Field, ValidationError, root_validator
 from mdagent.utils import PathRegistry
 
 
-def get_pdb(query_string, PathRegistry):
+def get_pdb(query_string, path_registry=None):
     """
     Search RSCB's protein data bank using the given query string
     and return the path to pdb file in either CIF or PDB format
     """
+    if path_registry is None:
+        path_registry = PathRegistry.get_instance()
     url = "https://search.rcsb.org/rcsbsearch/v2/query?json={search-request}"
     query = {
         "query": {
@@ -44,7 +46,7 @@ def get_pdb(query_string, PathRegistry):
             file.write(pdb.text)
         print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
-        PathRegistry.map_path(filename, filename, file_description)
+        path_registry.map_path(filename, filename, file_description)
         return filename
     return None
 
@@ -1427,7 +1429,7 @@ class PDBFilesFixInp(BaseModel):
 
 
 class FixPDBFile(BaseTool):
-    name: str = "PDB File Fixer"
+    name: str = "PDBFileFixer"
     description: str = "Fixes PDB files columns if needed"
     args_schema: Type[BaseModel] = PDBFilesFixInp
 

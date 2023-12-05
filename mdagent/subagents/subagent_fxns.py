@@ -247,7 +247,6 @@ class Iterator:
         current_tools_string = ""
         if self.current_tools:
             current_tools_string = json.dumps(self.current_tools)
-        # TODO: include a list of packages we currently have/support
 
         info = {
             "recent_history": recent_history_string,

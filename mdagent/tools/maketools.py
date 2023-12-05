@@ -102,18 +102,10 @@ def make_all_tools(
     subagents_tools = []
     if not skip_subagents:
         subagents_tools = [
-            CreateNewTool(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
-            ExecuteSkill(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
-            SkillRetrieval(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
-            WorkflowPlan(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
+            CreateNewTool(subagent_settings=subagent_settings),
+            ExecuteSkill(subagent_settings=subagent_settings),
+            SkillRetrieval(subagent_settings=subagent_settings),
+            WorkflowPlan(subagent_settings=subagent_settings),
         ]
 
     # add 'learned' tools here
@@ -146,17 +138,12 @@ def get_tools(
     retrieved_tools = []
     if subagents_required:
         # add subagents-related tools by default
-        path_instance = PathRegistry.get_instance()
+        PathRegistry.get_instance()
         retrieved_tools = [
-            CreateNewTool(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
-            ExecuteSkill(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
-            SkillRetrieval(
-                path_registry=path_instance, subagent_settings=subagent_settings
-            ),
+            CreateNewTool(subagent_settings=subagent_settings),
+            ExecuteSkill(subagent_settings=subagent_settings),
+            SkillRetrieval(subagent_settings=subagent_settings),
+            WorkflowPlan(subagent_settings=subagent_settings),
         ]
         retrieval_top_k -= len(retrieved_tools)
         all_tools = make_all_tools(
@@ -210,21 +197,15 @@ class CreateNewToolInputSchema(BaseModel):
 class CreateNewTool(BaseTool):
     name: str = "CreateNewTool"
     description: str = """
-        This tool is used to create a new tool.
+        Only use if you don't have right tools for sure and need a different tool.
         If succeeded, it will return the name of the tool.
         You can then use the tool in subsequent steps.
     """
     args_schema: Type[BaseModel] = CreateNewToolInputSchema
-    path_registry: Optional[PathRegistry]
     subagent_settings: Optional[SubAgentSettings]
 
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-        subagent_settings: Optional[SubAgentSettings],
-    ):
+    def __init__(self, subagent_settings: Optional[SubAgentSettings] = None):
         super().__init__()
-        self.path_registry = path_registry
         self.subagent_settings = subagent_settings
 
     def get_all_tools_string(self):
@@ -238,16 +219,13 @@ class CreateNewTool(BaseTool):
     def _run(self, task, orig_prompt, curr_tools):
         # def _run(self, task, orig_prompt):
         try:
-            if self.path_registry is None:
-                return "Path registry not initialized"
-            if self.subagent_settings is None:
-                return "Settings for subagents yet to be defined"
             # run iterator
+            path_registry = self.subagent_settings.path_registry
             print("getting all tools info")
             all_tools_string = self.get_all_tools_string()
             print("setting up iterator")
             newcode_iterator = Iterator(
-                self.path_registry,
+                path_registry,
                 self.subagent_settings,
                 all_tools_string=all_tools_string,
                 current_tools=curr_tools,
