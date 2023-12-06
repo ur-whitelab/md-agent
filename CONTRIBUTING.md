@@ -11,7 +11,6 @@ git clone https://github.com/ur-whitelab/md-agent.git
 cd md-agent
 conda env create -n mdagent -f environment.yaml
 conda activate mdagent
-conda install -c conda-forge openmm pdbfixer
 ```
 
 ### Installing the Package and Dependencies and Configuring Pre-commit Hooks

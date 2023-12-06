@@ -1,24 +1,27 @@
-from .clean_tools import (
-    AddHydrogensCleaningTool,
-    CleaningTools,
-    RemoveWaterCleaningTool,
-    SpecializedCleanTool,
-)
-from .git_issues_tool import SerpGitTool
-from .md_util_tools import Name2PDBTool, get_pdb
-from .pdb_tools import PackMolTool
-from .plot_tools import SimulationOutputFigures
-from .ppi_tools import PPIDistance
-from .registry_tools import ListRegistryPaths, MapPath2Name
-from .rmsd_tools import RMSDCalculator
-from .search_tools import Scholar2ResultLLM
-from .setup_and_run import InstructionSummary, SetUpAndRunTool, SimulationFunctions
-from .vis_tools import (
+from .analysis_tools.plot_tools import SimulationOutputFigures
+from .analysis_tools.ppi_tools import PPIDistance
+from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.vis_tools import (
     CheckDirectoryFiles,
     PlanBVisualizationTool,
     VisFunctions,
     VisualizationToolRender,
 )
+from .preprocess_tools.clean_tools import (
+    AddHydrogensCleaningTool,
+    CleaningTools,
+    RemoveWaterCleaningTool,
+    SpecializedCleanTool,
+)
+from .preprocess_tools.pdb_tools import Name2PDBTool, PackMolTool, get_pdb
+from .simulation_tools.setup_and_run import (
+    InstructionSummary,
+    SetUpAndRunTool,
+    SimulationFunctions,
+)
+from .util_tools.git_issues_tool import SerpGitTool
+from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
+from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
     "AddHydrogensCleaningTool",

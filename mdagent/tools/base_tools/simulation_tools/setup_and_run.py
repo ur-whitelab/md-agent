@@ -28,7 +28,7 @@ from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picos
 
 from mdagent.utils import PathRegistry
 
-from .clean_tools import CleaningTools
+from ..preprocess_tools.clean_tools import CleaningTools
 
 
 class SimulationFunctions:
@@ -351,7 +351,7 @@ class SetUpAndRunTool(BaseTool):
 
 
 class InstructionSummary(BaseTool):
-    name = "Instruction Summary"
+    name = "InstructionSummary"
     description = """This tool will summarize the instructions
      given by the human. This is the first tool you will
        use, unless you dont have a .cif or .pdb file in

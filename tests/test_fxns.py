@@ -52,7 +52,7 @@ def vis_fxns():
 # Test MD utility tools
 @pytest.fixture
 def fibronectin():
-    return "fibronectin"
+    return "fibronectin pdb"
 
 
 @pytest.fixture

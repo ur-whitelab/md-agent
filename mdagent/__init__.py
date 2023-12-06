@@ -1,3 +1,3 @@
-from .agent import MDAgent
+from .mainagent import MDAgent
 
 __all__ = ["MDAgent"]

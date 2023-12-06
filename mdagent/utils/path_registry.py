@@ -35,7 +35,7 @@ class PathRegistry:
                 existing_data = json.load(json_file)
                 existing_data.update(path_dict)
         with open(self.json_file_path, "w") as json_file:
-            json.dump(existing_data, json_file)
+            json.dump(existing_data, json_file, indent=4)
 
     def _check_json_content(self, name):
         if not self._check_for_json():
@@ -64,7 +64,7 @@ class PathRegistry:
     def _clear_json(self):
         if self._check_for_json():
             with open(self.json_file_path, "w") as json_file:
-                json_file.truncate(0)
+                json.dump({}, json_file)  # Writing an empty JSON object to the file
             return "JSON file cleared"
         return "JSON file does not exist"
 
@@ -76,7 +76,7 @@ class PathRegistry:
         if name in data:
             del data[name]
             with open(self.json_file_path, "w") as json_file:
-                json.dump(data, json_file)
+                json.dump(data, json_file, indent=4)
             return f"Path {name} removed from registry"
         return f"Path {name} not found in registry"
 
@@ -87,9 +87,8 @@ class PathRegistry:
             data = json.load(json_file)
         names = [key for key in data.keys()]
         return (
-            "Names in path registry: " + ", ".join(names)
+            "Names found in registry: " + ", ".join(names)
             if names
-            else """No names found.
-            The JSON file is empty or doesn't
-            contain name mappings."""
+            else "No names found. The JSON file is empty or does not"
+            "contain name mappings."
         )
