@@ -1,5 +1,6 @@
 from .clean_tools import (
     AddHydrogensCleaningTool,
+    CleaningToolFunction,
     CleaningTools,
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
@@ -14,4 +15,5 @@ __all__ = [
     "RemoveWaterCleaningTool",
     "SpecializedCleanTool",
     "get_pdb",
+    "CleaningToolFunction",
 ]
