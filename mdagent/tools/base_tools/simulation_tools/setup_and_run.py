@@ -44,10 +44,10 @@ from openmm.app import (
 from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 from pydantic import BaseModel, Field
 
+from mdagent.tools.base_tools.preprocess_tools import CleaningTools
+
 # Local Library/Application Imports
 from mdagent.utils import PathRegistry
-
-from ..preprocess_tools import CleaningTools
 
 FORCEFIELD_LIST = [
     "amber14/DNA.OL15.xml",
