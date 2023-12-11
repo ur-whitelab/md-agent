@@ -37,3 +37,36 @@ SUFFIX = """
 Thought: {agent_scratchpad}
 """
 FINAL_ANSWER_ACTION = "Final Answer:"
+
+###################==============OpenAIFunctions Prompts================####################
+
+FORMAT_INSTRUCTIONS_FUNC = """
+You can only act with an action, final answer or a
+reflexive thought that will help you make move towards the final answer.
+Complete format:
+
+Action: (the action name, should be one of tools available)
+Action Input: (the input string to the action)
+
+OR
+Thought:
+
+OR
+
+Final Answer: (the final answer to the original input question)
+"""
+
+QUESTION_PROMPT_FUNC = """
+Answer the question below.
+
+Use the tools provided, using the most specific tool available for each action.
+Once you map a path to a short name, you may only use that short name in future actions.
+Your final answer should contain all information necessary to answer the question and subquestions.
+
+Question: {input}
+"""
+
+
+SUFFIX = """
+Thought: {agent_scratchpad}
+"""
