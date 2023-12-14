@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
 
 action_template = PromptTemplate(
-    inputs=["files", "task", "history", "skills"],
+    input_variables=["files", "task", "history", "skills"],
     template="""
     You are a helpful assistant that writes python code to complete any
     OpenMM or other molecular dynamics related task specified by me.
@@ -70,7 +70,7 @@ action_template = PromptTemplate(
 )
 
 critic_template = PromptTemplate(
-    inputs=["code", "code_output", "task"],
+    input_variables=["code", "code_output", "task"],
     template="""
     You are an assistant that assesses the quality of my code
     and the validity of its output for my molecular dynamics project,
@@ -100,7 +100,7 @@ critic_template = PromptTemplate(
 )
 
 skill_template = PromptTemplate(
-    inputs=["code"],
+    input_variables=["code"],
     template="""
     You are a helpful assistant that writes a description of the given python code.
 
@@ -120,7 +120,7 @@ skill_template = PromptTemplate(
 )
 
 curriculum_template = PromptTemplate(
-    inputs=["final_task", "tools", "files", "failed_tasks"],
+    input_variables=["final_task", "tools", "files", "failed_tasks"],
     template="""
     You are an expert molecular dynamics scientist and your role is to set
     a curriculum plan with subtasks to complete the final task specified by me.
