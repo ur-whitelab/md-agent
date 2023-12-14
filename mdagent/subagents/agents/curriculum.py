@@ -2,25 +2,32 @@ import json
 from typing import Optional
 
 from dotenv import load_dotenv
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
 
-from mdagent.subagents.prompts import curriculum_template
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry
+
+from .prompts import curriculum_template
+
+load_dotenv()
 
 
-class CurriculumAgent:
+class Curriculum:
     def __init__(
         self,
-        model="gpt-4-1106-preview",
+        model="gpt-4",
         temp=0.1,
-        verbose=True,
         path_registry: Optional[PathRegistry] = None,
     ):
-        load_dotenv()
-
-        # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
-        self.llm_chain = LLMChain(llm=self.llm, prompt=curriculum_template)
+        llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        self.llm_chain = LLMChain(llm=llm, prompt=curriculum_template)
         self.path_registry = path_registry
 
     def run(self, task, curr_tools, files, failed_tasks=""):

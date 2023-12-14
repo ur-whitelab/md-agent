@@ -15,9 +15,7 @@ class GitToolFunctions:
     """Class to store the functions of the tool."""
 
     """chain that can be used the tools for summarization or classification"""
-    llm_ = _make_llm(
-        model="gpt-3.5-turbo-16k", temp=0.05, verbose=False, max_tokens=2500
-    )
+    llm_ = _make_llm(model="gpt-3.5-turbo-16k", temp=0.05, verbose=False)
 
     def _prompt_summary(self, query: str, output: str, llm: BaseLanguageModel = llm_):
         prompt_template = """You're receiving the following github issues and comments.

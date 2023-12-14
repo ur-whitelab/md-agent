@@ -27,20 +27,18 @@ class Iterator:
         initializer = SubAgentInitializer(subagent_settings)
         subagents = initializer.create_iteration_agents()
         self.action_agent = subagents["action"]
-        self.code_critic_agent = subagents["code_critic"]
+        self.critic_agent = subagents["critic"]
         self.skill_agent = subagents["skill"]
-        self.task_critic_agent = subagents["task_critic"]
 
     def _add_to_history(
         self,
         existing_history,
         iter,
         task,
-        context,
         code_history,
         output_history,
-        code_critique_history,
-        task_critique_history,
+        critique,
+        suggestions,
     ):
         # Initialize the output dictionary
         files_history = self.path_registry.list_path_names()
@@ -51,12 +49,11 @@ class Iterator:
         output_dict = {
             "iteration": iter,
             "task": task,
-            "context": context,
             "code": code_history,
             "output": output_history,
             "files": files_history,
-            "code critique": code_critique_history,
-            "task_critique": task_critique_history,
+            "critique": critique,
+            "suggestions": suggestions,
         }
         # Append to the existing history
         output_json_string = json.dumps(output_dict, indent=4)
@@ -76,112 +73,54 @@ class Iterator:
                 f.write("\n" + msg + "\n")
             return None
 
-    def _run_loop(self, task, context, recent_history, full_history, skills):
+    def _run_loop(self, task, full_history, skills):
         """
         this function just runs the iteration 1 time
         """
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
-        code_success, code, code_output, fxn_name = self.action_agent._run_code(
-            recent_history,
-            full_history,
-            task,
-            context,
-            skills,
+        success, code, fxn_name, code_output = self.action._run_code(
+            full_history, task, skills
         )
         print("\nCode Output: ", code_output)
-        if code_success is True:
-            print("\n\033[46mcode succeeded, running task critic\033[0m")
-            # run task critic
-            task_success, task_critique = self.task_critic_agent._run_task_critic(
-                code, code_output, task, context, None
-            )
+        critique = self.critic._run(code, code_output, task)
+        critique_full = json.loads(critique)
+        task_relevance = critique_full["task_relevance"]
+        critique = critique_full["critique"]
+        suggestions = critique_full["suggestions"]
+        if task_relevance and success:
+            success = True
         else:
-            task_critique = None
-            task_success = False
+            success = False
+        return success, code, fxn_name, code_output, task, critique, suggestions
 
-        # check if task is complete
-        if task_success is True:
-            print("\n\033[46mtask complete\033[0m")
-            return (
-                task_success,
-                code,
-                code_output,
-                context,
-                task,
-                critique,
-                task_critique,
-                fxn_name,
-            )
-
-        # otherwise, run code critic
-        print("\n\033[46mtask failed, running code critic\033[0m")
-        critique = self.code_critic_agent._run(code, code_output, task, context)
-        return (
-            task_success,
-            code,
-            code_output,
-            context,
-            task,
-            critique,
-            task_critique,
-            fxn_name,
-        )
-
-    def _run_iterations(
-        self, run, task, context, iterations=5, failed=None, explanation=None
-    ):
+    def _run_iterations(self, run, task, iterations=5):
         self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
         full_history = None
-        recent_history = None
         skills = self._pull_information()["skills"]
         while iter < iterations and success is False:
-            # if failed is not None:
-            #     success, code, code_output = self.action_agent._run_code(
-            #         None, None, task, context, skills, failed, explanation, "resume"
-            #     )
-            #     full_history = self._add_to_history(
-            #         None, iter, task, context, code, code_output, explanation, None
-            #     )
-            # else:
-            # if iter > 0:
-            #     full_history = self._add_to_history(
-            #         full_history,
-            #         iter,
-            #         task,
-            #         context,
-            #         code,
-            #         code_output,
-            #         # TODO: add these properly
-            #         # critique,
-            #         # task_critique,
-            #     )
-            #     recent_history = full_history[-1]
             (
                 success,
                 code,
-                code_output,
-                context,
-                task,
-                code_critique,
-                task_critique,
                 fxn_name,
-            ) = self._run_loop(task, context, recent_history, full_history, skills)
+                code_output,
+                task,
+                critique,
+                suggestions,
+            ) = self._run_loop(task, full_history, skills)
 
             # save to history
             full_history = self._add_to_history(
                 full_history,
                 iter,
                 task,
-                context,
                 code,
                 code_output,
-                code_critique,
-                task_critique,
+                critique,
+                suggestions,
             )
-            recent_history = full_history[-1]
             if success:
                 # update variables and save to file
                 self._save_failures(full_history, None)
@@ -199,11 +138,10 @@ class Iterator:
             full_history,
             iter,
             task,
-            context,
             code,
             code_output,
-            code_critique,
-            task_critique,
+            critique,
+            suggestions,
         )
         self._save_failures(full_failed, None)
         return success, tool_name
