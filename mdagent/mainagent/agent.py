@@ -143,7 +143,7 @@ class MDAgent:
         self.type = type
         if tools is None:
             tools_llm = _make_llm(tools_model, temp, verbose)
-            tools = make_all_tools(tools_llm, verbose=verbose)
+            tools = make_all_tools(tools_llm)
 
         if self.type == "functions":
             self.llm = _make_llm("gpt-4-1106-preview", temp, verbose)
