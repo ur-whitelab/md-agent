@@ -16,7 +16,7 @@ def test_subagent_setup():
     action_agent = subagents["action"]
     skill_agent = subagents["skill"]
     critic = subagents["critic"]
-    curriculum_agent = initializer.create_curriculum_agent()
+    curriculum_agent = initializer.create_curriculum()
     assert action_agent is not None
     assert critic is not None
     assert curriculum_agent is not None

@@ -128,7 +128,7 @@ class WorkflowPlan(BaseTool):
     def _run(self, task, curr_tools, files, failed_tasks=""):
         try:
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            curriculum_agent = agent_initializer.create_curriculum_agent()
+            curriculum_agent = agent_initializer.create_curriculum()
             if curriculum_agent is None:
                 return "Curriculum Agent is not initialized"
             if files == "":
