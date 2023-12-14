@@ -1,11 +1,11 @@
 import os
 import re
-from typing import Optional
+from typing import Dict, Optional, Type
 
 from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, root_validator
 
 from mdagent.utils import PathRegistry
 
@@ -248,6 +248,12 @@ class CleaningToolFunctionInput(BaseModel):
     )
     add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
 
+    @root_validator
+    def validate_query(cls, values) -> Dict:
+        """Check that the input is valid."""
+
+        return values
+
 
 class CleaningToolFunction(BaseTool):
     name = "CleaningToolFunction"
@@ -258,19 +264,16 @@ class CleaningToolFunction(BaseTool):
     replacing nonstandard residues, and/or removing water.
 
     """
-    args_schema = CleaningToolFunctionInput
+    args_schema: Type[BaseModel] = CleaningToolFunctionInput
 
     path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry: Optional[PathRegistry]):
-        super().__init__()
-        self.path_registry = path_registry
 
     def _run(self, **input_args) -> str:
         """Use the tool with specified operations."""
         try:
             ### No idea why the input is a dictionary with the key "input_args"
             # instead of the arguments themselves
+            print(input_args)
             if "input_args" in input_args.keys():
                 input_args = input_args["input_args"]
             else:
