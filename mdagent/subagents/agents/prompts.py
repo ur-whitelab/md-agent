@@ -80,9 +80,9 @@ critic_template = PromptTemplate(
     Code Output: The output of the executed code
     Task: The objective that the code needs to accomplish
     Your job is to evaluate the following:
-    task relevance: whether the code meets the task requirements (note,
+    task relevance: whether the code is written to meet the task requirements (note,
         this is not the same as whether the code is syntactically correct, but rather
-        whether it is written to accomplish the task)
+        whether it is written to accomplish the task.
     critique: you should always provide a critique of the code, even if it is successful
     suggestions: you should provide suggestions for how to improve the code,
         even if it is successful
@@ -96,6 +96,10 @@ critic_template = PromptTemplate(
     code: {code},
     code_output: {code_output},
     task: {task},
+
+    IMPORTANT: the code author is a student, so you
+    should not be too strict when assigning the task
+    relevance or providing critique.
     """,
 )
 

@@ -13,11 +13,11 @@ def test_subagent_setup():
     settings = SubAgentSettings(path_registry=None)
     initializer = SubAgentInitializer(settings)
     subagents = initializer.create_iteration_agents()
-    action_agent = subagents["action"]
-    skill_agent = subagents["skill"]
+    action = subagents["action"]
+    skill = subagents["skill"]
     critic = subagents["critic"]
-    curriculum_agent = initializer.create_curriculum()
-    assert action_agent is not None
+    curriculum = initializer.create_curriculum()
+    assert action is not None
     assert critic is not None
-    assert curriculum_agent is not None
-    assert skill_agent is not None
+    assert curriculum is not None
+    assert skill is not None

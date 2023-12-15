@@ -26,9 +26,9 @@ class Iterator:
         # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
         subagents = initializer.create_iteration_agents()
-        self.action_agent = subagents["action"]
-        self.critic_agent = subagents["critic"]
-        self.skill_agent = subagents["skill"]
+        self.action = subagents["action"]
+        self.critic = subagents["critic"]
+        self.skill = subagents["skill"]
 
     def _add_to_history(
         self,
@@ -83,7 +83,8 @@ class Iterator:
             full_history, task, skills
         )
         print("\nCode Output: ", code_output)
-        critique = self.critic._run(code, code_output, task)
+        critique = self.critic._run(code, task, code_output)
+        critique = critique.replace("```json", "").replace("```", "").strip()
         critique_full = json.loads(critique)
         task_relevance = critique_full["task_relevance"]
         critique = critique_full["critique"]
@@ -94,7 +95,8 @@ class Iterator:
             success = False
         return success, code, fxn_name, code_output, task, critique, suggestions
 
-    def _run_iterations(self, run, task, iterations=5):
+    def _run_iterations(self, run, task):
+        iterations = 5
         self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
@@ -127,7 +129,7 @@ class Iterator:
 
                 # give successful code to tool/skill manager
                 print("\n\033[46mThe new code is complete, running skill agent\033[0m")
-                tool_name = self.skill_agent.add_new_tool(fxn_name, code)
+                tool_name = self.skill.add_new_tool(fxn_name, code)
                 return success, tool_name
             iter += 1
 
@@ -150,10 +152,8 @@ class Iterator:
     def run(self, task, user_prompt):
         # info = self._pull_information() # if you want to pass any of these info
         success, tool_name = self._run_iterations(
-            0,
             task,
             user_prompt,
-            iterations=5,  # info,
         )
         if success:
             return tool_name
@@ -170,7 +170,7 @@ class Iterator:
                 lines = full_history_string.splitlines()
                 recent_history_string = lines[-1] if lines else None
 
-        skills = self.skill_agent.get_skills()
+        skills = self.skill.get_skills()
         if skills:
             skills_string = json.dumps(skills)
         else:

@@ -48,6 +48,9 @@ class Action:
         exec_context = {**globals(), **locals()}
         success = True
         try:
+            # if python code isnt' string for some reason, make it string
+            if not isinstance(python_code, str):
+                python_code = str(python_code)
             exec(python_code, exec_context, exec_context)
             output = captured_stdout.getvalue()
         except Exception as e:
@@ -59,11 +62,14 @@ class Action:
         return success, output
 
     def _extract_code(self, output):
-        code_match = re.search(r"Code:\n```.+?\n(.+?)\n```", output, re.DOTALL)
-        fxn_match = re.search(r"Function Name:\s(\w+)", output)
-        if code_match and fxn_match:
+        # Regular expression to match a code block with optional 'python' keyword
+        code_match = re.search(r"Code:\n```(?:python)?\n(.+?)\n```", output, re.DOTALL)
+
+        if code_match:
             code = code_match.group(1)
-            fxn_name = fxn_match.group(1)
+            # Regular expression to extract the function name from the 'def' line
+            fxn_match = re.search(r"def (\w+)\(", code)
+            fxn_name = fxn_match.group(1) if fxn_match else None
             return code, fxn_name
         else:
             return None, None
