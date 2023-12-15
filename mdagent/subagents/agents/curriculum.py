@@ -16,7 +16,7 @@ load_dotenv()
 class Curriculum:
     def __init__(
         self,
-        model="gpt-4",
+        model="gpt-4-1106-preview",
         temp=0.1,
         path_registry: Optional[PathRegistry] = None,
     ):

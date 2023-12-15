@@ -48,9 +48,6 @@ class Action:
         exec_context = {**globals(), **locals()}
         success = True
         try:
-            # if python code isnt' string for some reason, make it string
-            if not isinstance(python_code, str):
-                python_code = str(python_code)
             exec(python_code, exec_context, exec_context)
             output = captured_stdout.getvalue()
         except Exception as e:

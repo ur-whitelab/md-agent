@@ -9,7 +9,7 @@ load_dotenv()
 
 
 class Critic:
-    def __init__(self, model="gpt-4", temp=0.1):
+    def __init__(self, model="gpt-4-1106-preview", temp=0.1):
         llm = ChatOpenAI(
             temperature=temp,
             model=model,
