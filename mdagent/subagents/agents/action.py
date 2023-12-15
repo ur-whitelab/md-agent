@@ -4,113 +4,48 @@ import sys
 from typing import Optional
 
 from dotenv import load_dotenv
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-    AIMessagePromptTemplate,
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
+from langchain.chat_models import ChatOpenAI
 
-from mdagent.subagents.prompts import (
-    action_format,
-    action_prefix,
-    action_prefix_1,
-    action_prompt,
-    action_prompt_1,
-)
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry
+
+from .prompts import action_template
 
 load_dotenv()
 
 
-class ActionAgent:
+class Action:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
         model="gpt-4",
         temp=0.1,
-        max_iterations=120,
-        api_key=None,
-        verbose=True,
     ):
-        self.llm = _make_llm(model, temp, verbose)
+        llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        self.llm_chain = LLMChain(llm=llm, prompt=action_template)
         self.path_registry = path_registry
 
-    def _create_prompt(self, version):
-        suffix = ""
-        if version == "resume":  # if resume
-            human_prompt = PromptTemplate(
-                template=action_prompt,
-                input_variables=["recent_history", "full_history", "skills"],
-            )
-            prefix = action_prefix
-        elif version == "first":  # if first iteration
-            human_prompt = PromptTemplate(
-                template=action_prompt_1,
-                input_variables=["files", "task", "context", "skills"],
-            )
-            prefix = action_prefix_1
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([prefix, action_format])
-        )
-
-        return ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-
-    def _create_llm(self, version):
-        prompt = self._create_prompt(version)
-        llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=prompt,
-            # callbacks=StreamingStdOutCallbackHandler,
-        )
-        self.llm_chain = llm_chain
-        return None
-
-    def _run(
-        self,
-        version,
-        recent_history,
-        full_history,
-        task,
-        context,
-        skills,
-        failed,
-        explanation,
-    ):
+    def _run(self, history, task, skills):
         # get files
         files = self.path_registry.list_path_names()
         # get skills
-        if version == "resume":  # if resume
-            return self.llm_chain(
-                {
-                    "recent_history": recent_history,
-                    "full_history": full_history,
-                    "skills": skills,
-                }
-            )["text"]
-        elif version == "first":  # if first iter
-            return self.llm_chain(
-                {"files": files, "task": task, "context": context, "skills": skills}
-            )["text"]
+        return self.llm_chain(
+            {"files": files, "task": task, "history": history, "skills": skills}
+        )["text"]
 
     # function that runs the code
     def _exec_code(self, python_code):
-        # incoming code should be a json string
-        # Load the JSON string and extract the Python code
-        # data = json.loads(code)
-        # python_code = data["code"]
-
-        # Redirect stdout and stderr to capture the output
         original_stdout = sys.stdout
         original_stderr = sys.stderr
         sys.stdout = captured_stdout = sys.stderr = io.StringIO()
-        exec_context = {**globals(), **locals()}  # to allow for imports
+        exec_context = {**globals(), **locals()}
         success = True
         try:
             exec(python_code, exec_context, exec_context)
@@ -119,49 +54,28 @@ class ActionAgent:
             success = False
             output = str(e)
         finally:
-            # Restore stdout and stderr
             sys.stdout = original_stdout
             sys.stderr = original_stderr
         return success, output
 
     def _extract_code(self, output):
-        code_match = re.search(r"Code:\n```.+?\n(.+?)\n```", output, re.DOTALL)
-        fxn_match = re.search(r"Function Name:\s(\w+)", output)
-        if code_match and fxn_match:
+        # Regular expression to match a code block with optional 'python' keyword
+        code_match = re.search(r"Code:\n```(?:python)?\n(.+?)\n```", output, re.DOTALL)
+
+        if code_match:
             code = code_match.group(1)
-            fxn_name = fxn_match.group(1)
+            # Regular expression to extract the function name from the 'def' line
+            fxn_match = re.search(r"def (\w+)\(", code)
+            fxn_name = fxn_match.group(1) if fxn_match else None
             return code, fxn_name
         else:
             return None, None
 
-    def _run_code(
-        self,
-        recent_history,
-        full_history,
-        task,
-        context,
-        skills,
-        failed=None,
-        explanation=None,
-        version="resume",
-    ):
-        if failed is None and recent_history is None:
-            version = "first"
-        # create llm
-        self._create_llm(version)
+    def _run_code(self, history, task, skills):
         # run agent
-        output = self._run(
-            version,
-            recent_history,
-            full_history,
-            task,
-            context,
-            skills,
-            failed,
-            explanation,
-        )
+        output = self._run(history, task, skills)
         # extract code part
         code, fxn_name = self._extract_code(output)
         # run code
         success, code_output = self._exec_code(code)
-        return success, code, code_output, fxn_name
+        return success, code, fxn_name, code_output

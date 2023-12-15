@@ -32,18 +32,16 @@ class ExecuteSkill(BaseTool):
         try:
             path_registry = self.subagent_settings.path_registry
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            skill_agent = agent_initializer.create_skill_manager(resume=True)
-            if skill_agent is None:
+            skill = agent_initializer.create_skill_manager(resume=True)
+            if skill is None:
                 return "SubAgent for this tool not initialized"
             if args is not None:
                 print("args: ", args)
-                code_result = skill_agent.execute_skill_function(
+                code_result = skill.execute_skill_function(
                     skill_name, path_registry, **args
                 )
             else:
-                code_result = skill_agent.execute_skill_function(
-                    skill_name, path_registry
-                )
+                code_result = skill.execute_skill_function(skill_name, path_registry)
             return code_result
         except TypeError as e:
             return f"""{type(e).__name__}: {e}. Please check your inputs
@@ -80,10 +78,10 @@ class SkillRetrieval(BaseTool):
         """use the tool"""
         try:
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            skill_agent = agent_initializer.create_skill_manager(resume=True)
-            if skill_agent is None:
+            skill = agent_initializer.create_skill_manager(resume=True)
+            if skill is None:
                 return "SubAgent for this tool not initialized"
-            skills = skill_agent.retrieve_skills(query)
+            skills = skill.retrieve_skills(query)
             if skills is None:
                 return "No skills found for this query"
             return f"\nFound {len(skills)} skills.\033[0m\n{list(skills.keys())}"
@@ -128,12 +126,12 @@ class WorkflowPlan(BaseTool):
     def _run(self, task, curr_tools, files, failed_tasks=""):
         try:
             agent_initializer = SubAgentInitializer(self.subagent_settings)
-            curriculum_agent = agent_initializer.create_curriculum_agent()
-            if curriculum_agent is None:
+            curriculum = agent_initializer.create_curriculum()
+            if curriculum is None:
                 return "Curriculum Agent is not initialized"
             if files == "":
                 files = self.path_registry.list_path_names()
-            rationale, decomposed_tasks = curriculum_agent.run(
+            rationale, decomposed_tasks = curriculum.run(
                 task, curr_tools, files, failed_tasks
             )
             return f"""Here's the list of subtasks decomposed from the main task:\n

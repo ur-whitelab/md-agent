@@ -1,12 +1,6 @@
 from typing import Optional
 
-from mdagent.subagents.agents import (
-    ActionAgent,
-    CodeCriticAgent,
-    CurriculumAgent,
-    SkillManager,
-    TaskCriticAgent,
-)
+from mdagent.subagents.agents import Action, Critic, Curriculum, SkillManager
 from mdagent.utils import PathRegistry
 
 
@@ -39,10 +33,6 @@ class SubAgentInitializer:
         if settings is None:
             settings = SubAgentSettings()
         if settings.path_registry is None:
-            # warnings.warn(
-            #     "'path_registry' isn't specified. Use current directory by default.",
-            #     UserWarning,
-            # )
             settings.path_registry = PathRegistry.get_instance()
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
@@ -54,50 +44,40 @@ class SubAgentInitializer:
         self.resume = settings.resume
         self.retrieval_top_k = settings.retrieval_top_k
 
-    def create_action_agent(self, **overrides):
+    def create_action(self, **overrides):
         params = {
             "path_registry": self.path_registry,
             "model": self.subagents_model,
             "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
         }
         # Update params with any overrides
         params.update(overrides)
-        return ActionAgent(**params)
+        return Action(**params)
 
-    def create_code_critic(self, **overrides):
+    def create_critic(self, **overrides):
         params = {
             "model": self.subagents_model,
             "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
         }
         # Update params with any overrides
         params.update(overrides)
-        return CodeCriticAgent(**params)
+        return Critic(**params)
 
-    def create_curriculum_agent(self, **overrides):
+    def create_curriculum(self, **overrides):
         params = {
             "model": self.subagents_model,
             "temp": self.temp,
-            "verbose": self.verbose,
             "path_registry": self.path_registry,
         }
         # Update params with any overrides
         params.update(overrides)
-        return CurriculumAgent(**params)
+        return Curriculum(**params)
 
     def create_skill_manager(self, **overrides):
         params = {
             "path_registry": self.path_registry,
             "model": self.subagents_model,
             "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
             "ckpt_dir": self.ckpt_dir,
             "resume": self.resume,
             "retrieval_top_k": self.retrieval_top_k,
@@ -106,23 +86,9 @@ class SubAgentInitializer:
         params.update(overrides)
         return SkillManager(**params)
 
-    def create_task_critic(self, **overrides):
-        params = {
-            "path_registry": self.path_registry,
-            "model": self.subagents_model,
-            "temp": self.temp,
-            "max_iterations": self.max_iterations,
-            "api_key": self.api_key,
-            "verbose": self.verbose,
-        }
-        # Update params with any overrides
-        params.update(overrides)
-        return TaskCriticAgent(**params)
-
     def create_iteration_agents(self, **overrides):
         return {
-            "action": self.create_action_agent(**overrides),
-            "code_critic": self.create_code_critic(**overrides),
+            "action": self.create_action(**overrides),
+            "critic": self.create_critic(**overrides),
             "skill": self.create_skill_manager(**overrides),
-            "task_critic": self.create_task_critic(**overrides),
         }

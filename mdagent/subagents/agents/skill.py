@@ -4,19 +4,15 @@ import os
 from typing import Optional
 
 from dotenv import load_dotenv
+from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
+from langchain.chat_models import ChatOpenAI
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-    AIMessagePromptTemplate,
-    ChatPromptTemplate,
-    HumanMessagePromptTemplate,
-    SystemMessagePromptTemplate,
-)
 from langchain.vectorstores import Chroma
 
-from mdagent.subagents.prompts import SkillPrompts
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry
+
+from .prompts import skill_template
 
 
 class SkillManager:
@@ -25,10 +21,7 @@ class SkillManager:
         path_registry: Optional[PathRegistry],
         model="gpt-3.5",
         temp=0.1,
-        max_iterations=40,
-        api_key=None,
         retrieval_top_k=5,
-        verbose=True,
         ckpt_dir="ckpt",
         resume=False,
     ):
@@ -37,8 +30,14 @@ class SkillManager:
         self.path_registry = path_registry
         self.retrieval_top_k = retrieval_top_k
 
-        # initialize agent
-        self.llm = _make_llm(model, temp, verbose)
+        llm = ChatOpenAI(
+            temperature=temp,
+            model=model,
+            client=None,
+            streaming=True,
+            callbacks=[StreamingStdOutCallbackHandler()],
+        )
+        self.llm_chain = LLMChain(llm=llm, prompt=skill_template)
 
         self.skills = {}
         # retrieve past skills & tools
@@ -67,32 +66,9 @@ class SkillManager:
     def get_skills(self):
         return self.skills
 
-    def _create_prompt(self, prompts):
-        suffix = ""
-        human_prompt = PromptTemplate(
-            template=prompts.PROMPT,
-            input_variables=prompts.INPUT_VARS,
-        )
-        human_message_prompt = HumanMessagePromptTemplate(prompt=human_prompt)
-        ai_message_prompt = AIMessagePromptTemplate.from_template(suffix)
-        system_message_prompt = SystemMessagePromptTemplate.from_template(
-            "\n\n".join([prompts.PREFIX, prompts.FORMAT])
-        )
-        return ChatPromptTemplate.from_messages(
-            [system_message_prompt, human_message_prompt, ai_message_prompt]
-        )
-
-    def _initialize_llm(self, prompts):
-        llm_chain = LLMChain(
-            llm=self.llm,
-            prompt=self._create_prompt(prompts),
-        )
-        return llm_chain
-
     def _generate_tool_description(self, fxn_code):
         """Given the code snippet, it asks the agent to provide a tool description"""
-        llm_chain = self._initialize_llm(SkillPrompts)
-        return llm_chain({"code": fxn_code})["text"]
+        return self.llm_chain({"code": fxn_code})["text"]
 
     def add_new_tool(self, fxn_name, code, new_description=False):
         # execute the code to get function
