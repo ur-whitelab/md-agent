@@ -1,4 +1,4 @@
-from .create_simulation import ModifyScriptTool
+from .create_simulation import ModifyBaseSimulationScriptTool
 from .setup_and_run import (
     InstructionSummary,
     SetUpandRunFunction,
@@ -10,6 +10,6 @@ __all__ = [
     "SetUpAndRunTool",
     "InstructionSummary",
     "SimulationFunctions",
-    "ModifyScriptTool",
+    "ModifyBaseSimulationScriptTool",
     "SetUpandRunFunction",
 ]

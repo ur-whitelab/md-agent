@@ -289,7 +289,6 @@ class PackmolBox:
             input_data.append(f"structure {molecule.filename}")
             input_data.append(f"  number {molecule.number_of_molecules}")
             for idx, instruction in enumerate(molecule.instructions):
-                print(instruction)
                 input_data.append(f"  {molecule.instructions[idx]}")
             input_data.append("end structure")
 

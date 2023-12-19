@@ -1,7 +1,6 @@
 import textwrap
 from typing import Optional
 
-import langchain
 from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
@@ -11,9 +10,9 @@ from mdagent.utils import PathRegistry
 
 
 class ModifyScriptUtils:
-    llm = langchain.chat_models.ChatOpenAI(
-        temperature=0.05, model_name="gpt-4", request_timeout=1000
-    )
+    def __init__(self, llm):
+        llm = llm
+
     Examples = [
         """
 from openmm.app import *
@@ -85,7 +84,10 @@ simulation.step(10000)
         """
     ]
 
-    def _prompt_summary(self, query: str, llm: BaseLanguageModel = llm):
+    def _prompt_summary(self, query: str, llm: BaseLanguageModel = None):
+        if not llm:
+            raise ValueError("No language model provided at ModifyScriptTool")
+
         prompt_template = """ You're an expert programmer and in molecular dynamics.
         Your job is to make a script to make a simmulatiuon.
         in openmm.
@@ -132,18 +134,19 @@ class ModifyScriptInput(BaseModel):
     script: str = Field(..., description=" path to the base script file")
 
 
-class ModifyScriptTool(BaseTool):
+class ModifyBaseSimulationScriptTool(BaseTool):
     name: str = "ModifyScriptTool"
-    description: str = """This tool takes a base script and a user
-    requirement and returns a modified script to simmulate. """
+    description: str = """This tool takes a base simulation script and a user
+    requirement and returns a modified script. """
 
     args_schema = ModifyScriptInput
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], llm: BaseLanguageModel):
         super().__init__()
         self.path_registry = path_registry
+        self.llm = llm
 
     def _run(self, **input):
         base_script_path = input.get("script")
@@ -157,7 +160,7 @@ class ModifyScriptTool(BaseTool):
 
         description = input.get("query")
         answer = utils._prompt_summary(
-            query={"base_script": base_script, "query": description}
+            query={"base_script": base_script, "query": description}, llm=self.llm
         )
         script = answer["text"]
         thoughts, new_script = script.split("SCRIPT:")

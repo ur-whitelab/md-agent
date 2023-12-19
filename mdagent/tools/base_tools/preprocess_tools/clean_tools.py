@@ -273,7 +273,6 @@ class CleaningToolFunction(BaseTool):
         try:
             ### No idea why the input is a dictionary with the key "input_args"
             # instead of the arguments themselves
-            print(input_args)
             if "input_args" in input_args.keys():
                 input_args = input_args["input_args"]
             else:

@@ -19,7 +19,7 @@ from .base_tools import (
     CleaningToolFunction,
     ListRegistryPaths,
     MapPath2Name,
-    ModifyScriptTool,
+    ModifyBaseSimulationScriptTool,
     Name2PDBTool,
     PackMolTool,
     PlanBVisualizationTool,
@@ -88,7 +88,7 @@ def make_all_tools(
         PPIDistance(),
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
-        ModifyScriptTool(path_registry=path_instance),
+        ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         SimulationOutputFigures(),
         VisualizationToolRender(),
     ]
