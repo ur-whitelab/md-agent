@@ -11,7 +11,6 @@ class SubAgentSettings:
         subagents_model="gpt-3.5-turbo",
         temp=0.1,
         max_iterations=40,
-        api_key=None,
         verbose=True,
         ckpt_dir="ckpt",
         resume=False,
@@ -21,7 +20,6 @@ class SubAgentSettings:
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations
-        self.api_key = api_key
         self.verbose = verbose
         self.ckpt_dir = ckpt_dir
         self.resume = resume
@@ -38,7 +36,6 @@ class SubAgentInitializer:
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp
         self.max_iterations = settings.max_iterations
-        self.api_key = settings.api_key
         self.verbose = settings.verbose
         self.ckpt_dir = settings.ckpt_dir
         self.resume = settings.resume
