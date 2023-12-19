@@ -321,7 +321,6 @@ class SimulationFunctions:
         # Load the PDB file
         cleantools = CleaningTools()
         pdbfile = cleantools._extract_path(params["File Path"])
-        print("Starting pdb/cis file :", pdbfile)
         name = pdbfile.split(".")[0]
         end = pdbfile.split(".")[1]
         if end == "pdb":
@@ -651,9 +650,7 @@ class OpenMMSimulation:
     def setup_system(self):
         print("Building system...")
         self.pdb = PDBFile(self.params["pdb_path"])
-        print("forcefield_files", self.sys_params)
         self.forcefield = ForceField(*self.params["forcefield_files"])
-        print("nonbondingCutoff", self.sys_params.get("nonbondedCutoff", None))
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
 
         if self.sys_params.get("nonbondedMethod", None) in [
@@ -673,7 +670,6 @@ class OpenMMSimulation:
         print("Setting up integrator...")
         int_params = self.int_params
         integrator_type = int_params.get("integrator_type", "LangevinMiddle")
-        print("integrator_type", integrator_type)
 
         if integrator_type == "LangevinMiddle":
             self.integrator = LangevinMiddleIntegrator(
@@ -758,8 +754,7 @@ class OpenMMSimulation:
 
         # Update system_params with any additional parameters provided
         system_params.update(kwargs)
-        for k, v in system_params.items():
-            print(k, v)
+
         # if use_constraint_tolerance:
         #    constraintTolerance = system_params.pop('constraintTolerance')
 
@@ -997,8 +992,6 @@ class SetUpandRunFunction(BaseTool):
     PathRegistry: Optional[PathRegistry]
 
     def _run(self, **input_args):
-        print("Using SetUpandRunFunction")
-        print(input_args)
         input = self.check_system_params(input_args)
         error = input.get("error", None)
         if error:
@@ -1009,7 +1002,6 @@ class SetUpandRunFunction(BaseTool):
         except ValueError as e:
             return str(e) + f"This were the inputs {input_args}"
         try:
-            print("running simulation in the tool")
             Simulation.run()
             Simulation.write_standalone_script()
             return "Simulation done!"
@@ -1320,7 +1312,6 @@ class SetUpandRunFunction(BaseTool):
         values = {k.lower(): v for k, v in values.items()}
 
         system_params = values.get("system_params")
-        print("system_params", system_params)
         if system_params:
             system_params, msg = cls._process_parameters(
                 system_params, param_type="system_params"
@@ -1337,7 +1328,6 @@ class SetUpandRunFunction(BaseTool):
                 "constraintTolerance": 0.00001,
             }
         integrator_params = values.get("integrator_params")
-        print("integrator_params", integrator_params)
         if integrator_params:
             integrator_params, msg = cls._process_parameters(
                 integrator_params, param_type="integrator_params"
@@ -1353,7 +1343,6 @@ class SetUpandRunFunction(BaseTool):
                 "Pressure": 1.0 * bar,
             }
         simmulation_params = values.get("simmulation_params")
-        print("simmulation_params", simmulation_params)
         if simmulation_params is None:
             simmulation_params = {
                 "Ensemble": "NVT",
@@ -1411,7 +1400,6 @@ class SetUpandRunFunction(BaseTool):
         """Validating the forcefield files and Integrator"""
 
         integrator_type = integrator_params.get("integrator_type")
-        print("integrator_type", integrator_type)
         if integrator_type not in ["LangevinMiddle", "Verlet", "Brownian"]:
             error_msg += """integrator_type must be one of the following:
                              LangevinMiddle, Verlet, Brownian\n"""
@@ -1449,13 +1437,11 @@ class SetUpandRunFunction(BaseTool):
             print("Setting default forcefields v2")
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         else:
-            print("this is the validator", forcefield_files)
             for file in forcefield_files:
                 if file not in FORCEFIELD_LIST:
                     error_msg += "The forcefield file is not present"
 
         if error_msg != "":
-            print("this is the validator error message ", error_msg)
             return {
                 "error": error_msg
                 + "\n Correct this and try again. \n Everthing else is fine"
@@ -1468,7 +1454,6 @@ class SetUpandRunFunction(BaseTool):
             "simmulation_params": simmulation_params,
         }
         # if no error, return the values
-        print("this is the validator", values)
         return values
 
     async def _arun(self, query: str) -> str:
