@@ -15,22 +15,20 @@ from mdagent.subagents import Iterator, SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
 from .base_tools import (
-    AddHydrogensCleaningTool,
     CheckDirectoryFiles,
-    InstructionSummary,
+    CleaningToolFunction,
     ListRegistryPaths,
     MapPath2Name,
+    ModifyBaseSimulationScriptTool,
     Name2PDBTool,
     PackMolTool,
     PlanBVisualizationTool,
     PPIDistance,
-    RemoveWaterCleaningTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SerpGitTool,
-    SetUpAndRunTool,
+    SetUpandRunFunction,
     SimulationOutputFigures,
-    SpecializedCleanTool,
     VisualizationToolRender,
 )
 from .subagent_tools import ExecuteSkill, SkillRetrieval, WorkflowPlan
@@ -79,20 +77,19 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
-        AddHydrogensCleaningTool(path_registry=path_instance),
+        CleaningToolFunction(path_registry=path_instance),
         CheckDirectoryFiles(),
-        InstructionSummary(path_registry=path_instance),
+        #    InstructionSummary(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         MapPath2Name(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
         PlanBVisualizationTool(path_registry=path_instance),
         PPIDistance(),
-        RemoveWaterCleaningTool(path_registry=path_instance),
         RMSDCalculator(),
-        SetUpAndRunTool(path_registry=path_instance),
+        SetUpandRunFunction(path_registry=path_instance),
+        ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         SimulationOutputFigures(),
-        SpecializedCleanTool(path_registry=path_instance),
         VisualizationToolRender(),
     ]
 
