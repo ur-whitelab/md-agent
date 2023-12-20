@@ -176,3 +176,60 @@ def test_check_arguments_success(skill_manager):
     with pytest.raises(ValueError) as excinfo:
         skill_manager._check_arguments("sample_tool", arg1=5)
     assert "Missing arguments" in str(excinfo.value)
+
+
+def test_retrieve_skills(skill_manager):
+    skill_manager.vectordb = MagicMock()
+    skill_manager.vectordb._collection.count.return_value = 10
+    skill_manager.vectordb.similarity_search_with_score.return_value = [
+        (MagicMock(metadata={"name": "skill1"}), 0.9),
+        (MagicMock(metadata={"name": "skill2"}), 0.8),
+    ]
+
+    skill_manager.skills = {
+        "skill1": {"code": "code for skill1"},
+        "skill2": {"code": "code for skill2"},
+    }
+    skill_manager.retrieval_top_k = 5
+
+    retrieved_skills = skill_manager.retrieve_skills("query")
+
+    assert len(retrieved_skills) == 2
+    assert "skill1" in retrieved_skills
+    assert "skill2" in retrieved_skills
+    assert retrieved_skills["skill1"] == "code for skill1"
+    assert retrieved_skills["skill2"] == "code for skill2"
+
+
+def test_update_skill_library(skill_manager):
+    # Mock the dependencies
+    skill_manager.vectordb = MagicMock()
+    skill_manager.path_registry = MagicMock()
+    skill_manager.dir_name = "/mock_dir"
+
+    with patch("os.listdir", return_value=[]), patch(
+        "os.path.exists", return_value=False
+    ), patch("builtins.open", new_callable=MagicMock()) as mock_open:
+        sample_function = MagicMock()
+        sample_function.__name__ = "test_function"
+        code_script = "def test_function(): pass"
+        description = "Test function description"
+        arguments = []
+        skill_manager.update_skill_library(
+            sample_function, code_script, description, arguments
+        )
+        mock_open.assert_any_call("/mock_dir/code/test_function.py", "w")
+        mock_open.assert_any_call("/mock_dir/description/test_function.txt", "w")
+        mock_open.assert_any_call("/mock_dir/skills.json", "w")
+
+        skill_manager.vectordb.add_texts.assert_called_once_with(
+            texts=[description],
+            ids=["test_function"],
+            metadatas=[{"name": "test_function"}],
+        )
+        skill_manager.vectordb.persist.assert_called_once()
+        skill_manager.path_registry.map_path.assert_called_once_with(
+            name="test_function",
+            path="/mock_dir/code/test_function.py",
+            description="Code for new tool test_function",
+        )
