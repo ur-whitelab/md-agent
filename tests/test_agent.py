@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from mdagent.subagents.agents.action import Action
+from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
 from mdagent.subagents.subagent_setup import SubAgentSettings
 from mdagent.utils import PathRegistry
@@ -12,6 +13,11 @@ from mdagent.utils import PathRegistry
 @pytest.fixture
 def path_registry():
     return PathRegistry()
+
+
+@pytest.fixture
+def skill_manager(path_registry):
+    return SkillManager(path_registry=path_registry)
 
 
 @pytest.fixture
@@ -111,3 +117,29 @@ def test_pull_information(iterator):
             assert info["files"] == json.dumps(["file1", "file2"])
             assert info["current_tools"] == json.dumps({"tool1": "config1"})
             assert info["all_tools"] == "all_tools_string"
+
+
+def test_add_new_tool(skill_manager):
+    # mock exec so tests are independent
+    def mock_exec(code, namespace):
+        def sample_function():
+            """Sample Docstring"""
+            return "Hello, World!"
+
+        namespace["sample_function"] = sample_function
+
+    fxn_name = "sample_function"
+    code = (
+        "def sample_function():\n    '''Sample Docstring'''\n    return 'Hello, World!'"
+    )
+    skill_manager._generate_tool_description = MagicMock(
+        return_value="Generated Description"
+    )
+    skill_manager.update_skill_library = MagicMock()
+
+    with patch("builtins.exec", side_effect=mock_exec):
+        result = skill_manager.add_new_tool(fxn_name, code, new_description=False)
+        assert result == fxn_name
+        assert skill_manager.update_skill_library.call_args[0][0].__name__ == fxn_name
+        assert skill_manager.update_skill_library.call_args[0][1] == code
+        assert skill_manager.update_skill_library.call_args[0][2] == "Sample Docstring"
