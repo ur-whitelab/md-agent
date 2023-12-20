@@ -143,3 +143,23 @@ def test_add_new_tool(skill_manager):
         assert skill_manager.update_skill_library.call_args[0][0].__name__ == fxn_name
         assert skill_manager.update_skill_library.call_args[0][1] == code
         assert skill_manager.update_skill_library.call_args[0][2] == "Sample Docstring"
+
+
+def test_execute_skill_function(skill_manager):
+    path_registry = MagicMock()
+    path_registry.list_path_names.return_value = ["path1", "path2"]
+    skill_manager.skills = {
+        "sample_tool": {"code": "def sample_tool(arg1, arg2):\n    return arg1 + arg2"}
+    }
+    with patch("os.listdir", return_value=["file1", "file2"]):
+        skill_manager._check_arguments = MagicMock()
+        message = skill_manager.execute_skill_function(
+            "sample_tool", path_registry, arg1=5, arg2=3
+        )
+
+    assert "Successfully executed code." in message
+    assert "Code Output: 8" in message
+    skill_manager.skills = {}
+    with pytest.raises(ValueError) as excinfo:
+        skill_manager.execute_skill_function("nonexistent_tool", path_registry)
+    assert "Code for nonexistent_tool not found" in str(excinfo.value)
