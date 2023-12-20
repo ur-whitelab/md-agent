@@ -8,7 +8,6 @@ from langchain.base_language import BaseLanguageModel
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.tools import BaseTool, StructuredTool
 from langchain.vectorstores import Chroma
-from langchain_experimental.tools import PythonREPLTool
 from pydantic import BaseModel, Field
 
 from mdagent.subagents import Iterator, SubAgentSettings
@@ -68,7 +67,7 @@ def make_all_tools(
 
     if llm:
         all_tools += agents.load_tools(["llm-math"], llm)
-        all_tools += [PythonREPLTool()]  # or PythonREPLTool(llm=llm)?
+        # all_tools += [PythonREPLTool()]  # or PythonREPLTool(llm=llm)?
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
