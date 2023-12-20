@@ -163,3 +163,16 @@ def test_execute_skill_function(skill_manager):
     with pytest.raises(ValueError) as excinfo:
         skill_manager.execute_skill_function("nonexistent_tool", path_registry)
     assert "Code for nonexistent_tool not found" in str(excinfo.value)
+
+
+def test_check_arguments_success(skill_manager):
+    skill_manager.skills = {
+        "sample_tool": {"arguments": [{"name": "arg1"}, {"name": "arg2"}]}
+    }
+    try:
+        skill_manager._check_arguments("sample_tool", arg1=5, arg2=10)
+    except ValueError:
+        pytest.fail("ValueError raised unexpectedly")
+    with pytest.raises(ValueError) as excinfo:
+        skill_manager._check_arguments("sample_tool", arg1=5)
+    assert "Missing arguments" in str(excinfo.value)
