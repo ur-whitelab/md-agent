@@ -9,8 +9,9 @@ import textwrap
 from typing import Any, Dict, List, Optional, Type
 
 import langchain
-from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from openmm import (
     AndersenThermostat,

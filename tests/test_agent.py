@@ -5,6 +5,7 @@ import pytest
 
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.subagent_fxns import Iterator
+from mdagent.subagents.subagent_setup import SubAgentSettings
 from mdagent.utils import PathRegistry
 
 
@@ -20,7 +21,8 @@ def action(path_registry):
 
 @pytest.fixture
 def iterator(path_registry):
-    return Iterator(path_registry)
+    settings = SubAgentSettings(path_registry=None)
+    return Iterator(path_registry=path_registry, subagent_settings=settings)
 
 
 def test_exec_code(action):
@@ -37,8 +39,8 @@ def test_exec_code(action):
 def test_extract_code(action):
     # test1 is valid code
     sample_output = (
-        "Here's some code:\n```"
-        "\ndef sample_function():\n    return 'Hello, World!'\n```"
+        "Here's some code. \nCode:\n```python\n"
+        "def sample_function():\n    return 'Hello, World!'\n```"
     )
     # Call the _extract_code function with the sample output
     code, fxn_name = action._extract_code(sample_output)
@@ -51,7 +53,7 @@ def test_extract_code(action):
     # test2 is two types of invalid code
     no_code = "text without code."
     code_1, fxn_name_1 = action._extract_code(no_code)
-    no_fxn = "Here's some code:\n```python\nx = 10\ny = 20\n```"
+    no_fxn = "Code:\n```python\nx = 10\ny = 20\n```"
     code_2, fxn_name_2 = action._extract_code(no_fxn)
     assert code_2 == "x = 10\ny = 20"
     assert code_1 is None
