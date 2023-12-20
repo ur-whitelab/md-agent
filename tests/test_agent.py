@@ -1,20 +1,26 @@
 import json
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.subagent_fxns import Iterator
+from mdagent.utils import PathRegistry
 
 
 @pytest.fixture
-def action():
-    return Action()
+def path_registry():
+    return PathRegistry()
 
 
 @pytest.fixture
-def iterator():
-    return Iterator()
+def action(path_registry):
+    return Action(path_registry)
+
+
+@pytest.fixture
+def iterator(path_registry):
+    return Iterator(path_registry)
 
 
 def test_exec_code(action):
@@ -57,7 +63,6 @@ def test_add_to_history(iterator):
     iterator.path_registry = MagicMock()
     iterator.path_registry.list_path_names.return_value = ["file1.txt", "file2.txt"]
 
-    # Define sample inputs
     existing_history = []
     iter = 1
     task = "Sample Task"
@@ -66,7 +71,6 @@ def test_add_to_history(iterator):
     critique = "Good code"
     suggestions = "None"
 
-    # Call the _add_to_history function with the sample inputs
     updated_history = iterator._add_to_history(
         existing_history,
         iter,
@@ -77,13 +81,8 @@ def test_add_to_history(iterator):
         suggestions,
     )
 
-    # Assert that the history has one new item
     assert len(updated_history) == 1
-
-    # Convert the added history item back to a dictionary for verification
     history_item = json.loads(updated_history[0])
-
-    # Assert that all fields are correctly added to the history item
     assert history_item["iteration"] == iter
     assert history_item["task"] == task
     assert history_item["code"] == code_history
@@ -91,3 +90,22 @@ def test_add_to_history(iterator):
     assert history_item["files"] == ["file1.txt", "file2.txt"]
     assert history_item["critique"] == critique
     assert history_item["suggestions"] == suggestions
+
+
+def test_pull_information(iterator):
+    with patch("os.path.exists", return_value=True):
+        with patch("builtins.open", mock_open(read_data="line1\nline2\nline3")):
+            iterator.skill = MagicMock()
+            iterator.skill.get_skills.return_value = ["skill1", "skill2"]
+            iterator.path_registry = MagicMock()
+            iterator.path_registry.list_path_names.return_value = ["file1", "file2"]
+            iterator.current_tools = {"tool1": "config1"}
+            iterator.all_tools_string = "all_tools_string"
+            info = iterator._pull_information()
+
+            assert info["recent_history"] == "line3"
+            assert info["full_history"] == "line1\nline2\nline3"
+            assert info["skills"] == json.dumps(["skill1", "skill2"])
+            assert info["files"] == json.dumps(["file1", "file2"])
+            assert info["current_tools"] == json.dumps({"tool1": "config1"})
+            assert info["all_tools"] == "all_tools_string"
