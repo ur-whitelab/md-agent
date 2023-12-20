@@ -72,29 +72,44 @@ class VisFunctions:
         return "Visualization Complete"
 
 
-class VisualizationToolRender(BaseTool):
-    """For this tool
-    to work you need
-    to instal molrender
-    https://github.com/molstar/molrender/tree/master"""
+class VisualizeProtein(BaseTool):
+    """To get a png, you must install molrender
+    https://github.com/molstar/molrender/tree/master
+    Otherwise, you will get a notebook where you
+    can visualize the protein."""
 
     name = "PDBVisualization"
     description = """This tool will create
                     a visualization of a cif
                     file as a png file in
-                    the same directory. if
-                    cif file doesnt exist
-                    you should look for
-                    alternatives in the directory"""
+                    the same directory OR
+                    it will create
+                    a .ipynb file with the
+                    visualization of the
+                    file, depending on the
+                    packages available.
+                    If a notebook is created,
+                    the user can open the
+                    notebook and visualize the
+                    system."""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, query: str) -> str:
         """use the tool."""
+        vis = VisFunctions()
         try:
-            vis = VisFunctions()
             vis.run_molrender(query)
-            return "Visualization created"
-        except Exception as e:
-            return f"An error occurred while running molrender: {str(e)}"
+            return "Visualization created as png"
+        except Exception:
+            try:
+                vis.create_notebook(query, self.path_registry)
+                return "Visualization created as notebook"
+            except Exception as e:
+                return f"An error occurred while running molrender: {str(e)}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -115,48 +130,6 @@ class CheckDirectoryFiles(BaseTool):
             return vis.list_files_in_directory(".")
         except Exception:
             return "An error occurred while listing files in directory"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class PlanBVisualizationTool(BaseTool):
-    """This tool will create
-    a .ipynb file with the
-    visualization of the
-    file. It is intended
-    to be used only
-    if VisualizationToolRender fails"""
-
-    name = "PlanBVisualizationTool"
-    description = """This tool will create a .ipynb
-                    file with the visualization
-                    of the file. It is intended
-                    to be used only if
-                    VisualizationToolRender fails.
-                    Give this tool the saved
-                    name of the file
-                    and the output
-                    will be a notebook the
-                    user can use to visualize
-                    the file."""
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry: Optional[PathRegistry]):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, query: str) -> str:
-        """use the tool."""
-        try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            vis = VisFunctions()
-            vis.create_notebook(query, self.path_registry)
-            return "Visualization Complete"
-        except Exception:
-            return "An error occurred while creating the notebook"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
