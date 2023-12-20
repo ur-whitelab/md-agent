@@ -140,7 +140,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     requirement and returns a modified script. """
 
     args_schema = ModifyScriptInput
-
+    llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry], llm: BaseLanguageModel):
