@@ -1,5 +1,13 @@
 import json
 import os
+from datetime import datetime
+from enum import Enum
+
+
+class FileType(Enum):
+    PROTEIN = 1
+    SIMULATION = 2
+    RECORD = 3
 
 
 class PathRegistry:
@@ -92,3 +100,49 @@ class PathRegistry:
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
+
+    def get_timestamp(self):
+        # Get the current date and time
+        now = datetime.now()
+        # Format the date and time as "YYYYMMDD_HHMMSS"
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+
+        return timestamp
+
+    # File Name/ID in Path Registry JSON
+    def get_fileid(self, file_name: str, type: FileType):
+        # Split the filename on underscores
+        parts, ending = file_name.split(".")
+        parts_list = parts.split("_")
+
+        # Extract the timestamp (assuming it's always in the second to last part)
+        timestamp_part = parts_list[-1]
+        # Get the last 6 digits of the timestamp
+        timestamp_digits = timestamp_part[-6:]
+
+        if type == FileType.PROTEIN:
+            # Extract the PDB ID (assuming it's always the first part)
+            pdb_id = parts[0]
+            return pdb_id + timestamp_digits
+        if type == FileType.SIMULATION:
+            return "sim" + timestamp_digits
+        if type == FileType.RECORD:
+            return "rec" + timestamp_digits
+
+    def write_file_name(self, type: FileType, kwargs):
+        time_stamp = self.get_timestamp()
+        protein_name = kwargs.get("protein_name", None)
+        description = kwargs.get("description", "No description provided")
+        file_format = kwargs.get("file_format", "No file format provided")
+        protein_file_id = kwargs.get("protein_file_id", None)
+        type_of_sim = kwargs.get("type_of_sim", None)
+        conditions = kwargs.get("conditions", None)
+        Sim_id = kwargs.get("Sim_id", None)
+        if type == FileType.PROTEIN:
+            file_name = f"{protein_name}_{description}_{time_stamp}.{file_format}"
+        if type == FileType.SIMULATION:
+            file_name = f"{type_of_sim}_{protein_file_id}_{conditions}_{time_stamp}"
+        if type == FileType.RECORD:
+            file_name = f"{protein_file_id}_{Sim_id}_{time_stamp}"
+
+        return file_name

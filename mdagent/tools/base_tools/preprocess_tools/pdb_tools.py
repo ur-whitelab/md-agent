@@ -10,7 +10,7 @@ from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 def get_pdb(query_string, path_registry=None):
@@ -41,12 +41,18 @@ def get_pdb(query_string, path_registry=None):
         print(f"PDB file found with this ID: {pdbid}")
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
         pdb = requests.get(url)
-        filename = f"{pdbid}.{filetype}"
-        with open(filename, "w") as file:
+        filename = path_registry.write_file_name(
+            FileType.PROTEIN,
+            protein_name=pdbid,
+            description="raw",
+            file_format=filetype,
+        )
+        file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
+        with open(f"files/pdb/{filename}", "w") as file:
             file.write(pdb.text)
         print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
-        path_registry.map_path(filename, filename, file_description)
+        path_registry.map_path(file_id, f"files/pdb/{filename}", file_description)
         return filename
     return None
 
