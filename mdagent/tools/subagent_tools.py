@@ -130,7 +130,7 @@ class WorkflowPlan(BaseTool):
             if curriculum is None:
                 return "Curriculum Agent is not initialized"
             if files == "":
-                files = self.path_registry.list_path_names()
+                files = self.subagent_settings.path_registry.list_path_names()
             rationale, decomposed_tasks = curriculum.run(
                 task, curr_tools, files, failed_tasks
             )
