@@ -235,7 +235,7 @@ class CreateNewTool(BaseTool):
         # execute the new tool code
         if execute:
             try:
-                print("executing tool")
+                print("\nexecuting tool")
                 agent_initializer = SubAgentInitializer(self.subagent_settings)
                 skill = agent_initializer.create_skill_manager(resume=True)
                 if skill is None:
