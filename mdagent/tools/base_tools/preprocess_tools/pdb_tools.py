@@ -47,13 +47,20 @@ def get_pdb(query_string, path_registry=None):
             description="raw",
             file_format=filetype,
         )
+        print("filename", filename)
         file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
-        with open(f"files/pdb/{filename}", "w") as file:
+        print("file_id", file_id)
+        directory = "files/pdb"
+        # Create the directory if it does not exist
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
         print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {file_id}"
-        path_registry.map_path(file_id, f"files/pdb/{filename}", file_description)
-        return filename
+        path_registry.map_path(file_id, f"{directory}/{filename}", file_description)
+        return filename, file_id
     return None
 
 
@@ -79,12 +86,18 @@ class Name2PDBTool(BaseTool):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            pdb = get_pdb(query, self.path_registry)
-            if pdb is None:
+            filename, pdbfile_id = get_pdb(query, self.path_registry)
+            if pdbfile_id is None:
                 return "Name2PDB tool failed to find and download PDB file."
             else:
-                return f"Name2PDB tool successfully downloaded the PDB file: {pdb}"
+                self.path_registry.map_path(
+                    pdbfile_id,
+                    f"files/pdb/{filename}.pdb",
+                    f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
+                )
+                return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
         except Exception as e:
+            print(e)
             return f"Something went wrong. {e}"
 
     async def _arun(self, query) -> str:

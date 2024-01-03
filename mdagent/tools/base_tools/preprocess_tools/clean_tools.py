@@ -295,9 +295,13 @@ class CleaningToolFunction(BaseTool):
                 return "Path registry not initialized"
             file_description = "Cleaned File: "
             CleaningTools()
-            pdbfile = self.path_registry.get_mapped_path(pdbfile_id)
-            name = pdbfile.split(".")[0]
-            end = pdbfile.split(".")[1]
+            try:
+                pdbfile = self.path_registry.get_mapped_path(pdbfile_id)
+                name = pdbfile.split(".")[0]
+                end = pdbfile.split(".")[1]
+            except Exception as e:
+                print(f"error retrieving from path_registry, trying to read file {e}")
+                return "File not found in path registry. "
             fixer = PDBFixer(filename=pdbfile)
 
             try:
@@ -362,20 +366,26 @@ class CleaningToolFunction(BaseTool):
             #                    version += 1
             #
             #                file_name = f"tidy_{name}v{version}.{end}"
-
+            directory = "files/pdb"
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             if end == "pdb":
                 PDBFile.writeFile(
-                    fixer.topology, fixer.positions, open(file_name, file_mode)
+                    fixer.topology,
+                    fixer.positions,
+                    open(f"{directory}/{file_name}", file_mode),
                 )
             elif end == "cif":
                 PDBxFile.writeFile(
-                    fixer.topology, fixer.positions, open(file_name, file_mode)
+                    fixer.topology,
+                    fixer.positions,
+                    open(f"{directory}/{file_name}", file_mode),
                 )
 
             self.path_registry.map_path(
-                file_id, f"files/pdb/{file_name}", file_description
+                file_id, f"{directory}/{file_name}", file_description
             )
-            return f"{file_id} written to files/pdb/{file_name}"
+            return f"{file_id} written to {directory}/{file_name}"
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:

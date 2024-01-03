@@ -122,14 +122,15 @@ class PathRegistry:
 
         if type == FileType.PROTEIN:
             # Extract the PDB ID (assuming it's always the first part)
-            pdb_id = parts[0]
-            return pdb_id + timestamp_digits
+            pdb_id = parts_list[0]
+            print(pdb_id, "pdb abbreviation")
+            return pdb_id + "_" + timestamp_digits
         if type == FileType.SIMULATION:
-            return "sim" + timestamp_digits
+            return "sim" + "_" + timestamp_digits
         if type == FileType.RECORD:
-            return "rec" + timestamp_digits
+            return "rec" + "_" + timestamp_digits
 
-    def write_file_name(self, type: FileType, kwargs):
+    def write_file_name(self, type: FileType, **kwargs):
         time_stamp = self.get_timestamp()
         protein_name = kwargs.get("protein_name", None)
         description = kwargs.get("description", "No description provided")
