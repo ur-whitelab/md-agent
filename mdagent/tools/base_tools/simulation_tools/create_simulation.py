@@ -131,7 +131,7 @@ simulation.step(10000)
 
 class ModifyScriptInput(BaseModel):
     query: str = Field(..., description="Simmulation required by the user")
-    script: str = Field(..., description=" path to the base script file")
+    script: str = Field(..., description=" simulation ID of the base script file")
 
 
 class ModifyBaseSimulationScriptTool(BaseTool):
@@ -149,10 +149,14 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         self.llm = llm
 
     def _run(self, **input):
-        base_script_path = input.get("script")
-        if not base_script_path:
-            return """No script provided. The keys for the input are:
+        base_script_id = input.get("script")
+        if not base_script_id:
+            return """No id provided. The keys for the input are:
              'query' and 'script'"""
+        try:
+            base_script_path = self.path_registry.get_mapped_path(base_script_id)
+        except Exception as e:
+            return f"Error getting path from file id: {e}"
         with open(base_script_path, "r") as file:
             base_script = file.read()
         base_script = "".join(base_script)
