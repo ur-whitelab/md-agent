@@ -4,6 +4,8 @@ from datetime import datetime
 from enum import Enum
 
 
+##TODO: add method to get description from simulation inputs
+##TODO: add method to get conditions from simulation outputs
 class FileType(Enum):
     PROTEIN = 1
     SIMULATION = 2
