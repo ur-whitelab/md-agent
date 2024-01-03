@@ -78,7 +78,6 @@ def make_all_tools(
     base_tools = [
         CleaningToolFunction(path_registry=path_instance),
         CheckDirectoryFiles(),
-        #    InstructionSummary(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         MapPath2Name(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
@@ -125,22 +124,25 @@ def get_tools(
     query,
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
-    ckpt_dir="ckpt",
-    retrieval_top_k=10,
+    top_k_tools=15,
     subagents_required=True,
     human=False,
 ):
+    if subagent_settings:
+        ckpt_dir = subagent_settings.ckpt_dir
+    else:
+        ckpt_dir = "ckpt"
+
     retrieved_tools = []
     if subagents_required:
         # add subagents-related tools by default
-        PathRegistry.get_instance()
         retrieved_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
             ExecuteSkill(subagent_settings=subagent_settings),
             SkillRetrieval(subagent_settings=subagent_settings),
             WorkflowPlan(subagent_settings=subagent_settings),
         ]
-        retrieval_top_k -= len(retrieved_tools)
+        top_k_tools -= len(retrieved_tools)
         all_tools = make_all_tools(
             llm, subagent_settings, skip_subagents=True, human=human
         )
@@ -165,7 +167,7 @@ def get_tools(
         vectordb.persist()
 
     # retrieve 'k' tools
-    k = min(retrieval_top_k, vectordb._collection.count())
+    k = min(top_k_tools, vectordb._collection.count())
     if k == 0:
         return None
     docs = vectordb.similarity_search(query, k=k)
@@ -188,7 +190,6 @@ class CreateNewToolInputSchema(BaseModel):
     )
 
 
-# move this here to avoid circular import error (since it gets a list of all tools)
 class CreateNewTool(BaseTool):
     name: str = "CreateNewTool"
     description: str = """
