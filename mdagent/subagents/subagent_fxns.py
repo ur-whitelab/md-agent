@@ -2,22 +2,19 @@ import json
 import os
 from typing import Optional
 
-from mdagent.utils import PathRegistry
-
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 
 class Iterator:
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
         subagent_settings: Optional[SubAgentSettings],
         all_tools_string: Optional[str] = None,
         current_tools: Optional[dict] = None,
     ):
-        self.path_registry = path_registry
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
+        self.path_registry = subagent_settings.path_registry
         self.ckpt_dir = subagent_settings.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
