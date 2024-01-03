@@ -43,6 +43,7 @@ class PathRegistry:
                 existing_data = json.load(json_file)
                 existing_data.update(path_dict)
         with open(self.json_file_path, "w") as json_file:
+            existing_data.update(path_dict)
             json.dump(existing_data, json_file, indent=4)
 
     def _check_json_content(self, name):
@@ -123,7 +124,6 @@ class PathRegistry:
         if type == FileType.PROTEIN:
             # Extract the PDB ID (assuming it's always the first part)
             pdb_id = parts_list[0]
-            print(pdb_id, "pdb abbreviation")
             return pdb_id + "_" + timestamp_digits
         if type == FileType.SIMULATION:
             return "sim" + "_" + timestamp_digits

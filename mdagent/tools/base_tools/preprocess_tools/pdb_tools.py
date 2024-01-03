@@ -55,8 +55,7 @@ def get_pdb(query_string, path_registry=None):
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
-        file_description = f"PDB file downloaded from RSCB, PDB ID: {file_id}"
-        path_registry.map_path(file_id, f"{directory}/{filename}", file_description)
+
         return filename, file_id
     return None
 
@@ -89,7 +88,7 @@ class Name2PDBTool(BaseTool):
             else:
                 self.path_registry.map_path(
                     pdbfile_id,
-                    f"files/pdb/{filename}.pdb",
+                    f"files/pdb/{filename}",
                     f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
                 )
                 return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
