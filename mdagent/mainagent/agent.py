@@ -81,25 +81,24 @@ class MDAgent:
         )
 
     def _initialize_tools_and_agent(self, user_input=None):
-        if self.tools is not None:
-            tools = self.tools
-        elif self.top_k_tools != "all" and user_input is not None:
-            tools = get_tools(
-                query=user_input,
-                llm=self.tools_llm,
-                subagent_settings=self.subagents_settings,
-                human=self.use_human_tool,
-            )
-        else:
-            tools = make_all_tools(
-                self.tools_llm,
-                subagent_settings=self.subagents_settings,
-                human=self.use_human_tool,
-            )
+        if self.tools is None:
+            if self.top_k_tools != "all" and user_input is not None:
+                self.tools = get_tools(
+                    query=user_input,
+                    llm=self.tools_llm,
+                    subagent_settings=self.subagents_settings,
+                    human=self.use_human_tool,
+                )
+            else:
+                self.tools = make_all_tools(
+                    self.tools_llm,
+                    subagent_settings=self.subagents_settings,
+                    human=self.use_human_tool,
+                )
         return AgentExecutor.from_agent_and_tools(
-            tools=tools,
+            tools=self.tools,
             agent=AgentType.get_agent(self.agent_type).from_llm_and_tools(
-                self.llm, tools
+                self.llm, self.tools
             ),
             handle_parsing_errors=True,
         )
