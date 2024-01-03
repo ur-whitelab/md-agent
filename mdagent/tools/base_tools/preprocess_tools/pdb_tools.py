@@ -51,7 +51,7 @@ def get_pdb(query_string, path_registry=None):
         with open(f"files/pdb/{filename}", "w") as file:
             file.write(pdb.text)
         print(f"{filename} is created.")
-        file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
+        file_description = f"PDB file downloaded from RSCB, PDB ID: {file_id}"
         path_registry.map_path(file_id, f"files/pdb/{filename}", file_description)
         return filename
     return None
