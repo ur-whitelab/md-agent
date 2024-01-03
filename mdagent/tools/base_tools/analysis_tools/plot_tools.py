@@ -1,8 +1,12 @@
 import csv
+import os
 import re
+from typing import Optional
 
 import matplotlib.pyplot as plt
 from langchain.tools import BaseTool
+
+from mdagent.utils import PathRegistry
 
 
 def process_csv(file_name):
@@ -53,8 +57,13 @@ def plot_data(data, headers, matched_headers):
                 plt.title(f"{xlab} vs {header_lab}")
 
                 # Save the figure
-                plt.savefig(f"{xlab}_vs_{header_lab}.png")
+                directory = "files/figures"
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+
+                plt.savefig(f"{directory}/{xlab}_vs_{header_lab}.png")
                 plt.close()
+
                 created_plots.append(f"{xlab}_vs_{header_lab}.png")
             except ValueError:  # If data cannot be converted to float
                 failed_headers.append(header)
@@ -68,12 +77,14 @@ def plot_data(data, headers, matched_headers):
 class SimulationOutputFigures(BaseTool):
     name = "PostSimulationFigures"
     description = """This tool will take
-    a csv file output from an openmm
+    a csv file id output from an openmm
     simulation and create figures for
     all physical parameters
     versus timestep of the simulation.
     Give this tool the path to the
     csv file output from the simulation."""
+
+    path_registry: Optional[PathRegistry]
 
     def _run(self, file_path: str) -> str:
         """use the tool."""

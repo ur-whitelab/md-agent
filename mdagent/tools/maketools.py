@@ -88,7 +88,7 @@ def make_all_tools(
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-        SimulationOutputFigures(),
+        SimulationOutputFigures(path_registry=path_instance),
         VisualizationToolRender(),
     ]
 
