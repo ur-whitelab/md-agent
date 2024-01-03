@@ -47,9 +47,7 @@ def get_pdb(query_string, path_registry=None):
             description="raw",
             file_format=filetype,
         )
-        print("filename", filename)
         file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
-        print("file_id", file_id)
         directory = "files/pdb"
         # Create the directory if it does not exist
         if not os.path.exists(directory):
@@ -57,7 +55,6 @@ def get_pdb(query_string, path_registry=None):
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
-        print(f"{filename} is created.")
         file_description = f"PDB file downloaded from RSCB, PDB ID: {file_id}"
         path_registry.map_path(file_id, f"{directory}/{filename}", file_description)
         return filename, file_id
@@ -97,7 +94,6 @@ class Name2PDBTool(BaseTool):
                 )
                 return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
         except Exception as e:
-            print(e)
             return f"Something went wrong. {e}"
 
     async def _arun(self, query) -> str:
