@@ -1,3 +1,4 @@
+import os
 import textwrap
 from typing import Optional
 
@@ -131,7 +132,12 @@ simulation.step(10000)
 
 
 class ModifyScriptInput(BaseModel):
-    query: str = Field(..., description="Simmulation required by the user")
+    query: str = Field(
+        ...,
+        description="""Simmulation required by the user.You MUST
+                    specify the objective, requirements of the simulation as well
+                    as on what protein you are working.""",
+    )
     script: str = Field(..., description=" simulation ID of the base script file")
 
 
@@ -156,6 +162,9 @@ class ModifyBaseSimulationScriptTool(BaseTool):
              'query' and 'script'"""
         try:
             base_script_path = self.path_registry.get_mapped_path(base_script_id)
+            parts = base_script_path.split("/")
+            if len(parts) > 1:
+                parts[-1]
         except Exception as e:
             return f"Error getting path from file id: {e}"
         with open(base_script_path, "r") as file:
@@ -176,11 +185,17 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         script_content = script_content.replace("```", "#")
         script_content = textwrap.dedent(script_content).strip()
         # Write to file
-        filename = "modified_simul.py"
-        with open(filename, "w") as file:
+        filename = self.path_registry.write_file_name(
+            type="SIMULATION", Sim_id=base_script_id, modified=True
+        )
+        file_id = self.path_registry.get_fileid(filename, type="SIMULATION")
+        directory = "files/simulations"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        with open(f"{directory}/{filename}", "w") as file:
             file.write(script_content)
 
-        self.path_registry.map_path(filename, filename, description)
+        self.path_registry.map_path(file_id, filename, description)
         return "Script modified successfully"
 
     async def _arun(self, query) -> str:

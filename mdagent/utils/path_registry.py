@@ -141,11 +141,15 @@ class PathRegistry:
         type_of_sim = kwargs.get("type_of_sim", None)
         conditions = kwargs.get("conditions", None)
         Sim_id = kwargs.get("Sim_id", None)
+        modified = kwargs.get("modified", False)
+
         if type == FileType.PROTEIN:
             file_name = f"{protein_name}_{description}_{time_stamp}.{file_format}"
         if type == FileType.SIMULATION:
             if conditions:
                 file_name = f"{type_of_sim}_{protein_file_id}_{conditions}_{time_stamp}"
+            elif modified:
+                file_name = f"{Sim_id}_MOD_{time_stamp}"
             else:
                 file_name = f"{type_of_sim}_{protein_file_id}_{time_stamp}"
         if type == FileType.RECORD:
