@@ -186,7 +186,8 @@ class CreateNewToolInputSchema(BaseModel):
         this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
     )
     execute: Optional[bool] = Field(
-        description="Whether to execute the new tool or not. default: True"
+        True,
+        description="Whether to execute the new tool or not.",
     )
     args: Optional[dict] = Field(
         description="Input variables as a dictionary to pass to the skill"
