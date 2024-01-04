@@ -201,6 +201,7 @@ class CreateNewTool(BaseTool):
         If succeeded, it will return the name of the tool. Unless you set
         'execute' to False, it will also execute the tool and return the result.
         Make sure to provide any necessary input arguments for the tool.
+        If execution fails, move on to ReTryExecuteSkill.
     """
     args_schema: Type[BaseModel] = CreateNewToolInputSchema
     subagent_settings: Optional[SubAgentSettings]
@@ -217,7 +218,7 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
+    def _run(self, task, orig_prompt, curr_tools, execute, args=None):
         # run iterator
         try:
             all_tools_string = self.get_all_tools_string()
