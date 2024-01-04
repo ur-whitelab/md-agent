@@ -51,6 +51,8 @@ from mdagent.tools.base_tools.preprocess_tools import CleaningTools
 # Local Library/Application Imports
 from mdagent.utils import FileType, PathRegistry
 
+# TODO delete files created from the simulation if not needed.
+
 FORCEFIELD_LIST = [
     "amber14/DNA.OL15.xml",
     "amber14/DNA.bsc1.xml",
