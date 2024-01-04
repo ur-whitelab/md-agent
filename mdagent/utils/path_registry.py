@@ -104,6 +104,23 @@ class PathRegistry:
             "contain name mappings."
         )
 
+    def list_path_names_and_descriptions(self):
+        if not self._check_for_json():
+            return "JSON file does not exist"
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+        names = [key for key in data.keys()]
+        descriptions = [data[key]["description"] for key in data.keys()]
+        names_w_descriptions = [
+            f"{name}: {description}" for name, description in zip(names, descriptions)
+        ]
+        return (
+            "Files found in registry: " + ", ".join(names_w_descriptions)
+            if names
+            else "No names found. The JSON file is empty or does not"
+            "contain name mappings."
+        )
+
     def get_timestamp(self):
         # Get the current date and time
         now = datetime.now()
