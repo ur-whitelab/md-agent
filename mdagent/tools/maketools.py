@@ -21,14 +21,13 @@ from .base_tools import (
     ModifyBaseSimulationScriptTool,
     Name2PDBTool,
     PackMolTool,
-    PlanBVisualizationTool,
     PPIDistance,
     RMSDCalculator,
     Scholar2ResultLLM,
     SerpGitTool,
     SetUpandRunFunction,
     SimulationOutputFigures,
-    VisualizationToolRender,
+    VisualizeProtein,
 )
 from .subagent_tools import ExecuteSkill, SkillRetrieval, WorkflowPlan
 
@@ -83,13 +82,12 @@ def make_all_tools(
         #    MapPath2Name(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
-        PlanBVisualizationTool(path_registry=path_instance),
+        VisualizeProtein(path_registry=path_instance),
         PPIDistance(),
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-        SimulationOutputFigures(path_registry=path_instance),
-        VisualizationToolRender(),
+        SimulationOutputFigures(),
     ]
 
     # tools using subagents

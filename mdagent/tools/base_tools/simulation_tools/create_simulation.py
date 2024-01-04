@@ -1,8 +1,9 @@
 import textwrap
 from typing import Optional
 
-from langchain import LLMChain, PromptTemplate
 from langchain.base_language import BaseLanguageModel
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -140,7 +141,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     requirement and returns a modified script. """
 
     args_schema = ModifyScriptInput
-    llm = Optional[BaseLanguageModel]
+    llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry], llm: BaseLanguageModel):
