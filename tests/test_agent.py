@@ -27,8 +27,8 @@ def action(path_registry):
 
 @pytest.fixture
 def iterator(path_registry):
-    settings = SubAgentSettings(path_registry=None)
-    return Iterator(path_registry=path_registry, subagent_settings=settings)
+    settings = SubAgentSettings(path_registry=path_registry)
+    return Iterator(subagent_settings=settings)
 
 
 def test_exec_code(action):
@@ -153,15 +153,13 @@ def test_execute_skill_function(skill_manager):
     }
     with patch("os.listdir", return_value=["file1", "file2"]):
         skill_manager._check_arguments = MagicMock()
-        message = skill_manager.execute_skill_function(
-            "sample_tool", path_registry, arg1=5, arg2=3
-        )
+        message = skill_manager.execute_skill_function("sample_tool", arg1=5, arg2=3)
 
     assert "Successfully executed code." in message
     assert "Code Output: 8" in message
     skill_manager.skills = {}
     with pytest.raises(ValueError) as excinfo:
-        skill_manager.execute_skill_function("nonexistent_tool", path_registry)
+        skill_manager.execute_skill_function("nonexistent_tool")
     assert "Code for nonexistent_tool not found" in str(excinfo.value)
 
 

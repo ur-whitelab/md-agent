@@ -19,6 +19,7 @@ from openmm import (
     LangevinIntegrator,
     LangevinMiddleIntegrator,
     MonteCarloBarostat,
+    OpenMMException,
     Platform,
     VerletIntegrator,
     app,
@@ -48,7 +49,9 @@ from pydantic import BaseModel, Field
 from mdagent.tools.base_tools.preprocess_tools import CleaningTools
 
 # Local Library/Application Imports
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
+
+# TODO delete files created from the simulation if not needed.
 
 FORCEFIELD_LIST = [
     "amber14/DNA.OL15.xml",
@@ -545,7 +548,7 @@ class InstructionSummary(BaseTool):
 #######==================System Configuration==================########
 # System Configuration
 class SetUpandRunFunctionInput(BaseModel):
-    pdb_path: str
+    pdb_id: str
     forcefield_files: List[str]
     system_params: Dict[str, Any] = Field(
         {
@@ -614,7 +617,9 @@ class SetUpandRunFunctionInput(BaseModel):
 
 
 class OpenMMSimulation:
-    def __init__(self, input_params: SetUpandRunFunctionInput):
+    def __init__(
+        self, input_params: SetUpandRunFunctionInput, path_registry: PathRegistry
+    ):
         self.params = input_params
         self.int_params = self.params.get("integrator_params", None)
         if self.int_params is None:
@@ -644,13 +649,16 @@ class OpenMMSimulation:
                 "record_interval_steps": 100,
                 "record_params": ["step", "potentialEnergy", "temperature"],
             }
+        self.path_registry = path_registry
         self.setup_system()
         self.setup_integrator()
         self.create_simulation()
 
     def setup_system(self):
         print("Building system...")
-        self.pdb = PDBFile(self.params["pdb_path"])
+        self.pdb_id = self.params["pdb_id"]
+        self.pdb_path = self.path_registry.get_mapped_path(name=self.pdb_id)
+        self.pdb = PDBFile(self.pdb_path)
         self.forcefield = ForceField(*self.params["forcefield_files"])
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
 
@@ -775,7 +783,7 @@ class OpenMMSimulation:
             not runnable"""
             return f"{unit.value_in_unit(unit.unit)}*{unit.unit.get_name()}"
 
-        pdb_path = self.params["pdb_path"]
+        pdb_path = self.pdb_path
         forcefield_files = ", ".join(
             f"'{file}'" for file in self.params["forcefield_files"]
         )
@@ -956,10 +964,14 @@ class OpenMMSimulation:
         script_content = textwrap.dedent(script_content).strip()
 
         # Write to file
-        with open(filename, "w") as file:
+        directory = "files/simulations"
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(f"{directory}/{filename}", "w") as file:
             file.write(script_content)
 
-        print(f"Standalone simulation script written to {filename}")
+        print(f"Standalone simulation script written to {directory}/{filename}")
 
     def run(self):
         # Minimize and Equilibrate
@@ -990,27 +1002,55 @@ class SetUpandRunFunction(BaseTool):
 
     args_schema: Type[BaseModel] = SetUpandRunFunctionInput
 
-    PathRegistry: Optional[PathRegistry]
+    path_registry: Optional[PathRegistry]
 
     def _run(self, **input_args):
+        if self.path_registry is None:
+            print("Path registry not initialized")
+            return "Path registry not initialized"
         input = self.check_system_params(input_args)
+
         error = input.get("error", None)
         if error:
             return error
         try:
-            Simulation = OpenMMSimulation(input)
+            pdb_id = input["pdb_id"]
+        except KeyError:
+            print("whoops no pdb_id found in input,", input)
+            return "No pdb_id found in input"
+        try:
+            Simulation = OpenMMSimulation(input, self.path_registry)
             print("simulation set!")
         except ValueError as e:
             return str(e) + f"This were the inputs {input_args}"
+        except FileNotFoundError:
+            return f"File not found, check File id. This were the inputs {input_args}"
+        except OpenMMException as e:
+            return f"OpenMM Exception: {str(e)}. This were the inputs {input_args}"
         try:
             Simulation.run()
-            Simulation.write_standalone_script()
-            return "Simulation done!"
         except Exception as e:
             return f"""An exception was found: {str(e)}. Not a problem, thats one
             purpose of this tool: to run a short simulation to check for correct
             initialization. \n\n Try a) with different parameters like
             nonbondedMethod, constraints, etc or b) clean file inputs depending on error
+            """
+        try:
+            file_name = self.path_registry.write_file_name(
+                type=FileType.SIMULATION,
+                type_of_sim=input["simmulation_params"]["Ensemble"],
+                protein_file_id=pdb_id,
+            )
+            file_name += ".py"
+            file_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
+            Simulation.write_standalone_script(filename=file_name)
+            self.path_registry.map_path(
+                file_id, file_name, f"Basic Simulation of Protein {pdb_id}"
+            )
+            return "Simulation done!"
+        except Exception as e:
+            print(f"An exception was found: {str(e)}.")
+            return f"""An exception was found trying to write the filenames: {str(e)}.
             """
 
     def _parse_cutoff(self, cutoff):
@@ -1394,9 +1434,9 @@ class SetUpandRunFunction(BaseTool):
             error_msg = "constraintTolerance must be specified if rigidWater is True"
 
         """Checking if the file is in the path"""
-        pdb_path = values.get("pdb_path")
-        if not os.path.exists(pdb_path):
-            error_msg += "The pdb file is not present in the file"
+        pdb_id = values.get("pdb_id")
+        if not pdb_id:
+            error_msg += "The pdb id is not present in the inputs"
 
         """Validating the forcefield files and Integrator"""
 
@@ -1448,7 +1488,7 @@ class SetUpandRunFunction(BaseTool):
                 + "\n Correct this and try again. \n Everthing else is fine"
             }
         values = {
-            "pdb_path": pdb_path,
+            "pdb_id": pdb_id,
             "forcefield_files": forcefield_files,
             "system_params": system_params,
             "integrator_params": integrator_params,
