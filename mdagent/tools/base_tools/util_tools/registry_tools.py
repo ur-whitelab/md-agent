@@ -57,7 +57,7 @@ class ListRegistryPaths(BaseTool):
         try:
             if self.path_registry is None:
                 return "Path registry not initialized"
-            return self.path_registry.list_path_names()
+            return self.path_registry.list_path_names_and_descriptions()
         except Exception:
             return "Error listing paths"
 
