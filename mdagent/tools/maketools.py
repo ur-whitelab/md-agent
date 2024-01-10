@@ -123,22 +123,25 @@ def get_tools(
     query,
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
-    ckpt_dir="ckpt",
-    retrieval_top_k=10,
+    top_k_tools=15,
     subagents_required=True,
     human=False,
 ):
+    if subagent_settings:
+        ckpt_dir = subagent_settings.ckpt_dir
+    else:
+        ckpt_dir = "ckpt"
+
     retrieved_tools = []
     if subagents_required:
         # add subagents-related tools by default
-        PathRegistry.get_instance()
         retrieved_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
             RetryExecuteSkill(subagent_settings=subagent_settings),
             SkillRetrieval(subagent_settings=subagent_settings),
             WorkflowPlan(subagent_settings=subagent_settings),
         ]
-        retrieval_top_k -= len(retrieved_tools)
+        top_k_tools -= len(retrieved_tools)
         all_tools = make_all_tools(
             llm, subagent_settings, skip_subagents=True, human=human
         )
@@ -163,7 +166,7 @@ def get_tools(
         vectordb.persist()
 
     # retrieve 'k' tools
-    k = min(retrieval_top_k, vectordb._collection.count())
+    k = min(top_k_tools, vectordb._collection.count())
     if k == 0:
         return None
     docs = vectordb.similarity_search(query, k=k)
@@ -173,7 +176,8 @@ def get_tools(
             retrieved_tools.append(all_tools[index])
         else:
             print(f"Invalid index {index}.")
-            print(f"Try deleting vectordb at {ckpt_dir}/all_tools_vectordb.")
+            print("Some tools may be duplicated.")
+            print(f"Try to delete vector DB at {ckpt_dir}/all_tools_vectordb.")
     return retrieved_tools
 
 
@@ -217,7 +221,7 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    def _run(self, task, orig_prompt, curr_tools, execute, args=None):
+    def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
         # run iterator
         try:
             all_tools_string = self.get_all_tools_string()
