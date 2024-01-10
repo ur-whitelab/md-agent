@@ -51,7 +51,7 @@ class MDAgent:
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
         self.agent_type = agent_type
-        self.tools = tools
+        self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
@@ -82,12 +82,12 @@ class MDAgent:
 
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
-        if self.tools is not None:
-            tools = self.tools
+        if self.user_tools is not None:
+            self.tools = self.user_tools
         else:
             if self.top_k_tools != "all" and user_input is not None:
                 # retrieve only tools relevant to user input
-                tools = get_tools(
+                self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
                     subagent_settings=self.subagents_settings,
@@ -95,16 +95,16 @@ class MDAgent:
                 )
             else:
                 # retrieve all tools, including new tools if any
-                tools = make_all_tools(
+                self.tools = make_all_tools(
                     self.tools_llm,
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
                 )
         return AgentExecutor.from_agent_and_tools(
-            tools=tools,
+            tools=self.tools,
             agent=AgentType.get_agent(self.agent_type).from_llm_and_tools(
                 self.llm,
-                tools,
+                self.tools,
             ),
             handle_parsing_errors=True,
         )
