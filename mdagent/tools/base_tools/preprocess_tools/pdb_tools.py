@@ -10,7 +10,7 @@ from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 def get_pdb(query_string, path_registry=None):
@@ -41,13 +41,22 @@ def get_pdb(query_string, path_registry=None):
         print(f"PDB file found with this ID: {pdbid}")
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
         pdb = requests.get(url)
-        filename = f"{pdbid}.{filetype}"
-        with open(filename, "w") as file:
+        filename = path_registry.write_file_name(
+            FileType.PROTEIN,
+            protein_name=pdbid,
+            description="raw",
+            file_format=filetype,
+        )
+        file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
+        directory = "files/pdb"
+        # Create the directory if it does not exist
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
-        print(f"{filename} is created.")
-        file_description = f"PDB file downloaded from RSCB, PDB ID: {pdbid}"
-        path_registry.map_path(filename, filename, file_description)
-        return filename
+
+        return filename, file_id
     return None
 
 
@@ -73,11 +82,16 @@ class Name2PDBTool(BaseTool):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            pdb = get_pdb(query, self.path_registry)
-            if pdb is None:
+            filename, pdbfile_id = get_pdb(query, self.path_registry)
+            if pdbfile_id is None:
                 return "Name2PDB tool failed to find and download PDB file."
             else:
-                return f"Name2PDB tool successfully downloaded the PDB file: {pdb}"
+                self.path_registry.map_path(
+                    pdbfile_id,
+                    f"files/pdb/{filename}",
+                    f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
+                )
+                return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
         except Exception as e:
             return f"Something went wrong. {e}"
 
