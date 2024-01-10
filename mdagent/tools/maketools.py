@@ -176,7 +176,8 @@ def get_tools(
             retrieved_tools.append(all_tools[index])
         else:
             print(f"Invalid index {index}.")
-            print(f"Try deleting vectordb at {ckpt_dir}/all_tools_vectordb.")
+            print("Some tools may be duplicated.")
+            print(f"Try to delete vector DB at {ckpt_dir}/all_tools_vectordb.")
     return retrieved_tools
 
 
@@ -220,7 +221,7 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    def _run(self, task, orig_prompt, curr_tools, execute, args=None):
+    def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
         # run iterator
         try:
             all_tools_string = self.get_all_tools_string()
