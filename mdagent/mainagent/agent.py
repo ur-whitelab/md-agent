@@ -50,8 +50,6 @@ class MDAgent:
     ):
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
-
-        # save parameters to initialize the agent in the first run
         self.agent_type = agent_type
         self.tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
