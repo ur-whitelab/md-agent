@@ -35,7 +35,7 @@ class MDAgent:
     def __init__(
         self,
         tools=None,
-        agent_type="OpenAIFunctionsAgent",  # this can also be strucured_chat
+        agent_type="OpenAIFunctionsAgent",  # this can also be structured_chat
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
         tools_model="gpt-4-1106-preview",
         temp=0.1,
@@ -50,11 +50,13 @@ class MDAgent:
     ):
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
+
+        # save parameters to initialize the agent in the first run
         self.agent_type = agent_type
         self.tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
-        self.use_human_tool = use_human_tool
         self.top_k_tools = top_k_tools
+        self.use_human_tool = use_human_tool
 
         self.llm = ChatOpenAI(
             temperature=temp,
@@ -81,30 +83,34 @@ class MDAgent:
         )
 
     def _initialize_tools_and_agent(self, user_input=None):
-        if self.tools is None:
+        """Retrieve tools and initialize the agent."""
+        if self.tools is not None:
+            tools = self.tools
+        else:
             if self.top_k_tools != "all" and user_input is not None:
-                self.tools = get_tools(
+                # retrieve only tools relevant to user input
+                tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
                 )
             else:
-                self.tools = make_all_tools(
+                # retrieve all tools, including new tools if any
+                tools = make_all_tools(
                     self.tools_llm,
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
                 )
         return AgentExecutor.from_agent_and_tools(
-            tools=self.tools,
+            tools=tools,
             agent=AgentType.get_agent(self.agent_type).from_llm_and_tools(
-                self.llm, self.tools
+                self.llm,
+                tools,
             ),
             handle_parsing_errors=True,
         )
 
     def run(self, user_input, callbacks=None):
-        # todo: check this for both agent types
-
         self.agent = self._initialize_tools_and_agent(user_input)
         return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
