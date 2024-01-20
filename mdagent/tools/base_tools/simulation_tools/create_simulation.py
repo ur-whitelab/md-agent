@@ -90,31 +90,30 @@ simulation.step(10000)
         if not llm:
             raise ValueError("No language model provided at ModifyScriptTool")
 
-        prompt_template = """ You're an expert programmer and in molecular dynamics.
-        Your job is to make a script to make a simmulatiuon.
-        in openmm.
-        Youre starting point is a base script that runs a protein on its own.
-        The protein itself doesnt require more preperation.
-        The forcefields, integrator, and constraints are already set up for you.
-        You need to add lines to fullfill the user requirement.
-        Your answer has to be the modified script.
-        Your answer should be a python script.
-        Dont use ''' to comment out the code, use # instead.
-        Describe your thoughts and changes before you start writing the script.
-        The script will be rum as it is, so make it completely.
-
-        The format should be as follows:
-        THOUGHTS: (Your thoughts as an openmm expert with the base script and the query)
-        CHANGES:(what modifications youre doing to the script)
-        SCRIPT: (The COMPLETE modified script)
-        FINAL THOUGHTS: (Optional, Any final thoughts or comments
-        you have about the script)
-
-
-        Base_SCRIPT:
-        {base_script}
-        Question: {query}
-        """
+        prompt_template = (
+            "You're an expert programmer and in molecular dynamics. "
+            "Your job is to make a script to make a simmulation "
+            "in openmm. "
+            "Youre starting point is a base script that runs a protein on its own. "
+            "The protein itself doesnt require more preperation. "
+            "The forcefields, integrator, and constraints are already set up for you. "
+            "You need to add lines to fullfill the user requirement. "
+            "Your answer has to be the modified script. "
+            "Your answer should be a python script. "
+            "Dont use ''' to comment out the code, use # instead. "
+            "Describe your thoughts and changes before you start writing the script. "
+            "The script will be rum as it is, so make it completely. "
+            "The format should be as follows: "
+            "THOUGHTS: (Your thoughts as an openmm expert with the base "
+            "script and the query) \n"
+            "CHANGES:(what modifications youre doing to the script)\n "
+            "SCRIPT: (The COMPLETE modified script)\n "
+            "FINAL THOUGHTS: (Optional, Any final thoughts or comments\n "
+            "you have about the script\n "
+            "Base_SCRIPT:\n"
+            "{base_script} \n"
+            "Question: {query} "
+        )
 
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["base_script", "query"]
@@ -134,17 +133,21 @@ simulation.step(10000)
 class ModifyScriptInput(BaseModel):
     query: str = Field(
         ...,
-        description="""Simmulation required by the user.You MUST
-                    specify the objective, requirements of the simulation as well
-                    as on what protein you are working.""",
+        description=(
+            "Simmulation required by the user.You MUST "
+            "specify the objective, requirements of the simulation as well "
+            "as on what protein you are working."
+        ),
     )
     script: str = Field(..., description=" simulation ID of the base script file")
 
 
 class ModifyBaseSimulationScriptTool(BaseTool):
     name: str = "ModifyScriptTool"
-    description: str = """This tool takes a base simulation script and a user
-    requirement and returns a modified script. """
+    description: str = (
+        "This tool takes a base simulation script and a user "
+        "requirement and returns a modified script. "
+    )
 
     args_schema = ModifyScriptInput
     llm: Optional[BaseLanguageModel]
@@ -155,11 +158,16 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         self.path_registry = path_registry
         self.llm = llm
 
-    def _run(self, **input):
+    def _run(self, *args, **input):
+        if len(args) > 0:
+            return (
+                "This tool expects you to provide the input as a "
+                "dictionary: {'query': 'your query', 'script': 'script id'}"
+            )
+
         base_script_id = input.get("script")
         if not base_script_id:
-            return """No id provided. The keys for the input are:
-             'query' and 'script'"""
+            return "No id provided. The keys for the input are: " "query' and 'script'"
         try:
             base_script_path = self.path_registry.get_mapped_path(base_script_id)
             parts = base_script_path.split("/")
