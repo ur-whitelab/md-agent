@@ -159,17 +159,20 @@ class PathRegistry:
         conditions = kwargs.get("conditions", None)
         Sim_id = kwargs.get("Sim_id", None)
         modified = kwargs.get("modified", False)
-
+        file_name = ""
         if type == FileType.PROTEIN:
-            file_name = f"{protein_name}_{description}_{time_stamp}.{file_format}"
+            file_name += f"{protein_name}_{description}_{time_stamp}.{file_format}"
         if type == FileType.SIMULATION:
+            print("im here inside")
             if conditions:
-                file_name = f"{type_of_sim}_{protein_file_id}_{conditions}_{time_stamp}"
+                file_name += (
+                    f"{type_of_sim}_{protein_file_id}_{conditions}_{time_stamp}.py"
+                )
             elif modified:
-                file_name = f"{Sim_id}_MOD_{time_stamp}"
+                print("I got here!!!!")
+                file_name += f"{Sim_id}_MOD_{time_stamp}.py"
             else:
-                file_name = f"{type_of_sim}_{protein_file_id}_{time_stamp}"
-        if type == FileType.RECORD:
-            file_name = f"{protein_file_id}_{Sim_id}_{time_stamp}"
-
+                file_name += f"{type_of_sim}_{protein_file_id}_{time_stamp}.py"
+        if file_name == "":
+            file_name += "ErrorDuringNaming_error.py"
         return file_name

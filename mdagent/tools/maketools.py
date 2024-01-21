@@ -24,7 +24,6 @@ from .base_tools import (
     PPIDistance,
     RMSDCalculator,
     Scholar2ResultLLM,
-    SerpGitTool,
     SetUpandRunFunction,
     SimulationOutputFigures,
     VisualizeProtein,
@@ -63,15 +62,17 @@ def make_all_tools(
 ):
     load_dotenv()
     all_tools = []
-
+    path_instance = PathRegistry.get_instance()  # get instance first
     if llm:
         all_tools += agents.load_tools(["llm-math"], llm)
         all_tools += [PythonREPLTool()]  # or PythonREPLTool(llm=llm)?
+        all_tools += [
+            ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm)
+        ]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
     # get path registry
-    path_instance = PathRegistry.get_instance()  # get instance first
 
     # add base tools
     base_tools = [
@@ -110,10 +111,10 @@ def make_all_tools(
     all_tools += base_tools + subagents_tools + learned_tools
 
     # add other tools depending on api keys
-    serp_key = os.getenv("SERP_API_KEY")
+    os.getenv("SERP_API_KEY")
     pqa_key = os.getenv("PQA_API_KEY")
-    if serp_key:
-        all_tools.append(SerpGitTool(serp_key))  # github issues search
+    # if serp_key:
+    #    all_tools.append(SerpGitTool(serp_key))  # github issues search
     if pqa_key:
         all_tools.append(Scholar2ResultLLM(pqa_key))  # literature search
     return all_tools

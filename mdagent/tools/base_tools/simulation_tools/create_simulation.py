@@ -8,12 +8,14 @@ from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 class ModifyScriptUtils:
+    llm: Optional[BaseLanguageModel]
+
     def __init__(self, llm):
-        llm = llm
+        self.llm = llm
 
     Examples = [
         """
@@ -153,12 +155,16 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry], llm: BaseLanguageModel):
+    def __init__(self, path_registry: Optional[PathRegistry], llm):
         super().__init__()
         self.path_registry = path_registry
         self.llm = llm
+        print(f"fModifyScriptTool initialized, llm is {llm}")
 
     def _run(self, *args, **input):
+        if self.llm is None:  # this should not happen
+            print("No language model provided at ModifyScriptTool")
+            return "llm not initialized"
         if len(args) > 0:
             return (
                 "This tool expects you to provide the input as a "
@@ -178,7 +184,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         with open(base_script_path, "r") as file:
             base_script = file.read()
         base_script = "".join(base_script)
-        utils = ModifyScriptUtils()
+        utils = ModifyScriptUtils(self.llm)
 
         description = input.get("query")
         answer = utils._prompt_summary(
@@ -194,9 +200,9 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         script_content = textwrap.dedent(script_content).strip()
         # Write to file
         filename = self.path_registry.write_file_name(
-            type="SIMULATION", Sim_id=base_script_id, modified=True
+            type=FileType.SIMULATION, Sim_id=base_script_id, modified=True
         )
-        file_id = self.path_registry.get_fileid(filename, type="SIMULATION")
+        file_id = self.path_registry.get_fileid(filename, type=FileType.SIMULATION)
         directory = "files/simulations"
         if not os.path.exists(directory):
             os.makedirs(directory)
