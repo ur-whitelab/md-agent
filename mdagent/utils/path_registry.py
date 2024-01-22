@@ -163,13 +163,11 @@ class PathRegistry:
         if type == FileType.PROTEIN:
             file_name += f"{protein_name}_{description}_{time_stamp}.{file_format}"
         if type == FileType.SIMULATION:
-            print("im here inside")
             if conditions:
                 file_name += (
                     f"{type_of_sim}_{protein_file_id}_{conditions}_{time_stamp}.py"
                 )
             elif modified:
-                print("I got here!!!!")
                 file_name += f"{Sim_id}_MOD_{time_stamp}.py"
             else:
                 file_name += f"{type_of_sim}_{protein_file_id}_{time_stamp}.py"

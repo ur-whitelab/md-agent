@@ -159,7 +159,6 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
         self.llm = llm
-        print(f"fModifyScriptTool initialized, llm is {llm}")
 
     def _run(self, *args, **input):
         if self.llm is None:  # this should not happen
