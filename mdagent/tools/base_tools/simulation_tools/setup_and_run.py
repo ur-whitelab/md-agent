@@ -588,7 +588,7 @@ class SetUpandRunFunctionInput(BaseModel):
             "integrator_type": "LangevinMiddle",
             "Temperature": "300 * kelvin",
             "Friction": "1.0 / picoseconds",
-            "Timestep": "0.004 * picoseconds",
+            "Timestep": "0.002 * picoseconds",
             "Pressure": "1.0 * bar",
         },
         description="""Parameters for the openmm integrator.""",
@@ -596,7 +596,7 @@ class SetUpandRunFunctionInput(BaseModel):
     simmulation_params: Dict[str, Any] = Field(
         {
             "Ensemble": "NVT",
-            "Number of Steps": 10000,
+            "Number of Steps": 5000,
             "record_interval_steps": 100,
             "record_params": ["step", "potentialEnergy", "temperature"],
         },
@@ -627,7 +627,7 @@ class OpenMMSimulation:
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
                 "Friction": 1.0 / picoseconds,
-                "Timestep": 0.004 * picoseconds,
+                "Timestep": 0.002 * picoseconds,
                 "Pressure": 1.0 * bar,
             }
 
@@ -645,7 +645,7 @@ class OpenMMSimulation:
         if self.sim_params is None:
             self.sim_params = {
                 "Ensemble": "NVT",
-                "Number of Steps": 10000,
+                "Number of Steps": 5000,
                 "record_interval_steps": 100,
                 "record_params": ["step", "potentialEnergy", "temperature"],
             }
@@ -1041,7 +1041,6 @@ class SetUpandRunFunction(BaseTool):
                 type_of_sim=input["simmulation_params"]["Ensemble"],
                 protein_file_id=pdb_id,
             )
-            file_name += ".py"
             file_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
             Simulation.write_standalone_script(filename=file_name)
             self.path_registry.map_path(
