@@ -550,6 +550,22 @@ class InstructionSummary(BaseTool):
 class SetUpandRunFunctionInput(BaseModel):
     pdb_id: str
     forcefield_files: List[str]
+    final: bool = Field(
+        False,
+        description=(
+            (
+                "Set to 'True' when the simulation is the desired final version. "
+                "Determines whether the simulation is the primary one "
+                "intended for final use. If set to 'False' (default), "
+                "the simulation is considered as being in a testing "
+                "or preliminary scripting stage, utilizing default parameters. "
+                "This setting is ideal for initial experimentation or "
+                "basic script development before customizing the "
+                "script for final use."
+            )
+        ),
+    )
+
     system_params: Dict[str, Any] = Field(
         {
             "nonbondedMethod": "NoCutoff",
@@ -559,29 +575,30 @@ class SetUpandRunFunctionInput(BaseModel):
             "rigidWater": False,
             "constraintTolerance": None,
         },
-        description="""Parameters for the openmm system.
-        For nonbondedMethod, you can choose from the following:
-        NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME.
-        If anything but NoCutoff is chosen,
-        you have to include a nonbondedCutoff
-        and a constrainTolerance.
-        If PME is chosen,
-        you have to include an ewaldErrorTolerance too.
-        For constraints, you can choose from the following:
-        None, HBonds, AllBonds or OnlyWater.
-        For rigidWater, you can choose from the following:
-        True, False.
-        Example1:
-        {"nonbondedMethod": 'NoCutoff',
-        "constraints": 'None',
-        "rigidWater": False}
-        Example2:
-        {"nonbondedMethod": 'CutoffPeriodic',
-        "nonbondedCutoff": 1.0,
-        "constraints": 'HBonds',
-        "rigidWater": True,
-        "constraintTolerance": 0.00001}
-        """,
+        description=(
+            "Parameters for the openmm system. "
+            "For nonbondedMethod, you can choose from the following:\n"
+            "NoCutoff, CutoffNonPeriodic, CutoffPeriodic, Ewald, PME. "
+            "If anything but NoCutoff is chosen,"
+            "you have to include a nonbondedCutoff"
+            "and a constrainTolerance.\n"
+            "If PME is chosen,"
+            "you have to include an ewaldErrorTolerance too."
+            "For constraints, you can choose from the following:\n"
+            "None, HBonds, AllBonds or OnlyWater."
+            "For rigidWater, you can choose from the following:\n"
+            "True, False.\n"
+            "Example1:\n"
+            "{'nonbondedMethod': 'NoCutoff',\n"
+            "'constraints': 'None',\n"
+            "'rigidWater': False}\n"
+            "Example2:\n"
+            "{'nonbondedMethod': 'CutoffPeriodic',\n"
+            "'nonbondedCutoff': 1.0,\n"
+            "'constraints': 'HBonds',\n"
+            "'rigidWater': True,\n"
+            "'constraintTolerance': 0.00001} "
+        ),
     )
     integrator_params: Dict[str, Any] = Field(
         {
@@ -618,9 +635,17 @@ class SetUpandRunFunctionInput(BaseModel):
 
 class OpenMMSimulation:
     def __init__(
-        self, input_params: SetUpandRunFunctionInput, path_registry: PathRegistry
+        self,
+        input_params: SetUpandRunFunctionInput,
+        path_registry: PathRegistry,
+        final: bool,
+        sim_id: str,
+        pdb_id: str,
     ):
         self.params = input_params
+        self.final = final
+        self.sim_id = sim_id
+        self.pdb_id = pdb_id
         self.int_params = self.params.get("integrator_params", None)
         if self.int_params is None:
             self.int_params = {
@@ -709,23 +734,74 @@ class OpenMMSimulation:
         )
         self.simulation.context.setPositions(self.pdb.positions)
 
-        # Add reporters for output
-        self.simulation.reporters.append(
-            DCDReporter(
-                "trajectory.dcd",
-                self.sim_params["record_interval_steps"],
+        # TEMPORARY FILE MANAGEMENT OR PATH REGISTRY MAPPING
+        if self.final:
+            trajectory_name = self.path_registry.write_file_name(
+                type=FileType.RECORD,
+                record_type="TRAJ",
+                protein_file_id=self.pdb_id,
+                Sim_id=self.sim_id,
+                term="dcd",
             )
-        )
-        self.simulation.reporters.append(
-            StateDataReporter(
-                "log.txt",
-                self.sim_params["record_interval_steps"],
-                step=True,
-                potentialEnergy=True,
-                temperature=True,
-                separator="\t",
+
+            log_name = self.path_registry.write_file_name(
+                type=FileType.RECORD,
+                record_type="LOG",
+                protein_file_id=self.pdb_id,
+                Sim_id=self.sim_id,
+                term="txt",
             )
-        )
+            traj_id = self.path_registry.get_fileid(trajectory_name, FileType.RECORD)
+            log_id = self.path_registry.get_fileid(log_name, FileType.RECORD)
+            traj_desc = (
+                f"Simulation trajectory for protein {self.pdb_id}"
+                f" and simulation {self.sim_id}"
+            )
+            log_desc = (
+                f"Simulation state log for protein {self.pdb_id} "
+                f"and simulation {self.sim_id}"
+            )
+
+            self.simulation.reporters.append(
+                DCDReporter(
+                    f"{trajectory_name}",
+                    self.sim_params["record_interval_steps"],
+                )
+            )
+            self.simulation.reporters.append(
+                StateDataReporter(
+                    f"{log_name}",
+                    self.sim_params["record_interval_steps"],
+                    step=True,
+                    potentialEnergy=True,
+                    temperature=True,
+                    separator="\t",
+                )
+            )
+            self.registry_records = [
+                (traj_id, f"files/records/{trajectory_name}", traj_desc),
+                (log_id, f"files/records/{log_name}", log_desc),
+            ]
+
+            # TODO add checkpoint too?
+
+        else:
+            self.simulation.reporters.append(
+                DCDReporter(
+                    "temp_trajectory.dcd",
+                    self.sim_params["record_interval_steps"],
+                )
+            )
+            self.simulation.reporters.append(
+                StateDataReporter(
+                    "temp_log.txt",
+                    self.sim_params["record_interval_steps"],
+                    step=True,
+                    potentialEnergy=True,
+                    temperature=True,
+                    separator="\t",
+                )
+            )
 
     def _create_system(
         self,
@@ -858,13 +934,13 @@ class OpenMMSimulation:
         steps = {self.sim_params.get("Number of Steps", record_interval_steps)}
         equilibrationSteps = 1000
         platform = Platform.getPlatformByName('CPU')
-        dcdReporter = DCDReporter('trajectory.dcd', 10000)
+        dcdReporter = DCDReporter('trajectory.dcd', 1000)
         dataReporter = StateDataReporter('log.txt', {record_interval_steps},
             totalSteps=steps,
             step=True, speed=True, progress=True, elapsedTime=True, remainingTime=True,
             potentialEnergy=True, temperature=True, volume=True, density=True,
             separator='\t')
-        checkpointReporter = CheckpointReporter('checkpoint.chk', 10000)
+        checkpointReporter = CheckpointReporter('checkpoint.chk', 5000)
 
         # Minimize and Equilibrate
         # ... code for minimization and equilibration ...
@@ -989,16 +1065,26 @@ class OpenMMSimulation:
         self.simulation.currentStep = 0
         self.simulation.step(self.sim_params["Number of Steps"])
         print("Done!")
+        if not self.final:
+            if os.path.exists("temp_trajectory.dcd"):
+                os.remove("temp_trajectory.dcd")
+            if os.path.exists("temp_log.txt"):
+                os.remove("temp_log.txt")
+            if os.path.exists("temp_checkpoint.chk"):
+                os.remove("temp_checkpoint.chk")
+
         return "Simulation done!"
 
 
 class SetUpandRunFunction(BaseTool):
     name: str = "SetUpandRunFunction"
-    description: str = """This tool will set up and run a short simulation of a protein.
-        Then will write a standalone script that can be used
-        to reproduce the simulation or change accordingly for
-        a more elaborate simulation. It only runs short simulations because,
-        if there are errors you can try again changing the input"""
+    description: str = (
+        "This tool will set up and run a short simulation of a protein. "
+        "Then will write a standalone script that can be used "
+        "to reproduce the simulation or change accordingly for "
+        "a more elaborate simulation. It only runs short simulations because, "
+        "if there are errors, you can try again changing the input"
+    )
 
     args_schema: Type[BaseModel] = SetUpandRunFunctionInput
 
@@ -1009,17 +1095,43 @@ class SetUpandRunFunction(BaseTool):
             print("Path registry not initialized")
             return "Path registry not initialized"
         input = self.check_system_params(input_args)
-
         error = input.get("error", None)
         if error:
+            print(f"error found: {error}")
             return error
+
         try:
             pdb_id = input["pdb_id"]
+            # check if pdb_id is in the registry or as 1XYZ_112233 format
+            if pdb_id not in self.path_registry.list_path_names():
+                return "No pdb_id found in input, use the file id not the file name"
         except KeyError:
             print("whoops no pdb_id found in input,", input)
             return "No pdb_id found in input"
         try:
-            Simulation = OpenMMSimulation(input, self.path_registry)
+            final = input["final"]  # either this simulation
+            # the final one or not for this system
+        except KeyError:
+            final = False
+            print(
+                "No 'final' key found in input, setting to False. "
+                "Record files will be deleted after script is written."
+            )
+        try:
+            file_name = self.path_registry.write_file_name(
+                type=FileType.SIMULATION,
+                type_of_sim=input["simmulation_params"]["Ensemble"],
+                protein_file_id=pdb_id,
+            )
+
+            sim_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
+        except Exception as e:
+            print(f"An exception was found: {str(e)}.")
+            return f"An exception was found trying to write the filenames: {str(e)}."
+        try:
+            Simulation = OpenMMSimulation(
+                input, self.path_registry, final, sim_id, pdb_id
+            )
             print("simulation set!")
         except ValueError as e:
             return str(e) + f"This were the inputs {input_args}"
@@ -1030,27 +1142,36 @@ class SetUpandRunFunction(BaseTool):
         try:
             Simulation.run()
         except Exception as e:
-            return f"""An exception was found: {str(e)}. Not a problem, thats one
-            purpose of this tool: to run a short simulation to check for correct
-            initialization. \n\n Try a) with different parameters like
-            nonbondedMethod, constraints, etc or b) clean file inputs depending on error
-            """
-        try:
-            file_name = self.path_registry.write_file_name(
-                type=FileType.SIMULATION,
-                type_of_sim=input["simmulation_params"]["Ensemble"],
-                protein_file_id=pdb_id,
+            return (
+                f"An exception was found: {str(e)}. Not a problem, thats one "
+                "purpose of this tool: to run a short simulation to check for correct "
+                "initialization. "
+                ""
+                "Try a) with different parameters like "
+                "nonbondedMethod, constraints, etc \n or\n"
+                "b) clean file inputs depending on error "
             )
-            file_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
+        try:
             Simulation.write_standalone_script(filename=file_name)
             self.path_registry.map_path(
-                file_id, file_name, f"Basic Simulation of Protein {pdb_id}"
+                sim_id,
+                f"files/simulations/{file_name}",
+                f"Basic Simulation of Protein {pdb_id}",
             )
+            if final:
+                records = Simulation.registry_records
+                # move record files to files/records/
+                print(os.listdir("."))
+                if not os.path.exists("files/records"):
+                    os.makedirs("files/records")
+                for record in records:
+                    os.rename(record[1].split("/")[-1], f"{record[1]}")
+                for record in records:
+                    self.path_registry.map_path(*record)
             return "Simulation done!"
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
-            return f"""An exception was found trying to write the filenames: {str(e)}.
-            """
+            return f"An exception was found trying to write the filenames: {str(e)}."
 
     def _parse_cutoff(self, cutoff):
         # Check if cutoff is already an OpenMM Quantity (has a unit)
@@ -1481,6 +1602,10 @@ class SetUpandRunFunction(BaseTool):
                 if file not in FORCEFIELD_LIST:
                     error_msg += "The forcefield file is not present"
 
+        final = values.get("final", False)
+        if type(final) != bool:
+            error_msg += "final must be a boolean value"
+
         if error_msg != "":
             return {
                 "error": error_msg
@@ -1489,6 +1614,7 @@ class SetUpandRunFunction(BaseTool):
         values = {
             "pdb_id": pdb_id,
             "forcefield_files": forcefield_files,
+            "final": final,
             "system_params": system_params,
             "integrator_params": integrator_params,
             "simmulation_params": simmulation_params,

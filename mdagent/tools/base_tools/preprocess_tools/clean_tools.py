@@ -227,7 +227,6 @@ class CleaningToolFunctionInput(BaseModel):
     """Input model for CleaningToolFunction"""
 
     pdb_id: str = Field(..., description="ID of the pdb/cif file in the path registry")
-    output_path: Optional[str] = Field(..., description="Path to the output file")
     replace_nonstandard_residues: bool = Field(
         True, description="Whether to replace nonstandard residues with standard ones. "
     )
@@ -301,7 +300,7 @@ class CleaningToolFunction(BaseTool):
                     pdbfile_name = pdbfile.split("/")[-1]
                 name = pdbfile_name.split("_")[0]
                 end = pdbfile_name.split(".")[1]
-                print(f"pdbfile: {pdbfile}", f"name: {name}", f"end: {end}")
+
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
                 return "File not found in path registry. "
@@ -384,7 +383,7 @@ class CleaningToolFunction(BaseTool):
             self.path_registry.map_path(
                 file_id, f"{directory}/{file_name}", file_description
             )
-            return f"{file_id} written to {directory}/{file_name}"
+            return f"File cleaned!\nFile ID:{file_id}\nPath:{directory}/{file_name}"
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:
