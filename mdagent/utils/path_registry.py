@@ -56,13 +56,13 @@ class PathRegistry:
             return name in data
 
     # we use this fxn to "save" files (paths) to the json file
-    def map_path(self, name, path, description=None):
+    def map_path(self, file_id, path, description=None):
         description = description or "No description provided"
         full_path = self._get_full_path(path)
-        path_dict = {name: {"path": full_path, "description": description}}
+        path_dict = {file_id: {"path": full_path, "description": description}}
         self._save_mapping_to_json(path_dict)
-        saved = self._check_json_content(name)
-        return f"Path {'successfully' if saved else 'not'} mapped to name: {name}"
+        saved = self._check_json_content(file_id)
+        return f"Path {'successfully' if saved else 'not'} mapped to name: {file_id}"
 
     # this if we want to get the path. not use as often
     def get_mapped_path(self, name):
@@ -159,6 +159,7 @@ class PathRegistry:
         conditions = kwargs.get("conditions", None)
         Sim_id = kwargs.get("Sim_id", None)
         modified = kwargs.get("modified", False)
+        term = kwargs.get("term", "term")  # Default term if not provided
         file_name = ""
         if type == FileType.PROTEIN:
             file_name += f"{protein_name}_{description}_{time_stamp}.{file_format}"
@@ -171,6 +172,14 @@ class PathRegistry:
                 file_name += f"{Sim_id}_MOD_{time_stamp}.py"
             else:
                 file_name += f"{type_of_sim}_{protein_file_id}_{time_stamp}.py"
+        if type == FileType.RECORD:
+            record_type_name = kwargs.get("record_type", "RECORD")
+            term = kwargs.get("term", "term")  # Default term if not provided
+
+            file_name = (
+                f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
+            )
+
         if file_name == "":
             file_name += "ErrorDuringNaming_error.py"
         return file_name

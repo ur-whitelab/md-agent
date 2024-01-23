@@ -384,7 +384,8 @@ class CleaningToolFunction(BaseTool):
             self.path_registry.map_path(
                 file_id, f"{directory}/{file_name}", file_description
             )
-            return f"{file_id} written to {directory}/{file_name}"
+            print(f"Debugging: {file_id}, {file_name}, {file_description}")
+            return f"File cleaned!\nFile ID:{file_id}\nPath:{directory}/{file_name}"
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:
