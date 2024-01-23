@@ -229,12 +229,16 @@ def test_write_file_name_simulation_default(path_registry):
     assert file_name == "MD_123_20240109.py"
 
 
-@pytest.mark.skip(reason="not implemented for record files")
 def test_write_file_name_record(path_registry):
     file_name = path_registry.write_file_name(
-        FileType.RECORD, protein_file_id="123", Sim_id="SIM456", time_stamp="20240109"
+        FileType.RECORD,
+        record_type="REC",
+        protein_file_id="123",
+        Sim_id="SIM456",
+        term="dcd",
+        time_stamp="20240109",
     )
-    assert file_name == "123_SIM456_20240109"
+    assert file_name == "REC_SIM456_123_20240109.dcd"
 
 
 def test_map_path():
