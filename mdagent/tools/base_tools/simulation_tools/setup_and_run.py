@@ -761,8 +761,6 @@ class OpenMMSimulation:
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
             )
-            print("trajectory_name", trajectory_name)
-            print("log_name", log_name)
 
             self.simulation.reporters.append(
                 DCDReporter(
@@ -1097,7 +1095,6 @@ class SetUpandRunFunction(BaseTool):
             print("Path registry not initialized")
             return "Path registry not initialized"
         input = self.check_system_params(input_args)
-        print("no error until now")
         error = input.get("error", None)
         if error:
             print(f"error found: {error}")
@@ -1107,7 +1104,6 @@ class SetUpandRunFunction(BaseTool):
             pdb_id = input["pdb_id"]
             # check if pdb_id is in the registry or as 1XYZ_112233 format
             if pdb_id not in self.path_registry.list_path_names():
-                print("whoops no pdb_id found in input,", input)
                 return "No pdb_id found in input, use the file id not the file name"
         except KeyError:
             print("whoops no pdb_id found in input,", input)
@@ -1127,7 +1123,7 @@ class SetUpandRunFunction(BaseTool):
                 type_of_sim=input["simmulation_params"]["Ensemble"],
                 protein_file_id=pdb_id,
             )
-            print("file name set!: ", file_name)
+
             sim_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
@@ -1171,8 +1167,6 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
-                    print("debugging over here", record)
-
                     self.path_registry.map_path(*record)
             return "Simulation done!"
         except Exception as e:
