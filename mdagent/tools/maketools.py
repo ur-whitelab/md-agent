@@ -141,7 +141,7 @@ def get_tools(
             RetryExecuteSkill(subagent_settings=subagent_settings),
             SkillRetrieval(subagent_settings=subagent_settings),
         ]
-        if subagent_settings.curriculum:
+        if subagent_settings is not None and subagent_settings.curriculum:
             retrieved_tools.append(WorkflowPlan(subagent_settings=subagent_settings))
         top_k_tools -= len(retrieved_tools)
         all_tools = make_all_tools(
