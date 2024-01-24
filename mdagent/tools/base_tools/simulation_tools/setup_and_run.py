@@ -550,16 +550,17 @@ class InstructionSummary(BaseTool):
 class SetUpandRunFunctionInput(BaseModel):
     pdb_id: str
     forcefield_files: List[str]
-    final: bool = Field(
-        False,
+    save: bool = Field(
+        True,
         description=(
             (
-                "Set to 'True' when the simulation is the desired final version. "
-                "Determines whether the simulation is the primary one "
-                "intended for final use. If set to 'False' (default), "
+                "Set to 'True' (default) to save the log files and trajectories "
+                "of the simulation. "
+                "If set to 'False', "
                 "the simulation is considered as being in a testing "
-                "or preliminary scripting stage, utilizing default parameters. "
-                "This setting is ideal for initial experimentation or "
+                "or preliminary scripting stage, utilizing default parameters and "
+                "results are not saved. "
+                "This second setting is ideal for initial experimentation or "
                 "basic script development before customizing the "
                 "script for final use."
             )
