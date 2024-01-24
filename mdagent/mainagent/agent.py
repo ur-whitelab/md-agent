@@ -47,6 +47,7 @@ class MDAgent:
         resume=False,
         top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
         use_human_tool=False,
+        curriculum=False,
     ):
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
@@ -78,6 +79,7 @@ class MDAgent:
             verbose=verbose,
             ckpt_dir=ckpt_dir,
             resume=resume,
+            curriculum=curriculum,
         )
 
     def _initialize_tools_and_agent(self, user_input=None):

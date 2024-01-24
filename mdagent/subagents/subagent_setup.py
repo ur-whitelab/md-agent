@@ -15,6 +15,7 @@ class SubAgentSettings:
         ckpt_dir="ckpt",
         resume=False,
         retrieval_top_k=5,
+        curriculum=False,
     ):
         self.path_registry = path_registry
         self.subagents_model = subagents_model
@@ -24,6 +25,7 @@ class SubAgentSettings:
         self.ckpt_dir = ckpt_dir
         self.resume = resume
         self.retrieval_top_k = retrieval_top_k
+        self.curriculum = curriculum
 
 
 class SubAgentInitializer:
