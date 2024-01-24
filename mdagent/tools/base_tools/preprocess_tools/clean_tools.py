@@ -277,6 +277,7 @@ class CleaningToolFunction(BaseTool):
             else:
                 input_args = input_args
             pdbfile_id = input_args.get("pdb_id", None)
+            # TODO check if pdbfile_id is a valid pdb_id from the registry
             if pdbfile_id is None:
                 return """No file was provided.
                 The input has to be a dictionary with the key 'pdb_id'"""
@@ -297,9 +298,10 @@ class CleaningToolFunction(BaseTool):
             try:
                 pdbfile = self.path_registry.get_mapped_path(pdbfile_id)
                 if "/" in pdbfile:
-                    pdbfile_name = pdbfile.split("/")[-1]
-                name = pdbfile_name.split("_")[0]
-                end = pdbfile_name.split(".")[1]
+                    pdbfile = pdbfile.split("/")[-1]
+
+                name = pdbfile.split("_")[0]
+                end = pdbfile.split(".")[1]
 
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")

@@ -639,12 +639,12 @@ class OpenMMSimulation:
         self,
         input_params: SetUpandRunFunctionInput,
         path_registry: PathRegistry,
-        final: bool,
+        save: bool,
         sim_id: str,
         pdb_id: str,
     ):
         self.params = input_params
-        self.final = final
+        self.save = save
         self.sim_id = sim_id
         self.pdb_id = pdb_id
         self.int_params = self.params.get("integrator_params", None)
@@ -736,7 +736,7 @@ class OpenMMSimulation:
         self.simulation.context.setPositions(self.pdb.positions)
 
         # TEMPORARY FILE MANAGEMENT OR PATH REGISTRY MAPPING
-        if self.final:
+        if self.save:
             trajectory_name = self.path_registry.write_file_name(
                 type=FileType.RECORD,
                 record_type="TRAJ",
@@ -1066,7 +1066,7 @@ class OpenMMSimulation:
         self.simulation.currentStep = 0
         self.simulation.step(self.sim_params["Number of Steps"])
         print("Done!")
-        if not self.final:
+        if not self.save:
             if os.path.exists("temp_trajectory.dcd"):
                 os.remove("temp_trajectory.dcd")
             if os.path.exists("temp_log.txt"):
@@ -1110,12 +1110,12 @@ class SetUpandRunFunction(BaseTool):
             print("whoops no pdb_id found in input,", input)
             return "No pdb_id found in input"
         try:
-            final = input["final"]  # either this simulation
-            # the final one or not for this system
+            save = input["save"]  # either this simulation
+            # to save or not the output files from this simulation
         except KeyError:
-            final = False
+            save = True
             print(
-                "No 'final' key found in input, setting to False. "
+                "No 'save' key found in input, setting to True. "
                 "Record files will be deleted after script is written."
             )
         try:
@@ -1131,7 +1131,7 @@ class SetUpandRunFunction(BaseTool):
             return f"An exception was found trying to write the filenames: {str(e)}."
         try:
             Simulation = OpenMMSimulation(
-                input, self.path_registry, final, sim_id, pdb_id
+                input, self.path_registry, save, sim_id, pdb_id
             )
             print("simulation set!")
         except ValueError as e:
@@ -1159,7 +1159,7 @@ class SetUpandRunFunction(BaseTool):
                 f"files/simulations/{file_name}",
                 f"Basic Simulation of Protein {pdb_id}",
             )
-            if final:
+            if save:
                 records = Simulation.registry_records
                 # move record files to files/records/
                 print(os.listdir("."))
@@ -1603,9 +1603,9 @@ class SetUpandRunFunction(BaseTool):
                 if file not in FORCEFIELD_LIST:
                     error_msg += "The forcefield file is not present"
 
-        final = values.get("final", False)
-        if type(final) != bool:
-            error_msg += "final must be a boolean value"
+        save = values.get("final", False)
+        if type(save) != bool:
+            error_msg += "save must be a boolean value"
 
         if error_msg != "":
             return {
@@ -1615,7 +1615,7 @@ class SetUpandRunFunction(BaseTool):
         values = {
             "pdb_id": pdb_id,
             "forcefield_files": forcefield_files,
-            "final": final,
+            "save": save,
             "system_params": system_params,
             "integrator_params": integrator_params,
             "simmulation_params": simmulation_params,
