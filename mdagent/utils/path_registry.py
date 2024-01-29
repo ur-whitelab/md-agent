@@ -40,9 +40,7 @@ class PathRegistry:
                 json.dump({}, json_file)
         for subdir in subdirectories:
             subdir_path = os.path.join(base_directory, subdir)
-            print("subdir_path: ", subdir_path)
             if os.path.exists(subdir_path):
-                print("this subdir exists: ", subdir_path)
                 for file_name in os.listdir(subdir_path):
                     if file_name not in file_names_in_registry:
                         file_type = self._determine_file_type(subdir)
