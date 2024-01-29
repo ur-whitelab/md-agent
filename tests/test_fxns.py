@@ -245,10 +245,17 @@ def test_map_path():
     mock_json_data = {
         "existing_name": {
             "path": "existing/path",
+            "name": "path",
             "description": "Existing description",
         }
     }
-    new_path_dict = {"new_name": {"path": "new/path", "description": "New description"}}
+    new_path_dict = {
+        "new_name": {
+            "path": "new/path",
+            "name": "path",
+            "description": "New description",
+        }
+    }
     updated_json_data = {**mock_json_data, **new_path_dict}
 
     path_registry = PathRegistry()
