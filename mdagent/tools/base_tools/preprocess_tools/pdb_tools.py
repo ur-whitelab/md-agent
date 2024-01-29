@@ -378,8 +378,8 @@ def packmol_wrapper(
 
 
 class PackmolInput(BaseModel):
-    pdbfiles: typing.Optional[typing.List[str]] = Field(
-        ..., description="List of PDB files to pack into a box"
+    pdbfiles_id: typing.Optional[typing.List[str]] = Field(
+        ..., description="List of PDB files id (path_registry) to pack into a box"
     )
     number_of_molecules: typing.Optional[typing.List[int]] = Field(
         ..., description="List of number of molecules to pack into a box"
@@ -401,7 +401,7 @@ class PackmolInput(BaseModel):
         if isinstance(values, str):
             print("values is a string", values)
             raise ValidationError("Input must be a dictionary")
-        pdbfiles = values.get("pdbfiles", [])
+        pdbfiles = values.get("pdbfiles_id", [])
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
 
@@ -437,30 +437,22 @@ class PackmolInput(BaseModel):
                     )
                 }
         # Further validation, e.g., checking if files exist
-        for pdbfile in pdbfiles:
-            if not os.path.exists(pdbfile):
+        registry = PathRegistry()
+        file_ids = registry.list_path_names()
+
+        for pdbfile_id in pdbfiles:
+            if pdbfile_id not in file_ids:
                 # look for files in the current directory
                 # that match some part of the pdbfile
-                possible_files = []
-                for file in os.listdir():
-                    if pdbfile in file:
-                        possible_files.append(file)
-                if len(possible_files) > 0:
-                    return {
-                        "error": (
-                            f"PDB file {pdbfile} does not exist in the current "
-                            "directory, maybe you wanted one "
-                            f"of:{','.join(possible_files)}."
-                        )
-                    }
-                if len(possible_files) == 0:
-                    return {
-                        "error": (
-                            f"PDB file {pdbfile} does not exist "
-                            "in the current directory. "
-                            "Make sure the pdbfiles are correct."
-                        )
-                    }
+                ids_w_description = registry.list_path_names_and_descriptions()
+
+                return {
+                    "error": (
+                        f"PDB file ID {pdbfile_id} does not exist "
+                        "in the path registry.\n"
+                        f"This are the files IDs: {ids_w_description} "
+                    )
+                }
         return values
 
 

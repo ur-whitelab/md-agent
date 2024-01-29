@@ -46,7 +46,6 @@ class PathRegistry:
                 for file_name in os.listdir(subdir_path):
                     if file_name not in file_names_in_registry:
                         file_type = self._determine_file_type(subdir)
-                        print("file_type: ", file_type)
                         file_id = self.get_fileid(file_name, file_type)
                         # TODO get descriptions from file names if possible
                         # TODO make this a method. In theory, previous downlaods
@@ -184,12 +183,12 @@ class PathRegistry:
             data = json.load(json_file)
         filesids = [key for key in data.keys()]
         descriptions = [data[key]["description"] for key in data.keys()]
-        names_w_descriptions = [
+        fileid_w_descriptions = [
             f"{fileid}: {description}"
             for fileid, description in zip(filesids, descriptions)
         ]
         return (
-            "Files found in registry: " + ", ".join(names_w_descriptions)
+            "Files found in registry: " + ", ".join(fileid_w_descriptions)
             if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
