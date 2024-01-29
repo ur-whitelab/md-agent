@@ -48,6 +48,8 @@ class PathRegistry:
                         if file_name not in file_names_in_registry:
                             file_type = self._determine_file_type(subdir)
                             file_id = self.get_fileid(file_name, file_type)
+                            # TODO get descriptions from file names if possible
+                            # TODO make this a method
                             description = f"Auto-registered file from {subdir}"
                             self.map_path(
                                 file_id, subdir_path + "/" + file_name, description
