@@ -386,10 +386,12 @@ class PackmolInput(BaseModel):
     )
     instructions: typing.Optional[typing.List[List[str]]] = Field(
         ...,
-        description="""List of instructions for each molecule.
-        One List per Molecule.
-        Every instruction should be one string like:
-        'inside box 0. 0. 0. 90. 90. 90.'""",
+        description=(
+            "List of instructions for each molecule. "
+            "One List per Molecule. "
+            "Every instruction should be one string like:\n"
+            "'inside box 0. 0. 0. 90. 90. 90.'"
+        ),
     )
 
     @root_validator
@@ -405,16 +407,21 @@ class PackmolInput(BaseModel):
 
         if not (len(pdbfiles) == len(number_of_molecules) == len(instructions)):
             return {
-                "error": """The lengths of pdbfiles, number_of_molecules,
-            and instructions must be equal to use this tool."""
+                "error": (
+                    " The lengths of pdbfiles, number_of_molecules, "
+                    "and instructions must be equal to use this tool."
+                )
             }
 
         for instruction in instructions:
             if len(instruction) != 1:
                 return {
-                    "error": """Each instruction must be a single string.
-                If necessary, use newlines in a instruction string."""
+                    "error": (
+                        "Each instruction must be a single string. "
+                        "If necessary, use newlines in a instruction string."
+                    )
                 }
+            # TODO enhance this validation with more packmol instructions
             if instruction[0].split(" ")[0] not in [
                 "inside",
                 "center",
@@ -422,10 +429,12 @@ class PackmolInput(BaseModel):
                 "fixed",
             ]:
                 return {
-                    "error": """The first word of each instruction must be one of
-                        'inside' or 'center' or 'outside' or 'fixed' \n
-                        examples: center \n fixed 0. 0. 0. 0. 0. 0.,
-                        inside box -10. 0. 0. 10. 10. 10. \n """
+                    "error": (
+                        "The first word of each instruction must be one of "
+                        "'inside' or 'center' or 'outside' or 'fixed' \n"
+                        "examples: center \n fixed 0. 0. 0. 0. 0. 0.,\n"
+                        "inside box -10. 0. 0. 10. 10. 10. \n"
+                    )
                 }
         # Further validation, e.g., checking if files exist
         for pdbfile in pdbfiles:
@@ -438,22 +447,29 @@ class PackmolInput(BaseModel):
                         possible_files.append(file)
                 if len(possible_files) > 0:
                     return {
-                        "error": f"""PDB file {pdbfile} does not exist in the current
-                    directory, maybe you wanted one of:{','.join(possible_files)}."""
+                        "error": (
+                            f"PDB file {pdbfile} does not exist in the current "
+                            "directory, maybe you wanted one "
+                            f"of:{','.join(possible_files)}."
+                        )
                     }
                 if len(possible_files) == 0:
                     return {
-                        "error": f"""PDB file {pdbfile} does not exist
-                    in the current directory.
-                    Make sure the pdbfiles are correct."""
+                        "error": (
+                            f"PDB file {pdbfile} does not exist "
+                            "in the current directory. "
+                            "Make sure the pdbfiles are correct."
+                        )
                     }
         return values
 
 
 class PackMolTool(BaseTool):
     name: str = "packmol_tool"
-    description: str = """Useful when you need to create a box
-    of different types of molecules molecules"""
+    description: str = (
+        "Useful when you need to create a box "
+        "of different types of molecules molecules"
+    )
 
     args_schema: Type[BaseModel] = PackmolInput
 
@@ -483,8 +499,10 @@ class PackMolTool(BaseTool):
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
-                return """Packmol is not installed. Please install packmol
-                at 'https://m3g.github.io/packmol/download.shtml' and try again."""
+                return (
+                    "Packmol is not installed. Please install packmol "
+                    "at 'https://m3g.github.io/packmol/download.shtml' and try again."
+                )
 
         return packmol_wrapper(
             self.path_registry,
@@ -883,14 +901,15 @@ def pdb_summarizer(pdb_file):
     pdb.num_of_residues = pdb._num_of_dif_residues(pdb_file)
     pdb.HETATM_tempFact = pdb._hetatm_have_tempFactor(pdb_file)
 
-    output = f"""PDB file: {pdb_file} has the following properties:
-                Number of residues: {pdb.num_of_residues}
-                Are elements identifiers present: {pdb.atoms}
-                Are HETATM elements identifiers present: {pdb.HETATM}
-                Are residue names present: {pdb.residues}
-                Are box dimensions present: {pdb.box}
-                Non-standard residues: {pdb.HETATM}
-                """
+    output = (
+        f"PDB file: {pdb_file} has the following properties:\n"
+        f"Number of residues: {pdb.num_of_residues}\n"
+        f"Are elements identifiers present: {pdb.atoms}\n"
+        f"Are HETATM elements identifiers present: {pdb.HETATM}\n"
+        f"Are residue names present: {pdb.residues}\n"
+        f"Are box dimensions present: {pdb.box}\n"
+        f"Non-standard residues: {pdb.HETATM}"
+    )
     return output
 
 
@@ -1053,8 +1072,10 @@ def fix_element_column(pdb_file, custom_element_dict=None):
         ), pdb._hetatm_have_elements(pdb_file)
         if atoms_have_elems and HETATM_have_elems:
             f.close()
-            return """Element's column already filled with
-            elements, no fix needed for elements"""
+            return (
+                "Element's column already filled with "
+                "elements, no fix needed for elements"
+            )
         print("I closed the initial file")
         f.close()
 
