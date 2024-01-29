@@ -61,18 +61,21 @@ class PathRegistry:
     def map_path(self, file_id, path, description=None):
         description = description or "No description provided"
         full_path = self._get_full_path(path)
-        path_dict = {file_id: {"path": full_path, "description": description}}
+        file_name = os.path.basename(full_path)
+        path_dict = {
+            file_id: {"path": full_path, "name": file_name, "description": description}
+        }
         self._save_mapping_to_json(path_dict)
         saved = self._check_json_content(file_id)
         return f"Path {'successfully' if saved else 'not'} mapped to name: {file_id}"
 
     # this if we want to get the path. not use as often
-    def get_mapped_path(self, name):
+    def get_mapped_path(self, fileid):
         if not self._check_for_json():
             return "The JSON file does not exist."
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-            return data.get(name, {}).get("path", "Name not found in path registry.")
+            return data.get(fileid, {}).get("path", "Name not found in path registry.")
 
     def _clear_json(self):
         if self._check_for_json():
@@ -81,27 +84,27 @@ class PathRegistry:
             return "JSON file cleared"
         return "JSON file does not exist"
 
-    def _remove_path_from_json(self, name):
+    def _remove_path_from_json(self, fileid):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        if name in data:
-            del data[name]
+        if fileid in data:
+            del data[fileid]
             with open(self.json_file_path, "w") as json_file:
                 json.dump(data, json_file, indent=4)
-            return f"Path {name} removed from registry"
-        return f"Path {name} not found in registry"
+            return f"File {fileid} removed from registry"
+        return f"Path {fileid} not found in registry"
 
     def list_path_names(self):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        names = [key for key in data.keys()]
+        filesids = [key for key in data.keys()]
         return (
-            "Names found in registry: " + ", ".join(names)
-            if names
+            "Names found in registry: " + ", ".join(filesids)
+            if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
@@ -111,14 +114,15 @@ class PathRegistry:
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        names = [key for key in data.keys()]
+        filesids = [key for key in data.keys()]
         descriptions = [data[key]["description"] for key in data.keys()]
         names_w_descriptions = [
-            f"{name}: {description}" for name, description in zip(names, descriptions)
+            f"{fileid}: {description}"
+            for fileid, description in zip(filesids, descriptions)
         ]
         return (
             "Files found in registry: " + ", ".join(names_w_descriptions)
-            if names
+            if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
@@ -150,6 +154,8 @@ class PathRegistry:
             return "sim" + "_" + timestamp_digits
         if type == FileType.RECORD:
             return "rec" + "_" + timestamp_digits
+        if type == FileType.SOLVENT:
+            return parts + "_" + timestamp_digits
 
     def write_file_name(self, type: FileType, **kwargs):
         time_stamp = self.get_timestamp()
