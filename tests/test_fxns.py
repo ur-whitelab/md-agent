@@ -281,3 +281,32 @@ def test_map_path():
 
                 # Check the result message
                 assert result == "Path successfully mapped to name: new_name"
+
+
+mocked_files = {"files/solvents": ["water.pdb"]}
+
+
+def mock_exists(path):
+    return path in mocked_files
+
+
+def mock_listdir(path):
+    return mocked_files.get(path, [])
+
+
+@pytest.fixture
+def path_registry_with_mocked_fs():
+    with patch("os.path.exists", side_effect=mock_exists):
+        with patch("os.listdir", side_effect=mock_listdir):
+            registry = PathRegistry()
+            registry.get_timestamp = lambda: "20240109"
+            return registry
+
+
+def test_init_path_registry(path_registry_with_mocked_fs):
+    # This test will run with the mocked file system
+    # Here, you can assert if 'water.pdb' under 'solvents' is registered correctly
+    # Depending on how your PathRegistry class stores the registry,
+    # you may need to check the internal state or the contents of the JSON file.
+    # For example:
+    assert "water_000000" in path_registry_with_mocked_fs.list_path_names()
