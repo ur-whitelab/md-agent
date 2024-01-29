@@ -25,6 +25,53 @@ class PathRegistry:
 
     def __init__(self):
         self.json_file_path = "paths_registry.json"
+        self._init_path_registry()
+
+    def _init_path_registry(self):
+        base_directory = "files"
+        subdirectories = ["pdb", "records", "simulations", "solvents"]
+        existing_registry = self._load_existing_registry()
+        file_names_in_registry = []
+        if existing_registry != {}:
+            for _, registry in existing_registry.items():
+                file_names_in_registry.append(registry["name"])
+        else:
+            with open(self.json_file_path, "w") as json_file:
+                json.dump({}, json_file)
+        for subdir in subdirectories:
+            subdir_path = os.path.join(base_directory, subdir)
+            print("subdir_path: ", subdir_path)
+            if os.path.exists(subdir_path):
+                print("this subdir exists: ", subdir_path)
+                for file_name in os.listdir(subdir_path):
+                    if os.path.isfile(subdir_path + file_name):
+                        if file_name not in file_names_in_registry:
+                            file_type = self._determine_file_type(subdir)
+                            file_id = self.get_fileid(file_name, file_type)
+                            description = f"Auto-registered file from {subdir}"
+                            self.map_path(
+                                file_id, subdir_path + "/" + file_name, description
+                            )
+
+    def _load_existing_registry(self):
+        if self._check_for_json():
+            with open(self.json_file_path, "r") as json_file:
+                return json.load(json_file)
+        return {}
+
+    def _determine_file_type(self, subdir):
+        # Implement logic to determine the file type based on the subdir name
+        # Example:
+        if subdir == "pdb":
+            return FileType.PROTEIN
+        elif subdir == "records":
+            return FileType.RECORD
+        elif subdir == "simulations":
+            return FileType.SIMULATION
+        elif subdir == "solvents":
+            return FileType.SOLVENT
+        else:
+            return FileType.UNKNOWN  # or some default value
 
     def _get_full_path(self, file_path):
         return os.path.abspath(file_path)
@@ -144,7 +191,9 @@ class PathRegistry:
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp
-        timestamp_digits = timestamp_part[-6:]
+        timestamp_digits = (
+            timestamp_part[-6:] if timestamp_part.isnumeric() else "000000"
+        )
 
         if type == FileType.PROTEIN:
             # Extract the PDB ID (assuming it's always the first part)
