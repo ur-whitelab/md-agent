@@ -10,6 +10,7 @@ class FileType(Enum):
     PROTEIN = 1
     SIMULATION = 2
     RECORD = 3
+    UNKNOWN = 4
 
 
 class PathRegistry:
