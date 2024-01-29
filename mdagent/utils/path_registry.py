@@ -44,16 +44,35 @@ class PathRegistry:
             if os.path.exists(subdir_path):
                 print("this subdir exists: ", subdir_path)
                 for file_name in os.listdir(subdir_path):
-                    if os.path.isfile(subdir_path + file_name):
-                        if file_name not in file_names_in_registry:
-                            file_type = self._determine_file_type(subdir)
-                            file_id = self.get_fileid(file_name, file_type)
-                            # TODO get descriptions from file names if possible
-                            # TODO make this a method
-                            description = f"Auto-registered file from {subdir}"
-                            self.map_path(
-                                file_id, subdir_path + "/" + file_name, description
+                    if file_name not in file_names_in_registry:
+                        file_type = self._determine_file_type(subdir)
+                        print("file_type: ", file_type)
+                        file_id = self.get_fileid(file_name, file_type)
+                        # TODO get descriptions from file names if possible
+                        # TODO make this a method. In theory, previous downlaods
+                        # or simulation files should be already registered
+                        if file_type == FileType.PROTEIN:
+                            name_parts = file_name.split("_")
+                            protein_name = name_parts[0]
+                            status = name_parts[1]
+                            description = (
+                                f"Protein {protein_name} pdb file. "
+                                "downloaded from RCSB Protein Data Bank. "
+                                + (
+                                    "Preprocessed for simulation."
+                                    if status == "Clean"
+                                    else ""
+                                )
                             )
+                        elif file_type == FileType.SOLVENT:
+                            name_parts = file_name.split("_")
+                            solvent_name = name_parts[0]
+                            description = f"Solvent {solvent_name} pdb file. "
+                        else:
+                            description = "Auto-Registered during registry init."
+                        self.map_path(
+                            file_id, subdir_path + "/" + file_name, description
+                        )
 
     def _load_existing_registry(self):
         if self._check_for_json():
