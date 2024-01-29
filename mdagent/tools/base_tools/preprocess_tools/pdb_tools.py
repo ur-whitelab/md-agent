@@ -6,6 +6,7 @@ import typing
 from typing import Any, Dict, List, Optional, Type, Union
 
 import requests
+import streamlit as st
 from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
@@ -39,6 +40,7 @@ def get_pdb(query_string, path_registry=None):
     if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
+        st.markdown(f"PDB file found with this ID: {pdbid}", unsafe_allow_html=True)
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
         pdb = requests.get(url)
         filename = path_registry.write_file_name(

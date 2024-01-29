@@ -9,6 +9,7 @@ import textwrap
 from typing import Any, Dict, List, Optional, Type
 
 import langchain
+import streamlit as st
 from langchain.base_language import BaseLanguageModel
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
@@ -317,6 +318,7 @@ class SimulationFunctions:
             Forcefield = Forcefield_files[0]
             Water_model = Forcefield_files[1]
         print("Setting up forcields :", Forcefield, Water_model)
+        st.markdown("Setting up forcields", unsafe_allow_html=True)
         # check if forcefields end in .xml
         if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
             forcefield = ForceField(Forcefield, Water_model)
@@ -355,6 +357,7 @@ class SimulationFunctions:
                 _timestep,
                 "fs",
             )
+            st.markdown("Setting up Langevin integrator", unsafe_allow_html=True)
             if params["Ensemble"] == "NPT":
                 _pressure = params["Pressure"].split(" ")[0].strip()
                 system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
@@ -378,6 +381,7 @@ class SimulationFunctions:
                     "bar",
                 )
             print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
+            st.markdown("Setting up Verlet integrator", unsafe_allow_html=True)
             integrator = VerletIntegrator(float(_timestep) * picoseconds)
 
         simulation = Simulation(modeller.topology, system, integrator)
@@ -682,6 +686,7 @@ class OpenMMSimulation:
 
     def setup_system(self):
         print("Building system...")
+        st.markdown("Building system", unsafe_allow_html=True)
         self.pdb_id = self.params["pdb_id"]
         self.pdb_path = self.path_registry.get_mapped_path(name=self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
@@ -703,6 +708,7 @@ class OpenMMSimulation:
 
     def setup_integrator(self):
         print("Setting up integrator...")
+        st.markdown("Setting up integrator", unsafe_allow_html=True)
         int_params = self.int_params
         integrator_type = int_params.get("integrator_type", "LangevinMiddle")
 
@@ -727,6 +733,7 @@ class OpenMMSimulation:
 
     def create_simulation(self):
         print("Creating simulation...")
+        st.markdown("Creating simulation", unsafe_allow_html=True)
         self.simulation = Simulation(
             self.pdb.topology,
             self.system,
@@ -1049,13 +1056,16 @@ class OpenMMSimulation:
             file.write(script_content)
 
         print(f"Standalone simulation script written to {directory}/{filename}")
+        st.markdown("Standalone simulation script written", unsafe_allow_html=True)
 
     def run(self):
         # Minimize and Equilibrate
         print("Performing energy minimization...")
+        st.markdown("Performing energy minimization", unsafe_allow_html=True)
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
+        st.markdown("Minimization complete! Equilibrating...", unsafe_allow_html=True)
         print("Equilibrating...")
         _temp = self.int_params["Temperature"]
         self.simulation.context.setVelocitiesToTemperature(_temp)
@@ -1063,9 +1073,11 @@ class OpenMMSimulation:
         self.simulation.step(_eq_steps)
         # Simulate
         print("Simulating...")
+        st.markdown("Simulating...", unsafe_allow_html=True)
         self.simulation.currentStep = 0
         self.simulation.step(self.sim_params["Number of Steps"])
         print("Done!")
+        st.markdown("Done!", unsafe_allow_html=True)
         if not self.save:
             if os.path.exists("temp_trajectory.dcd"):
                 os.remove("temp_trajectory.dcd")
@@ -1134,6 +1146,7 @@ class SetUpandRunFunction(BaseTool):
                 input, self.path_registry, save, sim_id, pdb_id
             )
             print("simulation set!")
+            st.markdown("simulation set!", unsafe_allow_html=True)
         except ValueError as e:
             return str(e) + f"This were the inputs {input_args}"
         except FileNotFoundError:
@@ -1594,9 +1607,11 @@ class SetUpandRunFunction(BaseTool):
         forcefield_files = values.get("forcefield_files")
         if forcefield_files is None or forcefield_files is []:
             print("Setting default forcefields")
+            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         elif len(forcefield_files) == 0:
             print("Setting default forcefields v2")
+            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         else:
             for file in forcefield_files:
