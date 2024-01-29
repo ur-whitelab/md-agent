@@ -479,6 +479,7 @@ class PackMolTool(BaseTool):
 
         error_msg = values.get("error", None)
         pdbfiles = values.get("pdbfiles", [])
+        pdbfiles = [self.path_registry.get_mapped_path(pdbfile) for pdbfile in pdbfiles]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
         if error_msg:
