@@ -287,11 +287,11 @@ class PackmolBox:
     def generate_input_header(self):
         # Generate the header of the input file in .inp format
         orig_pdbs_ids = [
-            f"{molecule.number_of_molecules + molecule.id}"
+            f"{molecule.number_of_molecules}_{molecule.id}"
             for molecule in self.molecules
         ]
 
-        _final_name = f'{"_".join(orig_pdbs_ids)}'
+        _final_name = f'{"_and_".join(orig_pdbs_ids)}'
 
         self.file_description = (
             "Packed Structures of the following molecules:\n"
@@ -347,14 +347,14 @@ class PackmolBox:
                 )
 
         # validate final pdb
-        pdb_validation = validate_pdb_format(f"{self.file_name}")
+        pdb_validation = validate_pdb_format(f"{self.final_name}")
         if pdb_validation[0] == 0:
             # delete .inp files
             os.remove("packmol.inp")
             for molecule in self.molecules:
                 os.remove(molecule.filename)
             # name of packed pdb file
-            time_stamp = PathRegistry.get_timestamp()
+            time_stamp = PathRegistry.get_timestamp()[-6:]
             PathRegistry.map_path(
                 f"PACKED_{time_stamp}",
                 f"{self.final_name}",
@@ -398,7 +398,7 @@ def packmol_wrapper(
     box.generate_input_header()
     # generate input
     # run packmol
-
+    print("Packing:", box.file_description, "\nThe file name is:", box.final_name)
     return box.run_packmol(PathRegistry)
 
 
