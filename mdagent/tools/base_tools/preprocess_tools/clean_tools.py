@@ -296,17 +296,17 @@ class CleaningToolFunction(BaseTool):
             file_description = "Cleaned File: "
             CleaningTools()
             try:
-                pdbfile = self.path_registry.get_mapped_path(pdbfile_id)
-                if "/" in pdbfile:
-                    pdbfile = pdbfile.split("/")[-1]
-
-                name = pdbfile.split("_")[0]
-                end = pdbfile.split(".")[1]
+                pdbfile_path = self.path_registry.get_mapped_path(pdbfile_id)
+                if "/" in pdbfile_path:
+                    pdbfile = pdbfile_path.split("/")[-1]
+                else:
+                    pdbfile = pdbfile_path
+                name, end = pdbfile.split(".")
 
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
                 return "File not found in path registry. "
-            fixer = PDBFixer(filename=pdbfile)
+            fixer = PDBFixer(filename=pdbfile_path)
             try:
                 fixer.findMissingResidues()
             except Exception:
