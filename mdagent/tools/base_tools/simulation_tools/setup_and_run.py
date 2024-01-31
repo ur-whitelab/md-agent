@@ -683,7 +683,7 @@ class OpenMMSimulation:
     def setup_system(self):
         print("Building system...")
         self.pdb_id = self.params["pdb_id"]
-        self.pdb_path = self.path_registry.get_mapped_path(name=self.pdb_id)
+        self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
         self.forcefield = ForceField(*self.params["forcefield_files"])
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
