@@ -97,7 +97,8 @@ class WorkflowPlanInputSchema(BaseModel):
     )
     curr_tools: str = Field(
         description="""List of all tools you have access to. Such as
-        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+        this tool, 'ExecuteSkill',
+        'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
     )
     files: str = Field(description="List of all files you have access to.")
     # ^ would be nice if MDAgent could give files in case user provides unmapped files

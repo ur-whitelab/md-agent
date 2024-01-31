@@ -61,7 +61,7 @@ def get_pdb(query_string, path_registry=None):
     return None
 
 
-class Name2PDBTool(BaseTool):
+class ProteinName2PDBTool(BaseTool):
     name = "PDBFileDownloader"
     description = """This tool downloads PDB (Protein Data Bank) or
                     CIF (Crystallographic Information File) files using
@@ -102,7 +102,8 @@ class Name2PDBTool(BaseTool):
 
 """validate_pdb_format: validates a pdb file against the pdb format specification
    packmol_wrapper: takes in a list of pdb files, a
-   list of number of molecules and a list of instructions and returns a packed pdb file
+   list of number of molecules, a list of instructions, and a list of small molecules
+   and returns a packed pdb file
    Molecule: class that represents a molecule (helpful for packmol
    PackmolBox: class that represents a box of molecules (helpful for packmol)
    summarize_errors: function that summarizes the errors found by validate_pdb_format
@@ -360,9 +361,11 @@ def packmol_wrapper(
     # create a box
     box = PackmolBox()
     # add molecules to the box
-    for pdbfile, number_of_molecules, instructions in zip(
-        pdbfiles, number_of_molecules, instructions
-    ):
+    for (
+        pdbfile,
+        number_of_molecules,
+        instructions,
+    ) in zip(pdbfiles, number_of_molecules, instructions):
         molecule = Molecule(pdbfile, number_of_molecules, instructions)
         box.add_molecule(molecule)
     # generate input header
@@ -391,6 +394,9 @@ class PackmolInput(BaseModel):
         Every instruction should be one string like:
         'inside box 0. 0. 0. 90. 90. 90.'""",
     )
+    small_molecules: typing.Optional[typing.List[str]] = Field(
+        ..., description="""List of small molecules to be downloaded from MolPDB"""
+    )
 
     @root_validator
     def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
@@ -402,6 +408,7 @@ class PackmolInput(BaseModel):
         pdbfiles = values.get("pdbfiles", [])
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
+        values.get("small_molecules", [])
 
         if not (len(pdbfiles) == len(number_of_molecules) == len(instructions)):
             return {
@@ -463,6 +470,15 @@ class PackMolTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    def _get_sm_pdbs(self, small_molecules):
+        for molecule in small_molecules:
+            # check path registry for molecule.pdb
+            exists = self.path_registry._check_json_content(molecule)
+            if not exists:
+                # download molecule using small_molecule_pdb from MolPDB
+                molpdb = MolPDB()
+                molpdb.small_molecule_pdb(molecule, self.path_registry)
+
     def _run(self, **values) -> str:
         """use the tool."""
 
@@ -473,6 +489,9 @@ class PackMolTool(BaseTool):
         pdbfiles = values.get("pdbfiles", [])
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
+        small_molecules = values.get("small_molecules", [])
+        # make sure small molecules are all downloaded
+        self._get_sm_pdbs(small_molecules)
         if error_msg:
             return error_msg
         # check if packmol is installed
