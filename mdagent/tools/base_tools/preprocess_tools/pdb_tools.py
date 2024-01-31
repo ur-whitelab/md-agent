@@ -471,10 +471,11 @@ class PackMolTool(BaseTool):
         self.path_registry = path_registry
 
     def _get_sm_pdbs(self, small_molecules):
+        all_files = self.path_registry.list_path_names()
+        print(all_files)
         for molecule in small_molecules:
             # check path registry for molecule.pdb
-            exists = self.path_registry._check_json_content(molecule)
-            if not exists:
+            if molecule not in all_files:
                 # download molecule using small_molecule_pdb from MolPDB
                 molpdb = MolPDB()
                 molpdb.small_molecule_pdb(molecule, self.path_registry)
@@ -1575,7 +1576,7 @@ class MolPDB:
             return "Unknown Molecule"
         return name
 
-    def small_molecule_pdb(self, mol_str: str, path_registry=None) -> str:
+    def small_molecule_pdb(self, mol_str: str, path_registry) -> str:
         # takes in molecule name or smiles (converts to smiles if name)
         # writes pdb file name.pdb (gets name from smiles if possible)
         # output is done message
@@ -1598,7 +1599,7 @@ class MolPDB:
             Chem.MolToPDBFile(m, file_name)
             # add to path registry
             if path_registry:
-                _ = path_registry.map_math(
+                _ = path_registry.map_path(
                     file_name, file_name, f"pdb file for the small molecule {mol_name}"
                 )
             return (
