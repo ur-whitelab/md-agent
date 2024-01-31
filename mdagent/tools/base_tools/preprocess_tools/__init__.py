@@ -5,7 +5,7 @@ from .clean_tools import (
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
 )
-from .pdb_tools import Name2PDBTool, PackMolTool, get_pdb
+from .pdb_tools import Name2PDBTool, PackMolTool, SmallMolPDB, get_pdb
 
 __all__ = [
     "AddHydrogensCleaningTool",
@@ -16,4 +16,5 @@ __all__ = [
     "SpecializedCleanTool",
     "get_pdb",
     "CleaningToolFunction",
+    "SmallMolPDB",
 ]

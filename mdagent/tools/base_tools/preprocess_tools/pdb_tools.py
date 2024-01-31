@@ -9,6 +9,7 @@ import requests
 from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
+from rdkit import Chem
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -64,11 +65,10 @@ class Name2PDBTool(BaseTool):
     name = "PDBFileDownloader"
     description = """This tool downloads PDB (Protein Data Bank) or
                     CIF (Crystallographic Information File) files using
-                    commercial chemical names. It’s ideal for situations where
-                    you need to directly retrieve these file using a chemical’s
-                    commercial name. When a specific file type, either PDB or CIF,
+                    a protein's common name (NOT a small molecule).
+                    When a specific file type, either PDB or CIF,
                     is requested, add file type to the query string with space.
-                    Input: Commercial name of the chemical or file without
+                    Input: Commercial name of the protein or file without
                     file extension
                     Output: Corresponding PDB or CIF file"""
     path_registry: Optional[PathRegistry]
@@ -453,7 +453,7 @@ class PackmolInput(BaseModel):
 class PackMolTool(BaseTool):
     name: str = "packmol_tool"
     description: str = """Useful when you need to create a box
-    of different types of molecules molecules"""
+    of different types of molecules molecules. """
 
     args_schema: Type[BaseModel] = PackmolInput
 
@@ -1446,9 +1446,9 @@ class FixPDBFile(BaseTool):
     description: str = "Fixes PDB files columns if needed"
     args_schema: Type[BaseModel] = PDBFilesFixInp
 
-    path_registry: typing.Optional[PathRegistry]
+    path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: typing.Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
@@ -1495,3 +1495,116 @@ class FixPDBFile(BaseTool):
                 return "PDB file fixed"
             else:
                 return "PDB not fully fixed"
+
+
+class MolPDB:
+    def is_smiles(self, text: str) -> bool:
+        try:
+            m = Chem.MolFromSmiles(text, sanitize=False)
+            if m is None:
+                return False
+            return True
+        except Exception:
+            return False
+
+    def largest_mol(
+        self, smiles: str
+    ) -> (
+        str
+    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/utils.py
+        ss = smiles.split(".")
+        ss.sort(key=lambda a: len(a))
+        while not self.is_smiles(ss[-1]):
+            rm = ss[-1]
+            ss.remove(rm)
+        return ss[-1]
+
+    def molname2smiles(
+        self, query: str
+    ) -> (
+        str
+    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/tools/databases.py
+        url = " https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/{}"
+        r = requests.get(url.format(query, "property/IsomericSMILES/JSON"))
+        # convert the response to a json object
+        data = r.json()
+        # return the SMILES string
+        try:
+            smi = data["PropertyTable"]["Properties"][0]["IsomericSMILES"]
+        except KeyError:
+            return """Could not find a molecule matching the text.
+            One possible cause is that the input is incorrect, input one
+            molecule at a time."""
+        # remove salts
+        return Chem.CanonSmiles(self.largest_mol(smi))
+
+    def smiles2name(self, smi: str) -> str:
+        try:
+            smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), canonical=True)
+        except Exception:
+            return "Invalid SMILES string"
+        # query the PubChem database
+        r = requests.get(
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/"
+            + smi
+            + "/synonyms/JSON"
+        )
+        data = r.json()
+        try:
+            name = data["InformationList"]["Information"][0]["Synonym"][0]
+        except KeyError:
+            return "Unknown Molecule"
+        return name
+
+    def small_molecule_pdb(self, mol_str: str, path_registry=None) -> str:
+        # takes in molecule name or smiles (converts to smiles if name)
+        # writes pdb file name.pdb (gets name from smiles if possible)
+        # output is done message
+        ps = Chem.SmilesParserParams()
+        ps.removeHs = False
+        try:
+            if self.is_smiles(mol_str):
+                m = Chem.MolFromSmiles(mol_str)
+                mol_name = self.smiles2name(mol_str)
+            else:  # if input is not smiles, try getting smiles
+                smi = self.molname2smiles(mol_str)
+                m = Chem.MolFromSmiles(smi)
+                mol_name = mol_str
+            try:  # only if needed
+                m = Chem.AddHs(m)
+            except Exception:
+                pass
+            Chem.AllChem.EmbedMolecule(m)
+            file_name = f"{mol_name}.pdb"
+            Chem.MolToPDBFile(m, file_name)
+            # add to path registry
+            if path_registry:
+                _ = path_registry.map_math(
+                    file_name, file_name, f"pdb file for the small molecule {mol_name}"
+                )
+            return (
+                f"PDB file for {mol_str} successfully created and saved to {file_name}."
+            )
+        except Exception:
+            return (
+                "There was an error getting pdb. Please input a single molecule name."
+            )
+
+
+class SmallMolPDB(BaseTool):
+    name = "SmallMoleculePDB"
+    description = """
+        Creates a PDB file for a small molecule
+        Use this tool when you need to use a small molecule in a simulation.
+        Input can be a molecule name or a SMILES string."""
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, mol_str: str) -> str:
+        """use the tool."""
+        mol_pdb = MolPDB()
+        output = mol_pdb.small_molecule_pdb(mol_str, self.path_registry)
+        return output

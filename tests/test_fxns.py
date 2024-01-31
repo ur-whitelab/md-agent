@@ -12,6 +12,7 @@ from mdagent.tools.base_tools import (
     get_pdb,
 )
 from mdagent.tools.base_tools.analysis_tools.plot_tools import plot_data, process_csv
+from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB
 from mdagent.utils import FileType, PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -37,6 +38,11 @@ def path_to_cif():
 @pytest.fixture
 def cleaning_fxns():
     return CleaningTools()
+
+
+@pytest.fixture
+def molpdb():
+    return MolPDB()
 
 
 # Test simulation tools
@@ -281,3 +287,30 @@ def test_map_path():
 
                 # Check the result message
                 assert result == "Path successfully mapped to name: new_name"
+
+
+def test_small_molecule_pdb(molpdb):
+    # Test with a valid SMILES string
+    valid_smiles = "C1=CC=CC=C1"  # Benzene
+    expected_output = (
+        "PDB file for C1=CC=CC=C1 successfully created and saved to benzene.pdb."
+    )
+    assert molpdb.small_molecule_pdb(valid_smiles) == expected_output
+    assert os.path.exists("benzene.pdb")
+    os.remove("benzene.pdb")  # Clean up
+
+    # test with invalid SMILES string and invalid molecule name
+    invalid_smiles = "C1=CC=CC=C1X"
+    invalid_name = "NotAMolecule"
+    expected_output = (
+        "There was an error getting pdb. Please input a single molecule name."
+    )
+    assert molpdb.small_molecule_pdb(invalid_smiles) == expected_output
+    assert molpdb.small_molecule_pdb(invalid_name) == expected_output
+
+    # test with valid molecule name
+    valid_name = "water"
+    expected_output = "PDB file for water successfully created and saved to water.pdb."
+    assert molpdb.small_molecule_pdb(valid_name) == expected_output
+    assert os.path.exists("water.pdb")
+    os.remove("water.pdb")  # Clean up

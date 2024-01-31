@@ -26,6 +26,7 @@ from .base_tools import (
     Scholar2ResultLLM,
     SetUpandRunFunction,
     SimulationOutputFigures,
+    SmallMolPDB,
     VisualizeProtein,
 )
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
@@ -82,6 +83,7 @@ def make_all_tools(
         #    MapPath2Name(path_registry=path_instance),
         Name2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
+        SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
         PPIDistance(),
         RMSDCalculator(),
