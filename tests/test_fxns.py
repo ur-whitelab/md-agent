@@ -12,7 +12,7 @@ from mdagent.tools.base_tools import (
     get_pdb,
 )
 from mdagent.tools.base_tools.analysis_tools.plot_tools import plot_data, process_csv
-from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB
+from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB, PackMolTool
 from mdagent.utils import FileType, PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -66,6 +66,11 @@ def fibronectin():
 @pytest.fixture
 def get_registry():
     return PathRegistry()
+
+
+@pytest.fixture
+def packmol(get_registry):
+    return PackMolTool(get_registry)
 
 
 def test_process_csv():
@@ -139,7 +144,7 @@ def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns, get_registry
 
 @patch("os.path.exists")
 @patch("os.listdir")
-def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns, get_registry):
+def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns):
     # Test when parameters.json exists
     mock_exists.return_value = True
     assert sim_fxns._extract_parameters_path() == "simulation_parameters_summary.json"
@@ -314,3 +319,32 @@ def test_small_molecule_pdb(molpdb):
     assert molpdb.small_molecule_pdb(valid_name) == expected_output
     assert os.path.exists("water.pdb")
     os.remove("water.pdb")  # Clean up
+
+
+def test_packmol_sm_download_called(packmol):
+    with patch(
+        "mdagent.tools.base_tools.preprocess_tools.pdb_tools.PackMolTool._get_sm_pdbs",
+        new=MagicMock(),
+    ) as mock_get_sm_pdbs:
+        test_values = {
+            "pdbfiles": ["1A3N_144150"],
+            "number_of_molecules": [1, 10],
+            "instructions": [
+                ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
+            ],
+            "small_molecules": ["water", "benzene"],
+        }
+
+        packmol._run(**test_values)
+
+        mock_get_sm_pdbs.assert_called_with(["water", "benzene"])
+
+
+def test_packmol_download_only(packmol):
+    small_molecules = ["water", "benzene"]
+    packmol._get_sm_pdbs(small_molecules)
+    assert os.path.exists("water.pdb")
+    assert os.path.exists("benzene.pdb")
+    os.remove("water.pdb")
+    os.remove("benzene.pdb")
