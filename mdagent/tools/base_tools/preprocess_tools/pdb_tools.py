@@ -127,6 +127,9 @@ def validate_pdb_format(fhandle):
         - 1 if error was found, 0 if no errors were found.
         - List of error messages encountered.
     """
+    # check if filename is in directory
+    if not os.path.exists(fhandle):
+        return (1, ["File not found. Packmol failed to write the file."])
     errors = []
     _fmt_check = (
         ("Atm. Num.", (slice(6, 11), re.compile(r"[\d\s]+"))),
@@ -160,7 +163,7 @@ def validate_pdb_format(fhandle):
         if not line:
             continue
 
-        if line[0:6] in ("ATOM  ", "HETATM"):
+        if line[0:6] in ["ATOM  ", "HETATM"]:
             # ... [rest of the code unchanged here]
             linelen = len(line)
             if linelen < 80:
@@ -338,10 +341,12 @@ class PackmolBox:
         cmd = "packmol < packmol.inp"
         result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
         if result.returncode != 0:
+            print("Packmol failed to run with 'packmol < packmol.inp' command")
             result = subprocess.run(
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
+                print("Packmol failed to run with './packmol < packmol.inp' command")
                 return (
                     "Packmol failed to run. Please check the input file and try again."
                 )
@@ -355,13 +360,13 @@ class PackmolBox:
                 os.remove(molecule.filename)
             # name of packed pdb file
             time_stamp = PathRegistry.get_timestamp()[-6:]
+            os.rename(self.final_name, f"files/pdb/{self.final_name}")
             PathRegistry.map_path(
                 f"PACKED_{time_stamp}",
-                f"{self.final_name}",
+                f"files/pdb/{self.final_name}",
                 self.file_description,
             )
             # move file to files/pdb
-            os.rename(self.final_name, f"files/pdb/{self.final_name}")
             return f"PDB file validated successfully. FileID: PACKED_{time_stamp}"
         elif pdb_validation[0] == 1:
             # format pdb_validation[1] list of errors
@@ -486,6 +491,7 @@ class PackMolTool(BaseTool):
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
+                print("Packmol is not installed")
                 return (
                     "Packmol is not installed. Please install packmol "
                     "at 'https://m3g.github.io/packmol/download.shtml' and try again."

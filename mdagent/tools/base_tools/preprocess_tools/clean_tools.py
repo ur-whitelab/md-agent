@@ -353,7 +353,7 @@ class CleaningToolFunction(BaseTool):
             file_mode = "w" if add_hydrogens else "a"
             file_name = self.path_registry.write_file_name(
                 type=FileType.PROTEIN,
-                protein_name=name,
+                protein_name=name.split("_")[0],
                 description="Clean",
                 file_format=end,
             )
