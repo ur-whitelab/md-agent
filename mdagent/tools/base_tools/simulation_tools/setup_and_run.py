@@ -317,8 +317,8 @@ class SimulationFunctions:
             ]
             Forcefield = Forcefield_files[0]
             Water_model = Forcefield_files[1]
-        print("Setting up forcields :", Forcefield, Water_model)
-        st.markdown("Setting up forcields", unsafe_allow_html=True)
+        print("Setting up forcefields :", Forcefield, Water_model)
+        st.markdown("Setting up forcefields", unsafe_allow_html=True)
         # check if forcefields end in .xml
         if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
             forcefield = ForceField(Forcefield, Water_model)
