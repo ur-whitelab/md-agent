@@ -31,7 +31,7 @@ else:
 
 # for now I'm just going to allow  pdb and csv files - we can add more later
 uploaded_files = st.file_uploader(
-    "Upload a .pdb or .csv file", type=["pdb", "csv"], accept_multiple_files=True
+    "Upload a .pdb or .cif file", type=["pdb", "cif"], accept_multiple_files=True
 )
 files: List[str] = []
 # write file to disk
