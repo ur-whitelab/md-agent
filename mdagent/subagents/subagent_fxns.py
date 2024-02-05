@@ -20,7 +20,7 @@ class Iterator:
         self.ckpt_dir = subagent_settings.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
-        os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
+        os.makedirs(f"{self.ckpt_dir}/action_history/", exist_ok=True)
 
         # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
@@ -62,13 +62,13 @@ class Iterator:
     def _save_failures(self, history, msg):
         if msg is None:
             # save to file
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
+            with open(f"{self.ckpt_dir}/action_history/failed_history.json", "a") as f:
                 history_string = json.dumps(history)
                 f.write("\n" + history_string + "\n")
             return "failed history saved to file"
         else:
             # save to file
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
+            with open(f"{self.ckpt_dir}/action_history/failed_history.json", "a") as f:
                 f.write("\n" + msg + "\n")
             return None
 
@@ -172,8 +172,8 @@ class Iterator:
         # pull info of strings to pass to llm agents
         recent_history_string = ""
         full_history_string = ""
-        if os.path.exists(f"{self.ckpt_dir}/history/failed_history.json"):
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "r") as f:
+        if os.path.exists(f"{self.ckpt_dir}/action_history/failed_history.json"):
+            with open(f"{self.ckpt_dir}/action_history/failed_history.json", "r") as f:
                 full_history_string = f.read()
                 lines = full_history_string.splitlines()
                 recent_history_string = lines[-1] if lines else None
@@ -241,7 +241,7 @@ class AskCurriculum:
             "files": files,
             "current_tools": self.current_tools,  # -> skill_manager.get_current_tools()
             "all_tools": self.all_tools_string,  # -> skill_manager.get_all_tools()
-            # # below depends on task_history implmentation
+            # # below depends on task_history implementation
             # "succeeded_tasks": succeeded_tasks,
             # "failed_task": failed_task,
             # "failed_tool": failed_tool,
