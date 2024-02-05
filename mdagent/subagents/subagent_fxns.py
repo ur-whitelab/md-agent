@@ -15,7 +15,7 @@ class Iterator:
         current_tools: Optional[dict] = None,
     ):
         if subagent_settings is None:
-            raise ValueError("Subagent settings cannot be None")  # shouldn't happen
+            subagent_settings = SubAgentSettings()  # shouldn't happen
         self.path_registry = subagent_settings.path_registry
         self.ckpt_dir = subagent_settings.ckpt_dir
         self.all_tools_string = all_tools_string
@@ -203,3 +203,63 @@ class Iterator:
             "all_tools": self.all_tools_string,
         }
         return info
+
+
+class AskCurriculum:
+    def __init__(
+        self,
+        subagent_settings: Optional[SubAgentSettings],
+        all_tools_string: Optional[str] = None,
+        current_tools: Optional[dict] = None,
+    ):
+        if subagent_settings is None:
+            subagent_settings = SubAgentSettings()  # shouldn't happen
+        self.path_registry = subagent_settings.path_registry
+        self.ckpt_dir = subagent_settings.ckpt_dir
+        self.all_tools_string = all_tools_string
+        self.current_tools = current_tools
+
+        # initialize agents
+        initializer = SubAgentInitializer(subagent_settings)
+        self.curriculum_agent = initializer.create_curriculum()
+        # self.skill_manager = initializer.create_skill_manager()
+
+    def _pull_information(self):
+        files = self.path_registry.list_path_names()
+        # all_tools_string = skill_manager.get_all_tools() # from all_tools VDB
+        # current_tools = skill_manager.get_current_tools() # from current_tools VDB
+
+        # # get history info
+        # succeeded_tasks = self.task_history.success_history()
+        # failure_info = self.task_history.most_recent_failed_task()
+        # failed_task = failure_info.get("task")
+        # failed_tool = failure_info.get("tool")
+        # tool_inputs = failure_info.get("tool_inputs")
+        # tool_output = failure_info.get("tool_output")
+
+        info = {
+            "files": files,
+            "current_tools": self.current_tools,  # -> skill_manager.get_current_tools()
+            "all_tools": self.all_tools_string,  # -> skill_manager.get_all_tools()
+            # # below depends on task_history implmentation
+            # "succeeded_tasks": succeeded_tasks,
+            # "failed_task": failed_task,
+            # "failed_tool": failed_tool,
+            # "tool_inputs": tool_inputs,
+            # "tool_output": tool_output,
+        }
+        return info
+
+    def propose_next_step(self, user_prompt, current_stage, explore=False):
+        info = self._pull_information()
+        info["user_prompt"] = user_prompt
+        info["current_stage"] = current_stage
+        info["explore"] = explore
+        response = self.curriculum_agent.run_next(info)
+        return response
+
+    def propose_workflow_plan(self, user_prompt, explore=False):
+        full_info = self._pull_information()
+        current_tools = full_info["current_tools"]
+        response = self.curriculum_agent.run_plan(user_prompt, explore, current_tools)
+        return response
