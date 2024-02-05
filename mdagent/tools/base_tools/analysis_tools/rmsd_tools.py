@@ -4,6 +4,7 @@ from typing import Optional, Type
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
 import numpy as np
+import streamlit as st
 from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
@@ -44,15 +45,27 @@ class RMSDFunctions:
         if rmsd_type == "rmsd":
             if self.ref_file:
                 print("Calculating 1-D RMSD between two sets of coordinates...")
+                st.markdown(
+                    "Calculating 1-D RMSD between two sets of coordinates...",
+                    unsafe_allow_html=True,
+                )
                 return self.compute_rmsd_2sets(selection=selection)
             else:
                 print("Calculating time-dependent RMSD...")
+                st.markdown(
+                    "Calculating time-dependent RMSD...", unsafe_allow_html=True
+                )
                 return self.compute_rmsd(selection=selection, plot=plot)
         elif rmsd_type == "pairwise_rmsd":
             print("Calculating pairwise RMSD...")
+            st.markdown("Calculating pairwise RMSD...", unsafe_allow_html=True)
             return self.compute_2d_rmsd(selection=selection, plot_heatmap=plot)
         elif rmsd_type == "rmsf":
             print("Calculating root mean square fluctuation (RMSF)...")
+            st.markdown(
+                "Calculating root mean square fluctuation (RMSF)...",
+                unsafe_allow_html=True,
+            )
             return self.compute_rmsf(selection=selection, plot=plot)
         else:
             raise ValueError(

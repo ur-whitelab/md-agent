@@ -31,6 +31,7 @@ setup(
         "requests",
         "rmrkl",
         "tiktoken",
+        "streamlit",
     ],
     test_suite="tests",
     long_description=long_description,
