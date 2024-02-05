@@ -63,14 +63,16 @@ def get_pdb(query_string, path_registry=None):
 
 class ProteinName2PDBTool(BaseTool):
     name = "PDBFileDownloader"
-    description = """This tool downloads PDB (Protein Data Bank) or
-                    CIF (Crystallographic Information File) files using
-                    a protein's common name (NOT a small molecule).
-                    When a specific file type, either PDB or CIF,
-                    is requested, add file type to the query string with space.
-                    Input: Commercial name of the protein or file without
-                    file extension
-                    Output: Corresponding PDB or CIF file"""
+    description = (
+        "This tool downloads PDB (Protein Data Bank) or"
+        "CIF (Crystallographic Information File) files using"
+        "a protein's common name (NOT a small molecule)."
+        "When a specific file type, either PDB or CIF,"
+        "is requested, add file type to the query string with space."
+        "Input: Commercial name of the protein or file without"
+        "file extension"
+        "Output: Corresponding PDB or CIF file"
+    )
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):
@@ -395,7 +397,7 @@ class PackmolInput(BaseModel):
         'inside box 0. 0. 0. 90. 90. 90.'""",
     )
     small_molecules: typing.Optional[typing.List[str]] = Field(
-        ..., description="""List of small molecules to be downloaded from MolPDB"""
+        ..., description=("List of small molecules to be downloaded from MolPDB")
     )
 
     @root_validator
@@ -412,15 +414,19 @@ class PackmolInput(BaseModel):
 
         if not (len(pdbfiles) == len(number_of_molecules) == len(instructions)):
             return {
-                "error": """The lengths of pdbfiles, number_of_molecules,
-            and instructions must be equal to use this tool."""
+                "error": (
+                    "The lengths of pdbfiles, number_of_molecules,"
+                    "and instructions must be equal to use this tool."
+                )
             }
 
         for instruction in instructions:
             if len(instruction) != 1:
                 return {
-                    "error": """Each instruction must be a single string.
-                If necessary, use newlines in a instruction string."""
+                    "error": (
+                        "Each instruction must be a single string."
+                        "If necessary, use newlines in a instruction string."
+                    )
                 }
             if instruction[0].split(" ")[0] not in [
                 "inside",
@@ -450,17 +456,21 @@ class PackmolInput(BaseModel):
                     }
                 if len(possible_files) == 0:
                     return {
-                        "error": f"""PDB file {pdbfile} does not exist
-                    in the current directory.
-                    Make sure the pdbfiles are correct."""
+                        "error": (
+                            "PDB file {pdbfile} does not exist"
+                            "in the current directory."
+                            "Make sure the pdbfiles are correct."
+                        )
                     }
         return values
 
 
 class PackMolTool(BaseTool):
     name: str = "packmol_tool"
-    description: str = """Useful when you need to create a box
-    of different types of molecules molecules. """
+    description: str = (
+        "Useful when you need to create a box"
+        "of different types of molecules molecules. "
+    )
 
     args_schema: Type[BaseModel] = PackmolInput
 
@@ -503,8 +513,12 @@ class PackMolTool(BaseTool):
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
-                return """Packmol is not installed. Please install packmol
-                at 'https://m3g.github.io/packmol/download.shtml' and try again."""
+                return (
+                    "Packmol is not installed. Please install"
+                    "packmol at "
+                    "'https://m3g.github.io/packmol/download.shtml'"
+                    "and try again."
+                )
 
         return packmol_wrapper(
             self.path_registry,
@@ -790,9 +804,11 @@ class PDBsummarizerfxns:
         print(elements)
         if len(elements) != len(atoms):
             print(
-                f"""No elements in the ATOM records there are
-            {len(elements)} elements and {len(atoms)}
-            atoms records"""
+                (
+                    "No elements in the ATOM records there are"
+                    "{len(elements)} elements and {len(atoms)}"
+                    "atoms records"
+                )
             )
             return False
         elements = list(set(elements))
@@ -903,14 +919,15 @@ def pdb_summarizer(pdb_file):
     pdb.num_of_residues = pdb._num_of_dif_residues(pdb_file)
     pdb.HETATM_tempFact = pdb._hetatm_have_tempFactor(pdb_file)
 
-    output = f"""PDB file: {pdb_file} has the following properties:
-                Number of residues: {pdb.num_of_residues}
-                Are elements identifiers present: {pdb.atoms}
-                Are HETATM elements identifiers present: {pdb.HETATM}
-                Are residue names present: {pdb.residues}
-                Are box dimensions present: {pdb.box}
-                Non-standard residues: {pdb.HETATM}
-                """
+    output = (
+        f"PDB file: {pdb_file} has the following properties:"
+        "Number of residues: {pdb.num_of_residues}"
+        "Are elements identifiers present: {pdb.atoms}"
+        "Are HETATM elements identifiers present: {pdb.HETATM}"
+        "Are residue names present: {pdb.residues}"
+        "Are box dimensions present: {pdb.box}"
+        "Non-standard residues: {pdb.HETATM}"
+    )
     return output
 
 
@@ -1073,8 +1090,10 @@ def fix_element_column(pdb_file, custom_element_dict=None):
         ), pdb._hetatm_have_elements(pdb_file)
         if atoms_have_elems and HETATM_have_elems:
             f.close()
-            return """Element's column already filled with
-            elements, no fix needed for elements"""
+            return (
+                "Element's column already filled with"
+                "elements, no fix needed for elements"
+            )
         print("I closed the initial file")
         f.close()
 
@@ -1127,8 +1146,9 @@ class FixElementColumnArgs(BaseTool):
     pdb_file: str = Field(..., description="PDB file to be fixed")
     custom_element_dict: dict = Field(
         None,
-        description="""Custom element dictionary. If None,
-        the default dictionary is used""",
+        description=(
+            "Custom element dictionary. If None," "the default dictionary is used"
+        ),
     )
 
 
@@ -1202,8 +1222,10 @@ def fix_temp_factor_column(pdb_file, bfactor=1.00, only_fill=True):
         if atoms_have_bfactor and HETATM_have_bfactor and only_fill:
             # print("Im closing the file temp factor")
             f.close()
-            return """TempFact column filled with bfactor already,
-                    no fix needed for temp factor"""
+            return (
+                "TempFact column filled with bfactor already,"
+                "no fix needed for temp factor"
+            )
         f.close()
     # fix element column
     records = ("TITLE", "HEADER", "REMARK", "CRYST1", "HET", "LINK", "SEQRES")
@@ -1254,10 +1276,12 @@ class FixTempFactorColumnArgs(BaseTool):
     bfactor: float = Field(1.0, description="Bfactor value to use")
     only_fill: bool = Field(
         True,
-        description="""Only fill empty bfactor columns.
-        Avoids replacing existing values.
-        False if you want to replace all values
-        with the bfactor value""",
+        description=(
+            "Only fill empty bfactor columns."
+            "Avoids replacing existing values."
+            "False if you want to replace all values"
+            "with the bfactor value"
+        ),
     )
 
 
@@ -1315,8 +1339,10 @@ def fix_occupancy_columns(pdb_file, occupancy=1.0, only_fill=True):
         ), pdb._hetatom_have_occupancy(file_name)
         if atoms_have_bfactor and HETATM_have_bfactor and only_fill:
             f.close()
-            return """Occupancy column filled with occupancy
-            already, no fix needed for occupancy"""
+            return (
+                "Occupancy column filled with occupancy"
+                "already, no fix needed for occupancy"
+            )
         f.close()
     # fix element column
     records = ("TITLE", "HEADER", "REMARK", "CRYST1", "HET", "LINK", "SEQRES")
@@ -1366,10 +1392,12 @@ class FixOccupancyColumnArgs(BaseTool):
     occupancy: float = Field(1.0, description="Occupancy value to be set")
     only_fill: bool = Field(
         True,
-        description="""Only fill empty occupancy columns.
-        Avoids replacing existing values.
-        False if you want to replace all
-        values with the occupancy value""",
+        description=(
+            "Only fill empty occupancy columns."
+            "Avoids replacing existing values."
+            "False if you want to replace all"
+            "values with the occupancy value"
+        ),
     )
 
 
@@ -1399,23 +1427,29 @@ class PDBFilesFixInp(BaseModel):
     pdbfile: str = Field(..., description="PDB file to be fixed")
     ElemColum: typing.Optional[bool] = Field(
         False,
-        description="""List of fixes to be applied. If None, a
-        validation of what fixes are needed is performed.""",
+        description=(
+            "List of fixes to be applied. If None, a"
+            "validation of what fixes are needed is performed."
+        ),
     )
     tempFactor: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
-        description="""Tuple of     ( float, bool)
-                    first arg is the
-                    value to be set as the tempFill, and third arg indicates
-                    if only empty TempFactor columns have to be filled""",
+        description=(
+            "Tuple of     ( float, bool)"
+            "first arg is the"
+            "value to be set as the tempFill, and third arg indicates"
+            "if only empty TempFactor columns have to be filled"
+        ),
     )
     Occupancy: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
-        description="""Tuple of (bool, float, bool)
-                        where first arg indicates if Occupancy
-                        fix has to be applied, second arg is the
-                        value to be set, and third arg indicates
-                        if only empty Occupancy columns have to be filled""",
+        description=(
+            "Tuple of (bool, float, bool)"
+            "where first arg indicates if Occupancy"
+            "fix has to be applied, second arg is the"
+            "value to be set, and third arg indicates"
+            "if only empty Occupancy columns have to be filled"
+        ),
     )
 
     @root_validator
@@ -1438,18 +1472,22 @@ class PDBFilesFixInp(BaseModel):
             if occupancy:
                 if len(occupancy) != 2:
                     return {
-                        "error": """if you want to fix the occupancy
-                            column argument must be a tuple of (bool, float)"""
+                        "error": (
+                            "if you want to fix the occupancy"
+                            "column argument must be a tuple of (bool, float)"
+                        )
                     }
                 if not isinstance(occupancy[0], float):
                     return {"error": "occupancy first arg must be a float"}
                 if not isinstance(occupancy[1], bool):
-                    return {"error": """occupancy second arg must be a bool"""}
+                    return {"error": "occupancy second arg must be a bool"}
             if tempFactor:
                 if len(tempFactor != 2):
                     return {
-                        "error": """if you want to fix the tempFactor
-                            column argument must be a tuple of (float, bool)"""
+                        "error": (
+                            "if you want to fix the tempFactor"
+                            "column argument must be a tuple of (float, bool)"
+                        )
                     }
                 if not isinstance(tempFactor[0], bool):
                     return {"error": "occupancy first arg must be a float"}
@@ -1552,9 +1590,11 @@ class MolPDB:
         try:
             smi = data["PropertyTable"]["Properties"][0]["IsomericSMILES"]
         except KeyError:
-            return """Could not find a molecule matching the text.
-            One possible cause is that the input is incorrect, input one
-            molecule at a time."""
+            return (
+                "Could not find a molecule matching the text."
+                "One possible cause is that the input is incorrect, "
+                "input one molecule at a time."
+            )
         # remove salts
         return Chem.CanonSmiles(self.largest_mol(smi))
 
@@ -1613,10 +1653,11 @@ class MolPDB:
 
 class SmallMolPDB(BaseTool):
     name = "SmallMoleculePDB"
-    description = """
-        Creates a PDB file for a small molecule
-        Use this tool when you need to use a small molecule in a simulation.
-        Input can be a molecule name or a SMILES string."""
+    description = (
+        "Creates a PDB file for a small molecule"
+        "Use this tool when you need to use a small molecule in a simulation."
+        "Input can be a molecule name or a SMILES string."
+    )
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):
