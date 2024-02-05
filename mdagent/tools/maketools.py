@@ -2,6 +2,7 @@ import json
 import os
 from typing import Optional, Type
 
+import streamlit as st
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
@@ -181,6 +182,10 @@ def get_tools(
             print(f"Invalid index {index}.")
             print("Some tools may be duplicated.")
             print(f"Try to delete vector DB at {ckpt_dir}/all_tools_vectordb.")
+            st.markdown(
+                "Invalid index. Some tools may be duplicated Try to delete VDB.",
+                unsafe_allow_html=True,
+            )
     return retrieved_tools
 
 
@@ -235,6 +240,7 @@ class CreateNewTool(BaseTool):
                 current_tools=curr_tools,
             )
             print("running iterator to draft a new tool")
+            st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
             tool_name = newcode_iterator.run(task, orig_prompt)
             if not tool_name:
                 return "The 'CreateNewTool' tool failed to build a new tool."
@@ -245,6 +251,7 @@ class CreateNewTool(BaseTool):
         if execute:
             try:
                 print("\nexecuting tool")
+                st.markdown("Executing tool", unsafe_allow_html=True)
                 agent_initializer = SubAgentInitializer(self.subagent_settings)
                 skill = agent_initializer.create_skill_manager(resume=True)
                 if skill is None:
