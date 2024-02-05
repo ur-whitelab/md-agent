@@ -29,7 +29,7 @@ if resume_op == "True":
 else:
     resume = False
 
-# for now I'm just going to allow  pdb and csv files - we can add more later
+# for now I'm just going to allow  pdb and cif files - we can add more later
 uploaded_files = st.file_uploader(
     "Upload a .pdb or .cif file", type=["pdb", "cif"], accept_multiple_files=True
 )
