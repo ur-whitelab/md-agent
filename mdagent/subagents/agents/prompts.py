@@ -167,3 +167,66 @@ curriculum_template = PromptTemplate(
     - failed subtasks, if given: {failed_tasks}
     """,
 )
+
+curriculum_template_next_step = PromptTemplate(
+    input_variables=[
+        "user_prompt",
+        "current_stage",
+        "explore",
+        "files",
+        "current_tools",
+        "all_tools",
+        "succeeded_tasks",
+        "failed_task",
+        "failed_tool",
+        "tool_inputs",
+        "tool_output",
+    ],
+    template="""
+    Assessing the current status of the molecular dynamics project:
+    User's Goal: {user_prompt}
+    Current Stage: {current_stage}
+    Exploration Request: {explore}
+    Available Files: {files}
+    Tools Access: {current_tools}
+    All tools (not all available): {all_tools}
+    Succeeded Tasks: {succeeded_tasks}
+    Failed Task (if any): {failed_task}
+    Failed Tool (if any): {failed_tool}
+    Tool Inputs: {tool_inputs}
+    Output/Error of Failed Task: {tool_output}
+
+    Based on this information, respond in the following format:
+    RESPONSE FORMAT:
+    Reasoning: [The agent evaluates the provided information. If 'exploration_request'
+                is true, it considers developing a small-scale tool or script that
+                addresses a specific aspect of the workflow. If 'exploration_request'
+                is false, the focus remains on troubleshooting, optimizing, or advancing
+                the current workflow using existing tools and data.]
+    Task: [If exploration is requested, the task involves designing a simple tool or
+        script for a specific, well-defined function. Otherwise, it suggests a
+        conventional step like "Adjust parameters in the failed tool and retry" or
+        "Analyze the output of the last simulation with [Analysis Tool]".]
+
+    You should only respond in JSON format as described below:
+    {{
+        "Reasoning": "rationale",
+        "Task": "next step"
+
+    }}
+
+    Example response without exploration:
+    Reasoning: The energy minimization step has failed due to a configuration
+    error in the tool. Adjusting the parameters should resolve this issue.
+    Task: Modify the configuration parameters of [Failed Tool Name] and rerun the
+    energy minimization.
+
+    Example response with exploration:
+    Reasoning: There's a request for exploration. A specific challenge in the
+    workflow is the analysis of solvent dynamics. Creating a custom script to
+    automate and enhance this analysis could be beneficial.
+    Task: Develop a Python script to automatically analyze solvent dynamics
+    from the latest simulation output, focusing on key parameters like diffusion
+    coefficients and solvent-solute interactions.
+    """,
+)
