@@ -306,7 +306,7 @@ class PackmolBox:
                 ]
             )
         )
-        while os.path.exists(f"{_final_name}_v{self.file_number}.pdb"):
+        while os.path.exists(f"files/pdb/{_final_name}_v{self.file_number}.pdb"):
             self.file_number += 1
 
         self.final_name = f"{_final_name}_v{self.file_number}.pdb"
@@ -367,6 +367,7 @@ class PackmolBox:
                 self.file_description,
             )
             # move file to files/pdb
+            print("succesfull!")
             return f"PDB file validated successfully. FileID: PACKED_{time_stamp}"
         elif pdb_validation[0] == 1:
             # format pdb_validation[1] list of errors
@@ -374,6 +375,7 @@ class PackmolBox:
             # delete .inp files
 
             os.remove("packmol.inp")
+            print("errors:", f"{errors}")
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
 
@@ -437,13 +439,14 @@ class PackMolTool(BaseTool):
         "Three different examples:\n"
         "pdbfiles_id: ['1a2b_123456', 'water_000000']\n"
         "number_of_molecules: [1, 1000]\n"
-        "instructions: [['inside box 0. 0. 0. 90. 90. 90.'], "
+        "instructions: [['fixed 0. 0. 0. 0. 0. 0. \n centerofmass'], "
         "['inside box 0. 0. 0. 90. 90. 90.']]\n"
-        "will pack 1 molecule of 1a2b_123456 and 1000 molecules of water_000000. \n"
+        "will pack 1 molecule of 1a2b_123456 at the origin "
+        "and 1000 molecules of water_000000. \n"
         "pdbfiles_id: ['1a2b_123456']\n"
         "number_of_molecules: [1]\n"
-        "instructions: [['center\n fixed  0. 0. 0. 0. 0. 0.']]\n"
-        "This will fix the center of protein 1a2b_123456 at "
+        "instructions: [['fixed  0. 0. 0. 0. 0. 0.' \n center]]\n"
+        "This will fix the barocenter of protein 1a2b_123456 at "
         "the center of the box with no rotation.\n"
         "pdbfiles_id: ['1a2b_123456']\n"
         "number_of_molecules: [1]\n"
@@ -531,20 +534,32 @@ class PackMolTool(BaseTool):
                     )
                 }
             # TODO enhance this validation with more packmol instructions
-            if instruction[0].split(" ")[0] not in [
+            first_word = instruction[0].split(" ")[0]
+            if first_word == "center":
+                if len(instruction[0].split(" ")) == 1:
+                    return {
+                        "error": (
+                            "The instruction 'center' must be accompanied by more "
+                            "instructions. Example 'fixed 0. 0. 0. 0. 0. 0.' "
+                            "The complete instruction would be: 'center \n fixed 0. 0. "
+                            "0. 0. 0. 0.' with a newline separating the two "
+                            "instructions."
+                        )
+                    }
+            elif first_word not in [
                 "inside",
-                "center",
                 "outside",
                 "fixed",
             ]:
                 return {
                     "error": (
                         "The first word of each instruction must be one of "
-                        "'inside' or 'center' or 'outside' or 'fixed' \n"
+                        "'inside' or 'outside' or 'fixed' \n"
                         "examples: center \n fixed 0. 0. 0. 0. 0. 0.,\n"
                         "inside box -10. 0. 0. 10. 10. 10. \n"
                     )
                 }
+
         # Further validation, e.g., checking if files exist
         registry = PathRegistry()
         file_ids = registry.list_path_names()
