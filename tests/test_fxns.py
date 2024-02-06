@@ -306,7 +306,8 @@ def test_small_molecule_pdb(molpdb, get_registry):
     # Test with a valid SMILES string
     valid_smiles = "C1=CC=CC=C1"  # Benzene
     expected_output = (
-        "PDB file for C1=CC=CC=C1 successfully created and saved to benzene.pdb."
+        "PDB file for C1=CC=CC=C1 successfully created and saved to "
+        "files/pdb/benzene.pdb."
     )
     assert molpdb.small_molecule_pdb(valid_smiles, get_registry) == expected_output
     assert os.path.exists("files/pdb/benzene.pdb")
@@ -323,19 +324,25 @@ def test_small_molecule_pdb(molpdb, get_registry):
 
     # test with valid molecule name
     valid_name = "water"
-    expected_output = "PDB file for water successfully created and saved to water.pdb."
+    expected_output = (
+        "PDB file for water successfully created and " "saved to files/pdb/water.pdb."
+    )
     assert molpdb.small_molecule_pdb(valid_name, get_registry) == expected_output
     assert os.path.exists("files/pdb/water.pdb")
     os.remove("files/pdb/water.pdb")  # Clean up
 
 
 def test_packmol_sm_download_called(packmol):
+    path_registry = PathRegistry()
+    path_registry._remove_path_from_json("water")
+    path_registry._remove_path_from_json("benzene")
+    path_registry.map_path("1A3N_144150", "files/pdb/1A3N_144150.pdb", "pdb")
     with patch(
         "mdagent.tools.base_tools.preprocess_tools.pdb_tools.PackMolTool._get_sm_pdbs",
         new=MagicMock(),
     ) as mock_get_sm_pdbs:
         test_values = {
-            "pdbfiles": ["1A3N_144150"],
+            "pdbfiles_id": ["1A3N_144150"],
             "small_molecules": ["water", "benzene"],
             "number_of_molecules": [1, 10, 10],
             "instructions": [
@@ -352,32 +359,32 @@ def test_packmol_sm_download_called(packmol):
 
 def test_packmol_download_only(packmol):
     path_registry = PathRegistry()
-    path_registry._remove_path_from_json("water.pdb")
-    path_registry._remove_path_from_json("benzene.pdb")
+    path_registry._remove_path_from_json("water")
+    path_registry._remove_path_from_json("benzene")
     small_molecules = ["water", "benzene"]
     packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("water.pdb")
-    assert os.path.exists("benzene.pdb")
-    os.remove("water.pdb")
-    os.remove("benzene.pdb")
+    assert os.path.exists("files/pdb/water.pdb")
+    assert os.path.exists("files/pdb/benzene.pdb")
+    os.remove("files/pdb/water.pdb")
+    os.remove("files/pdb/benzene.pdb")
 
 
 def test_packmol_download_only_once(packmol):
     path_registry = PathRegistry()
-    path_registry._remove_path_from_json("water.pdb")
+    path_registry._remove_path_from_json("water")
     small_molecules = ["water"]
     packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("water.pdb")
-    water_time = os.path.getmtime("water.pdb")
+    assert os.path.exists("files/pdb/water.pdb")
+    water_time = os.path.getmtime("files/pdb/water.pdb")
     time.sleep(5)
 
     # Call the function again with the same molecule
     packmol._get_sm_pdbs(small_molecules)
-    water_time_after = os.path.getmtime("water.pdb")
+    water_time_after = os.path.getmtime("files/pdb/water.pdb")
 
     assert water_time == water_time_after
     # Clean up
-    os.remove("water.pdb")
+    os.remove("files/pdb/water.pdb")
 
 
 mocked_files = {"files/solvents": ["water.pdb"]}
