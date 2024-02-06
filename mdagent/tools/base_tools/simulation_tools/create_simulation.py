@@ -136,7 +136,7 @@ class ModifySimulationScriptInput(BaseModel):
     query: str = Field(
         ...,
         description=(
-            "Simmulation required by the user.You MUST "
+            "Simulation required by the user. You MUST "
             "specify the objective, requirements of the simulation as well "
             "as on what protein you are working."
         ),
@@ -147,8 +147,8 @@ class ModifySimulationScriptInput(BaseModel):
 class ModifyBaseSimulationScriptTool(BaseTool):
     name: str = "ModifySimulationScriptTool"
     description: str = (
-        "This tool takes a base simulation script and a user "
-        "requirement and returns a modified script. "
+        "This tool takes a base simulation script and user "
+        "requirements and returns a modified script. "
     )
 
     args_schema = ModifySimulationScriptInput
