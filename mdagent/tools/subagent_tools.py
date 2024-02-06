@@ -17,10 +17,11 @@ class ExecuteSkillInputSchema(BaseModel):
 
 class RetryExecuteSkill(BaseTool):
     name = "RetryExecuteSkill"
-    description = """Only use this tool to execute a tool recently created
-    that previously failed to execute or hasn't been executed yet.
-    Make sure to include tool name and inputs arguments.
-    """
+    description = (
+        "Only use this tool to execute a tool recently created"
+        "that previously failed to execute or hasn't been executed yet."
+        "Make sure to include tool name and inputs arguments."
+    )
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = ExecuteSkillInputSchema
 
@@ -61,9 +62,11 @@ class SkillRetrievalInput(BaseModel):
 
 class SkillRetrieval(BaseTool):
     name = "SkillRetrieval"
-    description = """Only use this tool to retrieve skills that have been
-    made during the current iteration. Use this tool less than other tools.
-    """
+    description = (
+        "Only use this tool to retrieve skills that have been "
+        "made during the current iteration. Use this tool less than other tools. "
+        "Use this if there is no tool available that can be used "
+    )
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = SkillRetrievalInput
 
