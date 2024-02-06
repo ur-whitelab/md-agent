@@ -360,9 +360,10 @@ class PackmolBox:
 
         # validate final pdb
         pdb_validation = validate_pdb_format(f"{self.final_name}")
+        print("pdb_validation:", pdb_validation)
         if pdb_validation[0] == 0:
             # delete .inp files
-            os.remove("packmol.inp")
+            # os.remove("packmol.inp")
             for molecule in self.molecules:
                 os.remove(molecule.filename)
             # name of packed pdb file
@@ -374,14 +375,14 @@ class PackmolBox:
                 self.file_description,
             )
             # move file to files/pdb
-            print("succesfull!")
+            print("successfull!")
             return f"PDB file validated successfully. FileID: PACKED_{time_stamp}"
         elif pdb_validation[0] == 1:
             # format pdb_validation[1] list of errors
             errors = summarize_errors(pdb_validation[1])
             # delete .inp files
 
-            os.remove("packmol.inp")
+            # os.remove("packmol.inp")
             print("errors:", f"{errors}")
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
@@ -427,20 +428,29 @@ class PackmolInput(BaseModel):
     pdbfiles_id: typing.Optional[typing.List[str]] = Field(
         ..., description="List of PDB files id (path_registry) to pack into a box"
     )
+    small_molecules: typing.Optional[typing.List[str]] = Field(
+        [],
+        description=(
+            "List of small molecules to be packed in the system. "
+            "Examples: water, benzene, toluene, etc."
+        ),
+    )
+
     number_of_molecules: typing.Optional[typing.List[int]] = Field(
-        ..., description="List of number of molecules to pack into a box"
+        ...,
+        description=(
+            "List of number of instances of each species to pack into the box. "
+            "One number per species (either protein or small molecule) "
+        ),
     )
     instructions: typing.Optional[typing.List[List[str]]] = Field(
         ...,
         description=(
-            "List of instructions for each molecule. "
+            "List of instructions for each species. "
             "One List per Molecule. "
             "Every instruction should be one string like:\n"
             "'inside box 0. 0. 0. 90. 90. 90.'"
         ),
-    )
-    small_molecules: typing.Optional[typing.List[str]] = Field(
-        ..., description=("List of small molecules to be downloaded from MolPDB")
     )
 
 
@@ -448,14 +458,15 @@ class PackMolTool(BaseTool):
     name: str = "packmol_tool"
     description: str = (
         "Useful when you need to create a box "
-        "of different types of molecules.\n"
+        "of different types of chemical species.\n"
         "Three different examples:\n"
-        "pdbfiles_id: ['1a2b_123456', 'water_000000']\n"
+        "pdbfiles_id: ['1a2b_123456']\n"
+        "small_molecules: ['water'] \n"
         "number_of_molecules: [1, 1000]\n"
         "instructions: [['fixed 0. 0. 0. 0. 0. 0. \n centerofmass'], "
         "['inside box 0. 0. 0. 90. 90. 90.']]\n"
         "will pack 1 molecule of 1a2b_123456 at the origin "
-        "and 1000 molecules of water_000000. \n"
+        "and 1000 molecules of water. \n"
         "pdbfiles_id: ['1a2b_123456']\n"
         "number_of_molecules: [1]\n"
         "instructions: [['fixed  0. 0. 0. 0. 0. 0.' \n center]]\n"
@@ -485,6 +496,7 @@ class PackMolTool(BaseTool):
                 # download molecule using small_molecule_pdb from MolPDB
                 molpdb = MolPDB()
                 molpdb.small_molecule_pdb(molecule, self.path_registry)
+        print("small molecule pdbs created successfully")
 
     def _run(self, **values) -> str:
         """use the tool."""
@@ -496,22 +508,42 @@ class PackMolTool(BaseTool):
         except ValidationError as e:
             return str(e)
         error_msg = values.get("error", None)
+        if error_msg:
+            print("Error in inputs:", error_msg)
+            return f"Error in inputs: {error_msg}"
+        print("Starting Packmol Tool!")
         pdbfile_ids = values.get("pdbfiles_id", [])
         pdbfiles = [
             self.path_registry.get_mapped_path(pdbfile) for pdbfile in pdbfile_ids
         ]
         pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
         # copy them to the current directory with temp_ names
-        for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
-            os.system(f"cp {pdbfile} temp_{pdbfile_name}")
+
         pdbfile_names = [f"temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
         small_molecules = values.get("small_molecules", [])
         # make sure small molecules are all downloaded
         self._get_sm_pdbs(small_molecules)
-        if error_msg:
-            return error_msg
+        small_molecules_files = [
+            self.path_registry.get_mapped_path(sm) for sm in small_molecules
+        ]
+        small_molecules_file_names = [
+            small_molecule.split("/")[-1] for small_molecule in small_molecules_files
+        ]
+        small_molecules_file_names = [
+            f"temp_{small_molecule_file_name}"
+            for small_molecule_file_name in small_molecules_file_names
+        ]
+        # append small molecules to pdbfiles
+        pdbfiles.extend(small_molecules_files)
+        pdbfile_names.extend(small_molecules_file_names)
+        pdbfile_ids.extend(small_molecules)
+        print("pdbfiles:", pdbfiles)
+        print("pdbfile_names:", pdbfile_names)
+        print("pdbfile_ids:", pdbfile_ids)
+        for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
+            os.system(f"cp {pdbfile} {pdbfile_name}")
         # check if packmol is installed
         cmd = "command -v packmol"
         result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
@@ -526,6 +558,11 @@ class PackMolTool(BaseTool):
                     "'https://m3g.github.io/packmol/download.shtml'"
                     "and try again."
                 )
+        print("Running packmol!")
+        print("pdbfile_names:", pdbfile_names)
+        print("pdbfile_ids:", pdbfile_ids)
+        print("number_of_molecules:", number_of_molecules)
+        print("instructions:", instructions)
 
         return packmol_wrapper(
             self.path_registry,
@@ -541,17 +578,41 @@ class PackMolTool(BaseTool):
             print("values is a string", values)
             raise ValidationError("Input must be a dictionary")
         pdbfiles = values.get("pdbfiles_id", [])
+        small_molecules = values.get("small_molecules", [])
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
+        number_of_species = len(pdbfiles) + len(small_molecules)
 
-        if not (len(pdbfiles) == len(number_of_molecules) == len(instructions)):
+        if not number_of_species == len(number_of_molecules):
+            if not number_of_species == len(instructions):
+                return {
+                    "error": (
+                        "The length of number_of_molecules AND instructions "
+                        "must be equal to the number of species in the system. "
+                        f"You have {number_of_species} "
+                        f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                        "small molecules"
+                    )
+                }
             return {
                 "error": (
-                    "The lengths of pdbfiles, number_of_molecules, "
-                    "and instructions must be equal to use this tool."
+                    "The length of number_of_molecules must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
+                )
+            }
+        elif not number_of_species == len(instructions):
+            return {
+                "error": (
+                    "The length of instructions must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
                 )
             }
 
+        molPDB = MolPDB()
         for instruction in instructions:
             if len(instruction) != 1:
                 return {
@@ -595,7 +656,7 @@ class PackMolTool(BaseTool):
             if "_" not in pdbfile_id:
                 return {
                     "error": (
-                        f"{pdbfile_id} is not a valid pdbfile_id" "in the path_registry"
+                        f"{pdbfile_id} is not a valid pdbfile_id in the path_registry"
                     )
                 }
             if pdbfile_id not in file_ids:
@@ -610,6 +671,17 @@ class PackMolTool(BaseTool):
                         f"This are the files IDs: {ids_w_description} "
                     )
                 }
+            for small_molecule in small_molecules:
+                if small_molecule not in file_ids:
+                    result = molPDB.small_molecule_pdb(small_molecule, registry)
+                    if "successfully" not in result:
+                        return {
+                            "error": (
+                                f"{small_molecule} could not be converted to a pdb "
+                                "file. Try with a different name, or with the SMILES "
+                                "of the small molecule"
+                            )
+                        }
         return values
 
     async def _arun(self, values: str) -> str:
@@ -1380,20 +1452,24 @@ class MolPDB:
                 mol_name = mol_str
             try:  # only if needed
                 m = Chem.AddHs(m)
-            except Exception:
+            except Exception:  # TODO: we should be more specific here
                 pass
             Chem.AllChem.EmbedMolecule(m)
-            file_name = f"{mol_name}.pdb"
+            file_name = f"files/pdb/{mol_name}.pdb"
             Chem.MolToPDBFile(m, file_name)
             # add to path registry
             if path_registry:
                 _ = path_registry.map_path(
-                    file_name, file_name, f"pdb file for the small molecule {mol_name}"
+                    mol_name, file_name, f"pdb file for the small molecule {mol_name}"
                 )
             return (
                 f"PDB file for {mol_str} successfully created and saved to {file_name}."
             )
-        except Exception:
+        except Exception:  # TODO: we should be more specific here
+            print(
+                "There was an error getting pdb. Please input a single molecule name."
+                f"{mol_str},{mol_name}, {smi}"
+            )
             return (
                 "There was an error getting pdb. Please input a single molecule name."
             )
