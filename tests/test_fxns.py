@@ -309,8 +309,8 @@ def test_small_molecule_pdb(molpdb, get_registry):
         "PDB file for C1=CC=CC=C1 successfully created and saved to benzene.pdb."
     )
     assert molpdb.small_molecule_pdb(valid_smiles, get_registry) == expected_output
-    assert os.path.exists("benzene.pdb")
-    os.remove("benzene.pdb")  # Clean up
+    assert os.path.exists("files/pdb/benzene.pdb")
+    os.remove("files/pdb/benzene.pdb")  # Clean up
 
     # test with invalid SMILES string and invalid molecule name
     invalid_smiles = "C1=CC=CC=C1X"
@@ -325,8 +325,8 @@ def test_small_molecule_pdb(molpdb, get_registry):
     valid_name = "water"
     expected_output = "PDB file for water successfully created and saved to water.pdb."
     assert molpdb.small_molecule_pdb(valid_name, get_registry) == expected_output
-    assert os.path.exists("water.pdb")
-    os.remove("water.pdb")  # Clean up
+    assert os.path.exists("files/pdb/water.pdb")
+    os.remove("files/pdb/water.pdb")  # Clean up
 
 
 def test_packmol_sm_download_called(packmol):
@@ -336,12 +336,13 @@ def test_packmol_sm_download_called(packmol):
     ) as mock_get_sm_pdbs:
         test_values = {
             "pdbfiles": ["1A3N_144150"],
-            "number_of_molecules": [1, 10],
+            "small_molecules": ["water", "benzene"],
+            "number_of_molecules": [1, 10, 10],
             "instructions": [
                 ["inside box 0. 0. 0. 100. 100. 100."],
                 ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
             ],
-            "small_molecules": ["water", "benzene"],
         }
 
         packmol._run(**test_values)
