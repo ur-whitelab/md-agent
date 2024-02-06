@@ -257,10 +257,17 @@ def test_map_path():
     mock_json_data = {
         "existing_name": {
             "path": "existing/path",
+            "name": "path",
             "description": "Existing description",
         }
     }
-    new_path_dict = {"new_name": {"path": "new/path", "description": "New description"}}
+    new_path_dict = {
+        "new_name": {
+            "path": "new/path",
+            "name": "path",
+            "description": "New description",
+        }
+    }
     updated_json_data = {**mock_json_data, **new_path_dict}
 
     path_registry = PathRegistry()
@@ -370,3 +377,32 @@ def test_packmol_download_only_once(packmol):
     assert water_time == water_time_after
     # Clean up
     os.remove("water.pdb")
+
+
+mocked_files = {"files/solvents": ["water.pdb"]}
+
+
+def mock_exists(path):
+    return path in mocked_files
+
+
+def mock_listdir(path):
+    return mocked_files.get(path, [])
+
+
+@pytest.fixture
+def path_registry_with_mocked_fs():
+    with patch("os.path.exists", side_effect=mock_exists):
+        with patch("os.listdir", side_effect=mock_listdir):
+            registry = PathRegistry()
+            registry.get_timestamp = lambda: "20240109"
+            return registry
+
+
+def test_init_path_registry(path_registry_with_mocked_fs):
+    # This test will run with the mocked file system
+    # Here, you can assert if 'water.pdb' under 'solvents' is registered correctly
+    # Depending on how your PathRegistry class stores the registry,
+    # you may need to check the internal state or the contents of the JSON file.
+    # For example:
+    assert "water_000000" in path_registry_with_mocked_fs.list_path_names()
