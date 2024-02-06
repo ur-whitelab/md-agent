@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from mdagent.utils import FileType, PathRegistry
 
 
-class ModifyScriptUtils:
+class ModifySimulationScriptUtils:
     llm: Optional[BaseLanguageModel]
 
     def __init__(self, llm):
@@ -90,7 +90,7 @@ simulation.step(10000)
 
     def _prompt_summary(self, query: str, llm: BaseLanguageModel = None):
         if not llm:
-            raise ValueError("No language model provided at ModifyScriptTool")
+            raise ValueError("No language model provided at ModifySimulationScriptTool")
 
         prompt_template = (
             "You're an expert programmer and in molecular dynamics. "
@@ -132,7 +132,7 @@ simulation.step(10000)
         return "\n".join(stripped_lines)
 
 
-class ModifyScriptInput(BaseModel):
+class ModifySimulationScriptInput(BaseModel):
     query: str = Field(
         ...,
         description=(
@@ -145,13 +145,13 @@ class ModifyScriptInput(BaseModel):
 
 
 class ModifyBaseSimulationScriptTool(BaseTool):
-    name: str = "ModifyScriptTool"
+    name: str = "ModifySimulationScriptTool"
     description: str = (
         "This tool takes a base simulation script and a user "
         "requirement and returns a modified script. "
     )
 
-    args_schema = ModifyScriptInput
+    args_schema = ModifySimulationScriptInput
     llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
 
@@ -162,7 +162,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
 
     def _run(self, *args, **input):
         if self.llm is None:  # this should not happen
-            print("No language model provided at ModifyScriptTool")
+            print("No language model provided at ModifySimulationScriptTool")
             return "llm not initialized"
         if len(args) > 0:
             return (
@@ -183,7 +183,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         with open(base_script_path, "r") as file:
             base_script = file.read()
         base_script = "".join(base_script)
-        utils = ModifyScriptUtils(self.llm)
+        utils = ModifySimulationScriptUtils(self.llm)
 
         description = input.get("query")
         answer = utils._prompt_summary(

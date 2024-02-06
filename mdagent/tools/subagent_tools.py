@@ -63,9 +63,9 @@ class SkillRetrievalInput(BaseModel):
 class SkillRetrieval(BaseTool):
     name = "SkillRetrieval"
     description = (
-        "Only use this tool to retrieve skills that have been "
-        "made during the current iteration. Use this tool less than other tools. "
-        "Use this if there is no tool available that can be used "
+        "Only use this tool to retrieve new skills you created during "
+        "the current iteration. Use this tool less than other tools. Use "
+        "this if there is no tool available that can be used for the task."
     )
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = SkillRetrievalInput
