@@ -360,7 +360,6 @@ class PackmolBox:
 
         # validate final pdb
         pdb_validation = validate_pdb_format(f"{self.final_name}")
-        print("pdb_validation:", pdb_validation)
         if pdb_validation[0] == 0:
             # delete .inp files
             # os.remove("packmol.inp")
@@ -489,14 +488,13 @@ class PackMolTool(BaseTool):
 
     def _get_sm_pdbs(self, small_molecules):
         all_files = self.path_registry.list_path_names()
-        print(all_files)
         for molecule in small_molecules:
             # check path registry for molecule.pdb
             if molecule not in all_files:
                 # download molecule using small_molecule_pdb from MolPDB
                 molpdb = MolPDB()
                 molpdb.small_molecule_pdb(molecule, self.path_registry)
-        print("small molecule pdbs created successfully")
+        print("Small molecules PDBs created successfully")
 
     def _run(self, **values) -> str:
         """use the tool."""
@@ -509,7 +507,7 @@ class PackMolTool(BaseTool):
             return str(e)
         error_msg = values.get("error", None)
         if error_msg:
-            print("Error in inputs:", error_msg)
+            print("Error in Packmol inputs:", error_msg)
             return f"Error in inputs: {error_msg}"
         print("Starting Packmol Tool!")
         pdbfile_ids = values.get("pdbfiles_id", [])
@@ -539,9 +537,7 @@ class PackMolTool(BaseTool):
         pdbfiles.extend(small_molecules_files)
         pdbfile_names.extend(small_molecules_file_names)
         pdbfile_ids.extend(small_molecules)
-        print("pdbfiles:", pdbfiles)
-        print("pdbfile_names:", pdbfile_names)
-        print("pdbfile_ids:", pdbfile_ids)
+
         for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
             os.system(f"cp {pdbfile} {pdbfile_name}")
         # check if packmol is installed
@@ -558,11 +554,6 @@ class PackMolTool(BaseTool):
                     "'https://m3g.github.io/packmol/download.shtml'"
                     "and try again."
                 )
-        print("Running packmol!")
-        print("pdbfile_names:", pdbfile_names)
-        print("pdbfile_ids:", pdbfile_ids)
-        print("number_of_molecules:", number_of_molecules)
-        print("instructions:", instructions)
 
         return packmol_wrapper(
             self.path_registry,
