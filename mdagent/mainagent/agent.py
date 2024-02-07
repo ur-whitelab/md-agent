@@ -7,7 +7,7 @@ from langchain.chat_models import ChatOpenAI
 from mdagent.subagents import SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
-from ..tools import make_all_tools
+from ..tools import get_tools, make_all_tools
 from .prompt import openaifxn_prompt, structured_prompt
 
 load_dotenv()
@@ -35,7 +35,7 @@ class MDAgent:
     def __init__(
         self,
         tools=None,
-        agent_type="OpenAIFunctionsAgent",  # this can also be strucured_chat
+        agent_type="OpenAIFunctionsAgent",  # this can also be structured_chat
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
         tools_model="gpt-4-1106-preview",
         temp=0.1,
@@ -45,14 +45,21 @@ class MDAgent:
         subagents_model="gpt-4-1106-preview",
         ckpt_dir="ckpt",
         resume=False,
-        top_k_tools=10,
+        top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
         use_human_tool=False,
+        uploaded_files=[],  # user input files to add to path registry
     ):
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
-        if tools is None:
-            tools_llm = _make_llm(tools_model, temp, verbose)
-            tools = make_all_tools(tools_llm, human=use_human_tool)
+        self.uploaded_files = uploaded_files
+        for file in uploaded_files:  # todo -> allow users to add descriptions?
+            path_registry.map_path(file, file, description="User uploaded file")
+
+        self.agent_type = agent_type
+        self.user_tools = tools
+        self.tools_llm = _make_llm(tools_model, temp, verbose)
+        self.top_k_tools = top_k_tools
+        self.use_human_tool = use_human_tool
 
         self.llm = ChatOpenAI(
             temperature=temp,
@@ -61,11 +68,7 @@ class MDAgent:
             streaming=True,
             callbacks=[StreamingStdOutCallbackHandler()],
         )
-        self.agent = AgentExecutor.from_agent_and_tools(
-            tools=tools,
-            agent=AgentType.get_agent(agent_type).from_llm_and_tools(self.llm, tools),
-            handle_parsing_errors=True,
-        )
+
         # assign prompt
         if agent_type == "Structured":
             self.prompt = structured_prompt
@@ -80,9 +83,37 @@ class MDAgent:
             verbose=verbose,
             ckpt_dir=ckpt_dir,
             resume=resume,
-            retrieval_top_k=top_k_tools,
+        )
+
+    def _initialize_tools_and_agent(self, user_input=None):
+        """Retrieve tools and initialize the agent."""
+        if self.user_tools is not None:
+            self.tools = self.user_tools
+        else:
+            if self.top_k_tools != "all" and user_input is not None:
+                # retrieve only tools relevant to user input
+                self.tools = get_tools(
+                    query=user_input,
+                    llm=self.tools_llm,
+                    subagent_settings=self.subagents_settings,
+                    human=self.use_human_tool,
+                )
+            else:
+                # retrieve all tools, including new tools if any
+                self.tools = make_all_tools(
+                    self.tools_llm,
+                    subagent_settings=self.subagents_settings,
+                    human=self.use_human_tool,
+                )
+        return AgentExecutor.from_agent_and_tools(
+            tools=self.tools,
+            agent=AgentType.get_agent(self.agent_type).from_llm_and_tools(
+                self.llm,
+                self.tools,
+            ),
+            handle_parsing_errors=True,
         )
 
     def run(self, user_input, callbacks=None):
-        # todo: check this for both agent types
+        self.agent = self._initialize_tools_and_agent(user_input)
         return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
