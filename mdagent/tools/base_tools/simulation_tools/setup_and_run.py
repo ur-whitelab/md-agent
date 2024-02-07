@@ -688,7 +688,7 @@ class OpenMMSimulation:
         print("Building system...")
         st.markdown("Building system", unsafe_allow_html=True)
         self.pdb_id = self.params["pdb_id"]
-        self.pdb_path = self.path_registry.get_mapped_path(name=self.pdb_id)
+        self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
         self.forcefield = ForceField(*self.params["forcefield_files"])
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)

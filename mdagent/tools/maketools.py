@@ -20,13 +20,14 @@ from .base_tools import (
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
-    Name2PDBTool,
     PackMolTool,
     PPIDistance,
+    ProteinName2PDBTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
     SimulationOutputFigures,
+    SmallMolPDB,
     VisualizeProtein,
 )
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
@@ -81,8 +82,9 @@ def make_all_tools(
         CheckDirectoryFiles(),
         ListRegistryPaths(path_registry=path_instance),
         #    MapPath2Name(path_registry=path_instance),
-        Name2PDBTool(path_registry=path_instance),
+        ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
+        SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
         PPIDistance(),
         RMSDCalculator(),
@@ -192,7 +194,8 @@ class CreateNewToolInputSchema(BaseModel):
     orig_prompt: str = Field(description="Full user prompt you got from the beginning.")
     curr_tools: str = Field(
         description="""List of all tools you have access to. Such as
-        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+        this tool, 'ExecuteSkill',
+        'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
     )
     execute: Optional[bool] = Field(
         True,

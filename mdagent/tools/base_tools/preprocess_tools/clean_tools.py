@@ -296,17 +296,17 @@ class CleaningToolFunction(BaseTool):
             file_description = "Cleaned File: "
             CleaningTools()
             try:
-                pdbfile = self.path_registry.get_mapped_path(pdbfile_id)
-                if "/" in pdbfile:
-                    pdbfile = pdbfile.split("/")[-1]
-
-                name = pdbfile.split("_")[0]
-                end = pdbfile.split(".")[1]
+                pdbfile_path = self.path_registry.get_mapped_path(pdbfile_id)
+                if "/" in pdbfile_path:
+                    pdbfile = pdbfile_path.split("/")[-1]
+                else:
+                    pdbfile = pdbfile_path
+                name, end = pdbfile.split(".")
 
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
                 return "File not found in path registry. "
-            fixer = PDBFixer(filename=pdbfile)
+            fixer = PDBFixer(filename=pdbfile_path)
             try:
                 fixer.findMissingResidues()
             except Exception:
@@ -353,7 +353,7 @@ class CleaningToolFunction(BaseTool):
             file_mode = "w" if add_hydrogens else "a"
             file_name = self.path_registry.write_file_name(
                 type=FileType.PROTEIN,
-                protein_name=name,
+                protein_name=name.split("_")[0],
                 description="Clean",
                 file_format=end,
             )
