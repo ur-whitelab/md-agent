@@ -5,15 +5,16 @@ from .clean_tools import (
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
 )
-from .pdb_tools import Name2PDBTool, PackMolTool, get_pdb
+from .pdb_tools import PackMolTool, ProteinName2PDBTool, SmallMolPDB, get_pdb
 
 __all__ = [
     "AddHydrogensCleaningTool",
     "CleaningTools",
-    "Name2PDBTool",
+    "ProteinName2PDBTool",
     "PackMolTool",
     "RemoveWaterCleaningTool",
     "SpecializedCleanTool",
     "get_pdb",
     "CleaningToolFunction",
+    "SmallMolPDB",
 ]

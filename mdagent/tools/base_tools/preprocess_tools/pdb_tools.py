@@ -6,11 +6,15 @@ import typing
 from typing import Any, Dict, List, Optional, Type, Union
 
 import requests
+import streamlit as st
 from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
+from rdkit import Chem
 
 from mdagent.utils import FileType, PathRegistry
+
+from .elements import list_of_elements
 
 
 def get_pdb(query_string, path_registry=None):
@@ -39,6 +43,7 @@ def get_pdb(query_string, path_registry=None):
     if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
         pdbid = r.json()["result_set"][0]["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
+        st.markdown(f"PDB file found with this ID: {pdbid}", unsafe_allow_html=True)
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
         pdb = requests.get(url)
         filename = path_registry.write_file_name(
@@ -60,17 +65,18 @@ def get_pdb(query_string, path_registry=None):
     return None
 
 
-class Name2PDBTool(BaseTool):
+class ProteinName2PDBTool(BaseTool):
     name = "PDBFileDownloader"
-    description = """This tool downloads PDB (Protein Data Bank) or
-                    CIF (Crystallographic Information File) files using
-                    commercial chemical names. It’s ideal for situations where
-                    you need to directly retrieve these file using a chemical’s
-                    commercial name. When a specific file type, either PDB or CIF,
-                    is requested, add file type to the query string with space.
-                    Input: Commercial name of the chemical or file without
-                    file extension
-                    Output: Corresponding PDB or CIF file"""
+    description = (
+        "This tool downloads PDB (Protein Data Bank) or"
+        "CIF (Crystallographic Information File) files using"
+        "a protein's common name (NOT a small molecule)."
+        "When a specific file type, either PDB or CIF,"
+        "is requested, add file type to the query string with space."
+        "Input: Commercial name of the protein or file without"
+        "file extension"
+        "Output: Corresponding PDB or CIF file"
+    )
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):
@@ -102,7 +108,8 @@ class Name2PDBTool(BaseTool):
 
 """validate_pdb_format: validates a pdb file against the pdb format specification
    packmol_wrapper: takes in a list of pdb files, a
-   list of number of molecules and a list of instructions and returns a packed pdb file
+   list of number of molecules, a list of instructions, and a list of small molecules
+   and returns a packed pdb file
    Molecule: class that represents a molecule (helpful for packmol
    PackmolBox: class that represents a box of molecules (helpful for packmol)
    summarize_errors: function that summarizes the errors found by validate_pdb_format
@@ -306,7 +313,7 @@ class PackmolBox:
                 ]
             )
         )
-        while os.path.exists(f"{_final_name}_v{self.file_number}.pdb"):
+        while os.path.exists(f"files/pdb/{_final_name}_v{self.file_number}.pdb"):
             self.file_number += 1
 
         self.final_name = f"{_final_name}_v{self.file_number}.pdb"
@@ -355,7 +362,7 @@ class PackmolBox:
         pdb_validation = validate_pdb_format(f"{self.final_name}")
         if pdb_validation[0] == 0:
             # delete .inp files
-            os.remove("packmol.inp")
+            # os.remove("packmol.inp")
             for molecule in self.molecules:
                 os.remove(molecule.filename)
             # name of packed pdb file
@@ -367,13 +374,15 @@ class PackmolBox:
                 self.file_description,
             )
             # move file to files/pdb
+            print("successfull!")
             return f"PDB file validated successfully. FileID: PACKED_{time_stamp}"
         elif pdb_validation[0] == 1:
             # format pdb_validation[1] list of errors
             errors = summarize_errors(pdb_validation[1])
             # delete .inp files
 
-            os.remove("packmol.inp")
+            # os.remove("packmol.inp")
+            print("errors:", f"{errors}")
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
 
@@ -394,9 +403,12 @@ def packmol_wrapper(
     # create a box
     box = PackmolBox()
     # add molecules to the box
-    for pdbfile, file_id, number_of_molecules, instructions in zip(
-        pdbfiles, files_id, number_of_molecules, instructions
-    ):
+    for (
+        pdbfile,
+        file_id,
+        number_of_molecules,
+        instructions,
+    ) in zip(pdbfiles, files_id, number_of_molecules, instructions):
         molecule = Molecule(pdbfile, file_id, number_of_molecules, instructions)
         box.add_molecule(molecule)
     # generate input header
@@ -415,13 +427,25 @@ class PackmolInput(BaseModel):
     pdbfiles_id: typing.Optional[typing.List[str]] = Field(
         ..., description="List of PDB files id (path_registry) to pack into a box"
     )
+    small_molecules: typing.Optional[typing.List[str]] = Field(
+        [],
+        description=(
+            "List of small molecules to be packed in the system. "
+            "Examples: water, benzene, toluene, etc."
+        ),
+    )
+
     number_of_molecules: typing.Optional[typing.List[int]] = Field(
-        ..., description="List of number of molecules to pack into a box"
+        ...,
+        description=(
+            "List of number of instances of each species to pack into the box. "
+            "One number per species (either protein or small molecule) "
+        ),
     )
     instructions: typing.Optional[typing.List[List[str]]] = Field(
         ...,
         description=(
-            "List of instructions for each molecule. "
+            "List of instructions for each species. "
             "One List per Molecule. "
             "Every instruction should be one string like:\n"
             "'inside box 0. 0. 0. 90. 90. 90.'"
@@ -433,17 +457,19 @@ class PackMolTool(BaseTool):
     name: str = "packmol_tool"
     description: str = (
         "Useful when you need to create a box "
-        "of different types of molecules.\n"
+        "of different types of chemical species.\n"
         "Three different examples:\n"
-        "pdbfiles_id: ['1a2b_123456', 'water_000000']\n"
+        "pdbfiles_id: ['1a2b_123456']\n"
+        "small_molecules: ['water'] \n"
         "number_of_molecules: [1, 1000]\n"
-        "instructions: [['inside box 0. 0. 0. 90. 90. 90.'], "
+        "instructions: [['fixed 0. 0. 0. 0. 0. 0. \n centerofmass'], "
         "['inside box 0. 0. 0. 90. 90. 90.']]\n"
-        "will pack 1 molecule of 1a2b_123456 and 1000 molecules of water_000000. \n"
+        "will pack 1 molecule of 1a2b_123456 at the origin "
+        "and 1000 molecules of water. \n"
         "pdbfiles_id: ['1a2b_123456']\n"
         "number_of_molecules: [1]\n"
-        "instructions: [['center\n fixed  0. 0. 0. 0. 0. 0.']]\n"
-        "This will fix the center of protein 1a2b_123456 at "
+        "instructions: [['fixed  0. 0. 0. 0. 0. 0.' \n center]]\n"
+        "This will fix the barocenter of protein 1a2b_123456 at "
         "the center of the box with no rotation.\n"
         "pdbfiles_id: ['1a2b_123456']\n"
         "number_of_molecules: [1]\n"
@@ -460,6 +486,16 @@ class PackMolTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    def _get_sm_pdbs(self, small_molecules):
+        all_files = self.path_registry.list_path_names()
+        for molecule in small_molecules:
+            # check path registry for molecule.pdb
+            if molecule not in all_files:
+                # download molecule using small_molecule_pdb from MolPDB
+                molpdb = MolPDB()
+                molpdb.small_molecule_pdb(molecule, self.path_registry)
+        print("Small molecules PDBs created successfully")
+
     def _run(self, **values) -> str:
         """use the tool."""
 
@@ -470,19 +506,40 @@ class PackMolTool(BaseTool):
         except ValidationError as e:
             return str(e)
         error_msg = values.get("error", None)
+        if error_msg:
+            print("Error in Packmol inputs:", error_msg)
+            return f"Error in inputs: {error_msg}"
+        print("Starting Packmol Tool!")
         pdbfile_ids = values.get("pdbfiles_id", [])
         pdbfiles = [
             self.path_registry.get_mapped_path(pdbfile) for pdbfile in pdbfile_ids
         ]
         pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
         # copy them to the current directory with temp_ names
-        for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
-            os.system(f"cp {pdbfile} temp_{pdbfile_name}")
+
         pdbfile_names = [f"temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
-        if error_msg:
-            return error_msg
+        small_molecules = values.get("small_molecules", [])
+        # make sure small molecules are all downloaded
+        self._get_sm_pdbs(small_molecules)
+        small_molecules_files = [
+            self.path_registry.get_mapped_path(sm) for sm in small_molecules
+        ]
+        small_molecules_file_names = [
+            small_molecule.split("/")[-1] for small_molecule in small_molecules_files
+        ]
+        small_molecules_file_names = [
+            f"temp_{small_molecule_file_name}"
+            for small_molecule_file_name in small_molecules_file_names
+        ]
+        # append small molecules to pdbfiles
+        pdbfiles.extend(small_molecules_files)
+        pdbfile_names.extend(small_molecules_file_names)
+        pdbfile_ids.extend(small_molecules)
+
+        for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
+            os.system(f"cp {pdbfile} {pdbfile_name}")
         # check if packmol is installed
         cmd = "command -v packmol"
         result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
@@ -491,10 +548,11 @@ class PackMolTool(BaseTool):
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
-                print("Packmol is not installed")
                 return (
-                    "Packmol is not installed. Please install packmol "
-                    "at 'https://m3g.github.io/packmol/download.shtml' and try again."
+                    "Packmol is not installed. Please install"
+                    "packmol at "
+                    "'https://m3g.github.io/packmol/download.shtml'"
+                    "and try again."
                 )
 
         return packmol_wrapper(
@@ -511,17 +569,41 @@ class PackMolTool(BaseTool):
             print("values is a string", values)
             raise ValidationError("Input must be a dictionary")
         pdbfiles = values.get("pdbfiles_id", [])
+        small_molecules = values.get("small_molecules", [])
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
+        number_of_species = len(pdbfiles) + len(small_molecules)
 
-        if not (len(pdbfiles) == len(number_of_molecules) == len(instructions)):
+        if not number_of_species == len(number_of_molecules):
+            if not number_of_species == len(instructions):
+                return {
+                    "error": (
+                        "The length of number_of_molecules AND instructions "
+                        "must be equal to the number of species in the system. "
+                        f"You have {number_of_species} "
+                        f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                        "small molecules"
+                    )
+                }
             return {
                 "error": (
-                    "The lengths of pdbfiles, number_of_molecules, "
-                    "and instructions must be equal to use this tool."
+                    "The length of number_of_molecules must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
+                )
+            }
+        elif not number_of_species == len(instructions):
+            return {
+                "error": (
+                    "The length of instructions must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
                 )
             }
 
+        molPDB = MolPDB()
         for instruction in instructions:
             if len(instruction) != 1:
                 return {
@@ -531,20 +613,32 @@ class PackMolTool(BaseTool):
                     )
                 }
             # TODO enhance this validation with more packmol instructions
-            if instruction[0].split(" ")[0] not in [
+            first_word = instruction[0].split(" ")[0]
+            if first_word == "center":
+                if len(instruction[0].split(" ")) == 1:
+                    return {
+                        "error": (
+                            "The instruction 'center' must be accompanied by more "
+                            "instructions. Example 'fixed 0. 0. 0. 0. 0. 0.' "
+                            "The complete instruction would be: 'center \n fixed 0. 0. "
+                            "0. 0. 0. 0.' with a newline separating the two "
+                            "instructions."
+                        )
+                    }
+            elif first_word not in [
                 "inside",
-                "center",
                 "outside",
                 "fixed",
             ]:
                 return {
                     "error": (
                         "The first word of each instruction must be one of "
-                        "'inside' or 'center' or 'outside' or 'fixed' \n"
+                        "'inside' or 'outside' or 'fixed' \n"
                         "examples: center \n fixed 0. 0. 0. 0. 0. 0.,\n"
                         "inside box -10. 0. 0. 10. 10. 10. \n"
                     )
                 }
+
         # Further validation, e.g., checking if files exist
         registry = PathRegistry()
         file_ids = registry.list_path_names()
@@ -553,7 +647,7 @@ class PackMolTool(BaseTool):
             if "_" not in pdbfile_id:
                 return {
                     "error": (
-                        f"{pdbfile_id} is not a valid pdbfile_id" "in the path_registry"
+                        f"{pdbfile_id} is not a valid pdbfile_id in the path_registry"
                     )
                 }
             if pdbfile_id not in file_ids:
@@ -568,6 +662,17 @@ class PackMolTool(BaseTool):
                         f"This are the files IDs: {ids_w_description} "
                     )
                 }
+            for small_molecule in small_molecules:
+                if small_molecule not in file_ids:
+                    result = molPDB.small_molecule_pdb(small_molecule, registry)
+                    if "successfully" not in result:
+                        return {
+                            "error": (
+                                f"{small_molecule} could not be converted to a pdb "
+                                "file. Try with a different name, or with the SMILES "
+                                "of the small molecule"
+                            )
+                        }
         return values
 
     async def _arun(self, values: str) -> str:
@@ -579,230 +684,8 @@ class PackMolTool(BaseTool):
 
 
 class PDBsummarizerfxns:
-    list_of_elements = [
-        " H",
-        "He",
-        "Li",
-        "Be",
-        " B",
-        " C",
-        " N",
-        " O",
-        " F",
-        "Ne",
-        "Na",
-        "Mg",
-        "Al",
-        "Si",
-        " P",
-        " S",
-        "Cl",
-        "Ar",
-        " K",
-        "Ca",
-        "Sc",
-        "Ti",
-        " V",
-        "Cr",
-        "Mn",
-        "Fe",
-        "Co",
-        "Ni",
-        "Cu",
-        "Zn",
-        "Ga",
-        "Ge",
-        "As",
-        "Se",
-        "Br",
-        "Kr",
-        "Rb",
-        "Sr",
-        " Y",
-        "Zr",
-        "Nb",
-        "Mo",
-        "Tc",
-        "Ru",
-        "Rh",
-        "Pd",
-        "Ag",
-        "Cd",
-        "In",
-        "Sn",
-        "Sb",
-        "Te",
-        " I",
-        "Xe",
-        "Cs",
-        "Ba",
-        "La",
-        "Ce",
-        "Pr",
-        "Nd",
-        "Pm",
-        "Sm",
-        "Eu",
-        "Gd",
-        "Tb",
-        "Dy",
-        "Ho",
-        "Er",
-        "Tm",
-        "Yb",
-        "Lu",
-        "Hf",
-        "Ta",
-        " W",
-        "Re",
-        "Os",
-        "Ir",
-        "Pt",
-        "Au",
-        "Hg",
-        "Tl",
-        "Pb",
-        "Bi",
-        "Po",
-        "At",
-        "Rn",
-        "Fr",
-        "Ra",
-        "Ac",
-        "Th",
-        "Pa",
-        " U",
-        "Np",
-        "Pu",
-        "Am",
-        "Cm",
-        "Bk",
-        "Cf",
-        "Es",
-        "Fm",
-        "Md",
-        "No",
-        "Lr",
-        "Rf",
-        "Db",
-        "Sg",
-        "Bh",
-        "Hs",
-        "Mt",
-        "Ds",
-        "Rg",
-        "Cn",
-        "Nh",
-        "Fl",
-        "Mc",
-        "Lv",
-        "Ts",
-        "Og",
-        "HE",
-        "LI",
-        "BE",
-        "NE",
-        "NA",
-        "MG",
-        "AL",
-        "SI",
-        "CL",
-        "AR",
-        "CA",
-        "SC",
-        "TI",
-        "CR",
-        "MN",
-        "FE",
-        "CO",
-        "NI",
-        "CU",
-        "ZN",
-        "GA",
-        "GE",
-        "AS",
-        "SE",
-        "BR",
-        "KR",
-        "RB",
-        "SR",
-        " Y",
-        "ZR",
-        "NB",
-        "MO",
-        "TC",
-        "RU",
-        "RH",
-        "PD",
-        "AG",
-        "CD",
-        "IN",
-        "SN",
-        "SB",
-        "TE",
-        "XE",
-        "CS",
-        "BA",
-        "LA",
-        "CE",
-        "PR",
-        "ND",
-        "PM",
-        "SM",
-        "EU",
-        "GD",
-        "TB",
-        "DY",
-        "HO",
-        "ER",
-        "TM",
-        "YB",
-        "LU",
-        "HF",
-        "TA",
-        "RE",
-        "OS",
-        "IR",
-        "PT",
-        "AU",
-        "HG",
-        "TL",
-        "PB",
-        "BI",
-        "PO",
-        "AT",
-        "RN",
-        "FR",
-        "RA",
-        "AC",
-        "TH",
-        "PA",
-        "NP",
-        "PU",
-        "AM",
-        "CM",
-        "BK",
-        "CF",
-        "ES",
-        "FM",
-        "MD",
-        "NO",
-        "LR",
-        "RF",
-        "DB",
-        "SG",
-        "BH",
-        "HS",
-        "MT",
-        "DS",
-        "RG",
-        "CN",
-        "NH",
-        "FL",
-        "MC",
-        "LV",
-        "TS",
-    ]
+    def __init__(self):
+        self.list_of_elements = list_of_elements
 
     def _record_inf(self, pdbfile):
         with open(pdbfile, "r") as f:
@@ -847,9 +730,11 @@ class PDBsummarizerfxns:
         print(elements)
         if len(elements) != len(atoms):
             print(
-                f"""No elements in the ATOM records there are
-            {len(elements)} elements and {len(atoms)}
-            atoms records"""
+                (
+                    "No elements in the ATOM records there are"
+                    "{len(elements)} elements and {len(atoms)}"
+                    "atoms records"
+                )
             )
             return False
         elements = list(set(elements))
@@ -961,133 +846,18 @@ def pdb_summarizer(pdb_file):
     pdb.HETATM_tempFact = pdb._hetatm_have_tempFactor(pdb_file)
 
     output = (
-        f"PDB file: {pdb_file} has the following properties:\n"
-        f"Number of residues: {pdb.num_of_residues}\n"
-        f"Are elements identifiers present: {pdb.atoms}\n"
-        f"Are HETATM elements identifiers present: {pdb.HETATM}\n"
-        f"Are residue names present: {pdb.residues}\n"
-        f"Are box dimensions present: {pdb.box}\n"
-        f"Non-standard residues: {pdb.HETATM}"
+        f"PDB file: {pdb_file} has the following properties:"
+        "Number of residues: {pdb.num_of_residues}"
+        "Are elements identifiers present: {pdb.atoms}"
+        "Are HETATM elements identifiers present: {pdb.HETATM}"
+        "Are residue names present: {pdb.residues}"
+        "Are box dimensions present: {pdb.box}"
+        "Non-standard residues: {pdb.HETATM}"
     )
     return output
 
 
 def _fix_element_column(pdb_file, custom_element_dict=None):
-    elements = set(
-        (
-            "H",
-            "D",
-            "HE",
-            "LI",
-            "BE",
-            "B",
-            "C",
-            "N",
-            "O",
-            "F",
-            "NE",
-            "NA",
-            "MG",
-            "AL",
-            "SI",
-            "P",
-            "S",
-            "CL",
-            "AR",
-            "K",
-            "CA",
-            "SC",
-            "TI",
-            "V",
-            "CR",
-            "MN",
-            "FE",
-            "CO",
-            "NI",
-            "CU",
-            "ZN",
-            "GA",
-            "GE",
-            "AS",
-            "SE",
-            "BR",
-            "KR",
-            "RB",
-            "SR",
-            "Y",
-            "ZR",
-            "NB",
-            "MO",
-            "TC",
-            "RU",
-            "RH",
-            "PD",
-            "AG",
-            "CD",
-            "IN",
-            "SN",
-            "SB",
-            "TE",
-            "I",
-            "XE",
-            "CS",
-            "BA",
-            "LA",
-            "CE",
-            "PR",
-            "ND",
-            "PM",
-            "SM",
-            "EU",
-            "GD",
-            "TB",
-            "DY",
-            "HO",
-            "ER",
-            "TM",
-            "YB",
-            "LU",
-            "HF",
-            "TA",
-            "W",
-            "RE",
-            "OS",
-            "IR",
-            "PT",
-            "AU",
-            "HG",
-            "TL",
-            "PB",
-            "BI",
-            "PO",
-            "AT",
-            "RN",
-            "FR",
-            "RA",
-            "AC",
-            "TH",
-            "PA",
-            "U",
-            "NP",
-            "PU",
-            "AM",
-            "CM",
-            "BK",
-            "CF",
-            "ES",
-            "FM",
-            "MD",
-            "NO",
-            "LR",
-            "RF",
-            "DB",
-            "SG",
-            "BH",
-            "HS",
-            "MT",
-        )
-    )
-
     records = ("ATOM", "HETATM", "ANISOU")
     corrected_lines = []
     for line in pdb_file:
@@ -1103,7 +873,7 @@ def _fix_element_column(pdb_file, custom_element_dict=None):
                 else:
                     element = atom_name[0]
 
-            if element not in elements:
+            if element not in set(list_of_elements):
                 element = "  "  # empty element in case we cannot assign
 
             line = line[:76] + element.rjust(2) + line[78:]
@@ -1132,7 +902,7 @@ def fix_element_column(pdb_file, custom_element_dict=None):
         if atoms_have_elems and HETATM_have_elems:
             f.close()
             return (
-                "Element's column already filled with "
+                "Element's column already filled with"
                 "elements, no fix needed for elements"
             )
         print("I closed the initial file")
@@ -1187,8 +957,9 @@ class FixElementColumnArgs(BaseTool):
     pdb_file: str = Field(..., description="PDB file to be fixed")
     custom_element_dict: dict = Field(
         None,
-        description="""Custom element dictionary. If None,
-        the default dictionary is used""",
+        description=(
+            "Custom element dictionary. If None," "the default dictionary is used"
+        ),
     )
 
 
@@ -1262,8 +1033,10 @@ def fix_temp_factor_column(pdb_file, bfactor=1.00, only_fill=True):
         if atoms_have_bfactor and HETATM_have_bfactor and only_fill:
             # print("Im closing the file temp factor")
             f.close()
-            return """TempFact column filled with bfactor already,
-                    no fix needed for temp factor"""
+            return (
+                "TempFact column filled with bfactor already,"
+                "no fix needed for temp factor"
+            )
         f.close()
     # fix element column
     records = ("TITLE", "HEADER", "REMARK", "CRYST1", "HET", "LINK", "SEQRES")
@@ -1314,10 +1087,12 @@ class FixTempFactorColumnArgs(BaseTool):
     bfactor: float = Field(1.0, description="Bfactor value to use")
     only_fill: bool = Field(
         True,
-        description="""Only fill empty bfactor columns.
-        Avoids replacing existing values.
-        False if you want to replace all values
-        with the bfactor value""",
+        description=(
+            "Only fill empty bfactor columns."
+            "Avoids replacing existing values."
+            "False if you want to replace all values"
+            "with the bfactor value"
+        ),
     )
 
 
@@ -1375,8 +1150,10 @@ def fix_occupancy_columns(pdb_file, occupancy=1.0, only_fill=True):
         ), pdb._hetatom_have_occupancy(file_name)
         if atoms_have_bfactor and HETATM_have_bfactor and only_fill:
             f.close()
-            return """Occupancy column filled with occupancy
-            already, no fix needed for occupancy"""
+            return (
+                "Occupancy column filled with occupancy"
+                "already, no fix needed for occupancy"
+            )
         f.close()
     # fix element column
     records = ("TITLE", "HEADER", "REMARK", "CRYST1", "HET", "LINK", "SEQRES")
@@ -1426,10 +1203,12 @@ class FixOccupancyColumnArgs(BaseTool):
     occupancy: float = Field(1.0, description="Occupancy value to be set")
     only_fill: bool = Field(
         True,
-        description="""Only fill empty occupancy columns.
-        Avoids replacing existing values.
-        False if you want to replace all
-        values with the occupancy value""",
+        description=(
+            "Only fill empty occupancy columns."
+            "Avoids replacing existing values."
+            "False if you want to replace all"
+            "values with the occupancy value"
+        ),
     )
 
 
@@ -1459,23 +1238,29 @@ class PDBFilesFixInp(BaseModel):
     pdbfile: str = Field(..., description="PDB file to be fixed")
     ElemColum: typing.Optional[bool] = Field(
         False,
-        description="""List of fixes to be applied. If None, a
-        validation of what fixes are needed is performed.""",
+        description=(
+            "List of fixes to be applied. If None, a"
+            "validation of what fixes are needed is performed."
+        ),
     )
     tempFactor: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
-        description="""Tuple of     ( float, bool)
-                    first arg is the
-                    value to be set as the tempFill, and third arg indicates
-                    if only empty TempFactor columns have to be filled""",
+        description=(
+            "Tuple of     ( float, bool)"
+            "first arg is the"
+            "value to be set as the tempFill, and third arg indicates"
+            "if only empty TempFactor columns have to be filled"
+        ),
     )
     Occupancy: typing.Optional[typing.Tuple[float, bool]] = Field(
         (...),
-        description="""Tuple of (bool, float, bool)
-                        where first arg indicates if Occupancy
-                        fix has to be applied, second arg is the
-                        value to be set, and third arg indicates
-                        if only empty Occupancy columns have to be filled""",
+        description=(
+            "Tuple of (bool, float, bool)"
+            "where first arg indicates if Occupancy"
+            "fix has to be applied, second arg is the"
+            "value to be set, and third arg indicates"
+            "if only empty Occupancy columns have to be filled"
+        ),
     )
 
     @root_validator
@@ -1498,18 +1283,22 @@ class PDBFilesFixInp(BaseModel):
             if occupancy:
                 if len(occupancy) != 2:
                     return {
-                        "error": """if you want to fix the occupancy
-                            column argument must be a tuple of (bool, float)"""
+                        "error": (
+                            "if you want to fix the occupancy"
+                            "column argument must be a tuple of (bool, float)"
+                        )
                     }
                 if not isinstance(occupancy[0], float):
                     return {"error": "occupancy first arg must be a float"}
                 if not isinstance(occupancy[1], bool):
-                    return {"error": """occupancy second arg must be a bool"""}
+                    return {"error": "occupancy second arg must be a bool"}
             if tempFactor:
                 if len(tempFactor != 2):
                     return {
-                        "error": """if you want to fix the tempFactor
-                            column argument must be a tuple of (float, bool)"""
+                        "error": (
+                            "if you want to fix the tempFactor"
+                            "column argument must be a tuple of (float, bool)"
+                        )
                     }
                 if not isinstance(tempFactor[0], bool):
                     return {"error": "occupancy first arg must be a float"}
@@ -1526,9 +1315,9 @@ class FixPDBFile(BaseTool):
     description: str = "Fixes PDB files columns if needed"
     args_schema: Type[BaseModel] = PDBFilesFixInp
 
-    path_registry: typing.Optional[PathRegistry]
+    path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: typing.Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
@@ -1575,3 +1364,123 @@ class FixPDBFile(BaseTool):
                 return "PDB file fixed"
             else:
                 return "PDB not fully fixed"
+
+
+class MolPDB:
+    def is_smiles(self, text: str) -> bool:
+        try:
+            m = Chem.MolFromSmiles(text, sanitize=False)
+            if m is None:
+                return False
+            return True
+        except Exception:
+            return False
+
+    def largest_mol(
+        self, smiles: str
+    ) -> (
+        str
+    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/utils.py
+        ss = smiles.split(".")
+        ss.sort(key=lambda a: len(a))
+        while not self.is_smiles(ss[-1]):
+            rm = ss[-1]
+            ss.remove(rm)
+        return ss[-1]
+
+    def molname2smiles(
+        self, query: str
+    ) -> (
+        str
+    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/tools/databases.py
+        url = " https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/{}"
+        r = requests.get(url.format(query, "property/IsomericSMILES/JSON"))
+        # convert the response to a json object
+        data = r.json()
+        # return the SMILES string
+        try:
+            smi = data["PropertyTable"]["Properties"][0]["IsomericSMILES"]
+        except KeyError:
+            return (
+                "Could not find a molecule matching the text."
+                "One possible cause is that the input is incorrect, "
+                "input one molecule at a time."
+            )
+        # remove salts
+        return Chem.CanonSmiles(self.largest_mol(smi))
+
+    def smiles2name(self, smi: str) -> str:
+        try:
+            smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), canonical=True)
+        except Exception:
+            return "Invalid SMILES string"
+        # query the PubChem database
+        r = requests.get(
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/"
+            + smi
+            + "/synonyms/JSON"
+        )
+        data = r.json()
+        try:
+            name = data["InformationList"]["Information"][0]["Synonym"][0]
+        except KeyError:
+            return "Unknown Molecule"
+        return name
+
+    def small_molecule_pdb(self, mol_str: str, path_registry) -> str:
+        # takes in molecule name or smiles (converts to smiles if name)
+        # writes pdb file name.pdb (gets name from smiles if possible)
+        # output is done message
+        ps = Chem.SmilesParserParams()
+        ps.removeHs = False
+        try:
+            if self.is_smiles(mol_str):
+                m = Chem.MolFromSmiles(mol_str)
+                mol_name = self.smiles2name(mol_str)
+            else:  # if input is not smiles, try getting smiles
+                smi = self.molname2smiles(mol_str)
+                m = Chem.MolFromSmiles(smi)
+                mol_name = mol_str
+            try:  # only if needed
+                m = Chem.AddHs(m)
+            except Exception:  # TODO: we should be more specific here
+                pass
+            Chem.AllChem.EmbedMolecule(m)
+            file_name = f"files/pdb/{mol_name}.pdb"
+            Chem.MolToPDBFile(m, file_name)
+            # add to path registry
+            if path_registry:
+                _ = path_registry.map_path(
+                    mol_name, file_name, f"pdb file for the small molecule {mol_name}"
+                )
+            return (
+                f"PDB file for {mol_str} successfully created and saved to {file_name}."
+            )
+        except Exception:  # TODO: we should be more specific here
+            print(
+                "There was an error getting pdb. Please input a single molecule name."
+                f"{mol_str},{mol_name}, {smi}"
+            )
+            return (
+                "There was an error getting pdb. Please input a single molecule name."
+            )
+
+
+class SmallMolPDB(BaseTool):
+    name = "SmallMoleculePDB"
+    description = (
+        "Creates a PDB file for a small molecule"
+        "Use this tool when you need to use a small molecule in a simulation."
+        "Input can be a molecule name or a SMILES string."
+    )
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, mol_str: str) -> str:
+        """use the tool."""
+        mol_pdb = MolPDB()
+        output = mol_pdb.small_molecule_pdb(mol_str, self.path_registry)
+        return output

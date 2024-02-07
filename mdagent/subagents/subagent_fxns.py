@@ -2,6 +2,8 @@ import json
 import os
 from typing import Optional
 
+import streamlit as st
+
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
 
@@ -76,6 +78,7 @@ class Iterator:
         """
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
+        st.markdown("action agent is running, writing code", unsafe_allow_html=True)
         success, code, fxn_name, code_output = self.action._run_code(
             full_history, task, skills
         )
@@ -126,12 +129,20 @@ class Iterator:
 
                 # give successful code to tool/skill manager
                 print("\n\033[46mThe new code is complete, running skill agent\033[0m")
+                st.markdown(
+                    "The new code is complete, running skill agent",
+                    unsafe_allow_html=True,
+                )
                 tool_name = self.skill.add_new_tool(fxn_name, code)
                 return success, tool_name
             iter += 1
 
         # if max iterations reached without success, save failures to file
         print("\n\033[46m Max iterations reached, saving failed history to file\033[0m")
+        st.markdown(
+            "Max iterations reached, saving failed history to file",
+            unsafe_allow_html=True,
+        )
         tool_name = None
         full_failed = self._add_to_history(
             full_history,

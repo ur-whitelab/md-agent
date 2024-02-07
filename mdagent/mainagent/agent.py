@@ -47,9 +47,14 @@ class MDAgent:
         resume=False,
         top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
         use_human_tool=False,
+        uploaded_files=[],  # user input files to add to path registry
     ):
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
+        self.uploaded_files = uploaded_files
+        for file in uploaded_files:  # todo -> allow users to add descriptions?
+            path_registry.map_path(file, file, description="User uploaded file")
+
         self.agent_type = agent_type
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
