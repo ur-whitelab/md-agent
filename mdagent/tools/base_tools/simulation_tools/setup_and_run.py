@@ -1412,9 +1412,12 @@ class SetUpandRunFunction(BaseTool):
                     try:
                         processed_params[key] = float(value)
                     except TypeError as e:
-                        error_msg += f"""Invalid ewaldErrorTolerance: {e}.
-                        If you are using null or None, just dont include
-                        as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid ewaldErrorTolerance: {e}. "
+                            "If you are using null or None, "
+                            "just dont include it "
+                            "as part of the parameters.\n"
+                        )
                 if key == "constraints":
                     try:
                         if type(value) == str:
@@ -1427,14 +1430,19 @@ class SetUpandRunFunction(BaseTool):
                             elif value == "HAngles":
                                 processed_params[key] = HAngles
                             else:
-                                error_msg += f"""Invalid constraints. got {value}.
-                                             Try using None, HBonds, AllBonds,
-                                             HAngles"""
+                                error_msg += (
+                                    f"Invalid constraints: Got {value}. "
+                                    "Try using None, HBonds, AllBonds or "
+                                    "HAngles\n"
+                                )
                         else:
                             processed_params[key] = value
                     except TypeError as e:
-                        error_msg += f"""Invalid constraints: {e}. If you are using
-                        null or None, just dont include as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid constraints: {e}. If you are using "
+                            "null or None, just dont include as "
+                            "part of the parameters.\n"
+                        )
                 if key == "rigidWater" or key == "rigidwater":
                     if type(value) == bool:
                         processed_params[key] = value
@@ -1443,17 +1451,42 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "False":
                         processed_params[key] = False
                     else:
-                        error_msg += f"""Invalid rigidWater. got {value}.
-                                    Try using True or False.\n"""
+                        error_msg += (
+                            f"Invalid rigidWater: got {value}. "
+                            "Try using True or False.\n"
+                        )
                 if key == "constraintTolerance" or key == "constrainttolerance":
                     try:
                         processed_params[key] = float(value)
                     except ValueError as e:
-                        error_msg += f"Invalid constraintTolerance. {e}."
+                        error_msg += f"Invalid constraintTolerance: {e}."
                     except TypeError as e:
-                        error_msg += f"""Invalid constraintTolerance. {e}. If
-                        constraintTolerance is null or None,
-                        just dont include as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid constraintTolerance: {e}. If "
+                            "constraintTolerance is null or None, "
+                            "just dont include as part of "
+                            "the parameters.\n"
+                        )
+                if key == "solvate":
+                    try:
+                        if type(value) == bool:
+                            processed_params[key] = value
+                        elif value == "True":
+                            processed_params[key] = True
+                        elif value == "False":
+                            processed_params[key] = False
+                        else:
+                            error_msg += (
+                                f"Invalid solvate: got {value}. "
+                                "Use either True or False.\n"
+                            )
+                    except TypeError as e:
+                        error_msg += (
+                            f"Invalid solvate: {e}. If solvate is null or "
+                            "None, just dont include as part of "
+                            "the parameters.\n"
+                        )
+
             return processed_params, error_msg
         if param_type == "integrator_params":
             for key, value in user_params.items():
@@ -1467,9 +1500,11 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "Brownian" or value == BrownianIntegrator:
                         processed_params[key] = "Brownian"
                     else:
-                        error_msg += f"""\nInvalid integrator_type. got {value}.
-                                         Try using LangevinMiddle, Langevin,
-                                         Verlet, or Brownian."""
+                        error_msg += (
+                            f"Invalid integrator_type: got {value}. "
+                            "Try using LangevinMiddle, Langevin, "
+                            "Verlet, or Brownian.\n"
+                        )
                 if key == "Temperature" or key == "temperature":
                     temperature, msg = self.parse_temperature(value)
                     processed_params[key] = temperature
@@ -1498,8 +1533,10 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "NVE":
                         processed_params[key] = "NVE"
                     else:
-                        error_msg += f"""Invalid Ensemble. got {value}.
-                                         Try using NPT, NVT, or NVE."""
+                        error_msg += (
+                            f"Invalid Ensemble. got {value}. "
+                            "Try using NPT, NVT, or NVE.\n"
+                        )
 
                 if key == "Number of Steps" or key == "number of steps":
                     processed_params[key] = int(value)
@@ -1530,6 +1567,7 @@ class SetUpandRunFunction(BaseTool):
                 "constraints": AllBonds,
                 "rigidWater": True,
                 "constraintTolerance": 0.00001,
+                "solvate": False,
             }
         integrator_params = values.get("integrator_params")
         if integrator_params:
