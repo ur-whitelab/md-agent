@@ -579,6 +579,7 @@ class SetUpandRunFunctionInput(BaseModel):
             "constraints": "None",
             "rigidWater": False,
             "constraintTolerance": None,
+            "solvate": False,
         },
         description=(
             "Parameters for the openmm system. "
@@ -602,7 +603,8 @@ class SetUpandRunFunctionInput(BaseModel):
             "'nonbondedCutoff': 1.0,\n"
             "'constraints': 'HBonds',\n"
             "'rigidWater': True,\n"
-            "'constraintTolerance': 0.00001} "
+            "'constraintTolerance': 0.00001,\n"
+            "'solvate': False} "
         ),
     )
     integrator_params: Dict[str, Any] = Field(
@@ -670,6 +672,7 @@ class OpenMMSimulation:
                 "constraints": AllBonds,
                 "rigidWater": True,
                 "constraintTolerance": 0.000001,
+                "solvate": False,
             }
         self.sim_params = self.params.get("simmulation_params", None)
         if self.sim_params is None:
@@ -821,6 +824,7 @@ class OpenMMSimulation:
         constraints="None",
         rigidWater=False,
         constraintTolerance=None,
+        solvate=False,
         **kwargs,
     ):
         # Create a dictionary to hold system parameters
@@ -850,8 +854,26 @@ class OpenMMSimulation:
 
         # if use_constraint_tolerance:
         #    constraintTolerance = system_params.pop('constraintTolerance')
-
-        system = forcefield.createSystem(pdb.topology, **system_params)
+        modeller = Modeller(pdb.topology, pdb.positions)
+        if solvate:
+            try:
+                modeller.addSolvent(forcefield)
+            except ValueError as e:
+                print("Error adding solvent", type(e).__name__, "–", e)
+                if "No Template for" in str(e):
+                    raise ValueError(str(e))
+            except AttributeError as e:
+                print("Error adding solvent: ", type(e).__name__, "–", e)
+                print("Trying to add solvent with 1 nm padding")
+                if "NoneType" and "value_in_unit" in str(e):
+                    try:
+                        modeller.addSolvent(forcefield, padding=1 * nanometers)
+                    except Exception as e:
+                        print("Error adding solvent", type(e).__name__, "–", e)
+                        raise (e)
+            system = forcefield.createSystem(modeller.topology, **system_params)
+        else:
+            system = forcefield.createSystem(modeller.topology, **system_params)
 
         return system
 
@@ -1148,7 +1170,14 @@ class SetUpandRunFunction(BaseTool):
             print("simulation set!")
             st.markdown("simulation set!", unsafe_allow_html=True)
         except ValueError as e:
-            return str(e) + f"This were the inputs {input_args}"
+            msg = str(e) + f"This were the inputs {input_args}"
+            if "No template for" in msg:
+                msg += (
+                    "This error is likely due to non standard residues "
+                    "in the protein, if you havent done it yet, try "
+                    "cleaning the pdb file using the cleaning tool"
+                )
+            return msg
         except FileNotFoundError:
             return f"File not found, check File id. This were the inputs {input_args}"
         except OpenMMException as e:
