@@ -740,12 +740,12 @@ class OpenMMSimulation:
         print("Creating simulation...")
         st.markdown("Creating simulation", unsafe_allow_html=True)
         self.simulation = Simulation(
-            self.pdb.topology,
+            self.modeller.topology,
             self.system,
             self.integrator,
             Platform.getPlatformByName("CPU"),
         )
-        self.simulation.context.setPositions(self.pdb.positions)
+        self.simulation.context.setPositions(self.modeller.positions)
 
         # TEMPORARY FILE MANAGEMENT OR PATH REGISTRY MAPPING
         if self.save:
@@ -856,10 +856,10 @@ class OpenMMSimulation:
 
         # if use_constraint_tolerance:
         #    constraintTolerance = system_params.pop('constraintTolerance')
-        modeller = Modeller(pdb.topology, pdb.positions)
+        self.modeller = Modeller(pdb.topology, pdb.positions)
         if solvate:
             try:
-                modeller.addSolvent(forcefield)
+                self.modeller.addSolvent(forcefield)
             except ValueError as e:
                 print("Error adding solvent", type(e).__name__, "–", e)
                 if "No Template for" in str(e):
@@ -869,13 +869,13 @@ class OpenMMSimulation:
                 print("Trying to add solvent with 1 nm padding")
                 if "NoneType" and "value_in_unit" in str(e):
                     try:
-                        modeller.addSolvent(forcefield, padding=1 * nanometers)
+                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
                     except Exception as e:
                         print("Error adding solvent", type(e).__name__, "–", e)
                         raise (e)
-            system = forcefield.createSystem(modeller.topology, **system_params)
+            system = forcefield.createSystem(self.modeller.topology, **system_params)
         else:
-            system = forcefield.createSystem(modeller.topology, **system_params)
+            system = forcefield.createSystem(self.modeller.topology, **system_params)
 
         return system
 
@@ -1039,7 +1039,7 @@ class OpenMMSimulation:
             script_content += """
         integrator = LangevinMiddleIntegrator(temperature, friction, dt)
         integrator.setConstraintTolerance(constraintTolerance)
-        simulation = Simulation(topology, system, integrator, platform)
+        simulation = Simulation(modeller.topology, system, integrator, platform)
         simulation.context.setPositions(modeller.positions)
         """
         if integrator_type == "LangevinMiddle" and constraints == "None":
