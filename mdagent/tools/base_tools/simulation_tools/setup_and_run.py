@@ -903,6 +903,7 @@ class OpenMMSimulation:
         ewaldErrorTolerance = {self.sys_params.get("ewaldErrorTolerance", 0.0005)}
         constraintTolerance = self.sys_params.get("constraintTolerance", None)
         hydrogenMass = self.sys_params.get("hydrogenMass", None)
+        solvate = self.sys_params.get("solvate", False)
 
         integrator_type = self.int_params.get("integrator_type", "LangevinMiddle")
         friction = self.int_params.get("Friction", 1.0 / picoseconds)
@@ -980,46 +981,51 @@ class OpenMMSimulation:
         # Simulate
 
         print('Building system...')
-        topology = pdb.topology
-        positions = pdb.positions
+        modeller = Modeller(pdb.topology, pdb.positions)
         """
+        if solvate:
+            script_content += (
+                """modeller.addSolvent(forcefield, padding=1*nanometers)"""
+            )
+
         if nonbondedMethod == NoCutoff:
             if hydrogenMass:
                 script_content += """
-            system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,
-            constraints=constraints, rigidWater=rigidWater, hydrogenMass=hydrogenMass)
+            system = forcefield.createSystem(modeller.topology,
+            nonbondedMethod=nonbondedMethod, constraints=constraints,
+            rigidWater=rigidWater, hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-            system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,
-            constraints=constraints, rigidWater=rigidWater)
+            system = forcefield.createSystem(modeller.topology,
+            nonbondedMethod=nonbondedMethod, constraints=constraints,
+            rigidWater=rigidWater)
             """
         if nonbondedMethod == CutoffNonPeriodic or nonbondedMethod == CutoffPeriodic:
             if hydrogenMass:
                 script_content += """
-                system = forcefield.createSystem(topology,
-                nonbondedMethod=nonbondedMethod,
-                nonbondedCutoff=nonbondedCutoff, constraints=constraints,
-                rigidWater=rigidWater, hydrogenMass=hydrogenMass)
+                system = forcefield.createSystem(modeller.topology,
+                nonbondedMethod=nonbondedMethod, nonbondedCutoff=nonbondedCutoff,
+                constraints=constraints, rigidWater=rigidWater,
+                hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-                system = forcefield.createSystem(topology,
-                nonbondedMethod=nonbondedMethod,
-                nonbondedCutoff=nonbondedCutoff, constraints=constraints,
-                rigidWater=rigidWater)
+                system = forcefield.createSystem(modeller.topology,
+                nonbondedMethod=nonbondedMethod, nonbondedCutoff=nonbondedCutoff,
+                constraints=constraints, rigidWater=rigidWater)
             """
         if nonbondedMethod == PME:
             if hydrogenMass:
                 script_content += """
-            system = forcefield.createSystem(topology,
+            system = forcefield.createSystem(modeller.topology,
             nonbondedMethod=nonbondedMethod,
             nonbondedCutoff=nonbondedCutoff, ewaldErrorTolerance=ewaldErrorTolerance,
             constraints=constraints, rigidWater=rigidWater, hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-            system = forcefield.createSystem(topology,
+            system = forcefield.createSystem(modeller.topology,
             nonbondedMethod=nonbondedMethod,
             nonbondedCutoff=nonbondedCutoff, ewaldErrorTolerance=ewaldErrorTolerance,
             constraints=constraints, rigidWater=rigidWater)
@@ -1034,13 +1040,13 @@ class OpenMMSimulation:
         integrator = LangevinMiddleIntegrator(temperature, friction, dt)
         integrator.setConstraintTolerance(constraintTolerance)
         simulation = Simulation(topology, system, integrator, platform)
-        simulation.context.setPositions(positions)
+        simulation.context.setPositions(modeller.positions)
         """
         if integrator_type == "LangevinMiddle" and constraints == "None":
             script_content += """
             integrator = LangevinMiddleIntegrator(temperature, friction, dt)
-            simulation = Simulation(topology, system, integrator, platform)
-            simulation.context.setPositions(positions)
+            simulation = Simulation(modeller.topology, system, integrator, platform)
+            simulation.context.setPositions(modeller.positions)
         """
 
         script_content += """
