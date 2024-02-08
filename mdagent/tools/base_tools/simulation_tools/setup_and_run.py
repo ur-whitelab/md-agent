@@ -594,6 +594,8 @@ class SetUpandRunFunctionInput(BaseModel):
             "None, HBonds, AllBonds or OnlyWater."
             "For rigidWater, you can choose from the following:\n"
             "True, False.\n"
+            "Finally, if you want to solvate the system, before the simulation,"
+            "you can set solvate to True.\n"
             "Example1:\n"
             "{'nonbondedMethod': 'NoCutoff',\n"
             "'constraints': 'None',\n"
@@ -604,7 +606,7 @@ class SetUpandRunFunctionInput(BaseModel):
             "'constraints': 'HBonds',\n"
             "'rigidWater': True,\n"
             "'constraintTolerance': 0.00001,\n"
-            "'solvate': False} "
+            "'solvate': True} "
         ),
     )
     integrator_params: Dict[str, Any] = Field(
