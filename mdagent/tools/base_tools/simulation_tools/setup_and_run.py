@@ -387,6 +387,15 @@ class SimulationFunctions:
         simulation = Simulation(modeller.topology, system, integrator)
         simulation.context.setPositions(modeller.positions)
         simulation.minimizeEnergy()
+        # save initial positions to registry
+        file_name = "initial_positions.pdb"
+        with open(file_name, "w") as f:
+            PDBFile.writeFile(
+                simulation.topology,
+                simulation.context.getState(getPositions=True).getPositions(),
+                f,
+            )
+        print("Initial Positions saved to initial_positions.pdb")
         simulation.reporters.append(PDBReporter(f"{name}.pdb", 1000))
         # reporter_args = {"reportInterval": 1000}
         reporter_args = {}
@@ -1095,6 +1104,16 @@ class OpenMMSimulation:
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
+        top_name = f"files/pdb/{self.sim_id}_initial_positions.pdb"
+        top_description = f"Initial positions for simulation {self.sim_id}"
+        with open(top_name, "w") as f:
+            PDBFile.writeFile(
+                self.simulation.topology,
+                self.simulation.context.getState(getPositions=True).getPositions(),
+                f,
+            )
+        self.path_registry.map_path(f"top_{self.sim_id}", top_name, top_description)
+        print("Initial Positions saved to initial_positions.pdb")
         st.markdown("Minimization complete! Equilibrating...", unsafe_allow_html=True)
         print("Equilibrating...")
         _temp = self.int_params["Temperature"]
@@ -1693,7 +1712,7 @@ class SetUpandRunFunction(BaseTool):
                 if file not in FORCEFIELD_LIST:
                     error_msg += "The forcefield file is not present"
 
-        save = values.get("final", False)
+        save = values.get("save", True)
         if type(save) != bool:
             error_msg += "save must be a boolean value"
 
