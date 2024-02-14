@@ -15,6 +15,7 @@ class SubAgentSettings:
         ckpt_dir="ckpt",
         resume=False,
         retrieval_top_k=5,
+        curriculum=True,
     ):
         self.path_registry = path_registry
         self.subagents_model = subagents_model
@@ -24,6 +25,7 @@ class SubAgentSettings:
         self.ckpt_dir = ckpt_dir
         self.resume = resume
         self.retrieval_top_k = retrieval_top_k
+        self.curriculum = curriculum
 
 
 class SubAgentInitializer:
@@ -40,6 +42,7 @@ class SubAgentInitializer:
         self.ckpt_dir = settings.ckpt_dir
         self.resume = settings.resume
         self.retrieval_top_k = settings.retrieval_top_k
+        self.curriculum = settings.curriculum
 
     def create_action(self, **overrides):
         params = {
@@ -61,6 +64,8 @@ class SubAgentInitializer:
         return Critic(**params)
 
     def create_curriculum(self, **overrides):
+        if not self.curriculum:
+            return None
         params = {
             "model": self.subagents_model,
             "temp": self.temp,

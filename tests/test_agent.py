@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
+from mdagent.mainagent.agent import MDAgent
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
@@ -231,3 +232,11 @@ def test_update_skill_library(skill_manager):
             path="/mock_dir/code/test_function.py",
             description="Code for new tool test_function",
         )
+
+
+# test mdagent with and without curriculum
+def test_mdagent_curriculum():
+    mdagent_curr = MDAgent(curriculum=True)
+    mdagent_no_curr = MDAgent(curriculum=False)
+    assert mdagent_curr.subagents_settings.curriculum is True
+    assert mdagent_no_curr.subagents_settings.curriculum is False
