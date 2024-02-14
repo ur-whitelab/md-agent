@@ -92,12 +92,12 @@ def make_all_tools(
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         SimulationOutputFigures(),
     ]
+    if subagent_settings is None:
+        subagent_settings = SubAgentSettings(path_registry=path_instance)
 
     # tools using subagents
     subagents_tools = []
     if not skip_subagents:
-        if subagent_settings is None:
-            subagent_settings = SubAgentSettings(path_registry=path_instance)
         subagents_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
             RetryExecuteSkill(subagent_settings=subagent_settings),
