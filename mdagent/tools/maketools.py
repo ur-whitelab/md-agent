@@ -102,8 +102,9 @@ def make_all_tools(
             CreateNewTool(subagent_settings=subagent_settings),
             RetryExecuteSkill(subagent_settings=subagent_settings),
             SkillRetrieval(subagent_settings=subagent_settings),
-            WorkflowPlan(subagent_settings=subagent_settings),
         ]
+        if subagent_settings.curriculum:
+            WorkflowPlan(subagent_settings=subagent_settings)
 
     # add 'learned' tools here
     # disclaimer: assume they don't need path_registry
