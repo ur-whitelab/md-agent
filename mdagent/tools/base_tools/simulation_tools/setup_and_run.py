@@ -909,7 +909,7 @@ class OpenMMSimulation:
         nonbondedCutoff = unit_to_string(nbCo)
         constraints = self.sys_params.get("constraints", "None")
         rigidWater = self.sys_params.get("rigidWater", False)
-        ewaldErrorTolerance = {self.sys_params.get("ewaldErrorTolerance", 0.0005)}
+        ewaldErrorTolerance = self.sys_params.get("ewaldErrorTolerance", 0.0005)
         constraintTolerance = self.sys_params.get("constraintTolerance", None)
         hydrogenMass = self.sys_params.get("hydrogenMass", None)
         solvate = self.sys_params.get("solvate", False)
