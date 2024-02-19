@@ -70,16 +70,15 @@ class MDAgent:
             callbacks=[StreamingStdOutCallbackHandler()],
         )
 
-        # assign prompt
         if learn:
-            if agent_type == "Structured":
-                self.prompt = structured_prompt
-            elif agent_type == "OpenAIFunctionsAgent":
-                self.prompt = openaifxn_prompt
             self.skip_subagents = False
         else:
-            self.prompt = openaifxn_prompt
             self.skip_subagents = True
+
+        if agent_type == "Structured":
+            self.prompt = structured_prompt
+        elif agent_type == "OpenAIFunctionsAgent":
+            self.prompt = openaifxn_prompt
 
         self.subagents_settings = SubAgentSettings(
             path_registry=path_registry,

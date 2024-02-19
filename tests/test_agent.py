@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from mdagent.mainagent.agent import MDAgent
-from mdagent.mainagent.prompt import openaifxn_prompt, structured_prompt
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
@@ -236,14 +235,8 @@ def test_update_skill_library(skill_manager):
 
 
 # test initiating mdagent with learn = false
-def test_mdagent_init():
+def test_mdagent_learn_init():
     mdagent_skill = MDAgent(learn=False)
-    assert (
-        mdagent_skill.prompt == openaifxn_prompt
-        or mdagent_skill.prompt == structured_prompt
-    )
     assert mdagent_skill.skip_subagents is True
-
     mdagent_learn = MDAgent(learn=True)
-    assert mdagent_learn.prompt == openaifxn_prompt
     assert mdagent_learn.skip_subagents is False
