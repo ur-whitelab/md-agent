@@ -15,9 +15,14 @@ class RDFToolInput(BaseModel):
 
     topology_fileid: Optional[str] = Field(None, description="Topology file")
     stride: Optional[int] = Field(None, description="Stride for reading trajectory")
-    atom_indices: Optional[List[int]] = Field(
-        None, description="Atom indices to load in the trajectory"
+    selections: Optional[List[List[str]]] = Field(
+        [["protein", "water"]],
+        description="Selections for RDF. Do not use for now. As "
+        "it will only calculate RDF for protein and water molecules.",
     )
+    # atom_indices: Optional[List[int]] = Field(
+    #    None, description="Atom indices to load in the trajectory"
+    # )
     # TODO: Add pairs of atoms to calculate RDF within the tool
     ##pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
 
@@ -31,7 +36,16 @@ class RDFTool(BaseTool):
     name = "RDFTool"
     description = (
         "Calculate the radial distribution function (RDF) of a trajectory "
-        "of a protein with respect to water molecules."
+        "of a protein with respect to water molecules. \n\nInput Example 1: \n"
+        "trajectory_fileid: 'rec0_142404' \n"
+        "topology_fileid: 'top_sim0_142401' \n"
+        "stride: 2 \n"
+        "selections: None\n"
+        "Input Example 2: \n"
+        "trajectory_fileid: 'rec0_142404' \n"
+        "topology_fileid: 'top_sim0_142401' \n"
+        "\n\n"
+        "As you can see, the stride and selections are optional. "
     )
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
@@ -52,18 +66,16 @@ class RDFTool(BaseTool):
         trajectory_id = inputs["trajectory_fileid"]
         topology_id = inputs["topology_fileid"]
         stride = inputs["stride"]
-        atom_indices = inputs["atom_indices"]
+        inputs["selections"]  # not used at the moment
 
         path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
         ending = path_to_traj.split(".")[-1]
         if ending in ["dcd", "xtc", "xyz"]:
             path_to_top = self.path_registry.get_mapped_path(topology_id)
-            traj = md.load(
-                path_to_traj, top=path_to_top, stride=stride, atom_indices=atom_indices
-            )
+            traj = md.load(path_to_traj, top=path_to_top, stride=stride)
         else:
             # hdf5, h5, pdb already checked in validation of inputs
-            traj = md.load(path_to_traj, stride=stride, atom_indices=atom_indices)
+            traj = md.load(path_to_traj, stride=stride)
         try:
             r, gr = md.compute_rdf(
                 traj,
@@ -102,7 +114,7 @@ class RDFTool(BaseTool):
 
         stride = input.get("stride", None)
 
-        atom_indices = input.get("atom_indices", None)
+        selections = input.get("selections", [])
 
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: Trajectory file ID is required")
@@ -159,19 +171,21 @@ class RDFTool(BaseTool):
                         "Incorrect Inputs: " "Stride must be a positive integer"
                     )
 
-        if atom_indices:
+        if selections:
             try:
-                atom_indices = list(map(int, atom_indices.split(",")))
+                selections = list(
+                    map(str, selection.split(",")) for selection in selections
+                )
             except ValueError:
                 raise ValueError(
-                    "Incorrect Inputs: Atom indices must be a comma "
-                    "separated list of integers or None for all atoms"
+                    "Incorrect Inputs: Selections must be a list of comma "
+                    "separated lists of  or None for all atoms"
                 )
         inputs = {
             "trajectory_fileid": trajectory_id,
             "topology_fileid": topology_id,
             "stride": stride,
-            "atom_indices": atom_indices,
+            "selections": selections,
         }
 
         return inputs
