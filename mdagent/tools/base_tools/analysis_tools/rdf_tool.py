@@ -1,9 +1,11 @@
-from typing import List, Optional, Type
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import mdtraj as md
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
+
+from mdagent.utils import PathRegistry
 
 
 class RDFToolInput(BaseModel):
@@ -32,8 +34,9 @@ class RDFTool(BaseTool):
         "of a protein with respect to water molecules."
     )
     args_schema = RDFToolInput
+    path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Type[RDFutils]):
+    def __init__(self, path_registry):
         self.path_registry = path_registry
 
     def _run(self, **input):
