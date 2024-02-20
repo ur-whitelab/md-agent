@@ -1244,11 +1244,11 @@ class SetUpandRunFunction(BaseTool):
                     self.path_registry.map_path(*record)
             return (
                 "Simulation done! \n Summary: \n"
-                "Record files written to files/records/ with IDs: "
-                f"{[record[0] for record in records]}\n"
+                "Record files written to files/records/ with IDs and descriptions: "
+                f"{[(record[0],record[2]) for record in records]}\n"
                 "Standalone script written to files/simulations/ with ID: "
                 f"{sim_id}.\n"
-                f"The topology file is saved as top_{sim_id} in files/pdb/"
+                f"The initial topology file ID is top_{sim_id} saved in files/pdb/"
             )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")

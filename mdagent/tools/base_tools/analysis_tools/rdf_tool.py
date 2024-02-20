@@ -50,7 +50,7 @@ class RDFTool(BaseTool):
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
-    def _run(self, **input):
+    def _run(self, input):
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
@@ -60,6 +60,9 @@ class RDFTool(BaseTool):
             elif "Invalid file extension" in str(e):
                 print("File Extension Not Supported in RDF tool: ", str(e))
                 return ("File Extension Not Supported", str(e))
+            elif "Missing Inputs" in str(e):
+                print("Missing Inputs in RDF tool: ", str(e))
+                return ("Missing Inputs", str(e))
             else:
                 raise ValueError(f"Error during inputs in RDF tool {e}")
 
@@ -108,6 +111,9 @@ class RDFTool(BaseTool):
         pass
 
     def validate_input(self, input):
+        if "action_input" in input:
+            input = input["action_input"]
+
         trajectory_id = input.get("trajectory_fileid", None)
 
         topology_id = input.get("topology_fileid", None)
@@ -117,11 +123,11 @@ class RDFTool(BaseTool):
         selections = input.get("selections", [])
 
         if not trajectory_id:
-            raise ValueError("Incorrect Inputs: Trajectory file ID is required")
+            raise ValueError("Missing Inputs: Trajectory file ID is required")
 
         # check if trajectory id is valid
         fileids = self.path_registry.list_path_names()
-
+        print("fileids: ", fileids)
         if trajectory_id not in fileids:
             raise ValueError("Trajectory File ID not in path registry")
 
@@ -132,7 +138,7 @@ class RDFTool(BaseTool):
             # requires topology
             if not topology_id:
                 raise ValueError(
-                    "Incorrect Inputs: "
+                    "Missing Inputs: "
                     "Topology file is required for trajectory "
                     "file with extension {}".format(ending)
                 )
