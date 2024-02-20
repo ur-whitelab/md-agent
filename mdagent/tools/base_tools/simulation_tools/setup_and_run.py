@@ -773,8 +773,7 @@ class OpenMMSimulation:
                 Sim_id=self.sim_id,
                 term="txt",
             )
-            traj_id = self.path_registry.get_fileid(trajectory_name, FileType.RECORD)
-            log_id = self.path_registry.get_fileid(log_name, FileType.RECORD)
+
             traj_desc = (
                 f"Simulation trajectory for protein {self.pdb_id}"
                 f" and simulation {self.sim_id}"
@@ -800,9 +799,10 @@ class OpenMMSimulation:
                     separator="\t",
                 )
             )
+            # "Holders because otherwise the ids are the same
             self.registry_records = [
-                (traj_id, f"files/records/{trajectory_name}", traj_desc),
-                (log_id, f"files/records/{log_name}", log_desc),
+                ["holder", f"files/records/{trajectory_name}", traj_desc],
+                ["holder", f"files/records/{log_name}", log_desc],
             ]
 
             # TODO add checkpoint too?
@@ -1237,8 +1237,19 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
+                    record[0] = self.path_registry.get_fileid(  # Step necessary here to
+                        record[1].split("/")[-1],  # avoid id being repeated
+                        FileType.RECORD,
+                    )
                     self.path_registry.map_path(*record)
-            return "Simulation done!"
+            return (
+                "Simulation done! \n Summary: \n"
+                "Record files written to files/records/ with IDs: "
+                f"{[record[0] for record in records]}\n"
+                "Standalone script written to files/simulations/ with ID: "
+                f"{sim_id}.\n"
+                f"The topology file is saved as top_{sim_id} in files/pdb/"
+            )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
             return f"An exception was found trying to write the filenames: {str(e)}."
