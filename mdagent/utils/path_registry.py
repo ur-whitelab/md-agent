@@ -205,7 +205,7 @@ class PathRegistry:
         # Split the filename on underscores
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
-
+        current_ids = self.list_path_names()
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp
@@ -218,9 +218,19 @@ class PathRegistry:
             pdb_id = parts_list[0]
             return pdb_id + "_" + timestamp_digits
         if type == FileType.SIMULATION:
-            return "sim" + "_" + timestamp_digits
+            num = 0
+            sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            while sim_id in current_ids:
+                num += 1
+                sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            return sim_id
         if type == FileType.RECORD:
-            return "rec" + "_" + timestamp_digits
+            num = 0
+            rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            while rec_id in current_ids:
+                num += 1
+                rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            return rec_id
         if type == FileType.SOLVENT:
             return parts + "_" + timestamp_digits
 
