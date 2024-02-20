@@ -99,7 +99,12 @@ class RDFTool(BaseTool):
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
-        image_name = "rdf_{}.png".format(trajectory_id)
+        num = 0
+        image_name = "rdf{}_{}.png".format(num, trajectory_id)
+        while image_name in self.path_registry.list_path_names():
+            num += 1
+            image_name = "rdf_{}_{}.png".format(trajectory_id, num)
+
         plt.savefig(image_name)
         plt.close()
         return (
