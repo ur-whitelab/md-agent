@@ -33,6 +33,7 @@ setup(
         "tiktoken",
         "rdkit",
         "streamlit",
+        "mdtraj",
     ],
     test_suite="tests",
     long_description=long_description,
