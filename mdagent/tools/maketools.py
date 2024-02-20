@@ -23,7 +23,6 @@ from .base_tools import (
     PackMolTool,
     PPIDistance,
     ProteinName2PDBTool,
-    RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -91,7 +90,6 @@ def make_all_tools(
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-        RDFTool(path_registry=path_instance),
         SimulationOutputFigures(),
     ]
 
