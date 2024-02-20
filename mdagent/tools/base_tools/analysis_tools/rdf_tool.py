@@ -99,11 +99,12 @@ class RDFTool(BaseTool):
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
-        plt.savefig("rdf_{}.png".format(trajectory_id))
+        image_name = "rdf_{}.png".format(trajectory_id)
+        plt.savefig(image_name)
         plt.close()
         return (
             "RDF calculated successfully"
-            "rdf.png has been saved in the current directory"
+            f"{image_name} has been saved in the current directory"
         )
         # path_to_top = self.path_registry.get_mapped_path(topology_id)
 
