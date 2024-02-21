@@ -5,7 +5,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.subagents import SubAgentSettings
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry, _make_llm, clear_memory
 
 from ..tools import get_tools, make_all_tools
 from .prompt import openaifxn_prompt, structured_prompt
@@ -50,8 +50,13 @@ class MDAgent:
         curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
     ):
+        self.resume = resume
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
+        if not resume:
+            path_registry._clear_json()
+            clear_memory()
+
         self.uploaded_files = uploaded_files
         for file in uploaded_files:  # todo -> allow users to add descriptions?
             path_registry.map_path(file, file, description="User uploaded file")
