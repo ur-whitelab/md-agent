@@ -94,10 +94,10 @@ def make_all_tools(
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(),
     ]
-
-    # tools using subagents
     if subagent_settings is None:
         subagent_settings = SubAgentSettings(path_registry=path_instance)
+
+    # tools using subagents
     subagents_tools = []
     if not skip_subagents:
         subagents_tools = [
@@ -131,7 +131,7 @@ def get_tools(
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
     top_k_tools=15,
-    subagents_required=True,
+    skip_subagents=False,
     human=False,
 ):
     if subagent_settings:
@@ -140,7 +140,7 @@ def get_tools(
         ckpt_dir = "ckpt"
 
     retrieved_tools = []
-    if subagents_required:
+    if not skip_subagents:
         # add subagents-related tools by default
         retrieved_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
