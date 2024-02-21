@@ -40,6 +40,9 @@ jobs:
       run: |
         pip install pre-commit
         pre-commit run --all-files || ( git status --short ; git diff ; exit 1 )
+    - name: Clean up files
+      run: |
+        python mdagent/utils/clear_mem.py
     - name: Run Test
       shell: bash -l {0}
       env:
