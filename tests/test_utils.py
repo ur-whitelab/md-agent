@@ -126,6 +126,7 @@ def test_map_path():
                 # Check the result message
                 assert result == "Path successfully mapped to name: new_name"
 
+
 mocked_files = {"files/solvents": ["water.pdb"]}
 
 

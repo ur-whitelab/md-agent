@@ -5,10 +5,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from mdagent.tools.base_tools import (
-    CleaningTools,
-    SimulationFunctions,
-)
+from mdagent.tools.base_tools import CleaningTools, SimulationFunctions
 from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB, PackMolTool
 from mdagent.utils import PathRegistry
 
@@ -56,7 +53,6 @@ def get_registry():
 @pytest.fixture
 def packmol(get_registry):
     return PackMolTool(get_registry)
-
 
 
 def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns, get_registry):
@@ -183,4 +179,3 @@ def test_packmol_download_only_once(packmol):
     assert water_time == water_time_after
     # Clean up
     os.remove("files/pdb/water.pdb")
-

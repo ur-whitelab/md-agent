@@ -45,6 +45,5 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         SEMANTIC_SCHOLAR_API_KEY: ${{ secrets.SEMANTIC_SCHOLAR_API_KEY }}
-        PQA_API_KEY : ${{ secrets.PQA_API_TOKEN }}
       run: |
          pytest -m "not skip" tests
