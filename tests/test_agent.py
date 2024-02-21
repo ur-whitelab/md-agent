@@ -234,7 +234,13 @@ def test_update_skill_library(skill_manager):
         )
 
 
-# test mdagent with and without curriculum
+def test_mdagent_learn_init():
+    mdagent_skill = MDAgent(learn=False)
+    assert mdagent_skill.skip_subagents is True
+    mdagent_learn = MDAgent(learn=True)
+    assert mdagent_learn.skip_subagents is False
+
+
 def test_mdagent_curriculum():
     mdagent_curr = MDAgent(curriculum=True)
     mdagent_no_curr = MDAgent(curriculum=False)
