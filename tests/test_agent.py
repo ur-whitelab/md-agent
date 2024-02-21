@@ -240,6 +240,7 @@ def test_mdagent_learn_init():
     mdagent_learn = MDAgent(learn=True)
     assert mdagent_learn.skip_subagents is False
 
+
 def test_mdagent_curriculum():
     mdagent_curr = MDAgent(curriculum=True)
     mdagent_no_curr = MDAgent(curriculum=False)
