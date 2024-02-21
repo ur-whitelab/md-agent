@@ -29,7 +29,6 @@ from .base_tools import (
     SimulationOutputFigures,
     SmallMolPDB,
     VisualizeProtein,
-    Scholar2ResultLLM,
 )
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
 

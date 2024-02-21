@@ -1,10 +1,11 @@
 import os
 import warnings
 from unittest.mock import MagicMock, mock_open, patch
-from langchain.chat_models import ChatOpenAI
+
 import pytest
-from mdagent.tools.base_tools import Scholar2ResultLLM
-from mdagent.tools.base_tools import VisFunctions, get_pdb
+from langchain.chat_models import ChatOpenAI
+
+from mdagent.tools.base_tools import Scholar2ResultLLM, VisFunctions, get_pdb
 from mdagent.tools.base_tools.analysis_tools.plot_tools import plot_data, process_csv
 from mdagent.utils import PathRegistry
 
@@ -113,12 +114,14 @@ def test_getpdb(fibronectin, get_registry):
     name, _ = get_pdb(fibronectin, get_registry)
     assert name.endswith(".pdb")
 
+
 @pytest.fixture
 def questions():
     qs = [
         "What are the effects of norhalichondrin B in mammals?",
     ]
     return qs[0]
+
 
 @pytest.mark.skip(reason="This requires an API call")
 def test_litsearch(questions):
@@ -129,6 +132,5 @@ def test_litsearch(questions):
         ans = searchtool._run(q)
         assert isinstance(ans, str)
         assert len(ans) > 0
-    #then if query folder exists one step back, delete it
     if os.path.exists("../query"):
         os.rmdir("../query")

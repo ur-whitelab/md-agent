@@ -1,18 +1,20 @@
 import os
 import re
-from langchain.base_language import BaseLanguageModel
+
 import langchain
 import paperqa
 import paperscraper
+from langchain.base_language import BaseLanguageModel
 from pypdf.errors import PdfReadError
 
 
-def paper_scraper(search:str, pdir:str="query") -> dict:
+def paper_scraper(search: str, pdir: str = "query") -> dict:
     try:
         return paperscraper.search_papers(search, pdir=pdir)
     except KeyError:
         return {}
-    
+
+
 def paper_search(llm, query):
     prompt = langchain.prompts.PromptTemplate(
         input_variables=["question"],
@@ -20,10 +22,11 @@ def paper_search(llm, query):
         I would like to find scholarly papers to answer
         this question: {question}.
         'A search query that would bring up papers that can answer
-        this question would be: '""",)
-    
+        this question would be: '""",
+    )
+
     query_chain = langchain.chains.llm.LLMChain(llm=llm, prompt=prompt)
-    if not os.path.isdir("./query"): #todo: move to ckpt
+    if not os.path.isdir("./query"):  # todo: move to ckpt
         os.mkdir("query/")
 
     search = query_chain.run(query)
@@ -51,7 +54,7 @@ def scholar2result_llm(llm, query):
 
 
 class Scholar2ResultLLM:
-    name = "Literature Search"
+    name = "LiteratureSearch"
     description = (
         "Useful to answer questions that require technical ",
         "knowledge. Ask a specific question.",
