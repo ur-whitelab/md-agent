@@ -13,7 +13,12 @@ from .preprocess_tools.clean_tools import (
     RemoveWaterCleaningTool,
     SpecializedCleanTool,
 )
-from .preprocess_tools.pdb_tools import Name2PDBTool, PackMolTool, get_pdb
+from .preprocess_tools.pdb_tools import (
+    PackMolTool,
+    ProteinName2PDBTool,
+    SmallMolPDB,
+    get_pdb,
+)
 from .simulation_tools.create_simulation import ModifyBaseSimulationScriptTool
 from .simulation_tools.setup_and_run import (
     InstructionSummary,
@@ -32,9 +37,10 @@ __all__ = [
     "InstructionSummary",
     "ListRegistryPaths",
     "MapPath2Name",
-    "Name2PDBTool",
+    "ProteinName2PDBTool",
     "PackMolTool",
     "PPIDistance",
+    "SmallMolPDB",
     "VisualizeProtein",
     "RMSDCalculator",
     "RemoveWaterCleaningTool",

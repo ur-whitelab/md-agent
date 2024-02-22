@@ -10,6 +10,8 @@ class FileType(Enum):
     PROTEIN = 1
     SIMULATION = 2
     RECORD = 3
+    SOLVENT = 4
+    UNKNOWN = 5
 
 
 class PathRegistry:
@@ -23,6 +25,71 @@ class PathRegistry:
 
     def __init__(self):
         self.json_file_path = "paths_registry.json"
+        self._init_path_registry()
+
+    def _init_path_registry(self):
+        base_directory = "files"
+        subdirectories = ["pdb", "records", "simulations", "solvents"]
+        existing_registry = self._load_existing_registry()
+        file_names_in_registry = []
+        if existing_registry != {}:
+            for _, registry in existing_registry.items():
+                file_names_in_registry.append(registry["name"])
+        else:
+            with open(self.json_file_path, "w") as json_file:
+                json.dump({}, json_file)
+        for subdir in subdirectories:
+            subdir_path = os.path.join(base_directory, subdir)
+            if os.path.exists(subdir_path):
+                for file_name in os.listdir(subdir_path):
+                    if file_name not in file_names_in_registry:
+                        file_type = self._determine_file_type(subdir)
+                        file_id = self.get_fileid(file_name, file_type)
+                        # TODO get descriptions from file names if possible
+                        # TODO make this a method. In theory, previous downlaods
+                        # or simulation files should be already registered
+                        if file_type == FileType.PROTEIN:
+                            name_parts = file_name.split("_")
+                            protein_name = name_parts[0]
+                            status = name_parts[1]
+                            description = (
+                                f"Protein {protein_name} pdb file. "
+                                "downloaded from RCSB Protein Data Bank. "
+                                + (
+                                    "Preprocessed for simulation."
+                                    if status == "Clean"
+                                    else ""
+                                )
+                            )
+                        elif file_type == FileType.SOLVENT:
+                            name_parts = file_name.split("_")
+                            solvent_name = name_parts[0]
+                            description = f"Solvent {solvent_name} pdb file. "
+                        else:
+                            description = "Auto-Registered during registry init."
+                        self.map_path(
+                            file_id, subdir_path + "/" + file_name, description
+                        )
+
+    def _load_existing_registry(self):
+        if self._check_for_json():
+            with open(self.json_file_path, "r") as json_file:
+                return json.load(json_file)
+        return {}
+
+    def _determine_file_type(self, subdir):
+        # Implement logic to determine the file type based on the subdir name
+        # Example:
+        if subdir == "pdb":
+            return FileType.PROTEIN
+        elif subdir == "records":
+            return FileType.RECORD
+        elif subdir == "simulations":
+            return FileType.SIMULATION
+        elif subdir == "solvents":
+            return FileType.SOLVENT
+        else:
+            return FileType.UNKNOWN  # or some default value
 
     def _get_full_path(self, file_path):
         return os.path.abspath(file_path)
@@ -59,18 +126,21 @@ class PathRegistry:
     def map_path(self, file_id, path, description=None):
         description = description or "No description provided"
         full_path = self._get_full_path(path)
-        path_dict = {file_id: {"path": full_path, "description": description}}
+        file_name = os.path.basename(full_path)
+        path_dict = {
+            file_id: {"path": full_path, "name": file_name, "description": description}
+        }
         self._save_mapping_to_json(path_dict)
         saved = self._check_json_content(file_id)
         return f"Path {'successfully' if saved else 'not'} mapped to name: {file_id}"
 
     # this if we want to get the path. not use as often
-    def get_mapped_path(self, name):
+    def get_mapped_path(self, fileid):
         if not self._check_for_json():
             return "The JSON file does not exist."
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-            return data.get(name, {}).get("path", "Name not found in path registry.")
+            return data.get(fileid, {}).get("path", "Name not found in path registry.")
 
     def _clear_json(self):
         if self._check_for_json():
@@ -79,27 +149,27 @@ class PathRegistry:
             return "JSON file cleared"
         return "JSON file does not exist"
 
-    def _remove_path_from_json(self, name):
+    def _remove_path_from_json(self, fileid):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        if name in data:
-            del data[name]
+        if fileid in data:
+            del data[fileid]
             with open(self.json_file_path, "w") as json_file:
                 json.dump(data, json_file, indent=4)
-            return f"Path {name} removed from registry"
-        return f"Path {name} not found in registry"
+            return f"File {fileid} removed from registry"
+        return f"Path {fileid} not found in registry"
 
     def list_path_names(self):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        names = [key for key in data.keys()]
+        filesids = [key for key in data.keys()]
         return (
-            "Names found in registry: " + ", ".join(names)
-            if names
+            "Names found in registry: " + ", ".join(filesids)
+            if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
@@ -109,14 +179,15 @@ class PathRegistry:
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
-        names = [key for key in data.keys()]
+        filesids = [key for key in data.keys()]
         descriptions = [data[key]["description"] for key in data.keys()]
-        names_w_descriptions = [
-            f"{name}: {description}" for name, description in zip(names, descriptions)
+        fileid_w_descriptions = [
+            f"{fileid}: {description}"
+            for fileid, description in zip(filesids, descriptions)
         ]
         return (
-            "Files found in registry: " + ", ".join(names_w_descriptions)
-            if names
+            "Files found in registry: " + ", ".join(fileid_w_descriptions)
+            if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
@@ -134,20 +205,34 @@ class PathRegistry:
         # Split the filename on underscores
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
-
+        current_ids = self.list_path_names()
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp
-        timestamp_digits = timestamp_part[-6:]
+        timestamp_digits = (
+            timestamp_part[-6:] if timestamp_part.isnumeric() else "000000"
+        )
 
         if type == FileType.PROTEIN:
             # Extract the PDB ID (assuming it's always the first part)
             pdb_id = parts_list[0]
             return pdb_id + "_" + timestamp_digits
         if type == FileType.SIMULATION:
-            return "sim" + "_" + timestamp_digits
+            num = 0
+            sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            while sim_id in current_ids:
+                num += 1
+                sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            return sim_id
         if type == FileType.RECORD:
-            return "rec" + "_" + timestamp_digits
+            num = 0
+            rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            while rec_id in current_ids:
+                num += 1
+                rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            return rec_id
+        if type == FileType.SOLVENT:
+            return parts + "_" + timestamp_digits
 
     def write_file_name(self, type: FileType, **kwargs):
         time_stamp = self.get_timestamp()

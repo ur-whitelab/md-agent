@@ -387,6 +387,15 @@ class SimulationFunctions:
         simulation = Simulation(modeller.topology, system, integrator)
         simulation.context.setPositions(modeller.positions)
         simulation.minimizeEnergy()
+        # save initial positions to registry
+        file_name = "initial_positions.pdb"
+        with open(file_name, "w") as f:
+            PDBFile.writeFile(
+                simulation.topology,
+                simulation.context.getState(getPositions=True).getPositions(),
+                f,
+            )
+        print("Initial Positions saved to initial_positions.pdb")
         simulation.reporters.append(PDBReporter(f"{name}.pdb", 1000))
         # reporter_args = {"reportInterval": 1000}
         reporter_args = {}
@@ -579,6 +588,7 @@ class SetUpandRunFunctionInput(BaseModel):
             "constraints": "None",
             "rigidWater": False,
             "constraintTolerance": None,
+            "solvate": False,
         },
         description=(
             "Parameters for the openmm system. "
@@ -593,6 +603,8 @@ class SetUpandRunFunctionInput(BaseModel):
             "None, HBonds, AllBonds or OnlyWater."
             "For rigidWater, you can choose from the following:\n"
             "True, False.\n"
+            "Finally, if you want to solvate the system, before the simulation,"
+            "you can set solvate to True.\n"
             "Example1:\n"
             "{'nonbondedMethod': 'NoCutoff',\n"
             "'constraints': 'None',\n"
@@ -602,7 +614,8 @@ class SetUpandRunFunctionInput(BaseModel):
             "'nonbondedCutoff': 1.0,\n"
             "'constraints': 'HBonds',\n"
             "'rigidWater': True,\n"
-            "'constraintTolerance': 0.00001} "
+            "'constraintTolerance': 0.00001,\n"
+            "'solvate': True} "
         ),
     )
     integrator_params: Dict[str, Any] = Field(
@@ -670,6 +683,7 @@ class OpenMMSimulation:
                 "constraints": AllBonds,
                 "rigidWater": True,
                 "constraintTolerance": 0.000001,
+                "solvate": False,
             }
         self.sim_params = self.params.get("simmulation_params", None)
         if self.sim_params is None:
@@ -688,7 +702,7 @@ class OpenMMSimulation:
         print("Building system...")
         st.markdown("Building system", unsafe_allow_html=True)
         self.pdb_id = self.params["pdb_id"]
-        self.pdb_path = self.path_registry.get_mapped_path(name=self.pdb_id)
+        self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
         self.forcefield = ForceField(*self.params["forcefield_files"])
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
@@ -735,12 +749,12 @@ class OpenMMSimulation:
         print("Creating simulation...")
         st.markdown("Creating simulation", unsafe_allow_html=True)
         self.simulation = Simulation(
-            self.pdb.topology,
+            self.modeller.topology,
             self.system,
             self.integrator,
             Platform.getPlatformByName("CPU"),
         )
-        self.simulation.context.setPositions(self.pdb.positions)
+        self.simulation.context.setPositions(self.modeller.positions)
 
         # TEMPORARY FILE MANAGEMENT OR PATH REGISTRY MAPPING
         if self.save:
@@ -759,8 +773,7 @@ class OpenMMSimulation:
                 Sim_id=self.sim_id,
                 term="txt",
             )
-            traj_id = self.path_registry.get_fileid(trajectory_name, FileType.RECORD)
-            log_id = self.path_registry.get_fileid(log_name, FileType.RECORD)
+
             traj_desc = (
                 f"Simulation trajectory for protein {self.pdb_id}"
                 f" and simulation {self.sim_id}"
@@ -787,8 +800,8 @@ class OpenMMSimulation:
                 )
             )
             self.registry_records = [
-                (traj_id, f"files/records/{trajectory_name}", traj_desc),
-                (log_id, f"files/records/{log_name}", log_desc),
+                ("holder", f"files/records/{trajectory_name}", traj_desc),
+                ("holder", f"files/records/{log_name}", log_desc),
             ]
 
             # TODO add checkpoint too?
@@ -821,6 +834,7 @@ class OpenMMSimulation:
         constraints="None",
         rigidWater=False,
         constraintTolerance=None,
+        solvate=False,
         **kwargs,
     ):
         # Create a dictionary to hold system parameters
@@ -850,8 +864,26 @@ class OpenMMSimulation:
 
         # if use_constraint_tolerance:
         #    constraintTolerance = system_params.pop('constraintTolerance')
-
-        system = forcefield.createSystem(pdb.topology, **system_params)
+        self.modeller = Modeller(pdb.topology, pdb.positions)
+        if solvate:
+            try:
+                self.modeller.addSolvent(forcefield)
+            except ValueError as e:
+                print("Error adding solvent", type(e).__name__, "–", e)
+                if "No Template for" in str(e):
+                    raise ValueError(str(e))
+            except AttributeError as e:
+                print("Error adding solvent: ", type(e).__name__, "–", e)
+                print("Trying to add solvent with 1 nm padding")
+                if "NoneType" and "value_in_unit" in str(e):
+                    try:
+                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
+                    except Exception as e:
+                        print("Error adding solvent", type(e).__name__, "–", e)
+                        raise (e)
+            system = forcefield.createSystem(self.modeller.topology, **system_params)
+        else:
+            system = forcefield.createSystem(self.modeller.topology, **system_params)
 
         return system
 
@@ -876,9 +908,10 @@ class OpenMMSimulation:
         nonbondedCutoff = unit_to_string(nbCo)
         constraints = self.sys_params.get("constraints", "None")
         rigidWater = self.sys_params.get("rigidWater", False)
-        ewaldErrorTolerance = {self.sys_params.get("ewaldErrorTolerance", 0.0005)}
+        ewaldErrorTolerance = self.sys_params.get("ewaldErrorTolerance", 0.0005)
         constraintTolerance = self.sys_params.get("constraintTolerance", None)
         hydrogenMass = self.sys_params.get("hydrogenMass", None)
+        solvate = self.sys_params.get("solvate", False)
 
         integrator_type = self.int_params.get("integrator_type", "LangevinMiddle")
         friction = self.int_params.get("Friction", 1.0 / picoseconds)
@@ -956,46 +989,51 @@ class OpenMMSimulation:
         # Simulate
 
         print('Building system...')
-        topology = pdb.topology
-        positions = pdb.positions
+        modeller = Modeller(pdb.topology, pdb.positions)
         """
+        if solvate:
+            script_content += (
+                """modeller.addSolvent(forcefield, padding=1*nanometers)"""
+            )
+
         if nonbondedMethod == NoCutoff:
             if hydrogenMass:
                 script_content += """
-            system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,
-            constraints=constraints, rigidWater=rigidWater, hydrogenMass=hydrogenMass)
+            system = forcefield.createSystem(modeller.topology,
+            nonbondedMethod=nonbondedMethod, constraints=constraints,
+            rigidWater=rigidWater, hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-            system = forcefield.createSystem(topology, nonbondedMethod=nonbondedMethod,
-            constraints=constraints, rigidWater=rigidWater)
+            system = forcefield.createSystem(modeller.topology,
+            nonbondedMethod=nonbondedMethod, constraints=constraints,
+            rigidWater=rigidWater)
             """
         if nonbondedMethod == CutoffNonPeriodic or nonbondedMethod == CutoffPeriodic:
             if hydrogenMass:
                 script_content += """
-                system = forcefield.createSystem(topology,
-                nonbondedMethod=nonbondedMethod,
-                nonbondedCutoff=nonbondedCutoff, constraints=constraints,
-                rigidWater=rigidWater, hydrogenMass=hydrogenMass)
+                system = forcefield.createSystem(modeller.topology,
+                nonbondedMethod=nonbondedMethod, nonbondedCutoff=nonbondedCutoff,
+                constraints=constraints, rigidWater=rigidWater,
+                hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-                system = forcefield.createSystem(topology,
-                nonbondedMethod=nonbondedMethod,
-                nonbondedCutoff=nonbondedCutoff, constraints=constraints,
-                rigidWater=rigidWater)
+                system = forcefield.createSystem(modeller.topology,
+                nonbondedMethod=nonbondedMethod, nonbondedCutoff=nonbondedCutoff,
+                constraints=constraints, rigidWater=rigidWater)
             """
         if nonbondedMethod == PME:
             if hydrogenMass:
                 script_content += """
-            system = forcefield.createSystem(topology,
+            system = forcefield.createSystem(modeller.topology,
             nonbondedMethod=nonbondedMethod,
             nonbondedCutoff=nonbondedCutoff, ewaldErrorTolerance=ewaldErrorTolerance,
             constraints=constraints, rigidWater=rigidWater, hydrogenMass=hydrogenMass)
             """
             else:
                 script_content += """
-            system = forcefield.createSystem(topology,
+            system = forcefield.createSystem(modeller.topology,
             nonbondedMethod=nonbondedMethod,
             nonbondedCutoff=nonbondedCutoff, ewaldErrorTolerance=ewaldErrorTolerance,
             constraints=constraints, rigidWater=rigidWater)
@@ -1009,14 +1047,14 @@ class OpenMMSimulation:
             script_content += """
         integrator = LangevinMiddleIntegrator(temperature, friction, dt)
         integrator.setConstraintTolerance(constraintTolerance)
-        simulation = Simulation(topology, system, integrator, platform)
-        simulation.context.setPositions(positions)
+        simulation = Simulation(modeller.topology, system, integrator, platform)
+        simulation.context.setPositions(modeller.positions)
         """
         if integrator_type == "LangevinMiddle" and constraints == "None":
             script_content += """
             integrator = LangevinMiddleIntegrator(temperature, friction, dt)
-            simulation = Simulation(topology, system, integrator, platform)
-            simulation.context.setPositions(positions)
+            simulation = Simulation(modeller.topology, system, integrator, platform)
+            simulation.context.setPositions(modeller.positions)
         """
 
         script_content += """
@@ -1065,6 +1103,16 @@ class OpenMMSimulation:
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
+        top_name = f"files/pdb/{self.sim_id}_initial_positions.pdb"
+        top_description = f"Initial positions for simulation {self.sim_id}"
+        with open(top_name, "w") as f:
+            PDBFile.writeFile(
+                self.simulation.topology,
+                self.simulation.context.getState(getPositions=True).getPositions(),
+                f,
+            )
+        self.path_registry.map_path(f"top_{self.sim_id}", top_name, top_description)
+        print("Initial Positions saved to initial_positions.pdb")
         st.markdown("Minimization complete! Equilibrating...", unsafe_allow_html=True)
         print("Equilibrating...")
         _temp = self.int_params["Temperature"]
@@ -1148,7 +1196,14 @@ class SetUpandRunFunction(BaseTool):
             print("simulation set!")
             st.markdown("simulation set!", unsafe_allow_html=True)
         except ValueError as e:
-            return str(e) + f"This were the inputs {input_args}"
+            msg = str(e) + f"This were the inputs {input_args}"
+            if "No template for" in msg:
+                msg += (
+                    "This error is likely due to non standard residues "
+                    "in the protein, if you havent done it yet, try "
+                    "cleaning the pdb file using the cleaning tool"
+                )
+            return msg
         except FileNotFoundError:
             return f"File not found, check File id. This were the inputs {input_args}"
         except OpenMMException as e:
@@ -1181,8 +1236,19 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
+                    record[0] = self.path_registry.get_fileid(  # Step necessary here to
+                        record[1].split("/")[-1],  # avoid id being repeated
+                        FileType.RECORD,
+                    )
                     self.path_registry.map_path(*record)
-            return "Simulation done!"
+            return (
+                "Simulation done! \n Summary: \n"
+                "Record files written to files/records/ with IDs and descriptions: "
+                f"{[(record[0],record[2]) for record in records]}\n"
+                "Standalone script written to files/simulations/ with ID: "
+                f"{sim_id}.\n"
+                f"The initial topology file ID is top_{sim_id} saved in files/pdb/"
+            )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
             return f"An exception was found trying to write the filenames: {str(e)}."
@@ -1383,9 +1449,12 @@ class SetUpandRunFunction(BaseTool):
                     try:
                         processed_params[key] = float(value)
                     except TypeError as e:
-                        error_msg += f"""Invalid ewaldErrorTolerance: {e}.
-                        If you are using null or None, just dont include
-                        as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid ewaldErrorTolerance: {e}. "
+                            "If you are using null or None, "
+                            "just dont include it "
+                            "as part of the parameters.\n"
+                        )
                 if key == "constraints":
                     try:
                         if type(value) == str:
@@ -1398,14 +1467,19 @@ class SetUpandRunFunction(BaseTool):
                             elif value == "HAngles":
                                 processed_params[key] = HAngles
                             else:
-                                error_msg += f"""Invalid constraints. got {value}.
-                                             Try using None, HBonds, AllBonds,
-                                             HAngles"""
+                                error_msg += (
+                                    f"Invalid constraints: Got {value}. "
+                                    "Try using None, HBonds, AllBonds or "
+                                    "HAngles\n"
+                                )
                         else:
                             processed_params[key] = value
                     except TypeError as e:
-                        error_msg += f"""Invalid constraints: {e}. If you are using
-                        null or None, just dont include as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid constraints: {e}. If you are using "
+                            "null or None, just dont include as "
+                            "part of the parameters.\n"
+                        )
                 if key == "rigidWater" or key == "rigidwater":
                     if type(value) == bool:
                         processed_params[key] = value
@@ -1414,17 +1488,42 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "False":
                         processed_params[key] = False
                     else:
-                        error_msg += f"""Invalid rigidWater. got {value}.
-                                    Try using True or False.\n"""
+                        error_msg += (
+                            f"Invalid rigidWater: got {value}. "
+                            "Try using True or False.\n"
+                        )
                 if key == "constraintTolerance" or key == "constrainttolerance":
                     try:
                         processed_params[key] = float(value)
                     except ValueError as e:
-                        error_msg += f"Invalid constraintTolerance. {e}."
+                        error_msg += f"Invalid constraintTolerance: {e}."
                     except TypeError as e:
-                        error_msg += f"""Invalid constraintTolerance. {e}. If
-                        constraintTolerance is null or None,
-                        just dont include as part of the parameters.\n"""
+                        error_msg += (
+                            f"Invalid constraintTolerance: {e}. If "
+                            "constraintTolerance is null or None, "
+                            "just dont include as part of "
+                            "the parameters.\n"
+                        )
+                if key == "solvate":
+                    try:
+                        if type(value) == bool:
+                            processed_params[key] = value
+                        elif value == "True":
+                            processed_params[key] = True
+                        elif value == "False":
+                            processed_params[key] = False
+                        else:
+                            error_msg += (
+                                f"Invalid solvate: got {value}. "
+                                "Use either True or False.\n"
+                            )
+                    except TypeError as e:
+                        error_msg += (
+                            f"Invalid solvate: {e}. If solvate is null or "
+                            "None, just dont include as part of "
+                            "the parameters.\n"
+                        )
+
             return processed_params, error_msg
         if param_type == "integrator_params":
             for key, value in user_params.items():
@@ -1438,9 +1537,11 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "Brownian" or value == BrownianIntegrator:
                         processed_params[key] = "Brownian"
                     else:
-                        error_msg += f"""\nInvalid integrator_type. got {value}.
-                                         Try using LangevinMiddle, Langevin,
-                                         Verlet, or Brownian."""
+                        error_msg += (
+                            f"Invalid integrator_type: got {value}. "
+                            "Try using LangevinMiddle, Langevin, "
+                            "Verlet, or Brownian.\n"
+                        )
                 if key == "Temperature" or key == "temperature":
                     temperature, msg = self.parse_temperature(value)
                     processed_params[key] = temperature
@@ -1469,8 +1570,10 @@ class SetUpandRunFunction(BaseTool):
                     elif value == "NVE":
                         processed_params[key] = "NVE"
                     else:
-                        error_msg += f"""Invalid Ensemble. got {value}.
-                                         Try using NPT, NVT, or NVE."""
+                        error_msg += (
+                            f"Invalid Ensemble. got {value}. "
+                            "Try using NPT, NVT, or NVE.\n"
+                        )
 
                 if key == "Number of Steps" or key == "number of steps":
                     processed_params[key] = int(value)
@@ -1501,6 +1604,7 @@ class SetUpandRunFunction(BaseTool):
                 "constraints": AllBonds,
                 "rigidWater": True,
                 "constraintTolerance": 0.00001,
+                "solvate": False,
             }
         integrator_params = values.get("integrator_params")
         if integrator_params:
@@ -1618,7 +1722,7 @@ class SetUpandRunFunction(BaseTool):
                 if file not in FORCEFIELD_LIST:
                     error_msg += "The forcefield file is not present"
 
-        save = values.get("final", False)
+        save = values.get("save", True)
         if type(save) != bool:
             error_msg += "save must be a boolean value"
 

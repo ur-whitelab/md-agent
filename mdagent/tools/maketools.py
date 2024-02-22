@@ -19,13 +19,14 @@ from .base_tools import (
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
-    Name2PDBTool,
     PackMolTool,
     PPIDistance,
+    ProteinName2PDBTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
     SimulationOutputFigures,
+    SmallMolPDB,
     VisualizeProtein,
 )
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
@@ -80,8 +81,9 @@ def make_all_tools(
         CheckDirectoryFiles(),
         ListRegistryPaths(path_registry=path_instance),
         #    MapPath2Name(path_registry=path_instance),
-        Name2PDBTool(path_registry=path_instance),
+        ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
+        SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
         PPIDistance(),
         RMSDCalculator(),
@@ -89,18 +91,19 @@ def make_all_tools(
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         SimulationOutputFigures(),
     ]
-
-    # tools using subagents
     if subagent_settings is None:
         subagent_settings = SubAgentSettings(path_registry=path_instance)
+
+    # tools using subagents
     subagents_tools = []
     if not skip_subagents:
         subagents_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
             RetryExecuteSkill(subagent_settings=subagent_settings),
             SkillRetrieval(subagent_settings=subagent_settings),
-            WorkflowPlan(subagent_settings=subagent_settings),
         ]
+        if subagent_settings.curriculum:
+            WorkflowPlan(subagent_settings=subagent_settings)
 
     # add 'learned' tools here
     # disclaimer: assume they don't need path_registry
@@ -125,7 +128,7 @@ def get_tools(
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
     top_k_tools=15,
-    subagents_required=True,
+    skip_subagents=False,
     human=False,
 ):
     if subagent_settings:
@@ -134,7 +137,7 @@ def get_tools(
         ckpt_dir = "ckpt"
 
     retrieved_tools = []
-    if subagents_required:
+    if not skip_subagents:
         # add subagents-related tools by default
         retrieved_tools = [
             CreateNewTool(subagent_settings=subagent_settings),
@@ -191,7 +194,8 @@ class CreateNewToolInputSchema(BaseModel):
     orig_prompt: str = Field(description="Full user prompt you got from the beginning.")
     curr_tools: str = Field(
         description="""List of all tools you have access to. Such as
-        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+        this tool, 'ExecuteSkill',
+        'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
     )
     execute: Optional[bool] = Field(
         True,
