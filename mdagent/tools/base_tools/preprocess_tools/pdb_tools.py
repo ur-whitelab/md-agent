@@ -1416,6 +1416,8 @@ class MolPDB:
         except ValueError:
             print("The requested value is not in the expected format.")
         # remove salts
+        except Exception as e:
+            print(f"An error occurred: {e}")
         return Chem.CanonSmiles(self.largest_mol(smi))
 
     def smiles2name(self, smi: str) -> str:
@@ -1452,7 +1454,7 @@ class MolPDB:
                 mol_name = mol_str
             try:  # only if needed
                 m = Chem.AddHs(m)
-            except Exception:  # TODO: we should be more specific here
+            except Exception:
                 pass
             Chem.AllChem.EmbedMolecule(m)
             file_name = f"files/pdb/{mol_name}.pdb"
@@ -1465,11 +1467,7 @@ class MolPDB:
             return (
                 f"PDB file for {mol_str} successfully created and saved to {file_name}."
             )
-        except Exception:  # TODO: we should be more specific here
-            print(
-                "There was an error getting pdb. Please input a single molecule name."
-                f"{mol_str},{mol_name}, {smi}"
-            )
+        except Exception:
             return (
                 "There was an error getting pdb. Please input a single molecule name."
             )
