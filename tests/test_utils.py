@@ -159,11 +159,12 @@ def test_init_path_registry(path_registry_with_mocked_fs):
 
 def test_find_file_path():
     file_name = "test_utils.py"
-    file_path_current = os.path.abspath(file_name)
+    # current directory won't include folders
+    cwd = os.getcwd()
+    file_path_current = os.path.join(cwd, "tests", file_name)
     file_path_test = find_file_path(file_name, exact_match=True)
     assert file_path_current == file_path_test
 
-    file_name_short = file_name[-4]
-    file_path_current_short = os.path.abspath(file_name_short)
+    file_name_short = "test_util"
     file_path_test_short = find_file_path(file_name_short, exact_match=False)
-    assert file_path_current_short == file_path_test_short
+    assert file_path_current == file_path_test_short

@@ -1406,6 +1406,15 @@ class MolPDB:
                 "One possible cause is that the input is incorrect, "
                 "input one molecule at a time."
             )
+        except IndexError:
+            print("The smiles property was not found for this molecule.")
+        except TypeError:
+            print(
+                "The information from the PubChem database is "
+                "not in the expected format."
+            )
+        except ValueError:
+            print("The requested value is not in the expected format.")
         # remove salts
         return Chem.CanonSmiles(self.largest_mol(smi))
 

@@ -17,6 +17,8 @@ def find_file_path(file_name: str, exact_match: bool = True):
             if (exact_match and filename == file_name) or (
                 not exact_match and file_name in filename
             ):
-                return os.path.join(dirpath, filename)
+                path_full = os.path.join(dirpath, filename)
+                # make sure its absolute
+                return os.path.abspath(path_full)
 
     return None
