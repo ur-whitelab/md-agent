@@ -7,7 +7,7 @@ import pytest
 
 from mdagent.tools.base_tools import CleaningTools, SimulationFunctions
 from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB, PackMolTool
-from mdagent.utils import PathRegistry
+from mdagent.utils import PathRegistry, find_file_path
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
 
@@ -99,13 +99,13 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 def test_small_molecule_pdb(molpdb, get_registry):
     # Test with a valid SMILES string
     valid_smiles = "C1=CC=CC=C1"  # Benzene
-    expected_output = (
-        "PDB file for C1=CC=CC=C1 successfully created and saved to "
-        "files/pdb/benzene.pdb."
+    expected_output_success = "successfully created and saved to "
+    assert expected_output_success in molpdb.small_molecule_pdb(
+        valid_smiles, get_registry
     )
-    assert molpdb.small_molecule_pdb(valid_smiles, get_registry) == expected_output
-    assert os.path.exists("files/pdb/benzene.pdb")
-    os.remove("files/pdb/benzene.pdb")  # Clean up
+    file_path = find_file_path("benzene", exact_match=False)
+    assert file_path is not None  # assert file was found
+    os.remove(file_path)  # Clean up
 
     # test with invalid SMILES string and invalid molecule name
     invalid_smiles = "C1=CC=CC=C1X"
@@ -113,15 +113,17 @@ def test_small_molecule_pdb(molpdb, get_registry):
     expected_output = (
         "There was an error getting pdb. Please input a single molecule name."
     )
-    assert molpdb.small_molecule_pdb(invalid_smiles, get_registry) == expected_output
-    assert molpdb.small_molecule_pdb(invalid_name, get_registry) == expected_output
+    assert expected_output in molpdb.small_molecule_pdb(invalid_smiles, get_registry)
+    assert expected_output in molpdb.small_molecule_pdb(invalid_name, get_registry)
 
     # test with valid molecule name
     valid_name = "water"
-    assert "successfully" in molpdb.small_molecule_pdb(valid_name, get_registry)
-    # assert os.path.exists("files/pdb/water.pdb")
-    if os.path.exists("files/pdb/water.pdb"):
-        os.remove("files/pdb/water.pdb")
+    assert expected_output_success in molpdb.small_molecule_pdb(
+        valid_name, get_registry
+    )
+    file_path = find_file_path("water", exact_match=False)
+    assert file_path is not None  # assert file was found
+    os.remove(file_path)  # Clean up
 
 
 def test_packmol_sm_download_called(packmol):
@@ -156,12 +158,14 @@ def test_packmol_download_only(packmol):
     path_registry._remove_path_from_json("benzene")
     small_molecules = ["water", "benzene"]
     packmol._get_sm_pdbs(small_molecules)
-    # assert os.path.exists("files/pdb/water.pdb")
-    # assert os.path.exists("files/pdb/benzene.pdb")
-    if os.path.exists("files/pdb/water.pdb"):
-        os.remove("files/pdb/water.pdb")
-    if os.path.exists("files/pdb/benzene.pdb"):
-        os.remove("files/pdb/benzene.pdb")
+
+    water_path = find_file_path("water", exact_match=False)
+    assert water_path is not None
+    os.remove(water_path)
+
+    benzene_path = find_file_path("benzene", exact_match=False)
+    assert benzene_path is not None
+    os.remove(benzene_path)
 
 
 @pytest.mark.skip(reason="Resume this test when ckpt is implemented")
@@ -170,14 +174,15 @@ def test_packmol_download_only_once(packmol):
     path_registry._remove_path_from_json("water")
     small_molecules = ["water"]
     packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    water_time = os.path.getmtime("files/pdb/water.pdb")
+    path_name = find_file_path("water", exact_match=False)
+    assert path_name is not None
+    water_time = os.path.getmtime(path_name)
     time.sleep(5)
 
     # Call the function again with the same molecule
     packmol._get_sm_pdbs(small_molecules)
-    water_time_after = os.path.getmtime("files/pdb/water.pdb")
+    water_time_after = os.path.getmtime(path_name)
 
     assert water_time == water_time_after
     # Clean up
-    os.remove("files/pdb/water.pdb")
+    os.remove(path_name)

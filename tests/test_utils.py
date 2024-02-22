@@ -1,10 +1,11 @@
 import json
+import os
 import warnings
 from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, find_file_path
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
 
@@ -154,3 +155,15 @@ def test_init_path_registry(path_registry_with_mocked_fs):
     # you may need to check the internal state or the contents of the JSON file.
     # For example:
     assert "water_000000" in path_registry_with_mocked_fs.list_path_names()
+
+
+def test_find_file_path():
+    file_name = "test_utils.py"
+    file_path_current = os.path.abspath(file_name)
+    file_path_test = find_file_path(file_name, exact_match=True)
+    assert file_path_current == file_path_test
+
+    file_name_short = file_name[-4]
+    file_path_current_short = os.path.abspath(file_name_short)
+    file_path_test_short = find_file_path(file_name_short, exact_match=False)
+    assert file_path_current_short == file_path_test_short
