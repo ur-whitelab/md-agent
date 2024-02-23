@@ -37,11 +37,6 @@ def path_to_cif():
 
 
 @pytest.fixture
-def cleaning_fxns():
-    return CleaningTools()
-
-
-@pytest.fixture
 def molpdb():
     return MolPDB()
 
@@ -76,6 +71,11 @@ def vis_fxns(get_registry):
 @pytest.fixture
 def packmol(get_registry):
     return PackMolTool(get_registry)
+
+
+@pytest.fixture
+def cleaning_fxns(get_registry):
+    return CleaningTools(get_registry)
 
 
 def test_process_csv(plotting_tools):
@@ -164,9 +164,9 @@ def test_create_notebook(path_to_cif, vis_fxns):
     assert result == "Visualization Complete"
 
 
-def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns, get_registry):
-    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif, get_registry)
-    assert "Cleaned File" in result  # just want to make sur the function ran
+def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
+    assert "Cleaned File" in result
 
 
 @patch("os.path.exists")
