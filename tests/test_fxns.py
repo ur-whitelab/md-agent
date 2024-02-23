@@ -161,11 +161,15 @@ def test_find_png(vis_fxns):
 
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
+    path_to_notebook = path_to_cif.split(".")[0] + "_vis.ipynb"
+    os.remove(path_to_notebook)
     assert result == "Visualization Complete"
 
 
 def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
     result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
+    path_to_cleaned_file = "tidy_" + path_to_cif
+    os.remove(path_to_cleaned_file)
     assert "Cleaned File" in result
 
 

@@ -69,10 +69,10 @@ class VisFunctions:
 
         # Code to import NGLview and display a file
         import_code = f"""
-        import nglview as nv
-        view = nv.show_file("{cif_file}")
-        view
-        """
+import nglview as nv
+view = nv.show_file("{cif_file}")
+view
+"""
 
         # Create new code cells
         install_cell = nbf.v4.new_code_cell(source=install_code)
