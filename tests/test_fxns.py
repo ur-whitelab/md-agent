@@ -52,12 +52,6 @@ def sim_fxns():
     return SimulationFunctions()
 
 
-# Test visualization tools
-@pytest.fixture
-def vis_fxns():
-    return VisFunctions()
-
-
 # Test MD utility tools
 @pytest.fixture
 def fibronectin():
@@ -72,6 +66,11 @@ def get_registry():
 @pytest.fixture
 def plotting_tools(get_registry):
     return PlottingTools(get_registry)
+
+
+@pytest.fixture
+def vis_fxns(get_registry):
+    return VisFunctions(get_registry)
 
 
 @pytest.fixture
@@ -149,8 +148,19 @@ def test_run_molrender(path_to_cif, vis_fxns):
     assert result == "Visualization created"
 
 
-def test_create_notebook(path_to_cif, vis_fxns, get_registry):
-    result = vis_fxns.create_notebook(path_to_cif, get_registry)
+def test_find_png(vis_fxns):
+    vis_fxns.starting_files = os.listdir(".")
+    test_file = "test_image.png"
+    with open(test_file, "w") as f:
+        f.write("")
+    png_files = vis_fxns._find_png()
+    assert test_file in png_files
+
+    os.remove(test_file)
+
+
+def test_create_notebook(path_to_cif, vis_fxns):
+    result = vis_fxns.create_notebook(path_to_cif)
     assert result == "Visualization Complete"
 
 
