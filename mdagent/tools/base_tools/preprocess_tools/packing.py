@@ -1,234 +1,463 @@
 import os
 import re
-import sys
+import subprocess
 import typing
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
-import requests
-import streamlit as st
 from langchain.tools import BaseTool
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field, ValidationError, root_validator
-from rdkit import Chem
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import PathRegistry
 
 from .elements import list_of_elements
+from .pdb_tools import MolPDB, validate_pdb_format
+
+##########################PACKMOL###############################
 
 
-def get_pdb(query_string, path_registry=None):
-    """
-    Search RSCB's protein data bank using the given query string
-    and return the path to pdb file in either CIF or PDB format
-    """
-    if path_registry is None:
-        path_registry = PathRegistry.get_instance()
-    url = "https://search.rcsb.org/rcsbsearch/v2/query?json={search-request}"
-    query = {
-        "query": {
-            "type": "terminal",
-            "service": "full_text",
-            "parameters": {"value": query_string},
-        },
-        "return_type": "entry",
-    }
-    r = requests.post(url, json=query)
-    if r.status_code == 204:
-        return None
-    if "cif" in query_string or "CIF" in query_string:
-        filetype = "cif"
-    else:
-        filetype = "pdb"
-    if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
-        pdbid = r.json()["result_set"][0]["identifier"]
-        print(f"PDB file found with this ID: {pdbid}")
-        st.markdown(f"PDB file found with this ID: {pdbid}", unsafe_allow_html=True)
-        url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
-        pdb = requests.get(url)
-        filename = path_registry.write_file_name(
-            FileType.PROTEIN,
-            protein_name=pdbid,
-            description="raw",
-            file_format=filetype,
+def summarize_errors(errors):
+    error_summary = {}
+
+    # Regular expression pattern to capture the error type and line number
+    pattern = r"\[!\] Offending field \((.+?)\) at line (\d+)"
+
+    for error in errors:
+        match = re.search(pattern, error)
+        if match:
+            error_type, line_number = match.groups()
+            # If this error type hasn't been seen before,
+            # initialize it in the dictionary
+            if error_type not in error_summary:
+                error_summary[error_type] = {"lines": []}
+            error_summary[error_type]["lines"].append(line_number)
+
+    # Format the summarized errors for display
+    summarized_strings = []
+    for error_type, data in error_summary.items():
+        line_count = len(data["lines"])
+        if line_count > 3:
+            summarized_strings.append(f"{error_type}: total {line_count} lines")
+        else:
+            summarized_strings.append(f"{error_type}: lines: {','.join(data['lines'])}")
+
+    return summarized_strings
+
+
+class Molecule:
+    def __init__(self, filename, file_id, number_of_molecules=1, instructions=None):
+        self.filename = filename
+        self.id = file_id
+        self.number_of_molecules = number_of_molecules
+        self.instructions = instructions if instructions else []
+        self.load()
+
+    def load(self):
+        # load the molecule data (optional)
+        pass
+
+    def get_number_of_atoms(self):
+        # return the number of atoms in this molecule
+        pass
+
+
+class PackmolBox:
+    def __init__(
+        self, file_number=1, file_description="PDB file for simulation with: \n"
+    ):
+        self.molecules = []
+        self.file_number = 1
+        self.file_description = file_description
+        self.final_name = None
+
+    def add_molecule(self, molecule):
+        self.molecules.append(molecule)
+        self.file_description += f"""{molecule.number_of_molecules} of
+        {molecule.filename} as {molecule.instructions} \n"""
+
+    def generate_input_header(self):
+        # Generate the header of the input file in .inp format
+        orig_pdbs_ids = [
+            f"{molecule.number_of_molecules}_{molecule.id}"
+            for molecule in self.molecules
+        ]
+
+        _final_name = f'{"_and_".join(orig_pdbs_ids)}'
+
+        self.file_description = (
+            "Packed Structures of the following molecules:\n"
+            + "\n".join(
+                [
+                    f"Molecule ID: {molecule.id}, "
+                    f"Number of Molecules: {molecule.number_of_molecules}"
+                    for molecule in self.molecules
+                ]
+            )
         )
-        file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
-        directory = "files/pdb"
-        # Create the directory if it does not exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        while os.path.exists(f"files/pdb/{_final_name}_v{self.file_number}.pdb"):
+            self.file_number += 1
 
-        with open(f"{directory}/{filename}", "w") as file:
-            file.write(pdb.text)
+        self.final_name = f"{_final_name}_v{self.file_number}.pdb"
+        with open("packmol.inp", "w") as out:
+            out.write("##Automatically generated by LangChain\n")
+            out.write("tolerance 2.0\n")
+            out.write("filetype pdb\n")
+            out.write(
+                f"output {self.final_name}\n"
+            )  # this is the name of the final file
+            out.close()
 
-        return filename, file_id
-    return None
+    def generate_input(self):
+        input_data = []
+        for molecule in self.molecules:
+            input_data.append(f"structure {molecule.filename}")
+            input_data.append(f"  number {molecule.number_of_molecules}")
+            for idx, instruction in enumerate(molecule.instructions):
+                input_data.append(f"  {molecule.instructions[idx]}")
+            input_data.append("end structure")
+
+        # Convert list of input data to a single string
+        return "\n".join(input_data)
+
+    def run_packmol(self, PathRegistry):
+        # Use the generated input to execute Packmol
+        input_string = self.generate_input()
+        # Write the input to a file
+        with open("packmol.inp", "a") as f:
+            f.write(input_string)
+        # Here, run Packmol using the subprocess module or similar
+        cmd = "packmol < packmol.inp"
+        result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+        if result.returncode != 0:
+            print("Packmol failed to run with 'packmol < packmol.inp' command")
+            result = subprocess.run(
+                "./" + cmd, shell=True, text=True, capture_output=True
+            )
+            if result.returncode != 0:
+                print("Packmol failed to run with './packmol < packmol.inp' command")
+                return (
+                    "Packmol failed to run. Please check the input file and try again."
+                )
+
+        # validate final pdb
+        pdb_validation = validate_pdb_format(f"{self.final_name}")
+        if pdb_validation[0] == 0:
+            # delete .inp files
+            # os.remove("packmol.inp")
+            for molecule in self.molecules:
+                os.remove(molecule.filename)
+            # name of packed pdb file
+            time_stamp = PathRegistry.get_timestamp()[-6:]
+            os.rename(self.final_name, f"files/pdb/{self.final_name}")
+            PathRegistry.map_path(
+                f"PACKED_{time_stamp}",
+                f"files/pdb/{self.final_name}",
+                self.file_description,
+            )
+            # move file to files/pdb
+            print("successfull!")
+            return f"PDB file validated successfully. FileID: PACKED_{time_stamp}"
+        elif pdb_validation[0] == 1:
+            # format pdb_validation[1] list of errors
+            errors = summarize_errors(pdb_validation[1])
+            # delete .inp files
+
+            # os.remove("packmol.inp")
+            print("errors:", f"{errors}")
+            return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
 
-class ProteinName2PDBTool(BaseTool):
-    name = "PDBFileDownloader"
-    description = (
-        "This tool downloads PDB (Protein Data Bank) or"
-        "CIF (Crystallographic Information File) files using"
-        "a protein's common name (NOT a small molecule)."
-        "When a specific file type, either PDB or CIF,"
-        "is requested, add file type to the query string with space."
-        "Input: Commercial name of the protein or file without"
-        "file extension"
-        "Output: Corresponding PDB or CIF file"
+# define function that takes in a list of
+#  molecules and a list of instructions and returns a pdb file
+
+
+def packmol_wrapper(
+    PathRegistry,
+    pdbfiles: List,
+    files_id: List,
+    number_of_molecules: List,
+    instructions: List[List],
+):
+    """Useful when you need to create a box
+    of different types of molecules molecules"""
+
+    # create a box
+    box = PackmolBox()
+    # add molecules to the box
+    for (
+        pdbfile,
+        file_id,
+        number_of_molecules,
+        instructions,
+    ) in zip(pdbfiles, files_id, number_of_molecules, instructions):
+        molecule = Molecule(pdbfile, file_id, number_of_molecules, instructions)
+        box.add_molecule(molecule)
+    # generate input header
+    box.generate_input_header()
+    # generate input
+    # run packmol
+    print("Packing:", box.file_description, "\nThe file name is:", box.final_name)
+    return box.run_packmol(PathRegistry)
+
+
+"""Args schema for packmol_wrapper tool. Useful for OpenAI functions"""
+##TODO
+
+
+class PackmolInput(BaseModel):
+    pdbfiles_id: typing.Optional[typing.List[str]] = Field(
+        ..., description="List of PDB files id (path_registry) to pack into a box"
     )
-    path_registry: Optional[PathRegistry]
+    small_molecules: typing.Optional[typing.List[str]] = Field(
+        [],
+        description=(
+            "List of small molecules to be packed in the system. "
+            "Examples: water, benzene, toluene, etc."
+        ),
+    )
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    number_of_molecules: typing.Optional[typing.List[int]] = Field(
+        ...,
+        description=(
+            "List of number of instances of each species to pack into the box. "
+            "One number per species (either protein or small molecule) "
+        ),
+    )
+    instructions: typing.Optional[typing.List[List[str]]] = Field(
+        ...,
+        description=(
+            "List of instructions for each species. "
+            "One List per Molecule. "
+            "Every instruction should be one string like:\n"
+            "'inside box 0. 0. 0. 90. 90. 90.'"
+        ),
+    )
+
+
+class PackMolTool(BaseTool):
+    name: str = "packmol_tool"
+    description: str = (
+        "Useful when you need to create a box "
+        "of different types of chemical species.\n"
+        "Three different examples:\n"
+        "pdbfiles_id: ['1a2b_123456']\n"
+        "small_molecules: ['water'] \n"
+        "number_of_molecules: [1, 1000]\n"
+        "instructions: [['fixed 0. 0. 0. 0. 0. 0. \n centerofmass'], "
+        "['inside box 0. 0. 0. 90. 90. 90.']]\n"
+        "will pack 1 molecule of 1a2b_123456 at the origin "
+        "and 1000 molecules of water. \n"
+        "pdbfiles_id: ['1a2b_123456']\n"
+        "number_of_molecules: [1]\n"
+        "instructions: [['fixed  0. 0. 0. 0. 0. 0.' \n center]]\n"
+        "This will fix the barocenter of protein 1a2b_123456 at "
+        "the center of the box with no rotation.\n"
+        "pdbfiles_id: ['1a2b_123456']\n"
+        "number_of_molecules: [1]\n"
+        "instructions: [['outside sphere 2.30 3.40 4.50 8.0]]\n"
+        "This will place the protein 1a2b_123456 outside a sphere "
+        "centered at 2.30 3.40 4.50 with radius 8.0\n"
+    )
+
+    args_schema: Type[BaseModel] = PackmolInput
+
+    path_registry: typing.Optional[PathRegistry]
+
+    def __init__(self, path_registry: typing.Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, query: str) -> str:
-        """Use the tool."""
+    def _get_sm_pdbs(self, small_molecules):
+        all_files = self.path_registry.list_path_names()
+        for molecule in small_molecules:
+            # check path registry for molecule.pdb
+            if molecule not in all_files:
+                # download molecule using small_molecule_pdb from MolPDB
+                molpdb = MolPDB(self.path_registry)
+                molpdb.small_molecule_pdb(molecule)
+        print("Small molecules PDBs created successfully")
+
+    def _run(self, **values) -> str:
+        """use the tool."""
+
+        if self.path_registry is None:  # this should not happen
+            raise ValidationError("Path registry not initialized")
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            filename, pdbfile_id = get_pdb(query, self.path_registry)
-            if pdbfile_id is None:
-                return "Name2PDB tool failed to find and download PDB file."
-            else:
-                self.path_registry.map_path(
-                    pdbfile_id,
-                    f"files/pdb/{filename}",
-                    f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
-                )
-                return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
-        except Exception as e:
-            return f"Something went wrong. {e}"
+            values = self.validate_input(values)
+        except ValidationError as e:
+            return str(e)
+        error_msg = values.get("error", None)
+        if error_msg:
+            print("Error in Packmol inputs:", error_msg)
+            return f"Error in inputs: {error_msg}"
+        print("Starting Packmol Tool!")
+        pdbfile_ids = values.get("pdbfiles_id", [])
+        pdbfiles = [
+            self.path_registry.get_mapped_path(pdbfile) for pdbfile in pdbfile_ids
+        ]
+        pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
+        # copy them to the current directory with temp_ names
 
-    async def _arun(self, query) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("this tool does not support async")
+        pdbfile_names = [f"temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
+        number_of_molecules = values.get("number_of_molecules", [])
+        instructions = values.get("instructions", [])
+        small_molecules = values.get("small_molecules", [])
+        # make sure small molecules are all downloaded
+        self._get_sm_pdbs(small_molecules)
+        small_molecules_files = [
+            self.path_registry.get_mapped_path(sm) for sm in small_molecules
+        ]
+        small_molecules_file_names = [
+            small_molecule.split("/")[-1] for small_molecule in small_molecules_files
+        ]
+        small_molecules_file_names = [
+            f"temp_{small_molecule_file_name}"
+            for small_molecule_file_name in small_molecules_file_names
+        ]
+        # append small molecules to pdbfiles
+        pdbfiles.extend(small_molecules_files)
+        pdbfile_names.extend(small_molecules_file_names)
+        pdbfile_ids.extend(small_molecules)
 
-
-"""validate_pdb_format: validates a pdb file against the pdb format specification
-   packmol_wrapper: takes in a list of pdb files, a
-   list of number of molecules, a list of instructions, and a list of small molecules
-   and returns a packed pdb file
-   Molecule: class that represents a molecule (helpful for packmol
-   PackmolBox: class that represents a box of molecules (helpful for packmol)
-   summarize_errors: function that summarizes the errors found by validate_pdb_format
-   _extract_path: function that extracts a file path from a string
-   _standard_cleaning: function that cleans a pdb file using pdbfixer)"""
-
-########PDB Validation#########
-
-
-def validate_pdb_format(fhandle):
-    """
-    Compare each ATOM/HETATM line with the format defined on the
-    official PDB website.
-
-    Parameters
-    ----------
-    fhandle : a line-by-line iterator of the original PDB file.
-
-    Returns
-    -------
-    (int, list)
-        - 1 if error was found, 0 if no errors were found.
-        - List of error messages encountered.
-    """
-    # check if filename is in directory
-    if not os.path.exists(fhandle):
-        return (1, ["File not found. Packmol failed to write the file."])
-    errors = []
-    _fmt_check = (
-        ("Atm. Num.", (slice(6, 11), re.compile(r"[\d\s]+"))),
-        ("Alt. Loc.", (slice(11, 12), re.compile(r"\s"))),
-        ("Atm. Nam.", (slice(12, 16), re.compile(r"\s*[A-Z0-9]+\s*"))),
-        ("Spacer #1", (slice(16, 17), re.compile(r"[A-Z0-9 ]{1}"))),
-        ("Res. Nam.", (slice(17, 20), re.compile(r"\s*[A-Z0-9]+\s*"))),
-        ("Spacer #2", (slice(20, 21), re.compile(r"\s"))),
-        ("Chain Id.", (slice(21, 22), re.compile(r"[A-Za-z0-9 ]{1}"))),
-        ("Res. Num.", (slice(22, 26), re.compile(r"\s*[\d\-]+\s*"))),
-        ("Ins. Code", (slice(26, 27), re.compile(r"[A-Z0-9 ]{1}"))),
-        ("Spacer #3", (slice(27, 30), re.compile(r"\s+"))),
-        ("Coordn. X", (slice(30, 38), re.compile(r"\s*[\d\.\-]+\s*"))),
-        ("Coordn. Y", (slice(38, 46), re.compile(r"\s*[\d\.\-]+\s*"))),
-        ("Coordn. Z", (slice(46, 54), re.compile(r"\s*[\d\.\-]+\s*"))),
-        ("Occupancy", (slice(54, 60), re.compile(r"\s*[\d\.\-]+\s*"))),
-        ("Tmp. Fac.", (slice(60, 66), re.compile(r"\s*[\d\.\-]+\s*"))),
-        ("Spacer #4", (slice(66, 72), re.compile(r"\s+"))),
-        ("Segm. Id.", (slice(72, 76), re.compile(r"[\sA-Z0-9\-\+]+"))),
-        ("At. Elemt", (slice(76, 78), re.compile(r"[\sA-Z0-9\-\+]+"))),
-        ("At. Charg", (slice(78, 80), re.compile(r"[\sA-Z0-9\-\+]+"))),
-    )
-
-    def _make_pointer(column):
-        col_bg, col_en = column.start, column.stop
-        pt = ["^" if c in range(col_bg, col_en) else " " for c in range(80)]
-        return "".join(pt)
-
-    for iline, line in enumerate(fhandle, start=1):
-        line = line.rstrip("\n").rstrip("\r")  # CR/LF
-        if not line:
-            continue
-
-        if line[0:6] in ["ATOM  ", "HETATM"]:
-            # ... [rest of the code unchanged here]
-            linelen = len(line)
-            if linelen < 80:
-                emsg = "[!] Line {0} is short: {1} < 80\n"
-                sys.stdout.write(emsg.format(iline, linelen))
-
-            elif linelen > 80:
-                emsg = "[!] Line {0} is long: {1} > 80\n"
-                sys.stdout.write(emsg.format(iline, linelen))
-
-            for fname, (fcol, fcheck) in _fmt_check:
-                field = line[fcol]
-                if not fcheck.match(field):
-                    pointer = _make_pointer(fcol)
-                    emsg = "[!] Offending field ({0}) at line {1}\n".format(
-                        fname, iline
-                    )
-                    emsg += repr(line) + "\n"
-                    emsg += pointer + "\n"
-                    errors.append(emsg)
-
-        else:
-            # ... [rest of the code unchanged here]
-            linelen = len(line)
-            # ... [rest of the code unchanged here]
-            linelen = len(line)
-            skip_keywords = (
-                "END",
-                "ENDMDL",
-                "HEADER",
-                "TITLE",
-                "REMARK",
-                "CRYST1",
-                "MODEL",
+        for pdbfile, pdbfile_name in zip(pdbfiles, pdbfile_names):
+            os.system(f"cp {pdbfile} {pdbfile_name}")
+        # check if packmol is installed
+        cmd = "command -v packmol"
+        result = subprocess.run(cmd, shell=True, text=True, capture_output=True)
+        if result.returncode != 0:
+            result = subprocess.run(
+                "./" + cmd, shell=True, text=True, capture_output=True
             )
+            if result.returncode != 0:
+                return (
+                    "Packmol is not installed. Please install"
+                    "packmol at "
+                    "'https://m3g.github.io/packmol/download.shtml'"
+                    "and try again."
+                )
 
-            if any(keyword in line for keyword in skip_keywords):
-                continue
+        return packmol_wrapper(
+            self.path_registry,
+            pdbfiles=pdbfile_names,
+            files_id=pdbfile_ids,
+            number_of_molecules=number_of_molecules,
+            instructions=instructions,
+        )
 
-            if linelen < 80:
-                emsg = "[!] Line {0} is short: {1} < 80\n"
-                sys.stdout.write(emsg.format(iline, linelen))
-            elif linelen > 80:
-                emsg = "[!] Line {0} is long: {1} > 80\n"
-                sys.stdout.write(emsg.format(iline, linelen))
+    def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
+        # check if is only a string
+        if isinstance(values, str):
+            print("values is a string", values)
+            raise ValidationError("Input must be a dictionary")
+        pdbfiles = values.get("pdbfiles_id", [])
+        small_molecules = values.get("small_molecules", [])
+        number_of_molecules = values.get("number_of_molecules", [])
+        instructions = values.get("instructions", [])
+        number_of_species = len(pdbfiles) + len(small_molecules)
 
-    """
-    map paths to files in path_registry before you return the string
-    same for all other functions you want to save files for next tools
-    Don't forget to import PathRegistry and add path_registry
-    or PathRegistry as an argument
-    """
-    if errors:
-        msg = "\nTo understand your errors, read the format specification:\n"
-        msg += "http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM\n"
-        errors.append(msg)
-        return (1, errors)
-    else:
-        return (0, ["It *seems* everything is OK."])
+        if not number_of_species == len(number_of_molecules):
+            if not number_of_species == len(instructions):
+                return {
+                    "error": (
+                        "The length of number_of_molecules AND instructions "
+                        "must be equal to the number of species in the system. "
+                        f"You have {number_of_species} "
+                        f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                        "small molecules"
+                    )
+                }
+            return {
+                "error": (
+                    "The length of number_of_molecules must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
+                )
+            }
+        elif not number_of_species == len(instructions):
+            return {
+                "error": (
+                    "The length of instructions must be equal to the "
+                    f"number of species in the system. You have {number_of_species} "
+                    f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
+                    "small molecules"
+                )
+            }
+        registry = PathRegistry.get_instance()
+        molPDB = MolPDB(registry)
+        for instruction in instructions:
+            if len(instruction) != 1:
+                return {
+                    "error": (
+                        "Each instruction must be a single string. "
+                        "If necessary, use newlines in a instruction string."
+                    )
+                }
+            # TODO enhance this validation with more packmol instructions
+            first_word = instruction[0].split(" ")[0]
+            if first_word == "center":
+                if len(instruction[0].split(" ")) == 1:
+                    return {
+                        "error": (
+                            "The instruction 'center' must be accompanied by more "
+                            "instructions. Example 'fixed 0. 0. 0. 0. 0. 0.' "
+                            "The complete instruction would be: 'center \n fixed 0. 0. "
+                            "0. 0. 0. 0.' with a newline separating the two "
+                            "instructions."
+                        )
+                    }
+            elif first_word not in [
+                "inside",
+                "outside",
+                "fixed",
+            ]:
+                return {
+                    "error": (
+                        "The first word of each instruction must be one of "
+                        "'inside' or 'outside' or 'fixed' \n"
+                        "examples: center \n fixed 0. 0. 0. 0. 0. 0.,\n"
+                        "inside box -10. 0. 0. 10. 10. 10. \n"
+                    )
+                }
+
+        # Further validation, e.g., checking if files exist
+        file_ids = registry.list_path_names()
+
+        for pdbfile_id in pdbfiles:
+            if "_" not in pdbfile_id:
+                return {
+                    "error": (
+                        f"{pdbfile_id} is not a valid pdbfile_id in the path_registry"
+                    )
+                }
+            if pdbfile_id not in file_ids:
+                # look for files in the current directory
+                # that match some part of the pdbfile
+                ids_w_description = registry.list_path_names_and_descriptions()
+
+                return {
+                    "error": (
+                        f"PDB file ID {pdbfile_id} does not exist "
+                        "in the path registry.\n"
+                        f"This are the files IDs: {ids_w_description} "
+                    )
+                }
+            for small_molecule in small_molecules:
+                if small_molecule not in file_ids:
+                    result = molPDB.small_molecule_pdb(small_molecule)
+                    if "successfully" not in result:
+                        return {
+                            "error": (
+                                f"{small_molecule} could not be converted to a pdb "
+                                "file. Try with a different name, or with the SMILES "
+                                "of the small molecule"
+                            )
+                        }
+        return values
+
+    async def _arun(self, values: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("custom_search does not support async")
 
 
 ########VALIDATION AND FIXING PDB FILES########################
@@ -915,124 +1144,3 @@ class FixPDBFile(BaseTool):
                 return "PDB file fixed"
             else:
                 return "PDB not fully fixed"
-
-
-class MolPDB:
-    def __init__(self, path_registry):
-        self.path_registry = path_registry
-
-    def is_smiles(self, text: str) -> bool:
-        try:
-            m = Chem.MolFromSmiles(text, sanitize=False)
-            if m is None:
-                return False
-            return True
-        except Exception:
-            return False
-
-    def largest_mol(
-        self, smiles: str
-    ) -> (
-        str
-    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/utils.py
-        ss = smiles.split(".")
-        ss.sort(key=lambda a: len(a))
-        while not self.is_smiles(ss[-1]):
-            rm = ss[-1]
-            ss.remove(rm)
-        return ss[-1]
-
-    def molname2smiles(
-        self, query: str
-    ) -> (
-        str
-    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/tools/databases.py
-        url = " https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/{}"
-        r = requests.get(url.format(query, "property/IsomericSMILES/JSON"))
-        # convert the response to a json object
-        data = r.json()
-        # return the SMILES string
-        try:
-            smi = data["PropertyTable"]["Properties"][0]["IsomericSMILES"]
-        except KeyError:
-            return (
-                "Could not find a molecule matching the text."
-                "One possible cause is that the input is incorrect, "
-                "input one molecule at a time."
-            )
-        # remove salts
-        return Chem.CanonSmiles(self.largest_mol(smi))
-
-    def smiles2name(self, smi: str) -> str:
-        try:
-            smi = Chem.MolToSmiles(Chem.MolFromSmiles(smi), canonical=True)
-        except Exception:
-            return "Invalid SMILES string"
-        # query the PubChem database
-        r = requests.get(
-            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/"
-            + smi
-            + "/synonyms/JSON"
-        )
-        data = r.json()
-        try:
-            name = data["InformationList"]["Information"][0]["Synonym"][0]
-        except KeyError:
-            return "Unknown Molecule"
-        return name
-
-    def small_molecule_pdb(self, mol_str: str) -> str:
-        # takes in molecule name or smiles (converts to smiles if name)
-        # writes pdb file name.pdb (gets name from smiles if possible)
-        # output is done message
-        ps = Chem.SmilesParserParams()
-        ps.removeHs = False
-        try:
-            if self.is_smiles(mol_str):
-                m = Chem.MolFromSmiles(mol_str)
-                mol_name = self.smiles2name(mol_str)
-            else:  # if input is not smiles, try getting smiles
-                smi = self.molname2smiles(mol_str)
-                m = Chem.MolFromSmiles(smi)
-                mol_name = mol_str
-            try:  # only if needed
-                m = Chem.AddHs(m)
-            except Exception:
-                pass
-            Chem.AllChem.EmbedMolecule(m)
-            file_name = f"files/pdb/{mol_name}.pdb"
-            Chem.MolToPDBFile(m, file_name)
-            self.path_registry.map_path(
-                mol_name, file_name, f"pdb file for the small molecule {mol_name}"
-            )
-            return (
-                f"PDB file for {mol_str} successfully created and saved to {file_name}."
-            )
-        except Exception:
-            print(
-                "There was an error getting pdb. Please input a single molecule name."
-                f"{mol_str},{mol_name}, {smi}"
-            )
-            return (
-                "There was an error getting pdb. Please input a single molecule name."
-            )
-
-
-class SmallMolPDB(BaseTool):
-    name = "SmallMoleculePDB"
-    description = (
-        "Creates a PDB file for a small molecule"
-        "Use this tool when you need to use a small molecule in a simulation."
-        "Input can be a molecule name or a SMILES string."
-    )
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry: Optional[PathRegistry]):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, mol_str: str) -> str:
-        """use the tool."""
-        mol_pdb = MolPDB(self.path_registry)
-        output = mol_pdb.small_molecule_pdb(mol_str)
-        return output

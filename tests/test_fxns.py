@@ -13,7 +13,8 @@ from mdagent.tools.base_tools import (
     get_pdb,
 )
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
-from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB, PackMolTool
+from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
+from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB
 from mdagent.utils import FileType, PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -34,11 +35,6 @@ def path_to_cif():
 
     # Restore original working directory after the test is done
     os.chdir(original_cwd)
-
-
-@pytest.fixture
-def molpdb():
-    return MolPDB()
 
 
 # Test simulation tools
@@ -71,6 +67,11 @@ def vis_fxns(get_registry):
 @pytest.fixture
 def packmol(get_registry):
     return PackMolTool(get_registry)
+
+
+@pytest.fixture
+def molpdb(get_registry):
+    return MolPDB(get_registry)
 
 
 @pytest.fixture
@@ -332,14 +333,14 @@ def test_map_path():
                 assert result == "Path successfully mapped to name: new_name"
 
 
-def test_small_molecule_pdb(molpdb, get_registry):
+def test_small_molecule_pdb(molpdb):
     # Test with a valid SMILES string
     valid_smiles = "C1=CC=CC=C1"  # Benzene
     expected_output = (
         "PDB file for C1=CC=CC=C1 successfully created and saved to "
         "files/pdb/benzene.pdb."
     )
-    assert molpdb.small_molecule_pdb(valid_smiles, get_registry) == expected_output
+    assert molpdb.small_molecule_pdb(valid_smiles) == expected_output
     assert os.path.exists("files/pdb/benzene.pdb")
     os.remove("files/pdb/benzene.pdb")  # Clean up
 
@@ -349,26 +350,23 @@ def test_small_molecule_pdb(molpdb, get_registry):
     expected_output = (
         "There was an error getting pdb. Please input a single molecule name."
     )
-    assert molpdb.small_molecule_pdb(invalid_smiles, get_registry) == expected_output
-    assert molpdb.small_molecule_pdb(invalid_name, get_registry) == expected_output
+    assert molpdb.small_molecule_pdb(invalid_smiles) == expected_output
+    assert molpdb.small_molecule_pdb(invalid_name) == expected_output
 
     # test with valid molecule name
     valid_name = "water"
     expected_output = (
         "PDB file for water successfully created and " "saved to files/pdb/water.pdb."
     )
-    assert molpdb.small_molecule_pdb(valid_name, get_registry) == expected_output
+    assert molpdb.small_molecule_pdb(valid_name) == expected_output
     assert os.path.exists("files/pdb/water.pdb")
     os.remove("files/pdb/water.pdb")  # Clean up
 
 
 def test_packmol_sm_download_called(packmol):
-    path_registry = PathRegistry()
-    path_registry._remove_path_from_json("water")
-    path_registry._remove_path_from_json("benzene")
-    path_registry.map_path("1A3N_144150", "files/pdb/1A3N_144150.pdb", "pdb")
+    packmol.path_registry.map_path("1A3N_144150", "files/pdb/1A3N_144150.pdb", "pdb")
     with patch(
-        "mdagent.tools.base_tools.preprocess_tools.pdb_tools.PackMolTool._get_sm_pdbs",
+        "mdagent.tools.base_tools.preprocess_tools.packing.PackMolTool._get_sm_pdbs",
         new=MagicMock(),
     ) as mock_get_sm_pdbs:
         test_values = {
@@ -388,9 +386,8 @@ def test_packmol_sm_download_called(packmol):
 
 
 def test_packmol_download_only(packmol):
-    path_registry = PathRegistry()
-    path_registry._remove_path_from_json("water")
-    path_registry._remove_path_from_json("benzene")
+    packmol.path_registry._remove_path_from_json("water")
+    packmol.path_registry._remove_path_from_json("benzene")
     small_molecules = ["water", "benzene"]
     packmol._get_sm_pdbs(small_molecules)
     assert os.path.exists("files/pdb/water.pdb")
@@ -400,8 +397,7 @@ def test_packmol_download_only(packmol):
 
 
 def test_packmol_download_only_once(packmol):
-    path_registry = PathRegistry()
-    path_registry._remove_path_from_json("water")
+    packmol.path_registry._remove_path_from_json("water")
     small_molecules = ["water"]
     packmol._get_sm_pdbs(small_molecules)
     assert os.path.exists("files/pdb/water.pdb")
