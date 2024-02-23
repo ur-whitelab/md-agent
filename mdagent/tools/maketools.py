@@ -86,7 +86,7 @@ def make_all_tools(
         PackMolTool(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
-        PPIDistance(),
+        PPIDistance(path_registry=path_instance),
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),

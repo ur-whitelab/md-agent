@@ -99,8 +99,9 @@ class SimulationOutputFigures(BaseTool):
     simulation and create figures for
     all physical parameters
     versus timestep of the simulation.
-    Give this tool the path to the
-    csv file output from the simulation."""
+    Give this tool the name of the
+    csv file output from the simulation.
+    The tool will get the exact path."""
 
     path_registry: Optional[PathRegistry]
 
