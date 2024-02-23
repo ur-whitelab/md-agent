@@ -90,7 +90,7 @@ def make_all_tools(
         RMSDCalculator(),
         SetUpandRunFunction(path_registry=path_instance),
         ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-        SimulationOutputFigures(),
+        SimulationOutputFigures(path_registry=path_instance),
     ]
     if subagent_settings is None:
         subagent_settings = SubAgentSettings(path_registry=path_instance)

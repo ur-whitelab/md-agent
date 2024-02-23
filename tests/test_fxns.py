@@ -12,7 +12,7 @@ from mdagent.tools.base_tools import (
     VisFunctions,
     get_pdb,
 )
-from mdagent.tools.base_tools.analysis_tools.plot_tools import plot_data, process_csv
+from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB, PackMolTool
 from mdagent.utils import FileType, PathRegistry
 
@@ -70,11 +70,16 @@ def get_registry():
 
 
 @pytest.fixture
+def plotting_tools(get_registry):
+    return PlottingTools(get_registry)
+
+
+@pytest.fixture
 def packmol(get_registry):
     return PackMolTool(get_registry)
 
 
-def test_process_csv():
+def test_process_csv(plotting_tools):
     mock_csv_content = "Time,Value1,Value2\n1,10,20\n2,15,25"
     mock_reader = MagicMock()
     mock_reader.fieldnames = ["Time", "Value1", "Value2"]
@@ -84,19 +89,23 @@ def test_process_csv():
             {"Time": "2", "Value1": "15", "Value2": "25"},
         ]
     )
-
+    plotting_tools.file_path = "mock_file.csv"
+    plotting_tools.file_name = "mock_file.csv"
     with patch("builtins.open", mock_open(read_data=mock_csv_content)):
         with patch("csv.DictReader", return_value=mock_reader):
-            data, headers, matched_headers = process_csv("mock_file.csv")
+            plotting_tools.process_csv()
 
-    assert headers == ["Time", "Value1", "Value2"]
-    assert len(matched_headers) == 1
-    assert matched_headers[0][1] == "Time"
-    assert len(data) == 2
-    assert data[0]["Time"] == "1" and data[0]["Value1"] == "10"
+    assert plotting_tools.headers == ["Time", "Value1", "Value2"]
+    assert len(plotting_tools.matched_headers) == 1
+    assert plotting_tools.matched_headers[0][1] == "Time"
+    assert len(plotting_tools.data) == 2
+    assert (
+        plotting_tools.data[0]["Time"] == "1"
+        and plotting_tools.data[0]["Value1"] == "10"
+    )
 
 
-def test_plot_data():
+def test_plot_data(plotting_tools):
     # Test successful plot generation
     data_success = [
         {"Time": "1", "Value1": "10", "Value2": "20"},
@@ -112,7 +121,10 @@ def test_plot_data():
     ), patch(
         "matplotlib.pyplot.close"
     ):
-        created_plots = plot_data(data_success, headers, matched_headers)
+        plotting_tools.data = data_success
+        plotting_tools.headers = headers
+        plotting_tools.matched_headers = matched_headers
+        created_plots = plotting_tools.plot_data()
         assert "time_vs_value1.png" in created_plots
         assert "time_vs_value2.png" in created_plots
 
@@ -122,8 +134,12 @@ def test_plot_data():
         {"Time": "2", "Value1": "C", "Value2": "D"},
     ]
 
+    plotting_tools.data = data_failure
+    plotting_tools.headers = headers
+    plotting_tools.matched_headers = matched_headers
+
     with pytest.raises(Exception) as excinfo:
-        plot_data(data_failure, headers, matched_headers)
+        plotting_tools.plot_data()
         assert "All plots failed due to non-numeric data." in str(excinfo.value)
 
 
