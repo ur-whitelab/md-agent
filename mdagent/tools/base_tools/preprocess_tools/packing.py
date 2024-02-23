@@ -63,19 +63,24 @@ class Molecule:
 
 class PackmolBox:
     def __init__(
-        self, file_number=1, file_description="PDB file for simulation with: \n"
+        self,
+        path_registry,
+        file_number=1,
+        file_description="PDB file for simulation with: \n",
     ):
+        self.path_registry = path_registry
         self.molecules = []
         self.file_number = 1
         self.file_description = file_description
         self.final_name = None
 
-    def add_molecule(self, molecule):
+    def add_molecule(self, molecule: Molecule) -> None:
         self.molecules.append(molecule)
         self.file_description += f"""{molecule.number_of_molecules} of
         {molecule.filename} as {molecule.instructions} \n"""
+        return None
 
-    def generate_input_header(self):
+    def generate_input_header(self) -> None:
         # Generate the header of the input file in .inp format
         orig_pdbs_ids = [
             f"{molecule.number_of_molecules}_{molecule.id}"
@@ -106,8 +111,9 @@ class PackmolBox:
                 f"output {self.final_name}\n"
             )  # this is the name of the final file
             out.close()
+        return None
 
-    def generate_input(self):
+    def generate_input(self) -> str:
         input_data = []
         for molecule in self.molecules:
             input_data.append(f"structure {molecule.filename}")
@@ -119,7 +125,7 @@ class PackmolBox:
         # Convert list of input data to a single string
         return "\n".join(input_data)
 
-    def run_packmol(self, PathRegistry):
+    def run_packmol(self):
         # Use the generated input to execute Packmol
         input_string = self.generate_input()
         # Write the input to a file
@@ -134,9 +140,9 @@ class PackmolBox:
                 "./" + cmd, shell=True, text=True, capture_output=True
             )
             if result.returncode != 0:
-                print("Packmol failed to run with './packmol < packmol.inp' command")
-                return (
-                    "Packmol failed to run. Please check the input file and try again."
+                raise RuntimeError(
+                    "Packmol failed to run with './packmol < packmol.inp' "
+                    "command. Please check the input file and try again."
                 )
 
         # validate final pdb
@@ -147,9 +153,9 @@ class PackmolBox:
             for molecule in self.molecules:
                 os.remove(molecule.filename)
             # name of packed pdb file
-            time_stamp = PathRegistry.get_timestamp()[-6:]
+            time_stamp = self.path_registry.get_timestamp()[-6:]
             os.rename(self.final_name, f"files/pdb/{self.final_name}")
-            PathRegistry.map_path(
+            self.path_registry.map_path(
                 f"PACKED_{time_stamp}",
                 f"files/pdb/{self.final_name}",
                 self.file_description,
@@ -172,7 +178,7 @@ class PackmolBox:
 
 
 def packmol_wrapper(
-    PathRegistry,
+    path_registry,
     pdbfiles: List,
     files_id: List,
     number_of_molecules: List,
@@ -182,7 +188,7 @@ def packmol_wrapper(
     of different types of molecules molecules"""
 
     # create a box
-    box = PackmolBox()
+    box = PackmolBox(path_registry)
     # add molecules to the box
     for (
         pdbfile,
@@ -197,7 +203,7 @@ def packmol_wrapper(
     # generate input
     # run packmol
     print("Packing:", box.file_description, "\nThe file name is:", box.final_name)
-    return box.run_packmol(PathRegistry)
+    return box.run_packmol()
 
 
 """Args schema for packmol_wrapper tool. Useful for OpenAI functions"""
@@ -335,14 +341,16 @@ class PackMolTool(BaseTool):
                     "'https://m3g.github.io/packmol/download.shtml'"
                     "and try again."
                 )
-
-        return packmol_wrapper(
-            self.path_registry,
-            pdbfiles=pdbfile_names,
-            files_id=pdbfile_ids,
-            number_of_molecules=number_of_molecules,
-            instructions=instructions,
-        )
+        try:
+            return packmol_wrapper(
+                self.path_registry,
+                pdbfiles=pdbfile_names,
+                files_id=pdbfile_ids,
+                number_of_molecules=number_of_molecules,
+                instructions=instructions,
+            )
+        except RuntimeError as e:
+            return f"Packmol failed to run with error: {e}"
 
     def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
         # check if is only a string
