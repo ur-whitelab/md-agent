@@ -1,3 +1,4 @@
+from .analysis_tools.analysis_props import RadiusofGyrationAverage
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rmsd_tools import RMSDCalculator
@@ -44,6 +45,7 @@ __all__ = [
     "VisualizeProtein",
     "RMSDCalculator",
     "RemoveWaterCleaningTool",
+    "RadiusofGyrationAverage",
     "Scholar2ResultLLM",
     "SerpGitTool",
     "SetUpAndRunTool",

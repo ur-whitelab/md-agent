@@ -26,6 +26,7 @@ setup(
         "nbformat",
         "openai",
         "paper-qa",
+        "mdtraj",
         "python-dotenv",
         "pqapi",
         "requests",

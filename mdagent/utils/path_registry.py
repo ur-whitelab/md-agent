@@ -77,6 +77,13 @@ class PathRegistry:
                 return json.load(json_file)
         return {}
 
+    def _list_all_paths(self):
+        if not self._check_for_json():
+            return "JSON file does not exist"
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+        return [data[key]["path"] for key in data.keys()]
+
     def _determine_file_type(self, subdir):
         # Implement logic to determine the file type based on the subdir name
         # Example:
@@ -161,18 +168,21 @@ class PathRegistry:
             return f"File {fileid} removed from registry"
         return f"Path {fileid} not found in registry"
 
-    def list_path_names(self):
+    def list_path_names(self, list_only=False):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
         filesids = [key for key in data.keys()]
-        return (
+        msg = (
             "Names found in registry: " + ", ".join(filesids)
             if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
+        if list_only:
+            msg = filesids
+        return msg
 
     def list_path_names_and_descriptions(self):
         if not self._check_for_json():
