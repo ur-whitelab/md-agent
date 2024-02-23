@@ -1,4 +1,3 @@
-import os
 import subprocess
 from typing import Optional
 
@@ -9,14 +8,6 @@ from mdagent.utils import PathRegistry
 
 
 class VisFunctions:
-    def list_files_in_directory(self, directory):
-        files = [
-            f
-            for f in os.listdir(directory)
-            if os.path.isfile(os.path.join(directory, f))
-        ]
-        return ", ".join(files)
-
     def run_molrender(self, cif_path):
         """Function to run molrender,
         it requires node.js to be installed
@@ -110,26 +101,6 @@ class VisualizeProtein(BaseTool):
                 return "Visualization created as notebook"
             except Exception as e:
                 return f"An error occurred while running molrender: {str(e)}"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class CheckDirectoryFiles(BaseTool):
-    name = "ListDirectoryFiles"
-    description = """This tool will
-    give you a list of comma
-    separated files in the
-    current directory."""
-
-    def _run(self, query: str) -> str:
-        """use the tool."""
-        try:
-            vis = VisFunctions()
-            return vis.list_files_in_directory(".")
-        except Exception:
-            return "An error occurred while listing files in directory"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

@@ -16,7 +16,6 @@ from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
 from .base_tools import (
-    CheckDirectoryFiles,
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
@@ -79,7 +78,6 @@ def make_all_tools(
     # add base tools
     base_tools = [
         CleaningToolFunction(path_registry=path_instance),
-        CheckDirectoryFiles(),
         ListRegistryPaths(path_registry=path_instance),
         #    MapPath2Name(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
