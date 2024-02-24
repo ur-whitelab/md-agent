@@ -6,7 +6,7 @@ from .clean_tools import (
     SpecializedCleanTool,
 )
 from .packing import PackMolTool
-from .pdb_tools import ProteinName2PDBTool, SmallMolPDB, get_pdb
+from .pdb_get import ProteinName2PDBTool, SmallMolPDB, get_pdb
 
 __all__ = [
     "AddHydrogensCleaningTool",

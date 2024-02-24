@@ -14,7 +14,7 @@ from mdagent.tools.base_tools import (
 )
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
-from mdagent.tools.base_tools.preprocess_tools.pdb_tools import MolPDB
+from mdagent.tools.base_tools.preprocess_tools.pdb_get import MolPDB
 from mdagent.utils import FileType, PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
