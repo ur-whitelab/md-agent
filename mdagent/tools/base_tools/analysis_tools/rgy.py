@@ -110,3 +110,57 @@ class RadiusofGyrationAverage(BaseTool):
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("custom_search does not support async")
+
+
+class RadiusofGyrationPerFrame(BaseTool):
+    name = "RadiusofGyrationPerFrame"
+    description = """This tool calculates the radius of gyration
+    at each frame of a given trajectory file. Give this tool the
+    protein ID (PDB ID) only. The tool will automatically find the necessary files.
+    The tool will save the radii of gyration to a csv file and
+    map it to the registry."""
+
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, pdb_id: str) -> str:
+        """use the tool."""
+        try:
+            RGY = RadiusofGyration(self.path_registry)
+            return RGY.rad_gyration_per_frame(pdb_id)
+        except ValueError as e:
+            return str(e)
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("custom_search does not support async")
+
+
+class RadiusofGyrationPlot(BaseTool):
+    name = "RadiusofGyrationPlot"
+    description = """This tool calculates the radius of gyration
+    at each frame of a given trajectory file and plots it.
+    Give this tool the protein ID (PDB ID) only.
+    The tool will automatically find the necessary files.
+    The tool will save the plot to a png file and map it to the registry."""
+
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, pdb_id: str) -> str:
+        """use the tool."""
+        try:
+            RGY = RadiusofGyration(self.path_registry)
+            return RGY.plot_rad_gyration(pdb_id)
+        except ValueError as e:
+            return str(e)
+
+    async def _arun(self, query: str) -> str:
+        """Use the tool asynchronously."""
+        raise NotImplementedError("custom_search does not support async")
