@@ -13,7 +13,6 @@ from .preprocess_tools.packing import PackMolTool
 from .preprocess_tools.pdb_get import ProteinName2PDBTool, SmallMolPDB, get_pdb
 from .simulation_tools.create_simulation import ModifyBaseSimulationScriptTool
 from .simulation_tools.setup_and_run import (
-    InstructionSummary,
     SetUpandRunFunction,
     SetUpAndRunTool,
     SimulationFunctions,
@@ -25,7 +24,6 @@ from .util_tools.search_tools import Scholar2ResultLLM
 __all__ = [
     "AddHydrogensCleaningTool",
     "CleaningTools",
-    "InstructionSummary",
     "ListRegistryPaths",
     "MapPath2Name",
     "ProteinName2PDBTool",

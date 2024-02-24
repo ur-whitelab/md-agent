@@ -37,13 +37,6 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
-# Test simulation tools
-@pytest.fixture
-def sim_fxns():
-    return SimulationFunctions()
-
-
-# Test MD utility tools
 @pytest.fixture
 def fibronectin():
     return "fibronectin pdb"
@@ -52,6 +45,11 @@ def fibronectin():
 @pytest.fixture
 def get_registry():
     return PathRegistry()
+
+
+@pytest.fixture
+def sim_fxns(get_registry):
+    return SimulationFunctions(get_registry)
 
 
 @pytest.fixture
