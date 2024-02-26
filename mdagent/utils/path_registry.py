@@ -168,7 +168,7 @@ class PathRegistry:
             return f"File {fileid} removed from registry"
         return f"Path {fileid} not found in registry"
 
-    def list_path_names(self, list_only=False):
+    def list_path_names(self):
         if not self._check_for_json():
             return "JSON file does not exist"
         with open(self.json_file_path, "r") as json_file:
@@ -180,8 +180,6 @@ class PathRegistry:
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
-        if list_only:
-            msg = filesids
         return msg
 
     def list_path_names_and_descriptions(self):
