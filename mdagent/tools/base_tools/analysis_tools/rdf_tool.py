@@ -50,7 +50,7 @@ class RDFTool(BaseTool):
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
-    def _run(self, input):
+    def _run(self, **input):
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
@@ -119,6 +119,9 @@ class RDFTool(BaseTool):
     def validate_input(self, input):
         if "action_input" in input:
             input = input["action_input"]
+
+        if "input" in input:
+            input = input["input"]
 
         trajectory_id = input.get("trajectory_fileid", None)
 
