@@ -5,9 +5,11 @@ import warnings
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
+from langchain.chat_models import ChatOpenAI
 
 from mdagent.tools.base_tools import (
     CleaningTools,
+    Scholar2ResultLLM,
     SimulationFunctions,
     VisFunctions,
     get_pdb,
@@ -438,3 +440,24 @@ def test_init_path_registry(path_registry_with_mocked_fs):
     # you may need to check the internal state or the contents of the JSON file.
     # For example:
     assert "water_000000" in path_registry_with_mocked_fs.list_path_names()
+
+
+@pytest.fixture
+def questions():
+    qs = [
+        "What are the effects of norhalichondrin B in mammals?",
+    ]
+    return qs[0]
+
+
+@pytest.mark.skip(reason="This requires an API call")
+def test_litsearch(questions):
+    llm = ChatOpenAI()
+
+    searchtool = Scholar2ResultLLM(llm=llm)
+    for q in questions:
+        ans = searchtool._run(q)
+        assert isinstance(ans, str)
+        assert len(ans) > 0
+    if os.path.exists("../query"):
+        os.rmdir("../query")
