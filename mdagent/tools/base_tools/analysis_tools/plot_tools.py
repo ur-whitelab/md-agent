@@ -17,12 +17,12 @@ class PlottingTools:
         self.data = None
         self.headers = None
         self.matched_headers = None
-        self.file_name = None
+        self.file_id = None
         self.file_path = None
 
-    def _find_file(self, file_name: str) -> None:
-        self.file_name = file_name
-        self.file_path = self.path_registry.get_mapped_path(file_name)
+    def _find_file(self, file_id: str) -> None:
+        self.file_id = file_id
+        self.file_path = self.path_registry.get_mapped_path(file_id)
         if not self.file_path:
             raise FileNotFoundError("File not found.")
         return None
@@ -61,21 +61,21 @@ class PlottingTools:
                     header_lab = (
                         header.split("(")[0].strip() if "(" in header else header
                     ).lower()
-                    plot_name = f"{self.file_name}_{xlab}_vs_{header_lab}.png"
+                    plot_name = f"{self.file_id}_{xlab}_vs_{header_lab}.png"
 
                     # Generate and save the plot
                     plt.figure()
                     plt.plot(x, y)
                     plt.xlabel(xlab)
                     plt.ylabel(header)
-                    plt.title(f"{self.file_name}_{xlab} vs {header_lab}")
+                    plt.title(f"{self.file_id}_{xlab} vs {header_lab}")
                     plt.savefig(plot_name)
                     self.path_registry.map_path(
                         plot_name,
                         plot_name,
                         (
-                            "Post Simulation Figure for "
-                            "{self.file_name} - {header_lab} vs {xlab}"
+                            f"Post Simulation Figure for {self.file_id}"
+                            f" - {header_lab} vs {xlab}"
                         ),
                     )
                     plt.close()
@@ -109,11 +109,11 @@ class SimulationOutputFigures(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, file_name: str) -> str:
+    def _run(self, file_id: str) -> str:
         """use the tool."""
         try:
             plotting_tools = PlottingTools(self.path_registry)
-            plotting_tools._find_file(file_name)
+            plotting_tools._find_file(file_id)
             plotting_tools.process_csv()
             plot_result = plotting_tools.plot_data()
             if type(plot_result) == str:
