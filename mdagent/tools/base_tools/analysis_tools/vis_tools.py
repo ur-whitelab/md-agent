@@ -9,15 +9,17 @@ from mdagent.utils import PathRegistry
 
 
 class VisFunctions:
-    def list_files_in_directory(self, directory):
-        files = [
-            f
-            for f in os.listdir(directory)
-            if os.path.isfile(os.path.join(directory, f))
-        ]
-        return ", ".join(files)
+    def __init__(self, path_registry):
+        self.path_registry = path_registry
+        self.starting_files = os.listdir(".")
 
-    def run_molrender(self, cif_path):
+    def _find_png(self):
+        current_files = os.listdir(".")
+        new_files = [f for f in current_files if f not in self.starting_files]
+        png_files = [f for f in new_files if f.endswith(".png")]
+        return png_files
+
+    def run_molrender(self, cif_path: str) -> str:
         """Function to run molrender,
         it requires node.js to be installed
         and the molrender package to be
@@ -25,22 +27,40 @@ class VisFunctions:
         This will save .png
         files in the current
         directory."""
+        self.cif_file_name = os.path.basename(cif_path)
 
         cmd = ["molrender", "all", cif_path, ".", "--format", "png"]
-        result = subprocess.run(cmd, capture_output=True, text=True)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+        except subprocess.CalledProcessError:
+            raise RuntimeError("molrender package not found")
+        file_name = self._find_png()
+        if not file_name:
+            raise FileNotFoundError("No .png files were created")
+        self.path_registry.map_path(
+            f"mol_render_{self.cif_file_name}",
+            file_name[0],
+            "Visualization of cif file {cif_file_name} as png file. using molrender.",
+        )
 
         if result.returncode != 0:
-            return Exception(f"Error running molrender: {result.stderr}")
+            raise RuntimeError(f"Error running molrender: {result.stderr}")
         else:
             print(f"Output: {result.stdout}")
+        return (
+            "Visualization using molrender complete, "
+            "saved as: mol_render_{self.cif_file_name}"
+        )
 
-    def create_notebook(self, query, PathRegistry):
+    def create_notebook(self, cif_file: str) -> str:
         """This is for plan B
         tool, it will create
         a notebook
         with the code to
         install nglview and
         display the cif/pdb file."""
+        self.cif_file_name = os.path.basename(cif_file)
+
         # Create a new notebook
         nb = nbf.v4.new_notebook()
 
@@ -49,10 +69,10 @@ class VisFunctions:
 
         # Code to import NGLview and display a file
         import_code = f"""
-        import nglview as nv
-        view = nv.show_file("{query}")
-        view
-        """
+import nglview as nv
+view = nv.show_file("{cif_file}")
+view
+"""
 
         # Create new code cells
         install_cell = nbf.v4.new_code_cell(source=install_code)
@@ -62,12 +82,14 @@ class VisFunctions:
         nb.cells.extend([install_cell, import_cell])
 
         # Write the notebook to a file
-        with open("Visualization.ipynb", "w") as f:
+        notebook_name = self.cif_file_name.split(".")[0] + "_vis.ipynb"
+        with open(notebook_name, "w") as f:
             nbf.write(nb, f)
-        # add filename to registry
-        file_description = "Notebook to visualize cif/pdb files"
-        PathRegistry.map_path(
-            "visualize_notebook", "Visualization.ipynb", file_description
+
+        self.path_registry.map_path(
+            notebook_name,
+            notebook_name,
+            f"Notebook to visualize cif/pdb file {self.cif_file_name} using nglview.",
         )
         return "Visualization Complete"
 
@@ -81,8 +103,7 @@ class VisualizeProtein(BaseTool):
     name = "PDBVisualization"
     description = """This tool will create
                     a visualization of a cif
-                    file as a png file in
-                    the same directory OR
+                    file as a png file OR
                     it will create
                     a .ipynb file with the
                     visualization of the
@@ -98,38 +119,23 @@ class VisualizeProtein(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, query: str) -> str:
+    def _run(self, cif_file_name: str) -> str:
         """use the tool."""
-        vis = VisFunctions()
+        if not self.path_registry:
+            return "Error: Path registry is not set"  # this should not happen
+        cif_path = self.path_registry.get_mapped_path(cif_file_name)
+        if not cif_path:
+            return f"File not found: {cif_file_name}"
+        vis = VisFunctions(self.path_registry)
         try:
-            vis.run_molrender(query)
-            return "Visualization created as png"
-        except Exception:
+            return vis.run_molrender(cif_path)
+        except (RuntimeError, FileNotFoundError) as e:
+            print(f"Error running molrender: {str(e)}. Using NGLView instead.")
             try:
-                vis.create_notebook(query, self.path_registry)
+                vis.create_notebook(cif_path)
                 return "Visualization created as notebook"
             except Exception as e:
-                return f"An error occurred while running molrender: {str(e)}"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class CheckDirectoryFiles(BaseTool):
-    name = "ListDirectoryFiles"
-    description = """This tool will
-    give you a list of comma
-    separated files in the
-    current directory."""
-
-    def _run(self, query: str) -> str:
-        """use the tool."""
-        try:
-            vis = VisFunctions()
-            return vis.list_files_in_directory(".")
-        except Exception:
-            return "An error occurred while listing files in directory"
+                return f"An error occurred {str(e)}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
