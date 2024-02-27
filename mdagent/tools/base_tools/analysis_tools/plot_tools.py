@@ -48,7 +48,7 @@ class PlottingTools:
             time_or_step = self.matched_headers[0][1]
             xlab = "step" if "step" in time_or_step.lower() else "time"
         else:
-            return "No 'step' or 'time' headers found."
+            raise ValueError("No timestep found.")
 
         failed_headers = []
         created_plots = []
@@ -120,10 +120,6 @@ class SimulationOutputFigures(BaseTool):
                 return "Figures created: " + plot_result
             else:
                 return "No figures created."
-        except ValueError:
-            return "File could not be processed."
-        except FileNotFoundError:
-            return "Issue with CSV file, file not found."
         except Exception as e:
             return str(e)
 
