@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Type
 
 import langchain
 import streamlit as st
-from langchain.base_language import BaseLanguageModel
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
@@ -110,9 +109,27 @@ FORCEFIELD_LIST = [
 
 
 class SimulationFunctions:
-    llm = langchain.chat_models.ChatOpenAI(
-        temperature=0.05, model_name="gpt-4", request_timeout=1000, max_tokens=2000
-    )
+    def __init__(
+        self,
+        path_registry,
+        temperature: float = 0.05,
+        model_name: str = "gpt-4",
+        request_timeout: int = 1000,
+        max_tokens: int = 2000,
+    ):
+        self.path_registry = path_registry
+        self.temperature = temperature
+        self.model_name = model_name
+        self.request_timeout = request_timeout
+        self.max_tokens = max_tokens
+
+        self.llm = langchain.chat_models.ChatOpenAI(
+            temperature=self.temperature,
+            model_name=self.model_name,
+            request_timeout=self.request_timeout,
+            max_tokens=self.request_timeout,
+        )
+
     #######==================System Congifuration==================########
     # System Configuration initialization.
 
@@ -187,7 +204,7 @@ class SimulationFunctions:
 
         return integrator
 
-    def _prompt_summary(self, query: str, llm: BaseLanguageModel = llm):
+    def _prompt_summary(self, query: str):
         prompt_template = """Your input is the original query. Your
                             task is to parse through the user query.
                             and provide a summary of the file path input,
@@ -252,11 +269,11 @@ class SimulationFunctions:
                             you may fill in with the default, but explicitly state so.
                             Here is the information:{query}"""
         prompt = PromptTemplate(template=prompt_template, input_variables=["query"])
-        llm_chain = LLMChain(prompt=prompt, llm=llm)
+        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
 
         return llm_chain.run(" ".join(query))
 
-    def _save_to_file(self, summary: str, filename: str, PathRegistry):
+    def _save_to_file(self, summary: str, filename: str):
         """Parse the summary string and
         save it to a file in JSON format."""
         # Split the summary into lines
@@ -274,11 +291,11 @@ class SimulationFunctions:
 
         # add filename to registry
         file_description = "Simulation Parameters"
-        PathRegistry.map_path(filename, filename, file_description)
+        self.path_registry.map_path(filename, filename, file_description)
 
-    def _instruction_summary(self, query: str, PathRegistry):
+    def _instruction_summary(self, query: str):
         summary = self._prompt_summary(query)
-        self._save_to_file(summary, "simulation_parameters.json", PathRegistry)
+        self._save_to_file(summary, "simulation_parameters.json")
         return summary
 
     def _setup_simulation_from_json(self, file_name):
@@ -287,7 +304,7 @@ class SimulationFunctions:
             params = json.load(f)
         return params
 
-    def _setup_and_run_simulation(self, query, PathRegistry):
+    def _setup_and_run_simulation(self, query):
         # Load the force field
         # ask for inputs from the user
         params = self._setup_simulation_from_json(query)
@@ -325,8 +342,8 @@ class SimulationFunctions:
         # adding forcefield to registry
 
         # Load the PDB file
-        cleantools = CleaningTools()
-        pdbfile = cleantools._extract_path(params["File Path"])
+        CleaningTools(self.path_registry)
+        pdbfile = self.path_registry.get_mapped_path(params["File Path"])
         name = pdbfile.split(".")[0]
         end = pdbfile.split(".")[1]
         if end == "pdb":
@@ -430,12 +447,12 @@ class SimulationFunctions:
         # add filenames to registry
         file_name1 = "simulation_trajectory.pdb"
         file_description1 = "Simulation PDB, containing the simulation trajectory"
-        PathRegistry.map_path(file_name1, f"{name}.pdb", file_description1)
+        self.path_registry.map_path(file_name1, f"{name}.pdb", file_description1)
         file_name2 = "simulation_data.csv"
         file_description2 = (
             "Simulation Data, containing step, potential energy, and temperature"
         )
-        PathRegistry.map_path(file_name2, f"{name}.csv", file_description2)
+        self.path_registry.map_path(file_name2, f"{name}.csv", file_description2)
 
         return simulation
 
@@ -456,8 +473,7 @@ class SimulationFunctions:
 
 class SetUpAndRunTool(BaseTool):
     name = "SetUpAndRunTool"
-    description = """This tool can only run after InstructionSummary
-                    This tool will set up the simulation objects
+    description = """This tool will set up the simulation objects
                     and run the simulation.
                     It will ask for the parameters path.
                     input:  json file
@@ -477,7 +493,7 @@ class SetUpAndRunTool(BaseTool):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Registry not initialized"
-            sim_fxns = SimulationFunctions()
+            sim_fxns = SimulationFunctions(path_registry=self.path_registry)
             parameters = sim_fxns._extract_parameters_path()
 
         except ValueError as e:
@@ -497,7 +513,7 @@ class SetUpAndRunTool(BaseTool):
         self.log("Are you sure you want to run the simulation? (y/n)")
         response = input("yes or no: ")
         if response.lower() in ["yes", "y"]:
-            sim_fxns._setup_and_run_simulation(parameters, self.path_registry)
+            sim_fxns._setup_and_run_simulation(parameters)
         else:
             return "Simulation interrupted due to human input"
         return "Simulation Completed, simulation trajectory and data files saved."
@@ -507,51 +523,6 @@ class SetUpAndRunTool(BaseTool):
             print("\033[1;34m\t{}\033[00m".format(text))
         if color == "red":
             print("\033[31m\t{}\033[00m".format(text))
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class InstructionSummary(BaseTool):
-    name = "Instruction Summary"
-    description = """This tool will summarize the instructions
-     given by the human. This is the first tool you will
-       use, unless you dont have a .cif or .pdb file in
-       which case you have to download one first.
-     Input: Instructions or original query.
-     Output: Summary of instructions"""
-    path_registry: Optional[PathRegistry]
-
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-    ):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, query: str) -> str:
-        # first check if there is any .cif or .pdb files in the directory
-        # if there is, then ask for instructions
-        if self.path_registry is None:  # this should not happen
-            return "Registry not initialized"
-        files = os.listdir(".")
-        pdb_cif_files = [f for f in files if f.endswith(".pdb") or f.endswith(".cif")]
-        pdb_cif_files_tidy = [
-            f
-            for f in files
-            if (f.endswith(".pdb") or f.endswith(".cif")) and "tidy" in f
-        ]
-        if len(pdb_cif_files_tidy) != 0:
-            path = pdb_cif_files_tidy[0]
-        else:
-            path = pdb_cif_files[0]
-            sim_fxns = SimulationFunctions()
-            summary = sim_fxns._prompt_summary(query + "the pdbfile is" + path)
-            sim_fxns._save_to_file(
-                summary, "simulation_parameters_summary.json", self.path_registry
-            )
-        return summary
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -1745,39 +1716,6 @@ class SetUpandRunFunction(BaseTool):
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
         raise NotImplementedError("custom_search does not support async")
-
-
-########==================Integrator==================########
-# TODO integrate this functions into the OPENMMsimulation class
-# Integrator
-def _define_integrator(
-    integrator_type="LangevinMiddle",
-    temperature=300 * kelvin,
-    friction=1.0 / picoseconds,
-    timestep=0.004 * picoseconds,
-    **kwargs,
-):
-    # Create a dictionary to hold integrator parameters
-    integrator_params = {
-        "temperature": temperature,
-        "friction": friction,
-        "timestep": timestep,
-    }
-
-    # Update integrator_params with any additional parameters provided
-    integrator_params.update(kwargs)
-
-    # Create the integrator
-    if integrator_type == "LangevinMiddle":
-        integrator = LangevinMiddleIntegrator(**integrator_params)
-    elif integrator_type == "Verlet":
-        integrator = VerletIntegrator(**integrator_params)
-    elif integrator_type == "Brownian":
-        integrator = BrownianIntegrator(**integrator_params)
-    else:
-        raise Exception("Integrator type not recognized")
-
-    return integrator
 
 
 def create_simulation_input(pdb_path, forcefield_files):
