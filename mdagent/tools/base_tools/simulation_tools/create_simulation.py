@@ -17,79 +17,8 @@ class ModifyScriptUtils:
     def __init__(self, llm):
         self.llm = llm
 
-    Examples = [
-        """
-from openmm.app import *
-from openmm import *
-from openmm.unit import *
-from sys import stdout
-
-pdb = PDBFile("1AKI.pdb")
-
-#We need to define the forcefield we want to use.
-#We will use the Amber14 forcefield and the TIP3P-FB water model.
-
-# Specify the forcefield
-forcefield = ForceField('amber14-all.xml', 'amber14/tip3pfb.xml')
-
-#This PDB file contains some crystal water molecules which we want to strip out.
-#This can be done using the Modeller class. We also add in any missing H atoms.
-modeller = Modeller(pdb.topology, pdb.positions)
-modeller.deleteWater()
-residues=modeller.addHydrogens(forcefield)
-
-#We can use the addSolvent method to add water molecules
-modeller.addSolvent(forcefield, padding=1.0*nanometer)
-
-#We now need to combine our molecular topology and the forcefield
-#to create a complete description of the system. This is done using
-# the ForceField object’s createSystem() function. We then create the integrator,
-# and combine the integrator and system to create the Simulation object.
-# Finally we set the initial atomic positions.
-
-system = forcefield.createSystem(modeller.topology, nonbondedMethod=PME,
-nonbondedCutoff=1.0*nanometer, constraints=HBonds)
-integrator = LangevinMiddleIntegrator(300*kelvin, 1/picosecond, 0.004*picoseconds)
-simulation = Simulation(modeller.topology, system, integrator)
-simulation.context.setPositions(modeller.positions)
-
-#It is a good idea to run local energy minimization at the start of a simulation,
-# since the coordinates in the PDB file might produce very large forces
-
-print("Minimizing energy")
-simulation.minimizeEnergy()
-
-#To get output from our simulation we can add reporters.
-# We use PDBReporter to write the coorinates every 1000 timesteps
-# to “output.pdb” and we use StateDataReporter to print the timestep,
-# potential energy, temperature, and volume to the screen and to
-# a file called “md_log.txt”.
-
-simulation.reporters.append(PDBReporter('output.pdb', 1000))
-simulation.reporters.append(StateDataReporter(stdout, 1000, step=True,
-        potentialEnergy=True, temperature=True, volume=True))
-simulation.reporters.append(StateDataReporter("md_log.txt", 100, step=True,
-        potentialEnergy=True, temperature=True, volume=True))
-
-#We are using a Langevin integrator which means we are simulating in the NVT ensemble.
-# To equilibrate the temperature we just need to run the
-# simulation for a number of timesteps.
-print("Running NVT")
-simulation.step(10000)
-
-#To run our simulation in the NPT ensemble we
-# need to add in a barostat to control the pressure. We can use MonteCarloBarostat
-system.addForce(MonteCarloBarostat(1*bar, 300*kelvin))
-simulation.context.reinitialize(preserveState=True)
-
-
-print("Running NPT")
-simulation.step(10000)
-        """
-    ]
-
-    def _prompt_summary(self, query: str, llm: BaseLanguageModel = None):
-        if not llm:
+    def _prompt_summary(self, query: str):
+        if not self.llm:
             raise ValueError("No language model provided at ModifyScriptTool")
 
         prompt_template = (
@@ -120,7 +49,7 @@ simulation.step(10000)
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["base_script", "query"]
         )
-        llm_chain = LLMChain(prompt=prompt, llm=llm)
+        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
 
         return llm_chain.invoke(query)
 
@@ -161,15 +90,13 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         self.llm = llm
 
     def _run(self, *args, **input):
-        if self.llm is None:  # this should not happen
-            print("No language model provided at ModifyScriptTool")
-            return "llm not initialized"
         if len(args) > 0:
             return (
                 "This tool expects you to provide the input as a "
                 "dictionary: {'query': 'your query', 'script': 'script id'}"
             )
-
+        if not self.path_registry:
+            return "No path registry provided"  # this should not happen
         base_script_id = input.get("script")
         if not base_script_id:
             return "No id provided. The keys for the input are: " "query' and 'script'"
@@ -187,7 +114,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
 
         description = input.get("query")
         answer = utils._prompt_summary(
-            query={"base_script": base_script, "query": description}, llm=self.llm
+            query={"base_script": base_script, "query": description}
         )
         script = answer["text"]
         thoughts, new_script = script.split("SCRIPT:")
