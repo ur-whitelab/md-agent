@@ -76,6 +76,7 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        Scholar2ResultLLM(llm=llm),
         CleaningToolFunction(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
@@ -108,14 +109,6 @@ def make_all_tools(
         learned_tools = get_learned_tools(subagent_settings.ckpt_dir)
 
     all_tools += base_tools + subagents_tools + learned_tools
-
-    # add other tools depending on api keys
-    os.getenv("SERP_API_KEY")
-    pqa_key = os.getenv("PQA_API_KEY")
-    # if serp_key:
-    #    all_tools.append(SerpGitTool(serp_key))  # github issues search
-    if pqa_key:
-        all_tools.append(Scholar2ResultLLM(pqa_key))  # literature search
     return all_tools
 
 
