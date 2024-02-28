@@ -1,6 +1,7 @@
 import inspect
 import json
 import os
+import shutil
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -207,3 +208,31 @@ class SkillManager:
             string += tool_name + ", Score: " + str(score) + "\n"
         print(f"\n\033[43m{string}\033[0m")
         return retrieved_skills
+
+    def remove_skill(self, tool_name):
+        if tool_name in self.skills:
+            self.vectordb._collection.delete(ids=[tool_name])
+            del self.skills[tool_name]
+            skill_file_path = f"{self.dir_name}/skills.json"
+            with open(skill_file_path, "w") as f:
+                json.dump(self.skills, f, indent=4)
+            print(f"\n\033[43mTool {tool_name} removed from skill library\033[0m")
+        else:
+            print(f"\n\033[43mTool {tool_name} not found in skill library\033[0m")
+
+    def reset_vdb(self):
+        skills = self.vectordb._collection.list()
+        self.vectordb._collection.delete(ids=skills)
+
+    def clear_skills(self):
+        self.skills = {}
+        self.reset_vdb()
+        dirs = [
+            f"{self.dir_name}/code",
+            f"{self.dir_name}/description",
+            f"{self.dir_name}/vectordb",
+        ]
+        for dir in dirs:
+            if os.path.exists(dir):
+                shutil.rmtree(dir)
+            os.makedirs(dir, exist_ok=False)

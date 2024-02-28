@@ -246,3 +246,11 @@ def test_mdagent_curriculum():
     mdagent_no_curr = MDAgent(curriculum=False)
     assert mdagent_curr.subagents_settings.curriculum is True
     assert mdagent_no_curr.subagents_settings.curriculum is False
+
+
+def reset_vdb(skill_manager):
+    if not skill_manager.vectorbd._collection.list():
+        skill_manager.add_new_tool("test_function", "def test_function(): pass")
+    assert len(skill_manager.vectorbd._collection.list()) == 1
+    skill_manager.reset_vdb()
+    assert len(skill_manager.vectorbd._collection.list()) == 0
