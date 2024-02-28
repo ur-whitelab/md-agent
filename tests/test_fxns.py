@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 from langchain.chat_models import ChatOpenAI
+from openmm import unit
 
 from mdagent.tools.base_tools import (
     CleaningTools,
@@ -17,6 +18,10 @@ from mdagent.tools.base_tools import (
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
 from mdagent.tools.base_tools.preprocess_tools.pdb_get import MolPDB
+from mdagent.tools.base_tools.simulation_tools.setup_and_run import (
+    OpenMMSimulation,
+    SetUpandRunFunctionInput,
+)
 from mdagent.utils import FileType, PathRegistry
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
@@ -77,6 +82,49 @@ def molpdb(get_registry):
 @pytest.fixture
 def cleaning_fxns(get_registry):
     return CleaningTools(get_registry)
+
+
+@pytest.fixture
+def setup_run_input():
+    # random values
+    return SetUpandRunFunctionInput(
+        pdb_id="1ABC",
+        forcefield_files=["amber14-all.xml", "amber14/tip3p.xml"],
+        save=True,
+        system_params={
+            "nonbondedMethod": "PME",
+            "nonbondedCutoff": "1.0 * nanometers",
+            "ewaldErrorTolerance": 0.0005,
+            "constraints": "HBonds",
+            "rigidWater": True,
+            "constraintTolerance": 0.00001,
+            "solvate": True,
+        },
+        integrator_params={
+            "integrator_type": "LangevinMiddle",
+            "Temperature": "300 * kelvin",
+            "Friction": "1.0 / picoseconds",
+            "Timestep": "0.002 * picoseconds",
+            "Pressure": "1.0 * bar",
+        },
+        simulation_params={
+            "Ensemble": "NVT",
+            "Number of Steps": 10000,
+            "record_interval_steps": 100,
+            "record_params": ["step", "potentialEnergy", "temperature", "density"],
+        },
+    )
+
+
+@pytest.fixture
+def openmm_sim(get_registry, setup_run_input):
+    return OpenMMSimulation(
+        input_params=setup_run_input,
+        path_registry=get_registry,
+        save=False,
+        sim_id="test",
+        pdb_id="test",
+    )
 
 
 def test_process_csv(plotting_tools):
@@ -461,3 +509,16 @@ def test_litsearch(questions):
         assert len(ans) > 0
     if os.path.exists("../query"):
         os.rmdir("../query")
+
+
+def test_unit_to_string(openmm_sim):
+    # Test with a simple unit
+    assert openmm_sim.unit_to_string(5 * unit.nanometer) == "5*nanometer"
+
+    # Test with a compound unit
+    assert (
+        openmm_sim.unit_to_string(2 * unit.kilocalorie_per_mole) == "2*kilocalorie/mole"
+    )
+
+    # Test with a unitless quantity
+    assert openmm_sim.unit_to_string(10 * unit.dimensionless) == "10*dimensionless"
