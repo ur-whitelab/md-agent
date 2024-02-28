@@ -1,0 +1,11 @@
+Query from the user: Simulate 2TNF in water at 280K. Dont forget to clean the protein first
+
+The server had an error processing your request. Sorry about that! You can retry your request, or contact us through our help center at help.openai.com if you keep seeing this error. (Please include the request ID req_81cbac2fec26125029a55f5533b78b1f in your email.) {
+  "error": {
+    "message": "The server had an error processing your request. Sorry about that! You can retry your request, or contact us through our help center at help.openai.com if you keep seeing this error. (Please include the request ID req_81cbac2fec26125029a55f5533b78b1f in your email.)",
+    "type": "server_error",
+    "param": null,
+    "code": null
+  }
+}
+ 500 {'error': {'message': 'The server had an error processing your request. Sorry about that! You can retry your request, or contact us through our help center at help.openai.com if you keep seeing this error. (Please include the request ID req_81cbac2fec26125029a55f5533b78b1f in your email.)', 'type': 'server_error', 'param': None, 'code': None}} {'Date': 'Tue, 13 Feb 2024 20:06:42 GMT', 'Content-Type': 'application/json', 'Content-Length': '370', 'Connection': 'keep-alive', 'access-control-allow-origin': '*', 'openai-organization': 'white-research-laboratory', 'openai-processing-ms': '275', 'openai-version': '2020-10-01', 'strict-transport-security': 'max-age=15724800; includeSubDomains', 'x-ratelimit-limit-requests': '10000', 'x-ratelimit-limit-tokens': '800000', 'x-ratelimit-remaining-requests': '9999', 'x-ratelimit-remaining-tokens': '796242', 'x-ratelimit-reset-requests': '6ms', 'x-ratelimit-reset-tokens': '281ms', 'x-request-id': 'req_81cbac2fec26125029a55f5533b78b1f', 'CF-Cache-Status': 'DYNAMIC', 'Server': 'cloudflare', 'CF-RAY': '854fb17fcfa642a7-EWR', 'alt-svc': 'h3=":443"; ma=86400'}
