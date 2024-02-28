@@ -1,5 +1,6 @@
 import pytest
 from openmm import unit
+from openmm.app import PME, NoCutoff
 
 from mdagent.tools.base_tools.simulation_tools.setup_and_run import (
     OpenMMSimulation,
@@ -114,7 +115,7 @@ def script_content_vars_1():
     return ScriptContent(
         pdb_path="test.pdb",
         forcefield_files="'amber14-all.xml', 'amber14/tip3p.xml'",
-        nonbonded_method="NoCutoff",
+        nonbonded_method=NoCutoff,
         constraints="None",
         rigid_water=False,
         constraint_tolerance=None,
@@ -155,7 +156,7 @@ def script_content_1(script_content_vars_1, openmm_sim):
     )
 
 
-def test_construct_script_content_basic(script_content_1, script_content_vars_1):
+def test_construct_script_content_script1(script_content_1, script_content_vars_1):
     assert f"pdb = PDBFile('{script_content_vars_1.pdb_path}')" in script_content_1
     assert (
         f"forcefield = ForceField({script_content_vars_1.forcefield_files})"
@@ -179,3 +180,66 @@ def test_construct_script_content_basic(script_content_1, script_content_vars_1)
         in script_content_1
     )
     assert "simulation.minimizeEnergy()" in script_content_1
+
+
+@pytest.fixture
+def script_content_vars_2():
+    return ScriptContent(
+        pdb_path="test.pdb",
+        forcefield_files="'amber14-all.xml', 'amber14/tip3p.xml'",
+        nonbonded_method=PME,
+        constraints="None",
+        rigid_water=False,
+        constraint_tolerance=None,
+        nonbonded_cutoff=1.0,
+        ewald_error_tolerance=0.0005,
+        hydrogen_mass=None,
+        time_step=0.002,
+        temperature=300,
+        friction=1,
+        ensemble="NVT",
+        pressure=None,
+        record_interval_steps=1000,
+        solvate=True,
+        integrator_type="LangevinMiddle",
+    )
+
+
+@pytest.fixture
+def script_content_2(script_content_vars_2, openmm_sim):
+    return openmm_sim._construct_script_content(
+        pdb_path=script_content_vars_2.pdb_path,
+        forcefield_files=script_content_vars_2.forcefield_files,
+        nonbonded_method=script_content_vars_2.nonbonded_method,
+        constraints=script_content_vars_2.constraints,
+        rigid_water=script_content_vars_2.rigid_water,
+        constraint_tolerance=script_content_vars_2.constraint_tolerance,
+        nonbonded_cutoff=script_content_vars_2.nonbonded_cutoff,
+        ewald_error_tolerance=script_content_vars_2.ewald_error_tolerance,
+        hydrogen_mass=script_content_vars_2.hydrogen_mass,
+        time_step=script_content_vars_2.time_step,
+        temperature=script_content_vars_2.temperature,
+        friction=script_content_vars_2.friction,
+        ensemble=script_content_vars_2.ensemble,
+        pressure=script_content_vars_2.pressure,
+        record_interval_steps=script_content_vars_2.record_interval_steps,
+        solvate=script_content_vars_2.solvate,
+        integrator_type=script_content_vars_2.integrator_type,
+    )
+
+
+def est_construct_script_content_script2(script_content_2, script_content_vars_2):
+    assert (
+        f"ewaldErrorTolerance = {script_content_vars_2.ewald_error_tolerance}"
+        in script_content_2
+    )
+    assert "modeller.addSolvent(forcefield" in script_content_2
+    assert (
+        """
+            system = forcefield.createSystem(modeller.topology,
+            nonbondedMethod=nonbondedMethod,
+            nonbondedCutoff=nonbondedCutoff, ewaldErrorTolerance=ewaldErrorTolerance,
+            constraints=constraints, rigidWater=rigidWater)
+            """
+        in script_content_2
+    )
