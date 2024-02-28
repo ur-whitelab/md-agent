@@ -9,6 +9,7 @@ from mdagent.utils import PathRegistry, _make_llm
 
 from ..tools import get_tools, make_all_tools
 from .prompt import openaifxn_prompt, structured_prompt
+from .query_filter import create_filtered_query
 
 load_dotenv()
 
@@ -124,5 +125,7 @@ class MDAgent:
         )
 
     def run(self, user_input, callbacks=None):
-        self.agent = self._initialize_tools_and_agent(user_input)
-        return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
+        structured_query = create_filtered_query(user_input, model="gpt-3.5-turbo")
+        print(structured_query)
+        # self.agent=self._initialize_tools_and_agent(user_input)
+        # returnself.agent.run(self.prompt.format(input=user_input),callbacks=callbacks)

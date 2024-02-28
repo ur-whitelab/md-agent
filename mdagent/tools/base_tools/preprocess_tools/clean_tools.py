@@ -1,10 +1,10 @@
 import os
-from typing import Dict, Optional, Type
+from typing import Optional, Type
 
 from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -226,12 +226,6 @@ class CleaningToolFunctionInput(BaseModel):
         True, description="Whether to add hydrogens to the file."
     )
     add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
-
-    @root_validator
-    def validate_query(cls, values) -> Dict:
-        """Check that the input is valid."""
-
-        return values
 
 
 class CleaningToolFunction(BaseTool):
