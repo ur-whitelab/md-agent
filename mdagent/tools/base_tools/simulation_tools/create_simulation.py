@@ -23,7 +23,7 @@ class ModifyScriptUtils:
 
         prompt_template = (
             "You're an expert programmer and in molecular dynamics. "
-            "Your job is to make a script to make a simmulation "
+            "Your job is to make a script to make a simulation "
             "in openmm. "
             "Youre starting point is a base script that runs a protein on its own. "
             "The protein itself doesnt require more preperation. "
@@ -65,7 +65,7 @@ class ModifyScriptInput(BaseModel):
     query: str = Field(
         ...,
         description=(
-            "Simmulation required by the user.You MUST "
+            "simulation required by the user.You MUST "
             "specify the objective, requirements of the simulation as well "
             "as on what protein you are working."
         ),

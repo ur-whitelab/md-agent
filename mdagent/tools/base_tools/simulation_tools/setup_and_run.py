@@ -599,7 +599,7 @@ class SetUpandRunFunctionInput(BaseModel):
         },
         description="""Parameters for the openmm integrator.""",
     )
-    simmulation_params: Dict[str, Any] = Field(
+    simulation_params: Dict[str, Any] = Field(
         {
             "Ensemble": "NVT",
             "Number of Steps": 5000,
@@ -656,7 +656,7 @@ class OpenMMSimulation:
                 "constraintTolerance": 0.000001,
                 "solvate": False,
             }
-        self.sim_params = self.params.get("simmulation_params", None)
+        self.sim_params = self.params.get("simulation_params", None)
         if self.sim_params is None:
             self.sim_params = {
                 "Ensemble": "NVT",
@@ -736,6 +736,13 @@ class OpenMMSimulation:
                 Sim_id=self.sim_id,
                 term="dcd",
             )
+            topology_name = self.path_registry.write_file_name(
+                type=FileType.RECORD,
+                record_type="TOP",
+                protein_file_id=self.pdb_id,
+                Sim_id=self.sim_id,
+                term="pdb",
+            )
 
             log_name = self.path_registry.write_file_name(
                 type=FileType.RECORD,
@@ -749,6 +756,10 @@ class OpenMMSimulation:
                 f"Simulation trajectory for protein {self.pdb_id}"
                 f" and simulation {self.sim_id}"
             )
+            top_desc = (
+                f"Simulation topology for protein"
+                f"{self.pdb_id} and simulation {self.sim_id}"
+            )
             log_desc = (
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
@@ -757,6 +768,12 @@ class OpenMMSimulation:
             self.simulation.reporters.append(
                 DCDReporter(
                     f"{trajectory_name}",
+                    self.sim_params["record_interval_steps"],
+                )
+            )
+            self.simulation.reporters.append(
+                PDBReporter(
+                    f"{topology_name}",
                     self.sim_params["record_interval_steps"],
                 )
             )
@@ -773,6 +790,7 @@ class OpenMMSimulation:
             self.registry_records = [
                 ("holder", f"files/records/{trajectory_name}", traj_desc),
                 ("holder", f"files/records/{log_name}", log_desc),
+                ("holder", f"files/records/{topology_name}", top_desc),
             ]
 
             # TODO add checkpoint too?
@@ -781,6 +799,12 @@ class OpenMMSimulation:
             self.simulation.reporters.append(
                 DCDReporter(
                     "temp_trajectory.dcd",
+                    self.sim_params["record_interval_steps"],
+                )
+            )
+            self.simulation.reporters.append(
+                PDBReporter(
+                    "temp_topology.pdb",
                     self.sim_params["record_interval_steps"],
                 )
             )
@@ -947,6 +971,7 @@ class OpenMMSimulation:
         equilibrationSteps = 1000
         platform = Platform.getPlatformByName('CPU')
         dcdReporter = DCDReporter('trajectory.dcd', 1000)
+        pdbReporter = PDBReporter('trajectory.pdb', 1000)
         dataReporter = StateDataReporter('log.txt', {record_interval_steps},
             totalSteps=steps,
             step=True, speed=True, progress=True, elapsedTime=True, remainingTime=True,
@@ -1041,6 +1066,7 @@ class OpenMMSimulation:
 
         print('Simulating...')
         simulation.reporters.append(dcdReporter)
+        simulation.reporters.append(pdbReporter)
         simulation.reporters.append(dataReporter)
         simulation.reporters.append(checkpointReporter)
         simulation.currentStep = 0
@@ -1124,7 +1150,6 @@ class SetUpandRunFunction(BaseTool):
 
     def _run(self, **input_args):
         if self.path_registry is None:
-            print("Path registry not initialized")
             return "Path registry not initialized"
         input = self.check_system_params(input_args)
         error = input.get("error", None)
@@ -1138,7 +1163,6 @@ class SetUpandRunFunction(BaseTool):
             if pdb_id not in self.path_registry.list_path_names():
                 return "No pdb_id found in input, use the file id not the file name"
         except KeyError:
-            print("whoops no pdb_id found in input,", input)
             return "No pdb_id found in input"
         try:
             save = input["save"]  # either this simulation
@@ -1152,7 +1176,7 @@ class SetUpandRunFunction(BaseTool):
         try:
             file_name = self.path_registry.write_file_name(
                 type=FileType.SIMULATION,
-                type_of_sim=input["simmulation_params"]["Ensemble"],
+                type_of_sim=input["simulation_params"]["Ensemble"],
                 protein_file_id=pdb_id,
             )
 
@@ -1207,10 +1231,11 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
-                    record[0] = self.path_registry.get_fileid(  # Step necessary here to
-                        record[1].split("/")[-1],  # avoid id being repeated
-                        FileType.RECORD,
+                    record_list = list(record)
+                    record_list[0] = self.path_registry.get_fileid(
+                        record_list[1].split("/")[-1], FileType.RECORD
                     )
+                    record = tuple(record_list)
                     self.path_registry.map_path(*record)
             return (
                 "Simulation done! \n Summary: \n"
@@ -1531,7 +1556,7 @@ class SetUpandRunFunction(BaseTool):
                     error_msg += msg
 
             return processed_params, error_msg
-        if param_type == "simmulation_params":
+        if param_type == "simulation_params":
             for key, value in user_params.items():
                 if key == "Ensemble" or key == "ensemble":
                     if value == "NPT":
@@ -1592,9 +1617,9 @@ class SetUpandRunFunction(BaseTool):
                 "Timestep": 0.004 * picoseconds,
                 "Pressure": 1.0 * bar,
             }
-        simmulation_params = values.get("simmulation_params")
-        if simmulation_params is None:
-            simmulation_params = {
+        simulation_params = values.get("simulation_params")
+        if simulation_params is None:
+            simulation_params = {
                 "Ensemble": "NVT",
                 "Number of Steps": 10000,
                 "record_interval_steps": 100,
@@ -1604,7 +1629,7 @@ class SetUpandRunFunction(BaseTool):
 
         # system_params = {k.lower(): v for k, v in system_params.items()}
         # integrator_params = {k.lower(): v for k, v in integrator_params.items()}
-        # simmulation_params = {k.lower(): v for k, v in simmulation_params.items()}
+        # simulation_params = {k.lower(): v for k, v in simulation_params.items()}
 
         nonbondedMethod = system_params.get("nonbondedMethod")
         nonbondedCutoff = system_params.get("nonbondedCutoff")
@@ -1708,7 +1733,7 @@ class SetUpandRunFunction(BaseTool):
             "save": save,
             "system_params": system_params,
             "integrator_params": integrator_params,
-            "simmulation_params": simmulation_params,
+            "simulation_params": simulation_params,
         }
         # if no error, return the values
         return values

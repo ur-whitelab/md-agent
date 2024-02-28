@@ -24,6 +24,8 @@ setup(
         "matplotlib",
         "nbformat",
         "openai",
+        "mdtraj",
+        "python-dotenv",
         "requests",
         "tiktoken",
         "rdkit",

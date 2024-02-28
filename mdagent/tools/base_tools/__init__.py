@@ -1,5 +1,10 @@
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
+from .analysis_tools.rgy import (
+    RadiusofGyrationAverage,
+    RadiusofGyrationPerFrame,
+    RadiusofGyrationPlot,
+)
 from .analysis_tools.rmsd_tools import RMSDCalculator
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import (
@@ -33,6 +38,9 @@ __all__ = [
     "VisualizeProtein",
     "RMSDCalculator",
     "RemoveWaterCleaningTool",
+    "RadiusofGyrationAverage",
+    "RadiusofGyrationPerFrame",
+    "RadiusofGyrationPlot",
     "Scholar2ResultLLM",
     "SerpGitTool",
     "SetUpAndRunTool",
