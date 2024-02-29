@@ -1,4 +1,6 @@
 import json
+import os
+from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -248,9 +250,42 @@ def test_mdagent_curriculum():
     assert mdagent_no_curr.subagents_settings.curriculum is False
 
 
-def reset_vdb(skill_manager):
-    if not skill_manager.vectorbd._collection.list():
+def test_reset_vdb(skill_manager):
+    if len(skill_manager.vectordb.get()["ids"]) == 0:
         skill_manager.add_new_tool("test_function", "def test_function(): pass")
-    assert len(skill_manager.vectorbd._collection.list()) == 1
+    assert len(skill_manager.vectordb.get()["ids"]) > 1
     skill_manager.reset_vdb()
-    assert len(skill_manager.vectorbd._collection.list()) == 0
+    assert len(skill_manager.vectordb.get()["ids"]) == 0
+
+
+def test_clear_skills(tmp_path, skill_manager):
+    skill_manager.skills = {"test_function": "code for test_function"}
+    skill_manager.clear_skills()
+    assert skill_manager.skills == {}
+
+    base_dir = tmp_path / "test_dir"
+    base_dir.mkdir()
+    skill_manager.dir_name = str(base_dir) + "/skill_library"
+
+    dir_name_code = Path(skill_manager.dir_name + "/code")
+    dir_name_code.mkdir(parents=True)
+    dir_path_code = os.path.join(dir_name_code, "test_function_code.py")
+    with open(dir_path_code, "w") as f:
+        f.write("test")
+
+    dir_name_description = Path(skill_manager.dir_name + "/description")
+    dir_name_description.mkdir(parents=True)
+    dir_path_desc = os.path.join(dir_name_description, "test_function_description.txt")
+    with open(dir_path_desc, "w") as f:
+        f.write("test")
+
+    dir_name_vector_db = Path(skill_manager.dir_name + "/vectordb")
+    dir_name_vector_db.mkdir(parents=True)
+    dir_path_vdb = os.path.join(dir_name_vector_db, "test_function_vector_db.txt")
+    with open(dir_path_vdb, "w") as f:
+        f.write("test")
+
+    skill_manager.clear_skills()
+    assert not os.path.exists(dir_path_code)
+    assert not os.path.exists(dir_path_desc)
+    assert not os.path.exists(dir_path_vdb)

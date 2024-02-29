@@ -221,8 +221,8 @@ class SkillManager:
             print(f"\n\033[43mTool {tool_name} not found in skill library\033[0m")
 
     def reset_vdb(self):
-        skills = self.vectordb._collection.list()
-        self.vectordb._collection.delete(ids=skills)
+        skills = self.vectordb.get()
+        self.vectordb._collection.delete(ids=skills["ids"])
 
     def clear_skills(self):
         self.skills = {}
