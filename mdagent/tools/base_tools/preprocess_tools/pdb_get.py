@@ -186,17 +186,20 @@ class MolPDB:
             Chem.AllChem.EmbedMolecule(m)
             file_name = f"files/pdb/{mol_name}.pdb"
             Chem.MolToPDBFile(m, file_name)
+            print("finished writing pdb file")
             self.path_registry.map_path(
                 mol_name, file_name, f"pdb file for the small molecule {mol_name}"
             )
             return (
                 f"PDB file for {mol_str} successfully created and saved to {file_name}."
             )
-        except Exception:
-            print(
-                "There was an error getting pdb. Please input a single molecule name."
-                f"{mol_str},{mol_name}, {smi}"
-            )
+        except Exception as e:
+            print(str(e))
+            print(e.__class__)
+            # print(
+            #    "There was an error getting pdb. Please input a single molecule name."
+            #    f"{mol_str},{mol_name}, {smi}"
+            # )
             return (
                 "There was an error getting pdb. Please input a single molecule name."
             )

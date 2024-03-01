@@ -3,7 +3,7 @@ import os
 import pytest
 
 
-@pytest.mark.parametrize("with_files, raw_or_clean", [(False, "raw"), (True, "raw")])
+@pytest.mark.parametrize("with_files, raw_or_clean", [("raw", False), ("raw", True)])
 def test_registry_init(get_registry, with_files, raw_or_clean):
     # make the test directory the cwd
     # print(os.curdir)

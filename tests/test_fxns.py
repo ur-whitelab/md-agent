@@ -10,19 +10,18 @@ from langchain.chat_models import ChatOpenAI
 from mdagent.tools.base_tools import (
     CleaningTools,
     Scholar2ResultLLM,
-    SimulationFunctions,
     VisFunctions,
     get_pdb,
 )
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
 from mdagent.tools.base_tools.preprocess_tools.pdb_get import MolPDB
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType
 
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="pkg_resources")
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def path_to_cif():
     # Save original working directory
     original_cwd = os.getcwd()
@@ -44,39 +43,39 @@ def fibronectin():
     return "fibronectin pdb"
 
 
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
+# @pytest.fixture
+# def get_registry():
+#    return PathRegistry()
 
 
-@pytest.fixture
-def sim_fxns(get_registry):
-    return SimulationFunctions(get_registry)
+# @pytest.fixture
+# def sim_fxns(get_registry):
+#    return SimulationFunctions(get_registry)
 
 
 @pytest.fixture
 def plotting_tools(get_registry):
-    return PlottingTools(get_registry)
+    return PlottingTools(get_registry("raw", False))
 
 
 @pytest.fixture
 def vis_fxns(get_registry):
-    return VisFunctions(get_registry)
+    return VisFunctions(get_registry("raw", False))
 
 
 @pytest.fixture
 def packmol(get_registry):
-    return PackMolTool(get_registry)
+    return PackMolTool(get_registry("raw", False))
 
 
 @pytest.fixture
 def molpdb(get_registry):
-    return MolPDB(get_registry)
+    return MolPDB(get_registry("raw", False))
 
 
 @pytest.fixture
 def cleaning_fxns(get_registry):
-    return CleaningTools(get_registry)
+    return CleaningTools(get_registry("raw", True))
 
 
 def test_process_csv(plotting_tools):
@@ -160,13 +159,15 @@ def test_find_png(vis_fxns):
     os.remove(test_file)
 
 
-def test_create_notebook(path_to_cif, vis_fxns):
+def test_create_notebook(ALA_CIF_file, vis_fxns):
+    path_to_cif = ALA_CIF_file
     result = vis_fxns.create_notebook(path_to_cif)
     path_to_notebook = path_to_cif.split(".")[0] + "_vis.ipynb"
     os.remove(path_to_notebook)
     assert result == "Visualization Complete"
 
 
+@pytest.mark.skip(reason="This has been deprecated")
 def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
     result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
     path_to_cleaned_file = "tidy_" + path_to_cif
@@ -176,6 +177,7 @@ def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
 
 @patch("os.path.exists")
 @patch("os.listdir")
+@pytest.mark.skip(reason="This has been deprecated")
 def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns):
     # Test when parameters.json exists
     mock_exists.return_value = True
@@ -201,6 +203,7 @@ def test_extract_parameters_path(mock_listdir, mock_exists, sim_fxns):
     read_data='{"param1": "value1", "param2": "value2"}',
 )
 @patch("json.load")
+@pytest.mark.skip(reason="This has been deprecated")
 def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
     # Define the mock behavior for json.load
     mock_json_load.return_value = {"param1": "value1", "param2": "value2"}
@@ -211,19 +214,19 @@ def test_setup_simulation_from_json(mock_json_load, mock_file_open, sim_fxns):
 
 
 def test_getpdb(fibronectin, get_registry):
-    name, _ = get_pdb(fibronectin, get_registry)
+    name, _ = get_pdb(fibronectin, get_registry("raw", True))
     assert name.endswith(".pdb")
 
 
-@pytest.fixture
-def path_registry():
-    registry = PathRegistry()
-    registry.get_timestamp = lambda: "20240109"
-    return registry
+# @pytest.fixture
+# def path_registry():
+#    registry = PathRegistry()
+#    registry.get_timestamp = lambda: "20240109"
+#    return registry
 
 
-def test_write_to_file():
-    path_registry = PathRegistry()
+def test_write_to_file(get_registry):
+    path_registry = get_registry("raw", False)
 
     with patch("builtins.open", mock_open()):
         file_name = path_registry.write_file_name(
@@ -237,14 +240,19 @@ def test_write_to_file():
         assert file_name.endswith(".pdb")
 
 
-def test_write_file_name_protein(path_registry):
+def test_write_file_name_protein(get_registry):
+    path_registry = get_registry("raw", False)
+    path_registry.get_timestamp = lambda: "20240109_123456"
     file_name = path_registry.write_file_name(
         FileType.PROTEIN, protein_name="1XYZ", description="testing", file_format="pdb"
     )
-    assert file_name == "1XYZ_testing_20240109.pdb"
+    assert file_name == "1XYZ_testing_20240109_123456.pdb"
 
 
-def test_write_file_name_simulation_with_conditions(path_registry):
+def test_write_file_name_simulation_with_conditions(get_registry):
+    path_registry = get_registry("raw", False)
+    path_registry.get_timestamp = lambda: "20240109_123456"
+
     file_name = path_registry.write_file_name(
         FileType.SIMULATION,
         type_of_sim="MD",
@@ -252,27 +260,36 @@ def test_write_file_name_simulation_with_conditions(path_registry):
         conditions="pH7",
         time_stamp="20240109",
     )
-    assert file_name == "MD_1XYZ_pH7_20240109.py"
+    assert file_name == "MD_1XYZ_pH7_20240109_123456.py"
 
 
-def test_write_file_name_simulation_modified(path_registry):
+def test_write_file_name_simulation_modified(get_registry):
+    path_registry = get_registry("raw", False)
+    path_registry.get_timestamp = lambda: "20240109_123456"
+
     file_name = path_registry.write_file_name(
         FileType.SIMULATION, Sim_id="SIM456", modified=True, time_stamp="20240109"
     )
-    assert file_name == "SIM456_MOD_20240109.py"
+    assert file_name == "SIM456_MOD_20240109_123456.py"
 
 
-def test_write_file_name_simulation_default(path_registry):
+def test_write_file_name_simulation_default(get_registry):
+    path_registry = get_registry("raw", False)
+    path_registry.get_timestamp = lambda: "20240109_123456"
+
     file_name = path_registry.write_file_name(
         FileType.SIMULATION,
         type_of_sim="MD",
         protein_file_id="123",
         time_stamp="20240109",
     )
-    assert file_name == "MD_123_20240109.py"
+    assert file_name == "MD_123_20240109_123456.py"
 
 
-def test_write_file_name_record(path_registry):
+def test_write_file_name_record(get_registry):
+    path_registry = get_registry("raw", False)
+    path_registry.get_timestamp = lambda: "20240109_123456"
+
     file_name = path_registry.write_file_name(
         FileType.RECORD,
         record_type="REC",
@@ -281,10 +298,10 @@ def test_write_file_name_record(path_registry):
         term="dcd",
         time_stamp="20240109",
     )
-    assert file_name == "REC_SIM456_123_20240109.dcd"
+    assert file_name == "REC_SIM456_123_20240109_123456.dcd"
 
 
-def test_map_path():
+def test_map_path(get_registry):
     mock_json_data = {
         "existing_name": {
             "path": "existing/path",
@@ -301,7 +318,7 @@ def test_map_path():
     }
     updated_json_data = {**mock_json_data, **new_path_dict}
 
-    path_registry = PathRegistry()
+    path_registry = get_registry("raw", False)
     path_registry.json_file_path = "dummy_json_file.json"
 
     # Mocking os.path.exists to simulate the JSON file existence
@@ -385,17 +402,24 @@ def test_packmol_sm_download_called(packmol):
         mock_get_sm_pdbs.assert_called_with(["water", "benzene"])
 
 
-def test_packmol_download_only(packmol):
-    packmol.path_registry._remove_path_from_json("water")
-    packmol.path_registry._remove_path_from_json("benzene")
-    small_molecules = ["water", "benzene"]
-    packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    assert os.path.exists("files/pdb/benzene.pdb")
-    os.remove("files/pdb/water.pdb")
-    os.remove("files/pdb/benzene.pdb")
+@pytest.mark.parametrize("small_molecule", [["water"], ["benzene"]])
+def test_packmol_download_only(packmol, small_molecule):
+    packmol.path_registry._remove_path_from_json(f"{small_molecule[0]}")
+
+    packmol._get_sm_pdbs(small_molecule)
+
+    here = os.path.exists(f"files/pdb/{small_molecule[0]}.pdb")
+    os.path.exists(f"tests/files/pdb/{small_molecule[0]}.pdb")
+    assert here  # or maybe_here
+    time_before = os.path.getmtime(f"files/pdb/{small_molecule[0]}.pdb")
+    time.sleep(3)
+    packmol._get_sm_pdbs(small_molecule)
+    time_after = os.path.getmtime(f"files/pdb/{small_molecule[0]}.pdb")
+    assert time_before == time_after
+    os.remove(f"files/pdb/{small_molecule[0]}.pdb")
 
 
+@pytest.mark.skip(reason="This was combined with previous test")
 def test_packmol_download_only_once(packmol):
     packmol.path_registry._remove_path_from_json("water")
     small_molecules = ["water"]
@@ -425,14 +449,15 @@ def mock_listdir(path):
 
 
 @pytest.fixture
-def path_registry_with_mocked_fs():
+def path_registry_with_mocked_fs(get_registry):
     with patch("os.path.exists", side_effect=mock_exists):
         with patch("os.listdir", side_effect=mock_listdir):
-            registry = PathRegistry()
+            registry = get_registry("raw", False)
             registry.get_timestamp = lambda: "20240109"
             return registry
 
 
+@pytest.mark.skip(reason="This was moved to test_pathregistry.py")
 def test_init_path_registry(path_registry_with_mocked_fs):
     # This test will run with the mocked file system
     # Here, you can assert if 'water.pdb' under 'solvents' is registered correctly
