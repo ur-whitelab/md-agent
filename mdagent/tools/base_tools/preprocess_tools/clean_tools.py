@@ -227,7 +227,7 @@ class CleaningToolFunctionInput(BaseModel):
     )
     add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_query(cls, values) -> Dict:
         """Check that the input is valid."""
 
