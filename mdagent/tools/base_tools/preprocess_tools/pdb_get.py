@@ -193,11 +193,11 @@ class MolPDB:
             return (
                 f"PDB file for {mol_str} successfully created and saved to {file_name}."
             )
-        except Exception as e:
+        except Exception:
             print(
                 "There was an error getting pdb. Please input a single molecule name."
                 f"{mol_str},{mol_name}"
-             )
+            )
             return (
                 "There was an error getting pdb. Please input a single molecule name."
             )
