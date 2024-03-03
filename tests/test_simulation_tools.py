@@ -2,14 +2,18 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from mdagent.tools.base_tools.simulation_tools import SimulationFunctions
-
-# Test functions in simulation tools
+from mdagent.tools.base_tools import SimulationFunctions
+from mdagent.utils import PathRegistry
 
 
 @pytest.fixture
-def sim_fxns():
-    return SimulationFunctions()
+def get_registry():
+    return PathRegistry()
+
+
+@pytest.fixture
+def sim_fxns(get_registry):
+    return SimulationFunctions(get_registry)
 
 
 @patch("os.path.exists")

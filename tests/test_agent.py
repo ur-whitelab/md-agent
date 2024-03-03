@@ -7,7 +7,7 @@ from mdagent.mainagent.agent import MDAgent
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
-from mdagent.subagents.subagent_setup import SubAgentSettings
+from mdagent.subagents.subagent_setup import SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry
 
 
@@ -30,6 +30,20 @@ def action(path_registry):
 def iterator(path_registry):
     settings = SubAgentSettings(path_registry=path_registry)
     return Iterator(subagent_settings=settings)
+
+
+def test_subagent_setup():
+    settings = SubAgentSettings(path_registry=None)
+    initializer = SubAgentInitializer(settings)
+    subagents = initializer.create_iteration_agents()
+    action = subagents["action"]
+    skill = subagents["skill"]
+    critic = subagents["critic"]
+    curriculum = initializer.create_curriculum()
+    assert action is not None
+    assert critic is not None
+    assert curriculum is not None
+    assert skill is not None
 
 
 def test_exec_code(action):
