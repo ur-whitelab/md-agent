@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
+from mdagent.mainagent.agent import MDAgent
 from mdagent.subagents.agents.action import Action
 from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
@@ -27,8 +28,8 @@ def action(path_registry):
 
 @pytest.fixture
 def iterator(path_registry):
-    settings = SubAgentSettings(path_registry=None)
-    return Iterator(path_registry=path_registry, subagent_settings=settings)
+    settings = SubAgentSettings(path_registry=path_registry)
+    return Iterator(subagent_settings=settings)
 
 
 def test_exec_code(action):
@@ -153,15 +154,13 @@ def test_execute_skill_function(skill_manager):
     }
     with patch("os.listdir", return_value=["file1", "file2"]):
         skill_manager._check_arguments = MagicMock()
-        message = skill_manager.execute_skill_function(
-            "sample_tool", path_registry, arg1=5, arg2=3
-        )
+        message = skill_manager.execute_skill_function("sample_tool", arg1=5, arg2=3)
 
     assert "Successfully executed code." in message
     assert "Code Output: 8" in message
     skill_manager.skills = {}
     with pytest.raises(ValueError) as excinfo:
-        skill_manager.execute_skill_function("nonexistent_tool", path_registry)
+        skill_manager.execute_skill_function("nonexistent_tool")
     assert "Code for nonexistent_tool not found" in str(excinfo.value)
 
 
@@ -233,3 +232,17 @@ def test_update_skill_library(skill_manager):
             path="/mock_dir/code/test_function.py",
             description="Code for new tool test_function",
         )
+
+
+def test_mdagent_learn_init():
+    mdagent_skill = MDAgent(learn=False)
+    assert mdagent_skill.skip_subagents is True
+    mdagent_learn = MDAgent(learn=True)
+    assert mdagent_learn.skip_subagents is False
+
+
+def test_mdagent_curriculum():
+    mdagent_curr = MDAgent(curriculum=True)
+    mdagent_no_curr = MDAgent(curriculum=False)
+    assert mdagent_curr.subagents_settings.curriculum is True
+    assert mdagent_no_curr.subagents_settings.curriculum is False

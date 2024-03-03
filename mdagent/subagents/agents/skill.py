@@ -149,7 +149,7 @@ class SkillManager:
         )
         self.vectordb.persist()
 
-    def execute_skill_function(self, tool_name, path_registry, **kwargs):
+    def execute_skill_function(self, tool_name, **kwargs):
         code = self.skills.get(tool_name, {}).get("code", None)
         if not code:
             raise ValueError(
@@ -158,7 +158,7 @@ class SkillManager:
             )
         # capture initial state
         initial_files = set(os.listdir("."))
-        initial_registry = path_registry.list_path_names()
+        initial_registry = self.path_registry.list_path_names()
 
         try:
             self._check_arguments(tool_name, **kwargs)
@@ -172,7 +172,7 @@ class SkillManager:
         # capture final state
         new_files = list(set(os.listdir(".")) - initial_files)
         new_registry = list(
-            set(path_registry.list_path_names()) - set(initial_registry)
+            set(self.path_registry.list_path_names()) - set(initial_registry)
         )
         message = "Successfully executed code."
         if new_files:

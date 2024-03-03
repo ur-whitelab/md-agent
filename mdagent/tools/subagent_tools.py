@@ -15,11 +15,11 @@ class ExecuteSkillInputSchema(BaseModel):
     )
 
 
-class ExecuteSkill(BaseTool):
-    name = "ExecuteSkill"
-    description = """Executes the code for a new tool or skill that has
-    been recently made during the current iteration. Make sure to include
-    function name and inputs arguments.
+class RetryExecuteSkill(BaseTool):
+    name = "RetryExecuteSkill"
+    description = """Only use this tool to execute a tool recently created
+    that previously failed to execute or hasn't been executed yet.
+    Make sure to include tool name and inputs arguments.
     """
     subagent_settings: Optional[SubAgentSettings]
     args_schema: Optional[Type[BaseModel]] = ExecuteSkillInputSchema
@@ -30,18 +30,15 @@ class ExecuteSkill(BaseTool):
 
     def _run(self, skill_name, args=None):
         try:
-            path_registry = self.subagent_settings.path_registry
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill = agent_initializer.create_skill_manager(resume=True)
             if skill is None:
                 return "SubAgent for this tool not initialized"
             if args is not None:
                 print("args: ", args)
-                code_result = skill.execute_skill_function(
-                    skill_name, path_registry, **args
-                )
+                code_result = skill.execute_skill_function(skill_name, **args)
             else:
-                code_result = skill.execute_skill_function(skill_name, path_registry)
+                code_result = skill.execute_skill_function(skill_name)
             return code_result
         except TypeError as e:
             return f"""{type(e).__name__}: {e}. Please check your inputs
@@ -100,7 +97,8 @@ class WorkflowPlanInputSchema(BaseModel):
     )
     curr_tools: str = Field(
         description="""List of all tools you have access to. Such as
-        this tool, 'ExecuteSkill', 'SkillRetrieval', and maybe `Name2PDBTool`, etc."""
+        this tool, 'ExecuteSkill',
+        'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
     )
     files: str = Field(description="List of all files you have access to.")
     # ^ would be nice if MDAgent could give files in case user provides unmapped files
