@@ -27,11 +27,6 @@ class RDFToolInput(BaseModel):
     ##pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
 
 
-class RDFutils:
-    # get the expression for select pairs
-    pass
-
-
 class RDFTool(BaseTool):
     name = "RDFTool"
     description = (
