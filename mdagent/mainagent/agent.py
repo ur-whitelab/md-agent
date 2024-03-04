@@ -1,3 +1,6 @@
+import json
+import time
+
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
@@ -58,6 +61,7 @@ class MDAgent:
             path_registry.map_path(file, file, description="User uploaded file")
 
         self.agent_type = agent_type
+        self.ckpt_dir = ckpt_dir
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
@@ -126,3 +130,47 @@ class MDAgent:
     def run(self, user_input, callbacks=None):
         self.agent = self._initialize_tools_and_agent(user_input)
         return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
+
+    def run_and_eval(self, user_input, callbacks=None):
+        self.agent = self._initialize_tools_and_agent(user_input)
+        num_steps = 0
+        tools_used = {}
+        step_start_time = start_time = time.time()
+        for step in self.agent.iter({"input": user_input}, include_run_info=True):
+            output = step.get("intermediate_step")
+            if output:
+                num_steps += 1
+                action, observation = output[0]
+                current_time = time.time()
+                step_elapsed_time = current_time - step_start_time
+                step_start_time = current_time
+
+                tools_used[f"Step {num_steps}"] = {
+                    "tool": action.tool,
+                    "tool_input": action.tool_input,
+                    "observation": observation,
+                    "step_elapsed_time (sec)": step_elapsed_time,
+                    "timestamp_from_start (sec)": current_time - start_time,
+                }
+        final_output = step["output"]
+        run_id = step["__run"].run_id
+        total_seconds = time.time() - start_time
+        total_mins = total_seconds / 60
+
+        print("Evaluation Summary:")
+        print(f"Total Steps: {num_steps+1}")
+        print(f"Total Time: {total_seconds:.2f} seconds ({total_mins:.2f} minutes)")
+        # TODO: calculate total num of tools used
+
+        summary = {
+            "total_steps": num_steps,
+            "total_time_seconds": total_seconds,
+            "total_time_minutes": total_mins,
+            "tools_used": tools_used,
+            "final_answer": final_output,
+            "run_id": run_id,
+        }
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
+        with open(f"{self.ckpt_dir}/evaluation_{timestamp}.json", "w") as f:
+            json.dump(summary, f, indent=4)
+        return final_output
