@@ -45,6 +45,7 @@ class MDAgent:
         subagents_model="gpt-4-1106-preview",
         ckpt_dir="ckpt",
         resume=False,
+        learn=True,
         top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
         use_human_tool=False,
         curriculum=True,
@@ -70,7 +71,11 @@ class MDAgent:
             callbacks=[StreamingStdOutCallbackHandler()],
         )
 
-        # assign prompt
+        if learn:
+            self.skip_subagents = False
+        else:
+            self.skip_subagents = True
+
         if agent_type == "Structured":
             self.prompt = structured_prompt
         elif agent_type == "OpenAIFunctionsAgent":
@@ -99,6 +104,7 @@ class MDAgent:
                     llm=self.tools_llm,
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
+                    skip_subagents=self.skip_subagents,
                 )
             else:
                 # retrieve all tools, including new tools if any
@@ -106,6 +112,7 @@ class MDAgent:
                     self.tools_llm,
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
+                    skip_subagents=self.skip_subagents,
                 )
         return AgentExecutor.from_agent_and_tools(
             tools=self.tools,

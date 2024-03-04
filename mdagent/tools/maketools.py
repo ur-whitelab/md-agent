@@ -9,20 +9,21 @@ from langchain.base_language import BaseLanguageModel
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.tools import BaseTool, StructuredTool
 from langchain.vectorstores import Chroma
-from langchain_experimental.tools import PythonREPLTool
 from pydantic import BaseModel, Field
 
 from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
 from .base_tools import (
-    CheckDirectoryFiles,
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
     PackMolTool,
     PPIDistance,
     ProteinName2PDBTool,
+    RadiusofGyrationAverage,
+    RadiusofGyrationPerFrame,
+    RadiusofGyrationPlot,
     RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
@@ -68,7 +69,7 @@ def make_all_tools(
     path_instance = PathRegistry.get_instance()  # get instance first
     if llm:
         all_tools += agents.load_tools(["llm-math"], llm)
-        all_tools += [PythonREPLTool()]  # or PythonREPLTool(llm=llm)?
+        # all_tools += [PythonREPLTool()]
         all_tools += [
             ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm)
         ]
@@ -79,25 +80,26 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        Scholar2ResultLLM(llm=llm),
         CleaningToolFunction(path_registry=path_instance),
-        CheckDirectoryFiles(),
         ListRegistryPaths(path_registry=path_instance),
-        #    MapPath2Name(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
-        PPIDistance(),
-        RMSDCalculator(),
+        RadiusofGyrationAverage(path_registry=path_instance),
+        RadiusofGyrationPerFrame(path_registry=path_instance),
+        RadiusofGyrationPlot(path_registry=path_instance),
+        PPIDistance(path_registry=path_instance),
+        RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
-        ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         RDFTool(path_registry=path_instance),
-        SimulationOutputFigures(),
+        SimulationOutputFigures(path_registry=path_instance),
     ]
-
-    # tools using subagents
     if subagent_settings is None:
         subagent_settings = SubAgentSettings(path_registry=path_instance)
+
+    # tools using subagents
     subagents_tools = []
     if not skip_subagents:
         subagents_tools = [
@@ -115,14 +117,6 @@ def make_all_tools(
         learned_tools = get_learned_tools(subagent_settings.ckpt_dir)
 
     all_tools += base_tools + subagents_tools + learned_tools
-
-    # add other tools depending on api keys
-    os.getenv("SERP_API_KEY")
-    pqa_key = os.getenv("PQA_API_KEY")
-    # if serp_key:
-    #    all_tools.append(SerpGitTool(serp_key))  # github issues search
-    if pqa_key:
-        all_tools.append(Scholar2ResultLLM(pqa_key))  # literature search
     return all_tools
 
 
@@ -131,7 +125,7 @@ def get_tools(
     llm: BaseLanguageModel,
     subagent_settings: Optional[SubAgentSettings] = None,
     top_k_tools=15,
-    subagents_required=True,
+    skip_subagents=False,
     human=False,
 ):
     if subagent_settings:
@@ -140,7 +134,7 @@ def get_tools(
         ckpt_dir = "ckpt"
 
     retrieved_tools = []
-    if subagents_required:
+    if not skip_subagents:
         # add subagents-related tools by default
         retrieved_tools = [
             CreateNewTool(subagent_settings=subagent_settings),

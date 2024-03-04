@@ -1,5 +1,4 @@
 import os
-import re
 from typing import Dict, Optional, Type
 
 from langchain.tools import BaseTool
@@ -11,31 +10,10 @@ from mdagent.utils import FileType, PathRegistry
 
 
 class CleaningTools:
-    def _extract_path(self, user_input: str, path_registry: PathRegistry) -> str:
-        """Extract file path from user input."""
+    def __init__(self, path_registry):
+        self.path_registry = path_registry
 
-        # Remove any leading or trailing white space
-        user_input = user_input.strip()
-
-        # Remove single and double quotes from the user_input
-        user_input = user_input.replace("'", "")
-        user_input = user_input.replace('"', "")
-
-        # First check the path registry
-        mapped_path = path_registry.get_mapped_path(user_input)
-        if mapped_path != "Name not found in path registry.":
-            return mapped_path
-
-        # If not found in registry, check if it is a valid path
-        match = re.search(r"[a-zA-Z0-9_\-/\\:.]+(?:\.pdb|\.cif)", user_input)
-
-        if match:
-            return match.group(0)
-        else:
-            raise ValueError("No valid file path found in user input.")
-
-    def _standard_cleaning(self, pdbfile: str, path_registry: PathRegistry):
-        pdbfile = self._extract_path(pdbfile, path_registry)
+    def _standard_cleaning(self, pdbfile: str) -> str:
         name, end = os.path.splitext(os.path.basename(pdbfile))
         end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
@@ -56,11 +34,10 @@ class CleaningTools:
         # add filename to registry
         short_name = f"tidy_{name}"
         file_description = "Cleaned File. Standard cleaning."
-        path_registry.map_path(short_name, tidy_filename, file_description)
+        self.path_registry.map_path(short_name, tidy_filename, file_description)
         return f"{file_description} Written to {tidy_filename}"
 
-    def _remove_water(self, pdbfile: str, path_registry: PathRegistry):
-        pdbfile = self._extract_path(pdbfile, path_registry)
+    def _remove_water(self, pdbfile: str) -> str:
         name, end = os.path.splitext(os.path.basename(pdbfile))
         end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
@@ -75,13 +52,10 @@ class CleaningTools:
         # add filename to registry
         short_name = f"tidy_{name}"
         file_description = "Cleaned File. Removed water."
-        path_registry.map_path(short_name, tidy_filename, file_description)
+        self.path_registry.map_path(short_name, tidy_filename, file_description)
         return f"{file_description} Written to {tidy_filename}"
 
-    def _add_hydrogens_and_remove_water(
-        self, pdbfile: str, path_registry: PathRegistry
-    ):
-        pdbfile = self._extract_path(pdbfile, path_registry)
+    def _add_hydrogens_and_remove_water(self, pdbfile: str) -> str:
         name, end = os.path.splitext(os.path.basename(pdbfile))
         end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
@@ -96,11 +70,10 @@ class CleaningTools:
         # add filename to registry
         short_name = f"tidy_{name}"
         file_description = "Cleaned File. Missing Hydrogens added and water removed."
-        path_registry.map_path(short_name, tidy_filename, file_description)
+        self.path_registry.map_path(short_name, tidy_filename, file_description)
         return f"{file_description} Written to {tidy_filename}"
 
-    def _add_hydrogens(self, pdbfile: str, path_registry: PathRegistry):
-        pdbfile = self._extract_path(pdbfile, path_registry)
+    def _add_hydrogens(self, pdbfile: str) -> str:
         name, end = os.path.splitext(os.path.basename(pdbfile))
         end = end.lstrip(".")
         fixer = PDBFixer(filename=pdbfile)
@@ -115,7 +88,7 @@ class CleaningTools:
         # add filename to registry
         short_name = f"tidy_{name}"
         file_description = "Cleaned File. Missing Hydrogens added."
-        path_registry.map_path(short_name, tidy_filename, file_description)
+        self.path_registry.map_path(short_name, tidy_filename, file_description)
         return f"{file_description} Written to {tidy_filename}"
 
 
@@ -125,22 +98,25 @@ class SpecializedCleanTool(BaseTool):
     name = "StandardCleaningTool"
     description = """
     This tool will perform a complete cleaning of a PDB or CIF file.
-    Input: PDB or CIF file.
+    Input: PDB or CIF file name
     Output: Cleaned PDB file
-    Youl will remove heterogens, add missing atoms and hydrogens, and add solvent."""
+    You will remove heterogens, add missing atoms and hydrogens, and add solvent."""
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry]):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, query: str) -> str:
+    def _run(self, file_name: str) -> str:
         """use the tool."""
+        if self.path_registry is None:
+            return "Path registry not initialized"
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            clean_tools = CleaningTools()
-            return clean_tools._standard_cleaning(query, self.path_registry)
+            file_path = self.path_registry.get_mapped_path(file_name)
+            if file_path is None:
+                return "File not found"
+            clean_tools = CleaningTools(self.path_registry)
+            return clean_tools._standard_cleaning(file_path)
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:
@@ -160,7 +136,7 @@ class RemoveWaterCleaningTool(BaseTool):
     to remove water and heterogens, and add hydrogens.
     This tool will remove water
     and add hydrogens in a pdb or cif file.
-    Input: PDB or CIF file.
+    Input: PDB or CIF file name.
     Output: Cleaned PDB file
     """
 
@@ -170,15 +146,16 @@ class RemoveWaterCleaningTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, query: str) -> str:
+    def _run(self, file_name: str) -> str:
         """use the tool."""
+        if self.path_registry is None:
+            return "Path registry not initialized"
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            clean_tools = CleaningTools()
-            return clean_tools._add_hydrogens_and_remove_water(
-                query, self.path_registry
-            )
+            file_path = self.path_registry.get_mapped_path(file_name)
+            if file_path is None:
+                return "File not found"
+            clean_tools = CleaningTools(self.path_registry)
+            return clean_tools._add_hydrogens_and_remove_water(file_path)
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:
@@ -196,7 +173,7 @@ class AddHydrogensCleaningTool(BaseTool):
     description = """
 ]   This tool only adds hydrogens to a pdb or cif file.
     in a pdb or cif file
-    Input: PDB or CIF file.
+    Input: PDB or CIF file name.
     Output: Cleaned PDB file
     """
 
@@ -206,13 +183,16 @@ class AddHydrogensCleaningTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, query: str) -> str:
+    def _run(self, file_name: str) -> str:
         """use the tool."""
+        if self.path_registry is None:
+            return "Path registry not initialized"
         try:
-            if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
-            clean_tools = CleaningTools()
-            return clean_tools._add_hydrogens(query, self.path_registry)
+            file_path = self.path_registry.get_mapped_path(file_name)
+            if file_path is None:
+                return "File not found"
+            clean_tools = CleaningTools(self.path_registry)
+            return clean_tools._add_hydrogens(file_path)
         except FileNotFoundError:
             return "Check your file path. File not found."
         except Exception as e:
@@ -247,7 +227,7 @@ class CleaningToolFunctionInput(BaseModel):
     )
     add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_query(cls, values) -> Dict:
         """Check that the input is valid."""
 
@@ -267,17 +247,21 @@ class CleaningToolFunction(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
+
     def _run(self, **input_args) -> str:
         """Use the tool with specified operations."""
+        if self.path_registry is None:
+            return "Path registry not initialized"
         try:
-            ### No idea why the input is a dictionary with the key "input_args"
-            # instead of the arguments themselves
             if "input_args" in input_args.keys():
                 input_args = input_args["input_args"]
             else:
                 input_args = input_args
             pdbfile_id = input_args.get("pdb_id", None)
-            # TODO check if pdbfile_id is a valid pdb_id from the registry
+            pdbfile_id = self.path_registry.get_mapped_path(pdbfile_id)
             if pdbfile_id is None:
                 return """No file was provided.
                 The input has to be a dictionary with the key 'pdb_id'"""
@@ -294,7 +278,6 @@ class CleaningToolFunction(BaseTool):
             if self.path_registry is None:
                 return "Path registry not initialized"
             file_description = "Cleaned File: "
-            CleaningTools()
             try:
                 pdbfile_path = self.path_registry.get_mapped_path(pdbfile_id)
                 if "/" in pdbfile_path:
