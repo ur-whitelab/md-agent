@@ -50,6 +50,9 @@ class RDFTool(BaseTool):
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
+    # def __init__(self, path_registry: PathRegistry):
+    #    self.path_registry = path_registry
+
     def _run(self, input):
         try:
             inputs = self.validate_input(input)
