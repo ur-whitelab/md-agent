@@ -2,7 +2,11 @@ import os
 
 import pytest
 
-from mdagent.tools.base_tools.preprocess_tools.packing import Molecule, PackmolBox
+from mdagent.tools.base_tools.preprocess_tools.packing import (
+    Molecule,
+    PackmolBox,
+    PackMolTool,
+)
 from mdagent.utils import PathRegistry
 
 
@@ -14,6 +18,11 @@ def get_registry():
 @pytest.fixture
 def packmolbox(get_registry):
     return PackmolBox(get_registry)
+
+
+@pytest.fixture
+def packmoltool(get_registry):
+    return PackMolTool(get_registry)
 
 
 @pytest.fixture
