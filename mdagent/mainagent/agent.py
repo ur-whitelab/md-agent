@@ -1,4 +1,5 @@
 import json
+import os
 import time
 
 from dotenv import load_dotenv
@@ -135,6 +136,7 @@ class MDAgent:
         self.agent = self._initialize_tools_and_agent(user_input)
         num_steps = 0
         tools_used = {}
+        tools_details = {}
         step_start_time = start_time = time.time()
         for step in self.agent.iter({"input": user_input}, include_run_info=True):
             output = step.get("intermediate_step")
@@ -144,8 +146,8 @@ class MDAgent:
                 current_time = time.time()
                 step_elapsed_time = current_time - step_start_time
                 step_start_time = current_time
-
-                tools_used[f"Step {num_steps}"] = {
+                tools_used[action.tool] = tools_used.get(action.tool, 0) + 1
+                tools_details[f"Step {num_steps}"] = {
                     "tool": action.tool,
                     "tool_input": action.tool_input,
                     "observation": observation,
@@ -164,21 +166,24 @@ class MDAgent:
             "learn": not self.skip_subagents,
             "curriculum": self.subagents_settings.curriculum,
         }
-        print("Evaluation Summary:")
+        print("\n----- Evaluation Summary -----")
         print(f"Total Steps: {num_steps+1}")
         print(f"Total Time: {total_seconds:.2f} seconds ({total_mins:.2f} minutes)")
-        # TODO: calculate total num of distinct tools used
 
         summary = {
             "agent_settings": agent_settings,
             "total_steps": num_steps,
-            "total_time_seconds": total_seconds,
-            "total_time_minutes": total_mins,
-            "tools_used": tools_used,
+            "total_time_seconds": f"{total_seconds:.3f}",
+            "total_time_minutes": f"{total_mins:.3f}",
             "final_answer": final_output,
-            "run_id": run_id,
+            "tools_used": tools_used,
+            "tools_details": tools_details,
+            "run_id": str(run_id),
         }
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        with open(f"{self.ckpt_dir}/evaluation_{timestamp}.json", "w") as f:
+        os.makedirs(f"{self.ckpt_dir}/eval", exist_ok=True)
+        filename = f"{self.ckpt_dir}/eval/evaluation_{timestamp}.json"
+        with open(filename, "w") as f:
             json.dump(summary, f, indent=4)
+        print(f"Summary saved to {filename}")
         return final_output
