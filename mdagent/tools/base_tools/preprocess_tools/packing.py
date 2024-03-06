@@ -67,7 +67,7 @@ class PackmolBox:
     ):
         self.path_registry = path_registry
         self.molecules = []
-        self.file_number = 1
+        self.file_number = file_number
         self.file_description = file_description
         self.final_name = None
 
