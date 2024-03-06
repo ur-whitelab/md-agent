@@ -33,15 +33,37 @@ def cleaning_fxns(get_registry):
     return CleaningTools(get_registry)
 
 
-def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
-    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
-    path_to_cleaned_file = "tidy_" + path_to_cif
-    os.remove(path_to_cleaned_file)
-    assert "Cleaned File" in result
-
-
 def test_standard_cleaning(path_to_cif, cleaning_fxns):
     result = cleaning_fxns._standard_cleaning(path_to_cif)
     path_to_cleaned_file = "tidy_" + path_to_cif
     os.remove(path_to_cleaned_file)
-    assert "Cleaned File" in result
+    msg = f"Cleaned File. Standard cleaning. Written to {path_to_cleaned_file}"
+    assert msg == result
+
+
+def test_remove_water(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._remove_water(path_to_cif)
+    path_to_cleaned_file = "tidy_" + path_to_cif
+    os.remove(path_to_cleaned_file)
+    msg = f"Cleaned File. Removed water. Written to {path_to_cleaned_file}"
+    assert msg == result
+
+
+def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._add_hydrogens_and_remove_water(path_to_cif)
+    path_to_cleaned_file = "tidy_" + path_to_cif
+    os.remove(path_to_cleaned_file)
+    msg = (
+        f"Cleaned File. Missing Hydrogens "
+        f"added and water removed. Written to "
+        f"{path_to_cleaned_file}"
+    )
+    assert msg == result
+
+
+def test_add_hyrogens(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._add_hydrogens(path_to_cif)
+    path_to_cleaned_file = "tidy_" + path_to_cif
+    os.remove(path_to_cleaned_file)
+    msg = f"Cleaned File. Missing Hydrogens added. Written to {path_to_cleaned_file}"
+    assert msg == result
