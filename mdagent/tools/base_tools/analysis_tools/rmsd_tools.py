@@ -9,6 +9,8 @@ from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
 
+from mdagent.utils import PathRegistry
+
 # all things related to RMSD as 'standard deviation'
 # 1  RMSD between two protein conformations or trajectories (1D scalar value)
 # 2. time-dependent RMSD of the whole trajectory with all or selected atoms
@@ -17,16 +19,15 @@ from pydantic import BaseModel, Field
 
 
 class RMSDFunctions:
-    def __init__(self, pdb_file, trajectory, ref_file=None, ref_trajectory=None):
-        self.pdb_file = pdb_file
-        self.trajectory = trajectory
-        self.pdb_name = os.path.splitext(os.path.basename(pdb_file))[0]
-        self.ref_file = ref_file
-        self.ref_trajectory = ref_trajectory
-        if ref_file:
-            self.ref_name = os.path.splitext(os.path.basename(ref_file))[0]
-        else:
-            self.ref_name = None
+    def __init__(self, path_registry, pdb, traj, ref=None, ref_traj=None):
+        self.path_registry = path_registry
+        self.pdb_file = self.path_registry.get_mapped_path(pdb)
+        self.trajectory = self.path_registry.get_mapped_path(traj)
+        self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
+        self.ref_file = self.path_registry.get_mapped_path(ref)
+        self.ref_trajectory = self.path_registry.get_mapped_path(ref_traj)
+        if self.ref_file:
+            self.ref_name = os.path.splitext(os.path.basename(self.ref_file))[0]
 
     def calculate_rmsd(
         self,
@@ -34,13 +35,9 @@ class RMSDFunctions:
         selection="backbone",
         plot=True,
     ):
-        i = 0
-        base_filename = f"{rmsd_type}_{self.pdb_name}"
-        filename = base_filename
-        while os.path.exists(filename + ".csv"):
-            i += 1
-            filename = f"{base_filename}_{i}"
-        self.filename = filename
+        if self.trajectory is None or self.pdb_file is None:
+            raise FileNotFoundError("PDB and trajectory files are required.")
+        self.filename = f"{rmsd_type}_{self.pdb_name}"
 
         if rmsd_type == "rmsd":
             if self.ref_file:
@@ -110,6 +107,9 @@ class RMSDFunctions:
         final_rmsd = R.results.rmsd[-1, 2]
         message = f"""Calculated RMSD for each timestep with respect\
         to the initial frame. Saved to {self.filename}.csv. """
+        self.path_registry.map_path(
+            f"{self.filename}.csv", f"{self.filename}.csv", message
+        )
         message += f"Average RMSD is {avg_rmsd} \u212B. "
         message += f"Final RMSD is {final_rmsd} \u212B.\n"
 
@@ -123,6 +123,9 @@ class RMSDFunctions:
             plt.savefig(f"{self.filename}.png")
             # plt.close() # if you don't want to show the plot in notebooks
             message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
+            self.path_registry.map_path(
+                f"{self.filename}.png", f"{self.filename}.png", message
+            )
         return message
 
     def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):
@@ -154,6 +157,9 @@ class RMSDFunctions:
             delimiter=",",
         )
         message = f"Saved pairwise RMSD matrix to {self.filename}.csv.\n"
+        self.path_registry.map_path(
+            f"{self.filename}.csv", f"{self.filename}.csv", message
+        )
         if plot_heatmap:
             plt.imshow(pairwise_matrix, cmap="viridis")
             plt.xlabel(x_label)
@@ -162,6 +168,9 @@ class RMSDFunctions:
             plt.show()
             plt.savefig(f"{self.filename}.png")
             message += f"Plotted pairwise RMSD matrix. Saved to {self.filename}.png.\n"
+            self.path_registry.map_path(
+                f"{self.filename}.png", f"{self.filename}.png", message
+            )
         return message
 
     def compute_rmsf(self, selection="backbone", plot=True):
@@ -188,6 +197,9 @@ class RMSDFunctions:
             comments="",
         )
         message = f"Saved RMSF data to {self.filename}.csv.\n"
+        self.path_registry.map_path(
+            f"{self.filename}.csv", f"{self.filename}.csv", message
+        )
 
         # Plot RMSF
         if plot:
@@ -200,6 +212,9 @@ class RMSDFunctions:
             plt.show()
             plt.savefig(f"{self.filename}.png")
             message += f"Plotted RMSF. Saved to {self.filename}.png.\n"
+            self.path_registry.map_path(
+                f"{self.filename}.png", f"{self.filename}.png", message
+            )
         return message
 
 
@@ -245,6 +260,11 @@ class RMSDCalculator(BaseTool):
     3. root mean square fluctuation (RMSF)
     Make sure to provide any necessary files for a chosen RMSD type."""
     args_schema: Type[BaseModel] = RMSDInputSchema
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(
         self,
@@ -257,13 +277,17 @@ class RMSDCalculator(BaseTool):
         plot: bool = True,
     ):
         try:
-            rmsd = RMSDFunctions(pdb_file, trajectory, ref_file, ref_trajectory)
+            rmsd = RMSDFunctions(
+                self.path_registry, pdb_file, trajectory, ref_file, ref_trajectory
+            )
             message = rmsd.calculate_rmsd(rmsd_type, selection, plot)
         except ValueError as e:
             return (
                 f"ValueError: {e}. \nMake sure to provide valid PBD "
                 "file and binding site using MDAnalysis selection syntax."
             )
+        except FileNotFoundError as e:
+            return str(e)
         except Exception as e:
             return f"Something went wrong. {type(e).__name__}: {e}"
         return message

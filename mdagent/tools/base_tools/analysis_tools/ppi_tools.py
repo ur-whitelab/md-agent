@@ -6,8 +6,10 @@ import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
+from mdagent.utils import PathRegistry
 
-def ppi_distance(pdb_file, binding_site="protein"):
+
+def ppi_distance(file_path, binding_site="protein"):
     """
     Calculates minimum heavy-atom distance between peptide (assumed to be
     smallest chain) and protein. Returns average distance between these two.
@@ -16,7 +18,7 @@ def ppi_distance(pdb_file, binding_site="protein"):
     Can work with any protein-protein interaction (PPI)
     """
     # load and find smallest chain
-    u = mda.Universe(pdb_file)
+    u = mda.Universe(file_path)
     peptide = None
     for chain in u.segments:
         if peptide is None or len(chain.residues) < len(peptide):
@@ -49,14 +51,25 @@ class PPIDistance(BaseTool):
     name: str = "ppi_distance"
     description: str = """Useful for calculating minimum heavy-atom distance
     between peptide and protein. First, make sure you have valid PDB file with
-    any protein-protein interaction."""
+    any protein-protein interaction. Give this tool the name of the file. The
+    tool will find the path."""
     args_schema: Type[BaseModel] = PPIDistanceInputSchema
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry]):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, pdb_file: str, binding_site: str = "protein"):
-        if not pdb_file.endswith(".pdb"):
+        if not self.path_registry:
+            return "Error: Path registry is not set"  # this should not happen
+        file_path = self.path_registry.get_mapped_path(pdb_file)
+        if not file_path:
+            return f"File not found: {pdb_file}"
+        if not file_path.endswith(".pdb"):
             return "Error with input: PDB file must have .pdb extension"
         try:
-            avg_dist = ppi_distance(pdb_file, binding_site=binding_site)
+            avg_dist = ppi_distance(file_path, binding_site=binding_site)
         except ValueError as e:
             return (
                 f"ValueError: {e}. \nMake sure to provide valid PBD "

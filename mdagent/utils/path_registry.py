@@ -77,6 +77,13 @@ class PathRegistry:
                 return json.load(json_file)
         return {}
 
+    def _list_all_paths(self):
+        if not self._check_for_json():
+            return "JSON file does not exist"
+        with open(self.json_file_path, "r") as json_file:
+            data = json.load(json_file)
+        return [data[key]["path"] for key in data.keys()]
+
     def _determine_file_type(self, subdir):
         # Implement logic to determine the file type based on the subdir name
         # Example:
@@ -167,12 +174,13 @@ class PathRegistry:
         with open(self.json_file_path, "r") as json_file:
             data = json.load(json_file)
         filesids = [key for key in data.keys()]
-        return (
+        msg = (
             "Names found in registry: " + ", ".join(filesids)
             if filesids
             else "No names found. The JSON file is empty or does not"
             "contain name mappings."
         )
+        return msg
 
     def list_path_names_and_descriptions(self):
         if not self._check_for_json():
@@ -205,7 +213,7 @@ class PathRegistry:
         # Split the filename on underscores
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
-
+        current_ids = self.list_path_names()
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp
@@ -218,9 +226,19 @@ class PathRegistry:
             pdb_id = parts_list[0]
             return pdb_id + "_" + timestamp_digits
         if type == FileType.SIMULATION:
-            return "sim" + "_" + timestamp_digits
+            num = 0
+            sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            while sim_id in current_ids:
+                num += 1
+                sim_id = "sim" + f"{num}" + "_" + timestamp_digits
+            return sim_id
         if type == FileType.RECORD:
-            return "rec" + "_" + timestamp_digits
+            num = 0
+            rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            while rec_id in current_ids:
+                num += 1
+                rec_id = "rec" + f"{num}" + "_" + timestamp_digits
+            return rec_id
         if type == FileType.SOLVENT:
             return parts + "_" + timestamp_digits
 
