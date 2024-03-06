@@ -35,3 +35,27 @@ def test_parse_cutoff_unknown_unit(setupandrun):
     with pytest.raises(ValueError) as e:
         setupandrun._parse_cutoff("2pc")
         assert "Unknown unit" in str(e.value)
+
+
+def test_parse_temperature(setupandrun):
+    result = setupandrun.parse_temperature("300k")
+    expected_result = unit.Quantity(300, unit.kelvin)
+    assert expected_result == result[0]
+
+
+def parse_friction(setupandrun):
+    result = setupandrun.parse_friction("1/ps")
+    expected_result = unit.Quantity(1, unit.picoseconds)
+    assert expected_result == result[0]
+
+
+def test_parse_time(setupandrun):
+    result = setupandrun.parse_timestep("1ns")
+    expected_result = unit.Quantity(1, unit.nanoseconds)
+    assert expected_result == result[0]
+
+
+def test_parse_pressure(setupandrun):
+    result = setupandrun.parse_pressure("1bar")
+    expected_result = unit.Quantity(1, unit.bar)
+    assert expected_result == result[0]
