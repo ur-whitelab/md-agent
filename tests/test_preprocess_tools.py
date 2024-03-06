@@ -38,3 +38,10 @@ def test_add_hydrogens_and_remove_water(path_to_cif, cleaning_fxns):
     path_to_cleaned_file = "tidy_" + path_to_cif
     os.remove(path_to_cleaned_file)
     assert "Cleaned File" in result
+
+
+def test_standard_cleaning(path_to_cif, cleaning_fxns):
+    result = cleaning_fxns._standard_cleaning(path_to_cif)
+    path_to_cleaned_file = "tidy_" + path_to_cif
+    os.remove(path_to_cleaned_file)
+    assert "Cleaned File" in result
