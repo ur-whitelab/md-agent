@@ -157,12 +157,20 @@ class MDAgent:
         total_seconds = time.time() - start_time
         total_mins = total_seconds / 60
 
+        agent_settings = {
+            "llm": self.llm.model_name,
+            "agent_type": self.agent_type,
+            "resume": self.subagents_settings.resume,
+            "learn": not self.skip_subagents,
+            "curriculum": self.subagents_settings.curriculum,
+        }
         print("Evaluation Summary:")
         print(f"Total Steps: {num_steps+1}")
         print(f"Total Time: {total_seconds:.2f} seconds ({total_mins:.2f} minutes)")
-        # TODO: calculate total num of tools used
+        # TODO: calculate total num of distinct tools used
 
         summary = {
+            "agent_settings": agent_settings,
             "total_steps": num_steps,
             "total_time_seconds": total_seconds,
             "total_time_minutes": total_mins,
