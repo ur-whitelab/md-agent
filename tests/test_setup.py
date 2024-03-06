@@ -1,5 +1,6 @@
 import pytest
 from openmm import unit
+from openmm.app import PME, HBonds
 
 from mdagent.tools.base_tools.simulation_tools import SetUpandRunFunction
 from mdagent.utils import PathRegistry
@@ -59,3 +60,19 @@ def test_parse_pressure(setupandrun):
     result = setupandrun.parse_pressure("1bar")
     expected_result = unit.Quantity(1, unit.bar)
     assert expected_result == result[0]
+
+
+def test_process_parameters(setupandrun):
+    parameters = {
+        "nonbondedMethod": "PME",
+        "constraints": "HBonds",
+        "rigidWater": True,
+    }
+    result = setupandrun._process_parameters(parameters)
+    expected_result = {
+        "nonbondedMethod": PME,
+        "constraints": HBonds,
+        "rigidWater": True,
+    }
+    for key in expected_result:
+        assert result[0][key] == expected_result[key]

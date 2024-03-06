@@ -1420,7 +1420,6 @@ class SetUpandRunFunction(BaseTool):
 
             return parameter, error_msg
 
-    # Example method to use _parse_parameter for specific parameter
     def parse_temperature(self, temperature):
         possible_units = {
             "k": unit.kelvin,
