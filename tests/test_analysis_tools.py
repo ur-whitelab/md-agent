@@ -3,11 +3,9 @@ from io import StringIO
 from unittest.mock import MagicMock, mock_open, patch
 
 import MDAnalysis as mda
-import numpy as np
 import pytest
 
 from mdagent.tools.base_tools import VisFunctions
-import mdagent.tools.base_tools.analysis_tools.ppi_tools
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.analysis_tools.ppi_tools import ppi_distance
 from mdagent.utils import PathRegistry
@@ -131,49 +129,35 @@ def test_create_notebook(path_to_cif, vis_fxns):
     path_to_notebook = path_to_cif.split(".")[0] + "_vis.ipynb"
     os.remove(path_to_notebook)
     assert result == "Visualization Complete"
-    
+
 
 pdb_string = """
-ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N  
-ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C  
-ATOM      3  C   ALA A   1       1.458   1.527   0.000  1.00 20.00           C  
-ATOM      4  O   ALA A   1       0.000   1.527   0.000  1.00 20.00           O  
-ATOM      5  CB  ALA A   1       1.458  -0.500   1.500  1.00 20.00           C  
-ATOM      6  N   GLY B   2      -1.458   0.000   0.000  1.00 20.00           N  
-ATOM      7  CA  GLY B   2      -2.916   0.000   0.000  1.00 20.00           C  
-ATOM      8  C   GLY B   2      -2.916   1.527   0.000  1.00 20.00           C  
-ATOM      9  O   GLY B   2      -1.458   1.527   0.000  1.00 20.00           O  
-ATOM     10  N   GLY B   3      -4.374   1.527   0.000  1.00 20.00           N  
+ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
+ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C
+ATOM      3  C   ALA A   1       1.458   1.527   0.000  1.00 20.00           C
+ATOM      4  O   ALA A   1       0.000   1.527   0.000  1.00 20.00           O
+ATOM      5  CB  ALA A   1       1.458  -0.500   1.500  1.00 20.00           C
+ATOM      6  N   GLY B   2      -1.458   0.000   0.000  1.00 20.00           N
+ATOM      7  CA  GLY B   2      -2.916   0.000   0.000  1.00 20.00           C
+ATOM      8  C   GLY B   2      -2.916   1.527   0.000  1.00 20.00           C
+ATOM      9  O   GLY B   2      -1.458   1.527   0.000  1.00 20.00           O
+ATOM     10  N   GLY B   3      -4.374   1.527   0.000  1.00 20.00           N
 TER
 END
 """
 pdb_file_like = StringIO(pdb_string)
 u = mda.Universe(pdb_file_like, format="PDB")
 
+
 @pytest.fixture
 def mock_mda_universe():
-    # pdb_string = """
-    # ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N  
-    # ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C  
-    # ATOM      3  C   ALA A   1       1.458   1.527   0.000  1.00 20.00           C  
-    # ATOM      4  O   ALA A   1       0.000   1.527   0.000  1.00 20.00           O  
-    # ATOM      5  CB  ALA A   1       1.458  -0.500   1.500  1.00 20.00           C  
-    # ATOM      6  N   GLY B   2      -1.458   0.000   0.000  1.00 20.00           N  
-    # ATOM      7  CA  GLY B   2      -2.916   0.000   0.000  1.00 20.00           C  
-    # ATOM      8  C   GLY B   2      -2.916   1.527   0.000  1.00 20.00           C  
-    # ATOM      9  O   GLY B   2      -1.458   1.527   0.000  1.00 20.00           O  
-    # ATOM     10  N   GLY B   3      -4.374   1.527   0.000  1.00 20.00           N  
-    # TER
-    # END
-    # """
-    # pdb_file_like = StringIO(pdb_string)
-    # u = mda.Universe(pdb_file_like, format="PDB")
-    with patch('mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.Universe', return_value=u) as mock_universe:
-        #mock_universe.return_value = u
+    with patch(
+        "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.Universe", return_value=u
+    ) as mock_universe:
         yield mock_universe
+
 
 def test_ppi_distance(mock_mda_universe):
     file_path = "dummy_path.pdb"
     avg_dist = ppi_distance(file_path)
     assert avg_dist > 0, "Expected a positive average distance"
-
