@@ -1311,6 +1311,8 @@ class SetUpandRunFunction(BaseTool):
 
         # Convert to string in case it's not (e.g., int or float)
         cutoff = str(cutoff)
+        if cutoff[-1] == "s":
+            cutoff = cutoff[:-1]
 
         # Remove spaces and convert to lowercase for easier parsing
         cutoff = cutoff.replace(" ", "").lower()
