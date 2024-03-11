@@ -637,7 +637,7 @@ class OpenMMSimulation:
         self.pdb_id = pdb_id
         self.int_params = (
             self.params.integrator_params
-            if self.params.integrator_params is not None
+            if self.params.integrator_params
             else {
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
