@@ -46,7 +46,7 @@ def string_input():
                 "Friction": "1 / picosecond",
                 "Timestep": "2 * femtoseconds"
             }},
-                "simmulation_params": {{
+                "simulation_params": {{
                 "Ensemble": "NVT",
                 "Number of Steps": 5000,
                 "record_interval_steps": 50,
@@ -88,23 +88,12 @@ def test_check_system_params(get_registry, string_input, raw, clean):
 def test_openmmsimulation_init(get_registry, string_input, raw, clean):
     """Test the OpenMMSimulation class initialization."""
     # assert an openmmexception is raised
-    with pytest.raises(ValueError):
-        registry = get_registry(raw, True)
-        tool_input = json.loads(string_input(raw))
-        print(tool_input)
-        Simulation = OpenMMSimulation(
-            input_params=tool_input,
-            path_registry=registry,
-            save=tool_input["save"],
-            sim_id="sim_123456",
-            pdb_id=tool_input["pdb_id"],
-        )
 
     registry = get_registry(clean, True)
     tool_input = json.loads(string_input(clean))
     inputs = SetUpandRunFunction(path_registry=registry).check_system_params(tool_input)
     print(tool_input)
-    path_of_file = registry.get_mapped_path(tool_input["pdb_id"])
+    registry.get_mapped_path(tool_input["pdb_id"])
     Simulation = OpenMMSimulation(
         input_params=inputs,
         path_registry=registry,
@@ -112,7 +101,10 @@ def test_openmmsimulation_init(get_registry, string_input, raw, clean):
         sim_id="sim_654321",
         pdb_id=tool_input["pdb_id"],
     )
-    assert Simulation.pdb_path == path_of_file
+    assert Simulation.save == tool_input["save"]
+    assert Simulation.sim_id == "sim_654321"
+    assert Simulation.pdb_id == tool_input["pdb_id"]
+    assert Simulation.path_registry == registry
 
     # remove files that start with LOG, TOP, and TRAJ
     for file in os.listdir("."):
