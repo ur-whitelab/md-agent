@@ -43,16 +43,6 @@ def fibronectin():
     return "fibronectin pdb"
 
 
-# @pytest.fixture
-# def get_registry():
-#    return PathRegistry()
-
-
-# @pytest.fixture
-# def sim_fxns(get_registry):
-#    return SimulationFunctions(get_registry)
-
-
 @pytest.fixture
 def plotting_tools(get_registry):
     return PlottingTools(get_registry("raw", False))
