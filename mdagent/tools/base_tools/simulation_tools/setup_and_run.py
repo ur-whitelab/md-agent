@@ -636,7 +636,7 @@ class OpenMMSimulation:
         self.sim_id = sim_id
         self.pdb_id = pdb_id
         self.int_params = (
-            self.params["ntegrator_params"]
+            self.params["integrator_params"]
             if self.params["integrator_params"]
             else {
                 "integrator_type": "LangevinMiddle",
