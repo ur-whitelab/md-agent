@@ -10,7 +10,7 @@ class FileType(Enum):
     PROTEIN = 1
     SIMULATION = 2
     RECORD = 3
-    SOLVENT = 4
+    FIGURE = 4
     UNKNOWN = 5
 
 
@@ -29,7 +29,7 @@ class PathRegistry:
 
     def _init_path_registry(self):
         base_directory = "files"
-        subdirectories = ["pdb", "records", "simulations", "solvents"]
+        subdirectories = ["pdb", "records", "simulations", "figures"]
         existing_registry = self._load_existing_registry()
         file_names_in_registry = []
         if existing_registry != {}:
@@ -61,10 +61,10 @@ class PathRegistry:
                                     else ""
                                 )
                             )
-                        elif file_type == FileType.SOLVENT:
+                        elif file_type == FileType.FIGURE:
                             name_parts = file_name.split("_")
-                            solvent_name = name_parts[0]
-                            description = f"Solvent {solvent_name} pdb file. "
+                            figure_name = name_parts[0]
+                            description = f"Figure {figure_name} pdb file. "
                         else:
                             description = "Auto-Registered during registry init."
                         self.map_path(
@@ -93,8 +93,8 @@ class PathRegistry:
             return FileType.RECORD
         elif subdir == "simulations":
             return FileType.SIMULATION
-        elif subdir == "solvents":
-            return FileType.SOLVENT
+        elif subdir == "figures":
+            return FileType.FIGURE
         else:
             return FileType.UNKNOWN  # or some default value
 
@@ -239,7 +239,7 @@ class PathRegistry:
                 num += 1
                 rec_id = "rec" + f"{num}" + "_" + timestamp_digits
             return rec_id
-        if type == FileType.SOLVENT:
+        if type == FileType.FIGURE:
             return parts + "_" + timestamp_digits
 
     def write_file_name(self, type: FileType, **kwargs):
@@ -253,6 +253,7 @@ class PathRegistry:
         Sim_id = kwargs.get("Sim_id", None)
         modified = kwargs.get("modified", False)
         term = kwargs.get("term", "term")  # Default term if not provided
+        fig_analysis = kwargs.get("fig_analysis", None)
         file_name = ""
         if type == FileType.PROTEIN:
             file_name += f"{protein_name}_{description}_{time_stamp}.{file_format}"
@@ -272,6 +273,16 @@ class PathRegistry:
             file_name = (
                 f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
             )
+        if type == FileType.FIGURE:
+            if fig_analysis:
+                if Sim_id:
+                    file_name += (
+                        f"FIG_{fig_analysis}_{Sim_id}_{time_stamp}.{file_format}"
+                    )
+                else:
+                    file_name += f"FIG_{fig_analysis}_{time_stamp}.{file_format}"
+            else:
+                file_name += f"FIG_{protein_file_id}_{time_stamp}.{file_format}"
 
         if file_name == "":
             file_name += "ErrorDuringNaming_error.py"
