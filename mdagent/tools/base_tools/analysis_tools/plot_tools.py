@@ -76,7 +76,9 @@ class PlottingTools:
                         fig_analysis=fig_vs,
                         file_format="png",
                     )
-                    plot_id = self.path_registry.get_fileid(plot_name)
+                    plot_id = self.path_registry.get_fileid(
+                        file_name=plot_name, type=FileType.FIGURE
+                    )
                     if not os.path.exists("files/figures"):  # PR: Needed to avoid error
                         os.makedirs("files/figures")
                     plt.savefig(f"files/figures/{plot_name}")

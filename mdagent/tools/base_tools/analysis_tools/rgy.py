@@ -76,7 +76,9 @@ class RadiusofGyration:
         plot_name = self.path_registry.write_file_name(
             type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
         )
-        plot_id = self.path_registry.get_fileid(plot_name)
+        plot_id = self.path_registry.get_fileid(
+            file_name=plot_name, type=FileType.FIGURE
+        )
 
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
