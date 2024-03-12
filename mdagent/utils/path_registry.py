@@ -240,9 +240,15 @@ class PathRegistry:
                 rec_id = "rec" + f"{num}" + "_" + timestamp_digits
             return rec_id
         if type == FileType.FIGURE:
-            return parts + "_" + timestamp_digits
+            num = 0
+            fig_id = "fig" + f"{num}" + "_" + timestamp_digits
+            while fig_id in current_ids:
+                num += 1
+                fig_id = "fig" + f"{num}" + "_" + timestamp_digits
+            return fig_id
 
     def write_file_name(self, type: FileType, **kwargs):
+        # PR: I know this looks messy, it is, im adding as things keep coming :c
         time_stamp = self.get_timestamp()
         protein_name = kwargs.get("protein_name", None)
         description = kwargs.get("description", "No description provided")
@@ -251,6 +257,7 @@ class PathRegistry:
         type_of_sim = kwargs.get("type_of_sim", None)
         conditions = kwargs.get("conditions", None)
         Sim_id = kwargs.get("Sim_id", None)
+        Log_id = kwargs.get("Log_id", None)
         modified = kwargs.get("modified", False)
         term = kwargs.get("term", "term")  # Default term if not provided
         fig_analysis = kwargs.get("fig_analysis", None)
@@ -279,10 +286,14 @@ class PathRegistry:
                     file_name += (
                         f"FIG_{fig_analysis}_{Sim_id}_{time_stamp}.{file_format}"
                     )
+                elif Log_id:
+                    file_name += (
+                        f"FIG_{fig_analysis}_{Log_id}_{time_stamp}.{file_format}"
+                    )
                 else:
                     file_name += f"FIG_{fig_analysis}_{time_stamp}.{file_format}"
             else:
-                file_name += f"FIG_{protein_file_id}_{time_stamp}.{file_format}"
+                file_name += f"FIG_{time_stamp}.{file_format}"
 
         if file_name == "":
             file_name += "ErrorDuringNaming_error.py"

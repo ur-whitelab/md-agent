@@ -9,7 +9,7 @@ from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 # all things related to RMSD as 'standard deviation'
 # 1  RMSD between two protein conformations or trajectories (1D scalar value)
@@ -120,11 +120,24 @@ class RMSDFunctions:
             plt.title("Time-Dependent RMSD")
             plt.legend()
             plt.show()
-            plt.savefig(f"{self.filename}.png")
+            if not os.path.exists("files/figures"):  # PR: Needed to avoid error
+                os.makedirs("files/figures")
+            plot_name = self.path_registry.write_file_name(
+                type=FileType.FIGURE,
+                fig_analysis=self.filename,
+                file_format="png",
+            )
+            plot_id = self.path_registry.get_fileid(plot_name)
+            plt.savefig(f"files/figures/{plot_name}.png")
             # plt.close() # if you don't want to show the plot in notebooks
-            message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
+            # PRComment: Getting description only for the plot
+            plot_message = (
+                f"Plotted RMSD over time for{self.pdb_file}."
+                f" Saved with plot id {plot_id}.\n"
+            )
+            message += plot_message
             self.path_registry.map_path(
-                f"{self.filename}.png", f"{self.filename}.png", message
+                plot_id, f"files/figures/{plot_name}", plot_message
             )
         return message
 
