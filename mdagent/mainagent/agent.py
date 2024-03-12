@@ -1,3 +1,5 @@
+import json
+
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
@@ -8,8 +10,8 @@ from mdagent.subagents import SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
 from ..tools import get_tools, make_all_tools
-from .prompt import openaifxn_prompt, structured_prompt
-from .query_filter import create_filtered_query
+from .prompt import modular_analysis_prompt, openaifxn_prompt, structured_prompt
+from .query_filter import Parameters, Task_type, create_filtered_query
 
 load_dotenv()
 
@@ -77,10 +79,8 @@ class MDAgent:
         else:
             self.skip_subagents = True
 
-        if agent_type == "Structured":
-            self.prompt = structured_prompt
-        elif agent_type == "OpenAIFunctionsAgent":
-            self.prompt = openaifxn_prompt
+        # PR Comment: moved the initialization of the prompt (as it will now depend
+        # on the agent_type and user input) inside the run method
 
         self.subagents_settings = SubAgentSettings(
             path_registry=path_registry,
@@ -124,8 +124,100 @@ class MDAgent:
             handle_parsing_errors=True,
         )
 
+    # PR Comment: The run method is now responsible for initializing the prompt too!
+    # If you're reviewing this, strongly recommend to look at the query_filter.py file
+    # first
     def run(self, user_input, callbacks=None):
-        structured_query = create_filtered_query(user_input, model="gpt-3.5-turbo")
-        print(structured_query)
-        # self.agent=self._initialize_tools_and_agent(user_input)
-        # returnself.agent.run(self.prompt.format(input=user_input),callbacks=callbacks)
+        if self.agent_type == "Structured":
+            tries = 1  # PR Comment: trying 3 times (robustness) before defaulting
+            # to the un processed input with the previous prompt
+
+            while tries <= 3:
+                try:
+                    structured_query = create_filtered_query(
+                        user_input, model="gpt-3.5-turbo"
+                    )
+                    structured_query = json.loads(structured_query)
+                    parameters = Parameters.parse_parameters_string(
+                        structured_query["Parameters"]
+                    )
+                    _parameters = ""
+                    for key, value in parameters.items():
+                        if value == "None":
+                            continue
+                        else:
+                            _parameters += f"{key}: {value}, "
+                    _plan = ""
+                    if structured_query["UserProposedPlan"] == "[]":
+                        _plan += "None"
+                    else:
+                        if type(structured_query["UserProposedPlan"]) == str:
+                            for plan in structured_query["UserProposedPlan"].split(","):
+                                _plan += f"{plan},"
+                        elif type(structured_query["UserProposedPlan"]) == list:
+                            for plan in structured_query["UserProposedPlan"]:
+                                _plan += f"{plan},"
+                    _proteins = ""
+                    if structured_query["ProteinS"] == "['None']":
+                        _proteins += "None"
+                    elif structured_query["ProteinS"] == "[]":
+                        _proteins += "None"
+                    else:
+                        for protein in eval(structured_query["ProteinS"]):
+                            _proteins += f"{protein}, "
+                    _subtasks = ""
+                    if structured_query["Subtask_types"] == "['None']":
+                        _subtasks += "None"
+                    elif structured_query["Subtask_types"] == "[]":
+                        _subtasks += "None"
+                    elif structured_query["Subtask_types"] == ["None"]:
+                        _subtasks += "None"
+                    else:
+                        if type(structured_query["Subtask_types"]) == str:
+                            for subtask in Task_type.parse_task_type_string(
+                                structured_query["Subtask_types"]
+                            ):
+                                _subtasks += f"{subtask}, "
+                        elif type(structured_query["Subtask_types"]) == list:
+                            for subtask in structured_query["Subtask_types"]:
+                                _str = Task_type.parse_task_type_string(subtask)
+                                _subtasks += f"{_str}, "  # PR Comment: Two steps
+                                # to stay within char limit
+                    prompt = modular_analysis_prompt.format(
+                        Main_Task=structured_query["Main_Task"],
+                        Subtask_types=_subtasks,
+                        Proteins=_proteins,
+                        Parameters=_parameters,
+                        UserProposedPlan=_plan,
+                    )
+                    break
+                except ValueError as e:
+                    print(f"Failed to structure query, attempt {tries}/3. Retrying...")
+                    print(e, e.args)
+                    tries += 1
+                    continue
+                except Exception as e:
+                    print(f"Failed to structure query, attempt {tries}/3. Retrying...")
+                    print(e, e.args)
+                    tries += 1
+                    continue
+
+            # PR Comment: Assigning the prompt attribute
+            if tries > 3:
+                # PR Comment: In case the structured query fails after 3 attempts,
+                # the input will be used as we've been doing it.
+                print(
+                    "Failed to structure query after 3 attempts."
+                    "Input will be used as is."
+                )
+                self.prompt = structured_prompt.format(input=user_input)
+            else:
+                # PR Comment: If the structured query is successful, the prompt will
+                # be set
+                self.prompt = prompt
+        elif self.agent_type == "OpenAIFunctionsAgent":
+            self.prompt = openaifxn_prompt.format(input=user_input)
+
+        self.agent = self._initialize_tools_and_agent(user_input)
+        # PR Comment: The prompt attribute is already set
+        return self.agent.run(self.prompt, callbacks=callbacks)
