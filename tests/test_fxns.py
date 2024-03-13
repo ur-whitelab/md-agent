@@ -162,13 +162,6 @@ def test_getpdb(fibronectin, get_registry):
     assert name.endswith(".pdb")
 
 
-# @pytest.fixture
-# def path_registry():
-#    registry = PathRegistry()
-#    registry.get_timestamp = lambda: "20240109"
-#    return registry
-
-
 def test_write_to_file(get_registry):
     path_registry = get_registry("raw", False)
 
