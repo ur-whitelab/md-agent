@@ -368,7 +368,10 @@ class PackMolTool(BaseTool):
                         "must be equal to the number of species in the system. "
                         f"You have {number_of_species} "
                         f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                        "small molecules"
+                        "small molecules. You have included "
+                        f"{len(number_of_molecules)} values for "
+                        f"number_of_molecules and {len(instructions)}"
+                        "instructions."
                     )
                 }
             return {
@@ -376,7 +379,9 @@ class PackMolTool(BaseTool):
                     "The length of number_of_molecules must be equal to the "
                     f"number of species in the system. You have {number_of_species} "
                     f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                    "small molecules"
+                    f"small molecules. You have included "
+                    f"{len(number_of_molecules)} values "
+                    "for number_of_molecules"
                 )
             }
         elif not number_of_species == len(instructions):
@@ -385,7 +390,8 @@ class PackMolTool(BaseTool):
                     "The length of instructions must be equal to the "
                     f"number of species in the system. You have {number_of_species} "
                     f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                    "small molecules"
+                    "small molecules. You have included "
+                    f"{len(instructions)} instructions."
                 )
             }
         registry = PathRegistry.get_instance()
@@ -404,8 +410,9 @@ class PackMolTool(BaseTool):
                 if len(instruction[0].split(" ")) == 1:
                     return {
                         "error": (
-                            "The instruction 'center' must be accompanied by more "
-                            "instructions. Example 'fixed 0. 0. 0. 0. 0. 0.' "
+                            "The instruction 'center' must be "
+                            "accompanied by more instructions. "
+                            "Example 'fixed 0. 0. 0. 0. 0. 0.' "
                             "The complete instruction would be: 'center \n fixed 0. 0. "
                             "0. 0. 0. 0.' with a newline separating the two "
                             "instructions."
