@@ -293,7 +293,12 @@ class PathRegistry:
                 else:
                     file_name += f"FIG_{fig_analysis}_{time_stamp}.{file_format}"
             else:
-                file_name += f"FIG_{time_stamp}.{file_format}"
+                if Sim_id:
+                    file_name += f"FIG_{Sim_id}_{time_stamp}.{file_format}"
+                elif Log_id:
+                    file_name += f"FIG_{Log_id}_{time_stamp}.{file_format}"
+                else:
+                    file_name += f"FIG_{time_stamp}.{file_format}"
 
         if file_name == "":
             file_name += "ErrorDuringNaming_error.py"

@@ -97,6 +97,7 @@ def test_write_file_name_figure_1(path_registry, todays_date):
         protein_file_id="123",
         Sim_id="SIM456",
         time_stamp=todays_date,
+        file_format="png",
         irrelevant="irrelevant",
     )
     assert "FIG_SIM456_123_" in file_name
