@@ -91,6 +91,47 @@ def test_write_file_name_record(path_registry, todays_date):
     assert file_name.endswith(".dcd")
 
 
+def test_write_file_name_figure_1(path_registry, todays_date):
+    file_name = path_registry.write_file_name(
+        FileType.FIGURE,
+        protein_file_id="123",
+        Sim_id="SIM456",
+        time_stamp=todays_date,
+        irrelevant="irrelevant",
+    )
+    assert "FIG_SIM456_123_" in file_name
+    assert todays_date in file_name
+    assert file_name.endswith(".png")
+
+
+def test_write_file_name_figure_2(path_registry, todays_date):
+    file_name = path_registry.write_file_name(
+        FileType.FIGURE,
+        protein_file_id="X123",
+        Log_id="LOG_123456",
+        time_stamp=todays_date,
+        file_format="jpg",
+        irrelevant="irrelevant",
+    )
+    assert "FIG_LOG_123456_X123_" in file_name
+    assert todays_date in file_name
+    assert file_name.endswith(".jpg")
+
+
+def test_write_file_name_figure_3(path_registry, todays_date):
+    file_name = path_registry.write_file_name(
+        FileType.FIGURE,
+        protein_file_id="X123",
+        Log_id="LOG_123456",
+        fig_analysis="randomanalytic",
+        file_format="jpg",
+        irrelevant="irrelevant",
+    )
+    assert "FIG_randomanalytic_LOG_123456_" in file_name
+    assert todays_date in file_name
+    assert file_name.endswith(".jpg")
+
+
 def test_map_path(path_registry):
     mock_json_data = {
         "existing_name": {
