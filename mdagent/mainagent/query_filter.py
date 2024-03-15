@@ -9,7 +9,7 @@ from pydantic import BaseModel
 ################################################################
 
 """
-PR COMMENTS: The following is based on outlines documentations and examples
+The following is based on outlines documentations and examples
 https://outlines-dev.github.io/outlines/welcome/
 
 Classes and functions described in this file:
