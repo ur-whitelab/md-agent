@@ -660,7 +660,7 @@ class PDBFilesFixInp(BaseModel):
         ),
     )
 
-    @root_validator
+    @root_validator(skip_on_failure=True)
     def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
         if isinstance(values, str):
             print("values is a string", values)
