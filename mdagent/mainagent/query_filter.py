@@ -21,8 +21,9 @@ Classes and functions described in this file:
 - create_filtered_query
 
 
-query_filter: A function that takes a raw query and a list of examples (Example classes)
-and returns a "prompt for filtering" that include the examples (similar to
+query_filter: A function that takes a raw query and a list of
+examples (Example classes) and returns a "prompt for filtering"
+that include the examples (similar to
 Few-shot prompting).
 
 create_filtered_query: A function that uses (so far an openai model) and the
@@ -67,14 +68,14 @@ class Parameters:
     def __repr__(self) -> str:
         return (
             f"Parameters(Temperature = '{self.Temperature}',"
-            f"Pressure = '{self.Pressure}', "
+            f"Pressure = '{self.Pressure}',"
             f"Time = '{self.Time}',"
             f"ForceField = '{self.ForceField}',"
-            f"WaterModel = '{self.WaterModel}', "
+            f"WaterModel = '{self.WaterModel}',"
             f"SaltConcentration = '{self.SaltConcentration}',"
             f"pH = '{self.pH}',"
-            f"Solvate = '{self.Solvate}', "
-            f"Ensemble = '{self.Ensemble}', "
+            f"Solvate = '{self.Solvate}',"
+            f"Ensemble = '{self.Ensemble}',"
             f"Other_Parameters = '{self.Other_Parameters}'"
             ")"
         )
