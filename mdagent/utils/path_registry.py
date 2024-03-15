@@ -248,7 +248,6 @@ class PathRegistry:
             return fig_id
 
     def write_file_name(self, type: FileType, **kwargs):
-        # PR: I know this looks messy, it is, im adding as things keep coming :c
         time_stamp = self.get_timestamp()
         protein_name = kwargs.get("protein_name", None)
         description = kwargs.get("description", "No description provided")

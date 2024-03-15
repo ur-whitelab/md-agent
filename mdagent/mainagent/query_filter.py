@@ -105,9 +105,7 @@ class Parameters:
 class Task_type(str, Enum):
     question = "Question"
     preprocessing = "Preprocessing"
-    preparation = "Preparation"  # PR Comment: I've added this task type because
-    # during testing, the models tend to use it instead of
-    # Preprocessing. So I've added it to the enum
+    preparation = "Preparation"
     simulation = "Simulation"
     postnalysis = "Postanalysis"
 

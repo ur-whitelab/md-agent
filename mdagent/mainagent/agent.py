@@ -79,9 +79,6 @@ class MDAgent:
         else:
             self.skip_subagents = True
 
-        # PR Comment: moved the initialization of the prompt (as it will now depend
-        # on the agent_type and user input) inside the run method
-
         self.subagents_settings = SubAgentSettings(
             path_registry=path_registry,
             subagents_model=subagents_model,
@@ -124,13 +121,9 @@ class MDAgent:
             handle_parsing_errors=True,
         )
 
-    # PR Comment: The run method is now responsible for initializing the prompt too!
-    # If you're reviewing this, strongly recommend to look at the query_filter.py file
-    # first
     def run(self, user_input, callbacks=None):
         if self.agent_type == "Structured":
-            tries = 1  # PR Comment: trying 3 times (robustness) before defaulting
-            # to the un processed input with the previous prompt
+            tries = 1
 
             while tries <= 3:
                 try:
@@ -181,8 +174,7 @@ class MDAgent:
                         elif type(structured_query["Subtask_types"]) == list:
                             for subtask in structured_query["Subtask_types"]:
                                 _str = Task_type.parse_task_type_string(subtask)
-                                _subtasks += f"{_str}, "  # PR Comment: Two steps
-                                # to stay within char limit
+                                _subtasks += f"{_str}, "
                     prompt = modular_analysis_prompt.format(
                         Main_Task=structured_query["Main_Task"],
                         Subtask_types=_subtasks,
@@ -202,22 +194,16 @@ class MDAgent:
                     tries += 1
                     continue
 
-            # PR Comment: Assigning the prompt attribute
             if tries > 3:
-                # PR Comment: In case the structured query fails after 3 attempts,
-                # the input will be used as we've been doing it.
                 print(
                     "Failed to structure query after 3 attempts."
                     "Input will be used as is."
                 )
                 self.prompt = structured_prompt.format(input=user_input)
             else:
-                # PR Comment: If the structured query is successful, the prompt will
-                # be set
                 self.prompt = prompt
         elif self.agent_type == "OpenAIFunctionsAgent":
             self.prompt = openaifxn_prompt.format(input=user_input)
 
         self.agent = self._initialize_tools_and_agent(user_input)
-        # PR Comment: The prompt attribute is already set
         return self.agent.run(self.prompt, callbacks=callbacks)

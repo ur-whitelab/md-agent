@@ -30,9 +30,6 @@ structured_prompt = PromptTemplate(
         and you must explicitly state the actions you are taking.
         Question: {input} """,
 )
-# PR Comment: This prompt is used to structure the user's query into a
-# what i think, is a better format. It includes a brief explanation on what the
-# Sub tasks, parameters, etc are.
 modular_analysis_prompt = PromptTemplate(
     input_variables=[
         "Main_Task",
