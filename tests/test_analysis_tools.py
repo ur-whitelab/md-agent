@@ -86,8 +86,8 @@ def test_plot_data(plotting_tools):
         plotting_tools.headers = headers
         plotting_tools.matched_headers = matched_headers
         created_plots = plotting_tools.plot_data()
-        assert "time_vs_value1.png" in created_plots
-        assert "time_vs_value2.png" in created_plots
+        assert "FIG_timevsvalue1" in created_plots
+        assert "FIG_timevsvalue2" in created_plots
 
     # Test failure due to non-numeric data
     data_failure = [

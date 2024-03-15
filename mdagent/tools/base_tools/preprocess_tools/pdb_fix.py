@@ -660,54 +660,6 @@ class PDBFilesFixInp(BaseModel):
         ),
     )
 
-    # @model_validator(mode='before')
-    # def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
-    #    if isinstance(values, str):
-    #        print("values is a string", values)
-    #        raise ValidationError("Input must be a dictionary")
-
-
-#
-#    pdbfile = values.get("pdbfiles", "")
-#    occupancy = values.get("occupancy")
-#    tempFactor = values.get("tempFactor")
-#    ElemColum = values.get("ElemColum")
-#
-#    if occupancy is None and tempFactor is None and ElemColum is None:
-#        if pdbfile == "":
-#            return {"error": "No inputs given, failed use of tool."}
-#        else:
-#            return values
-#    else:
-#        if occupancy:
-#            if len(occupancy) != 2:
-#                return {
-#                    "error": (
-#                        "if you want to fix the occupancy"
-#                        "column argument must be a tuple of (bool, float)"
-#                    )
-#                }
-#            if not isinstance(occupancy[0], float):
-#                return {"error": "occupancy first arg must be a float"}
-#            if not isinstance(occupancy[1], bool):
-#                return {"error": "occupancy second arg must be a bool"}
-#        if tempFactor:
-#            if len(tempFactor != 2):
-#                return {
-#                    "error": (
-#                        "if you want to fix the tempFactor"
-#                        "column argument must be a tuple of (float, bool)"
-#                    )
-#                }
-#            if not isinstance(tempFactor[0], bool):
-#                return {"error": "occupancy first arg must be a float"}
-#            if not isinstance(tempFactor[1], float):
-#                return {"error": "tempFactor second arg must be a float"}
-#        if ElemColum is not None:
-#            if not isinstance(ElemColum[1], bool):
-#                return {"error": "ElemColum must be a bool"}
-#        return values
-
 
 class FixPDBFile(BaseTool):
     name: str = "PDBFileFixer"
