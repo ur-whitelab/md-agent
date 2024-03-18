@@ -6,12 +6,6 @@ from mdagent.tools.base_tools.simulation_tools.setup_and_run import (
     OpenMMSimulation,
     SetUpandRunFunctionInput,
 )
-from mdagent.utils import PathRegistry
-
-
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
 
 
 @pytest.fixture
@@ -50,7 +44,7 @@ def setup_run_input():
 def openmm_sim(get_registry, setup_run_input):
     return OpenMMSimulation(
         input_params=setup_run_input,
-        path_registry=get_registry,
+        path_registry=get_registry("raw", False),
         save=False,
         sim_id="test",
         pdb_id="test",

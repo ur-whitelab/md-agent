@@ -6,7 +6,6 @@ import pytest
 from mdagent.tools.base_tools import get_pdb
 from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
 from mdagent.tools.base_tools.preprocess_tools.pdb_get import MolPDB
-from mdagent.utils import PathRegistry
 
 
 @pytest.fixture
@@ -15,22 +14,17 @@ def fibronectin():
 
 
 @pytest.fixture
-def get_registry():
-    return PathRegistry()
-
-
-@pytest.fixture
 def molpdb(get_registry):
-    return MolPDB(get_registry)
+    return MolPDB(get_registry("raw", False))
 
 
 @pytest.fixture
 def packmol(get_registry):
-    return PackMolTool(get_registry)
+    return PackMolTool(get_registry("raw", False))
 
 
 def test_getpdb(fibronectin, get_registry):
-    name, _ = get_pdb(fibronectin, get_registry)
+    name, _ = get_pdb(fibronectin, get_registry("raw", False))
     assert name.endswith(".pdb")
 
 
