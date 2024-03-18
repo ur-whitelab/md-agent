@@ -61,12 +61,6 @@ def string_input():
     return create_input
 
 
-# @pytest.fixture(scope="module")
-# def get_tool_input(string_input,type):
-#    inp = string_input(type)
-#    return SetUpandRunFunctionInput(**json.loads(inp))
-
-
 def test_init_SetUpandRunFunction(get_registry):
     """Test the SetUpandRunFunction class initialization."""
     registry = get_registry("raw", False)
