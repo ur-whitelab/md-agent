@@ -1311,6 +1311,8 @@ class SetUpandRunFunction(BaseTool):
 
         # Convert to string in case it's not (e.g., int or float)
         cutoff = str(cutoff)
+        if cutoff[-1] == "s":
+            cutoff = cutoff[:-1]
 
         # Remove spaces and convert to lowercase for easier parsing
         cutoff = cutoff.replace(" ", "").lower()
@@ -1389,12 +1391,20 @@ class SetUpandRunFunction(BaseTool):
         if "*" in parameter_str:
             num_part, unit_part = parameter_str.split("*")
             num_value = float(num_part)
+        elif "poundforce/inch^2" in parameter_str:
+            num_value = float(parameter_str.replace("poundforce/inch^2", ""))
+            unit_part = "poundforce/inch^2"
         # Check for division symbol and split if necessary
         # e.g. "1/ps" or "1/ps^-1"
         elif "/" in parameter_str:
             num_part, unit_part = parameter_str.split("/")
             num_value = float(num_part)
             unit_part = "/" + unit_part
+        elif "^-1" in parameter_str:
+            parameter_str = parameter_str.replace("^-1", "")
+            match = re.match(r"^(\d+(?:\.\d+)?)([a-zA-Z]+)$", parameter_str)
+            num_value = float(match.group(1))
+            unit_part = "/" + match.group(2)
         else:
             # Attempt to convert directly to float; if it fails,
             # it must have a unit like "K", "ps", etc.
@@ -1410,8 +1420,8 @@ class SetUpandRunFunction(BaseTool):
                     error_msg += f"Invalid format for parameter: '{parameter_str}'."
 
         # Convert the unit part to an OpenMM unit
-        if unit_part in possible_units:
-            return num_value * possible_units[unit_part], error_msg
+        if unit_part.lower() in possible_units:
+            return num_value * possible_units[unit_part.lower()], error_msg
         else:
             # If the unit is not recognized, raise an error
             error_msg += f"""Unknown unit '{unit_part}' for parameter.
@@ -1419,7 +1429,6 @@ class SetUpandRunFunction(BaseTool):
 
             return parameter, error_msg
 
-    # Example method to use _parse_parameter for specific parameter
     def parse_temperature(self, temperature):
         possible_units = {
             "k": unit.kelvin,
@@ -1461,7 +1470,7 @@ class SetUpandRunFunction(BaseTool):
             "atmosphere": unit.atmospheres,
             "pascal": unit.pascals,
             "pascals": unit.pascals,
-            "Pa": unit.pascals,
+            "pa": unit.pascals,
             "poundforce/inch^2": unit.psi,
             "psi": unit.psi,
         }
