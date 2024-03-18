@@ -1,5 +1,6 @@
 import os
 import time
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -58,29 +59,40 @@ def test_small_molecule_pdb(molpdb):
     os.remove("files/pdb/water.pdb")  # Clean up
 
 
-def test_packmol_pdb_download_only(packmol):
-    packmol.path_registry._remove_path_from_json("water")
-    packmol.path_registry._remove_path_from_json("benzene")
-    small_molecules = ["water", "benzene"]
-    packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    assert os.path.exists("files/pdb/benzene.pdb")
-    os.remove("files/pdb/water.pdb")
-    os.remove("files/pdb/benzene.pdb")
+def test_packmol_sm_download_called(packmol):
+    packmol.path_registry.map_path("1A3N_144150", "files/pdb/1A3N_144150.pdb", "pdb")
+    with patch(
+        "mdagent.tools.base_tools.preprocess_tools.packing.PackMolTool._get_sm_pdbs",
+        new=MagicMock(),
+    ) as mock_get_sm_pdbs:
+        test_values = {
+            "pdbfiles_id": ["1A3N_144150"],
+            "small_molecules": ["water", "benzene"],
+            "number_of_molecules": [1, 10, 10],
+            "instructions": [
+                ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
+            ],
+        }
+
+        packmol._run(**test_values)
+
+        mock_get_sm_pdbs.assert_called_with(["water", "benzene"])
 
 
-def test_packmol_download_only_once(packmol):
-    packmol.path_registry._remove_path_from_json("water")
-    small_molecules = ["water"]
-    packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    water_time = os.path.getmtime("files/pdb/water.pdb")
-    time.sleep(5)
+@pytest.mark.parametrize("small_molecule", [["water"], ["benzene"]])
+def test_packmol_download_only(packmol, small_molecule):
+    packmol.path_registry._remove_path_from_json(f"{small_molecule[0]}")
 
-    # Call the function again with the same molecule
-    packmol._get_sm_pdbs(small_molecules)
-    water_time_after = os.path.getmtime("files/pdb/water.pdb")
+    packmol._get_sm_pdbs(small_molecule)
 
-    assert water_time == water_time_after
-    # Clean up
-    os.remove("files/pdb/water.pdb")
+    here = os.path.exists(f"files/pdb/{small_molecule[0]}.pdb")
+    os.path.exists(f"tests/files/pdb/{small_molecule[0]}.pdb")
+    assert here  # or maybe_here
+    time_before = os.path.getmtime(f"files/pdb/{small_molecule[0]}.pdb")
+    time.sleep(3)
+    packmol._get_sm_pdbs(small_molecule)
+    time_after = os.path.getmtime(f"files/pdb/{small_molecule[0]}.pdb")
+    assert time_before == time_after
+    os.remove(f"files/pdb/{small_molecule[0]}.pdb")

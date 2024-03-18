@@ -7,6 +7,23 @@ import pytest
 from mdagent.utils import PathRegistry
 
 
+@pytest.fixture
+def path_to_cif():
+    # Save original working directory
+    original_cwd = os.getcwd()
+
+    # Change current working directory to the directory where the CIF file is located
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(tests_dir)
+
+    # Yield the filename only
+    filename_only = "3pqr.cif"
+    yield filename_only
+
+    # Restore original working directory after the test is done
+    os.chdir(original_cwd)
+
+
 @pytest.fixture(scope="module")
 def raw_alanine_pdb_file(request):
     pdb_content = """

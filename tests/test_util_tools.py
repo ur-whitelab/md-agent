@@ -8,17 +8,12 @@ import pytest
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.tools.base_tools import Scholar2ResultLLM
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType
 
 
 @pytest.fixture
 def todays_date():
     return str(datetime.today().strftime("%Y%m%d"))
-
-
-@pytest.fixture
-def registry():
-    return PathRegistry()
 
 
 def test_write_to_file(get_registry):

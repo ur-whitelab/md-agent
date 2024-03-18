@@ -1,25 +1,6 @@
 import os
 
-import pytest
-
 from mdagent.tools.base_tools import CleaningToolFunction
-
-
-@pytest.fixture
-def path_to_cif():
-    # Save original working directory
-    original_cwd = os.getcwd()
-
-    # Change current working directory to the directory where the CIF file is located
-    tests_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(tests_dir)
-
-    # Yield the filename only
-    filename_only = "3pqr.cif"
-    yield filename_only
-
-    # Restore original working directory after the test is done
-    os.chdir(original_cwd)
 
 
 def test_cleaning_function(get_registry):
