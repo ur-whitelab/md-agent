@@ -23,11 +23,25 @@ class RMSDFunctions:
         self.path_registry = path_registry
         self.pdb_file = self.path_registry.get_mapped_path(pdb)
         self.trajectory = self.path_registry.get_mapped_path(traj)
-        self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
         self.ref_file = self.path_registry.get_mapped_path(ref)
         self.ref_trajectory = self.path_registry.get_mapped_path(ref_traj)
-        if self.ref_file:
+
+        # check for missing paths
+        if self.pdb_file == "Name not found in path registry.":
+            # set that file to None
+            self.pdb_file = None
+            self.pdb_name = None
+        else:
+            self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
+        if self.trajectory == "Name not found in path registry.":
+            self.trajectory = None
+        if self.ref_file == "Name not found in path registry." or self.ref_file is None:
+            self.ref_file = None
+            self.ref_name = None
+        else:
             self.ref_name = os.path.splitext(os.path.basename(self.ref_file))[0]
+        if self.ref_trajectory == "Name not found in path registry.":
+            self.ref_trajectory = None
 
     def calculate_rmsd(
         self,
@@ -119,8 +133,8 @@ class RMSDFunctions:
             plt.ylabel("RMSD ($\AA$)")
             plt.title("Time-Dependent RMSD")
             plt.legend()
-            plt.show()
             plt.savefig(f"{self.filename}.png")
+            # plt.show()
             # plt.close() # if you don't want to show the plot in notebooks
             message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
             self.path_registry.map_path(
@@ -165,7 +179,7 @@ class RMSDFunctions:
             plt.xlabel(x_label)
             plt.ylabel(y_label)
             plt.colorbar(label=r"RMSD ($\AA$)")
-            plt.show()
+            # plt.show()
             plt.savefig(f"{self.filename}.png")
             message += f"Plotted pairwise RMSD matrix. Saved to {self.filename}.png.\n"
             self.path_registry.map_path(
@@ -187,7 +201,6 @@ class RMSDFunctions:
         R = rms.RMSF(atoms).run()
         rmsf = R.results.rmsf
 
-        # Save to a text file
         rmsf_data = np.column_stack((atoms.resids, rmsf))
         np.savetxt(
             f"{self.filename}.csv",
@@ -209,8 +222,8 @@ class RMSDFunctions:
             plt.ylabel("RMSF ($\AA$)")
             plt.title("Root Mean Square Fluctuation")
             plt.legend()
-            plt.show()
             plt.savefig(f"{self.filename}.png")
+            # plt.show()
             message += f"Plotted RMSF. Saved to {self.filename}.png.\n"
             self.path_registry.map_path(
                 f"{self.filename}.png", f"{self.filename}.png", message
