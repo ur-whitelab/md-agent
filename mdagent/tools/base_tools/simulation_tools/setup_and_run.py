@@ -1399,6 +1399,11 @@ class SetUpandRunFunction(BaseTool):
             num_part, unit_part = parameter_str.split("/")
             num_value = float(num_part)
             unit_part = "/" + unit_part
+        elif "^-1" in parameter_str:
+            parameter_str = parameter_str.replace("^-1", "")
+            match = re.match(r'^(\d+(?:\.\d+)?)([a-zA-Z]+)$', parameter_str)
+            num_value = float(match.group(1))
+            unit_part = "/" + match.group(2)
         else:
             # Attempt to convert directly to float; if it fails,
             # it must have a unit like "K", "ps", etc.
