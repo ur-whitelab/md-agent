@@ -200,7 +200,11 @@ class RMSDFunctions:
         atoms = u.select_atoms(selection)
         R = rms.RMSF(atoms).run()
         rmsf = R.results.rmsf
+        self.process_rmsf_results(atoms, rmsf, selection=selection, plot=plot)
 
+    def process_rmsf_results(self, atoms, rmsf, selection="backbone", plot=True):
+        print(f"rmsf: {rmsf}")
+        print("atoms.resids: ", atoms.resids)
         rmsf_data = np.column_stack((atoms.resids, rmsf))
         np.savetxt(
             f"{self.filename}.csv",
