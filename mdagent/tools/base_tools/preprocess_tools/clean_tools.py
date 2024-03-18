@@ -341,14 +341,6 @@ class CleaningToolFunction(BaseTool):
                 file_format=end,
             )
             file_id = self.path_registry.get_fileid(file_name, FileType.PROTEIN)
-            #            if output_path:
-            #                file_name = output_path
-            #            else:
-            #                version = 1
-            #                while os.path.exists(f"tidy_{name}v{version}.{end}"):
-            #                    version += 1
-            #
-            #                file_name = f"tidy_{name}v{version}.{end}"
             directory = "files/pdb"
             if not os.path.exists(directory):
                 os.makedirs(directory)
