@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
@@ -5,6 +6,8 @@ from typing import List, Optional
 import outlines
 from outlines import generate, models
 from pydantic import BaseModel
+
+from .prompt import modular_analysis_prompt, openaifxn_prompt, structured_prompt
 
 ################################################################
 
@@ -252,3 +255,86 @@ def create_filtered_query(raw_query, model="gpt-3.5-turbo", examples=examples):
     filter_model = models.openai(model)
     generator = generate.text(filter_model)
     return generator(query_filter(raw_query, examples=examples))
+
+
+def make_prompt(user_input, agent_type, model="gpt-3.5-turbo"):
+    if agent_type == "Structured":
+        tries = 1
+
+        while tries <= 3:
+            try:
+                structured_query = create_filtered_query(user_input, model=model)
+                structured_query = json.loads(structured_query)
+                parameters = Parameters.parse_parameters_string(
+                    structured_query["Parameters"]
+                )
+                _parameters = ""
+                for key, value in parameters.items():
+                    if value == "None":
+                        continue
+                    else:
+                        _parameters += f"{key}: {value}, "
+                _plan = ""
+                if structured_query["UserProposedPlan"] == "[]":
+                    _plan += "None"
+                else:
+                    if type(structured_query["UserProposedPlan"]) == str:
+                        for plan in structured_query["UserProposedPlan"].split(","):
+                            _plan += f"{plan},"
+                    elif type(structured_query["UserProposedPlan"]) == list:
+                        for plan in structured_query["UserProposedPlan"]:
+                            _plan += f"{plan},"
+                _proteins = ""
+                if structured_query["ProteinS"] == "['None']":
+                    _proteins += "None"
+                elif structured_query["ProteinS"] == "[]":
+                    _proteins += "None"
+                else:
+                    for protein in eval(structured_query["ProteinS"]):
+                        _proteins += f"{protein}, "
+                _subtasks = ""
+                if structured_query["Subtask_types"] == "['None']":
+                    _subtasks += "None"
+                elif structured_query["Subtask_types"] == "[]":
+                    _subtasks += "None"
+                elif structured_query["Subtask_types"] == ["None"]:
+                    _subtasks += "None"
+                else:
+                    if type(structured_query["Subtask_types"]) == str:
+                        for subtask in Task_type.parse_task_type_string(
+                            structured_query["Subtask_types"]
+                        ):
+                            _subtasks += f"{subtask}, "
+                    elif type(structured_query["Subtask_types"]) == list:
+                        for subtask in structured_query["Subtask_types"]:
+                            _str = Task_type.parse_task_type_string(subtask)
+                            _subtasks += f"{_str}, "
+                prompt = modular_analysis_prompt.format(
+                    Main_Task=structured_query["Main_Task"],
+                    Subtask_types=_subtasks,
+                    Proteins=_proteins,
+                    Parameters=_parameters,
+                    UserProposedPlan=_plan,
+                )
+                break
+            except ValueError as e:
+                print(f"Failed to structure query, attempt {tries}/3. Retrying...")
+                print(e, e.args)
+                tries += 1
+                continue
+            except Exception as e:
+                print(f"Failed to structure query, attempt {tries}/3. Retrying...")
+                print(e, e.args)
+                tries += 1
+                continue
+
+        if tries > 3:
+            print(
+                "Failed to structure query after 3 attempts."
+                "Input will be used as is."
+            )
+            return structured_prompt.format(input=user_input)
+        else:
+            return prompt
+    elif agent_type == "OpenAIFunctionsAgent":
+        return openaifxn_prompt.format(input=user_input)
