@@ -5,22 +5,16 @@ import pytest
 
 from mdagent.tools.base_tools import VisFunctions
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
-from mdagent.utils import PathRegistry
-
-
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
 
 
 @pytest.fixture
 def plotting_tools(get_registry):
-    return PlottingTools(get_registry)
+    return PlottingTools(get_registry("raw", False))
 
 
 @pytest.fixture
 def vis_fxns(get_registry):
-    return VisFunctions(get_registry)
+    return VisFunctions(get_registry("raw", False))
 
 
 @pytest.fixture
