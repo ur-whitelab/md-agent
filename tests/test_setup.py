@@ -7,7 +7,7 @@ from mdagent.tools.base_tools.simulation_tools import SetUpandRunFunction
 
 @pytest.fixture
 def setupandrun(get_registry):
-    return SetUpandRunFunction(get_registry("raw", False))
+    return SetUpandRunFunction(path_registry=get_registry("raw", False))
 
 
 def test_parse_cutoff(setupandrun):

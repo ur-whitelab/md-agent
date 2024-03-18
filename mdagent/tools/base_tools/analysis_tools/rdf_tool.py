@@ -20,9 +20,7 @@ class RDFToolInput(BaseModel):
         description="Selections for RDF. Do not use for now. As "
         "it will only calculate RDF for protein and water molecules.",
     )
-    # atom_indices: Optional[List[int]] = Field(
-    #    None, description="Atom indices to load in the trajectory"
-    # )
+
     # TODO: Add pairs of atoms to calculate RDF within the tool
     ##pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
 
@@ -45,8 +43,9 @@ class RDFTool(BaseTool):
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
-    # def __init__(self, path_registry: PathRegistry):
-    #    self.path_registry = path_registry
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, input):
         try:
