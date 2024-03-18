@@ -2,7 +2,6 @@ from typing import List, Optional
 
 import requests
 import tiktoken
-from langchain.base_language import BaseLanguageModel
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
@@ -14,10 +13,18 @@ from mdagent.utils import _make_llm
 class GitToolFunctions:
     """Class to store the functions of the tool."""
 
-    """chain that can be used the tools for summarization or classification"""
-    llm_ = _make_llm(model="gpt-3.5-turbo-16k", temp=0.05, verbose=False)
+    def __init__(
+        self,
+        model: str = "gpt-3.5-turbo-16k",
+        temp: float = 0.05,
+        verbose: bool = False,
+    ):
+        self.model = model
+        self.temp = temp
+        self.verbose = verbose
+        self.llm = _make_llm(model=self.model, temp=self.temp, verbose=self.verbose)
 
-    def _prompt_summary(self, query: str, output: str, llm: BaseLanguageModel = llm_):
+    def _prompt_summary(self, query: str, output: str):
         prompt_template = """You're receiving the following github issues and comments.
                             They come after looking for issues
                             in the openmm repo for the query: {query}.
@@ -47,7 +54,7 @@ class GitToolFunctions:
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["query", "output"]
         )
-        llm_chain = LLMChain(prompt=prompt, llm=llm)
+        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
 
         return llm_chain.run({"query": query, "output": output})
 
