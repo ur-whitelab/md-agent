@@ -140,6 +140,7 @@ def test_pacmol_validate_input_instruction_fail(packmoltool, packmol_valid_input
 
 def test_packmol_validate_input_valid(get_registry):
     get_registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
+    get_registry.map_path("water", "water.pdb", "fake_water_test_file")
     packmoltool = PackMolTool(get_registry)
     example_input = {
         "pdbfiles_id": ["3pqr_test"],
@@ -154,6 +155,7 @@ def test_packmol_validate_input_valid(get_registry):
     assert input_valid == example_input
 
     example_input["small_molecules"] = ["water", "urea"]
+    get_registry.map_path("urea", "urea.pdb", "fake_urea_test_file")
     example_input["instructions"] = [
         example_input["instructions"][0],
         example_input["instructions"][0],
