@@ -5,22 +5,16 @@ import pytest
 
 from mdagent.tools.base_tools import VisFunctions
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
-from mdagent.utils import PathRegistry
-
-
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
 
 
 @pytest.fixture
 def plotting_tools(get_registry):
-    return PlottingTools(get_registry)
+    return PlottingTools(get_registry("raw", False))
 
 
 @pytest.fixture
 def vis_fxns(get_registry):
-    return VisFunctions(get_registry)
+    return VisFunctions(get_registry("raw", False))
 
 
 @pytest.fixture
@@ -86,8 +80,8 @@ def test_plot_data(plotting_tools):
         plotting_tools.headers = headers
         plotting_tools.matched_headers = matched_headers
         created_plots = plotting_tools.plot_data()
-        assert "time_vs_value1.png" in created_plots
-        assert "time_vs_value2.png" in created_plots
+        assert "FIG_timevsvalue1" in created_plots
+        assert "FIG_timevsvalue2" in created_plots
 
     # Test failure due to non-numeric data
     data_failure = [
