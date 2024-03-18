@@ -1401,7 +1401,7 @@ class SetUpandRunFunction(BaseTool):
             unit_part = "/" + unit_part
         elif "^-1" in parameter_str:
             parameter_str = parameter_str.replace("^-1", "")
-            match = re.match(r'^(\d+(?:\.\d+)?)([a-zA-Z]+)$', parameter_str)
+            match = re.match(r"^(\d+(?:\.\d+)?)([a-zA-Z]+)$", parameter_str)
             num_value = float(match.group(1))
             unit_part = "/" + match.group(2)
         else:
@@ -1419,8 +1419,8 @@ class SetUpandRunFunction(BaseTool):
                     error_msg += f"Invalid format for parameter: '{parameter_str}'."
 
         # Convert the unit part to an OpenMM unit
-        if unit_part in possible_units:
-            return num_value * possible_units[unit_part], error_msg
+        if unit_part.lower() in possible_units:
+            return num_value * possible_units[unit_part.lower()], error_msg
         else:
             # If the unit is not recognized, raise an error
             error_msg += f"""Unknown unit '{unit_part}' for parameter.
@@ -1469,7 +1469,7 @@ class SetUpandRunFunction(BaseTool):
             "atmosphere": unit.atmospheres,
             "pascal": unit.pascals,
             "pascals": unit.pascals,
-            "Pa": unit.pascals,
+            "pa": unit.pascals,
             "poundforce/inch^2": unit.psi,
             "psi": unit.psi,
         }
