@@ -1390,6 +1390,9 @@ class SetUpandRunFunction(BaseTool):
         if "*" in parameter_str:
             num_part, unit_part = parameter_str.split("*")
             num_value = float(num_part)
+        elif "poundforce/inch^2" in parameter_str:
+            num_value = float(parameter_str.replace("poundforce/inch^2", ""))
+            unit_part = "poundforce/inch^2"
         # Check for division symbol and split if necessary
         # e.g. "1/ps" or "1/ps^-1"
         elif "/" in parameter_str:
