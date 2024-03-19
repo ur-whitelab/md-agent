@@ -5,7 +5,7 @@ import mdtraj as md
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 class RDFToolInput(BaseModel):
@@ -84,7 +84,14 @@ class RDFTool(BaseTool):
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
+        self.path_registry.write_file_name(
+            type=FileType.FIGURE,
+            fig_analysis="rdf",
+            file_format="png",
+            file_id=trajectory_id,
+        )
         plt.savefig("rdf_{}.png".format(trajectory_id))
+
         plt.close()
         return (
             "RDF calculated successfully"
