@@ -36,6 +36,7 @@ setup(
         "outlines",
         "mdtraj",
         "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
+        "mdtraj",
     ],
     test_suite="tests",
     long_description=long_description,

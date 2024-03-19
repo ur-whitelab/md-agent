@@ -214,6 +214,8 @@ class PathRegistry:
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
         current_ids = self.list_path_names()
+        current_ids = self.list_path_names()
+        print(current_ids)
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp

@@ -761,10 +761,6 @@ class OpenMMSimulation:
                 f"Simulation trajectory for protein {self.pdb_id}"
                 f" and simulation {self.sim_id}"
             )
-            top_desc = (
-                f"Simulation topology for protein"
-                f"{self.pdb_id} and simulation {self.sim_id}"
-            )
             log_desc = (
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
@@ -792,10 +788,10 @@ class OpenMMSimulation:
                     separator="\t",
                 )
             )
+            # "Holders because otherwise the ids are the same
             self.registry_records = [
-                ("holder", f"files/records/{trajectory_name}", traj_desc),
-                ("holder", f"files/records/{log_name}", log_desc),
-                ("holder", f"files/records/{topology_name}", top_desc),
+                ["holder", f"files/records/{trajectory_name}", traj_desc],
+                ["holder", f"files/records/{log_name}", log_desc],
             ]
 
             # TODO add checkpoint too?
@@ -1284,11 +1280,10 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
-                    record_list = list(record)
-                    record_list[0] = self.path_registry.get_fileid(
-                        record_list[1].split("/")[-1], FileType.RECORD
+                    record[0] = self.path_registry.get_fileid(  # Step necessary here to
+                        record[1].split("/")[-1],  # avoid id being repeated
+                        FileType.RECORD,
                     )
-                    record = tuple(record_list)
                     self.path_registry.map_path(*record)
             return (
                 "Simulation done! \n Summary: \n"

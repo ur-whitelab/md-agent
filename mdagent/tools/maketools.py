@@ -24,6 +24,7 @@ from .base_tools import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
+    RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -92,6 +93,7 @@ def make_all_tools(
         PPIDistance(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
+        RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
     ]
     if subagent_settings is None:
