@@ -1,10 +1,10 @@
 import os
-from typing import Dict, Optional, Type
+from typing import Optional, Type
 
 from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -227,12 +227,6 @@ class CleaningToolFunctionInput(BaseModel):
     )
     add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
 
-    @root_validator
-    def validate_query(cls, values) -> Dict:
-        """Check that the input is valid."""
-
-        return values
-
 
 class CleaningToolFunction(BaseTool):
     name = "CleaningToolFunction"
@@ -261,7 +255,6 @@ class CleaningToolFunction(BaseTool):
             else:
                 input_args = input_args
             pdbfile_id = input_args.get("pdb_id", None)
-            pdbfile_id = self.path_registry.get_mapped_path(pdbfile_id)
             if pdbfile_id is None:
                 return """No file was provided.
                 The input has to be a dictionary with the key 'pdb_id'"""
@@ -289,6 +282,7 @@ class CleaningToolFunction(BaseTool):
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
                 return "File not found in path registry. "
+            print(f"file path: {pdbfile_path}")
             fixer = PDBFixer(filename=pdbfile_path)
             try:
                 fixer.findMissingResidues()
@@ -341,14 +335,6 @@ class CleaningToolFunction(BaseTool):
                 file_format=end,
             )
             file_id = self.path_registry.get_fileid(file_name, FileType.PROTEIN)
-            #            if output_path:
-            #                file_name = output_path
-            #            else:
-            #                version = 1
-            #                while os.path.exists(f"tidy_{name}v{version}.{end}"):
-            #                    version += 1
-            #
-            #                file_name = f"tidy_{name}v{version}.{end}"
             directory = "files/pdb"
             if not os.path.exists(directory):
                 os.makedirs(directory)

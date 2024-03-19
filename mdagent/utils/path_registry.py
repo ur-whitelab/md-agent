@@ -10,7 +10,7 @@ class FileType(Enum):
     PROTEIN = 1
     SIMULATION = 2
     RECORD = 3
-    SOLVENT = 4
+    FIGURE = 4
     UNKNOWN = 5
 
 
@@ -29,7 +29,7 @@ class PathRegistry:
 
     def _init_path_registry(self):
         base_directory = "files"
-        subdirectories = ["pdb", "records", "simulations", "solvents"]
+        subdirectories = ["pdb", "records", "simulations", "figures"]
         existing_registry = self._load_existing_registry()
         file_names_in_registry = []
         if existing_registry != {}:
@@ -61,10 +61,10 @@ class PathRegistry:
                                     else ""
                                 )
                             )
-                        elif file_type == FileType.SOLVENT:
+                        elif file_type == FileType.FIGURE:
                             name_parts = file_name.split("_")
-                            solvent_name = name_parts[0]
-                            description = f"Solvent {solvent_name} pdb file. "
+                            figure_name = name_parts[0]
+                            description = f"Figure {figure_name} pdb file. "
                         else:
                             description = "Auto-Registered during registry init."
                         self.map_path(
@@ -93,8 +93,8 @@ class PathRegistry:
             return FileType.RECORD
         elif subdir == "simulations":
             return FileType.SIMULATION
-        elif subdir == "solvents":
-            return FileType.SOLVENT
+        elif subdir == "figures":
+            return FileType.FIGURE
         else:
             return FileType.UNKNOWN  # or some default value
 
@@ -214,6 +214,8 @@ class PathRegistry:
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
         current_ids = self.list_path_names()
+        current_ids = self.list_path_names()
+        print(current_ids)
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp
@@ -239,10 +241,16 @@ class PathRegistry:
                 num += 1
                 rec_id = "rec" + f"{num}" + "_" + timestamp_digits
             return rec_id
-        if type == FileType.SOLVENT:
-            return parts + "_" + timestamp_digits
+        if type == FileType.FIGURE:
+            num = 0
+            fig_id = "fig" + f"{num}" + "_" + timestamp_digits
+            while fig_id in current_ids:
+                num += 1
+                fig_id = "fig" + f"{num}" + "_" + timestamp_digits
+            return fig_id
 
     def write_file_name(self, type: FileType, **kwargs):
+        # PR: I know this looks messy, it is, im adding as things keep coming :c
         time_stamp = self.get_timestamp()
         protein_name = kwargs.get("protein_name", None)
         description = kwargs.get("description", "No description provided")
@@ -251,8 +259,10 @@ class PathRegistry:
         type_of_sim = kwargs.get("type_of_sim", None)
         conditions = kwargs.get("conditions", None)
         Sim_id = kwargs.get("Sim_id", None)
+        Log_id = kwargs.get("Log_id", None)
         modified = kwargs.get("modified", False)
         term = kwargs.get("term", "term")  # Default term if not provided
+        fig_analysis = kwargs.get("fig_analysis", None)
         file_name = ""
         if type == FileType.PROTEIN:
             file_name += f"{protein_name}_{description}_{time_stamp}.{file_format}"
@@ -272,6 +282,25 @@ class PathRegistry:
             file_name = (
                 f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
             )
+        if type == FileType.FIGURE:
+            if fig_analysis:
+                if Sim_id:
+                    file_name += (
+                        f"FIG_{fig_analysis}_{Sim_id}_{time_stamp}.{file_format}"
+                    )
+                elif Log_id:
+                    file_name += (
+                        f"FIG_{fig_analysis}_{Log_id}_{time_stamp}.{file_format}"
+                    )
+                else:
+                    file_name += f"FIG_{fig_analysis}_{time_stamp}.{file_format}"
+            else:
+                if Sim_id:
+                    file_name += f"FIG_{Sim_id}_{time_stamp}.{file_format}"
+                elif Log_id:
+                    file_name += f"FIG_{Log_id}_{time_stamp}.{file_format}"
+                else:
+                    file_name += f"FIG_{time_stamp}.{file_format}"
 
         if file_name == "":
             file_name += "ErrorDuringNaming_error.py"

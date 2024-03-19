@@ -8,27 +8,21 @@ from mdagent.subagents.agents.action import Action
 from mdagent.subagents.agents.skill import SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
 from mdagent.subagents.subagent_setup import SubAgentInitializer, SubAgentSettings
-from mdagent.utils import PathRegistry
 
 
 @pytest.fixture
-def path_registry():
-    return PathRegistry()
+def skill_manager(get_registry):
+    return SkillManager(path_registry=get_registry("raw", False))
 
 
 @pytest.fixture
-def skill_manager(path_registry):
-    return SkillManager(path_registry=path_registry)
+def action(get_registry):
+    return Action(get_registry("raw", False))
 
 
 @pytest.fixture
-def action(path_registry):
-    return Action(path_registry)
-
-
-@pytest.fixture
-def iterator(path_registry):
-    settings = SubAgentSettings(path_registry=path_registry)
+def iterator(get_registry):
+    settings = SubAgentSettings(path_registry=get_registry("raw", False))
     return Iterator(subagent_settings=settings)
 
 
