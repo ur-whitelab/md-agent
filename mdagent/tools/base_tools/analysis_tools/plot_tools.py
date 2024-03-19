@@ -69,7 +69,6 @@ class PlottingTools:
                     plt.ylabel(header)
                     plt.title(f"{self.file_id}_{xlab} vs {header_lab}")
                     fig_vs = f"{xlab}vs{header_lab}"
-                    # PR: Mapping involves writing file name -> get file id
                     plot_name = self.path_registry.write_file_name(
                         type=FileType.FIGURE,
                         Log_id=self.file_id,
@@ -79,7 +78,7 @@ class PlottingTools:
                     plot_id = self.path_registry.get_fileid(
                         file_name=plot_name, type=FileType.FIGURE
                     )
-                    if not os.path.exists("files/figures"):  # PR: Needed to avoid error
+                    if not os.path.exists("files/figures"):
                         os.makedirs("files/figures")
                     plt.savefig(f"files/figures/{plot_name}")
                     self.path_registry.map_path(

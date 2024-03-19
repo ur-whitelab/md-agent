@@ -1316,7 +1316,8 @@ class SetUpandRunFunction(BaseTool):
 
         # Remove spaces and convert to lowercase for easier parsing
         cutoff = cutoff.replace(" ", "").lower()
-
+        if cutoff.endswith("s"):
+            cutoff = cutoff[:-1]
         # Check for multiplication symbol and split if necessary
         if "*" in cutoff:
             # Split on the '*' and extract the numerical part and the unit part
