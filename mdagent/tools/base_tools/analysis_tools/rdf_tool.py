@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
@@ -84,20 +85,28 @@ class RDFTool(BaseTool):
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
-        self.path_registry.write_file_name(
+        plot_name = self.path_registry.write_file_name(
             type=FileType.FIGURE,
             fig_analysis="rdf",
             file_format="png",
-            file_id=trajectory_id,
+            Log_id=trajectory_id,
         )
-        plt.savefig("rdf_{}.png".format(trajectory_id))
+        fig_id = self.path_registry.get_fileid(plot_name, type=FileType.FIGURE)
 
+        if not os.path.exists("files/figures"):
+            os.makedirs("files/figures")
+
+        plt.savefig(f"files/figures/{plot_name}")
+        self.path_registry.map_path(
+            fig_id,
+            plot_name,
+            description=f"RDF plot for the trajectory file with id: {trajectory_id}",
+        )
         plt.close()
         return (
             "RDF calculated successfully"
             "rdf.png has been saved in the current directory"
         )
-        # path_to_top = self.path_registry.get_mapped_path(topology_id)
 
     def _arun(self, input):
         pass
