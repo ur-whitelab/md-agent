@@ -20,12 +20,7 @@ class RDFToolInput(BaseModel):
         None, description="Atom indices to load in the trajectory"
     )
     # TODO: Add pairs of atoms to calculate RDF within the tool
-    ##pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
-
-
-class RDFutils:
-    # get the expression for select pairs
-    pass
+    # pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
 
 
 class RDFTool(BaseTool):
@@ -36,6 +31,10 @@ class RDFTool(BaseTool):
     )
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        super().__init__()
+        self.path_registry = path_registry
 
     def _run(self, **input):
         try:
