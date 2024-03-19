@@ -2,20 +2,17 @@ import pytest
 from openmm import unit
 from openmm.app import PME, NoCutoff
 
-from mdagent.tools.base_tools.simulation_tools.setup_and_run import (
-    OpenMMSimulation,
-    SetUpandRunFunctionInput,
-)
+from mdagent.tools.base_tools.simulation_tools.setup_and_run import OpenMMSimulation
 
 
 @pytest.fixture
 def setup_run_input():
     # random values
-    return SetUpandRunFunctionInput(
-        pdb_id="1ABC",
-        forcefield_files=["amber14-all.xml", "amber14/tip3p.xml"],
-        save=True,
-        system_params={
+    return {
+        "pdb_id": "1ABC",
+        "forcefield_files": ["amber14-all.xml", "amber14/tip3p.xml"],
+        "save": True,
+        "system_params": {
             "nonbondedMethod": "PME",
             "nonbondedCutoff": "1.0 * nanometers",
             "ewaldErrorTolerance": 0.0005,
@@ -24,20 +21,20 @@ def setup_run_input():
             "constraintTolerance": 0.00001,
             "solvate": True,
         },
-        integrator_params={
+        "integrator_params": {
             "integrator_type": "LangevinMiddle",
             "Temperature": "300 * kelvin",
             "Friction": "1.0 / picoseconds",
             "Timestep": "0.002 * picoseconds",
             "Pressure": "1.0 * bar",
         },
-        simulation_params={
+        "simulation_params": {
             "Ensemble": "NVT",
             "Number of Steps": 10000,
             "record_interval_steps": 100,
             "record_params": ["step", "potentialEnergy", "temperature", "density"],
         },
-    )
+    }
 
 
 @pytest.fixture
