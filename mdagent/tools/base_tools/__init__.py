@@ -1,5 +1,6 @@
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
+from .analysis_tools.rdf_tool import RDFTool
 from .analysis_tools.rgy import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
@@ -52,4 +53,5 @@ __all__ = [
     "CleaningToolFunction",
     "SetUpandRunFunction",
     "ModifyBaseSimulationScriptTool",
+    "RDFTool",
 ]

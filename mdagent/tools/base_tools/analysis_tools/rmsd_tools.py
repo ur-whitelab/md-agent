@@ -131,8 +131,6 @@ class RMSDFunctions:
                 file_name=plot_name, type=FileType.FIGURE
             )
             plt.savefig(f"files/figures/{plot_name}.png")
-            # plt.close() # if you don't want to show the plot in notebooks
-            # PRComment: Getting description only for the plot
             plot_message = (
                 f"Plotted RMSD over time for{self.pdb_file}."
                 f" Saved with plot id {plot_id}.\n"
