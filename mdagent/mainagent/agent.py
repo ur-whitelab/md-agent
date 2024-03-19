@@ -8,7 +8,7 @@ from mdagent.subagents import SubAgentSettings
 from mdagent.utils import PathRegistry, _make_llm
 
 from ..tools import get_tools, make_all_tools
-from .prompt import openaifxn_prompt, structured_prompt
+from .query_filter import make_prompt
 
 load_dotenv()
 
@@ -76,11 +76,6 @@ class MDAgent:
         else:
             self.skip_subagents = True
 
-        if agent_type == "Structured":
-            self.prompt = structured_prompt
-        elif agent_type == "OpenAIFunctionsAgent":
-            self.prompt = openaifxn_prompt
-
         self.subagents_settings = SubAgentSettings(
             path_registry=path_registry,
             subagents_model=subagents_model,
@@ -124,5 +119,6 @@ class MDAgent:
         )
 
     def run(self, user_input, callbacks=None):
+        self.prompt = make_prompt(user_input, self.agent_type, model="gpt-3.5-turbo")
         self.agent = self._initialize_tools_and_agent(user_input)
-        return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
+        return self.agent.run(self.prompt, callbacks=callbacks)

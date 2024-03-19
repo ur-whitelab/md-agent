@@ -1,11 +1,12 @@
 import csv
+import os
 import re
 from typing import Optional
 
 import matplotlib.pyplot as plt
 from langchain.tools import BaseTool
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 class PlottingTools:
@@ -61,18 +62,28 @@ class PlottingTools:
                     header_lab = (
                         header.split("(")[0].strip() if "(" in header else header
                     ).lower()
-                    plot_name = f"{self.file_id}_{xlab}_vs_{header_lab}.png"
-
                     # Generate and save the plot
                     plt.figure()
                     plt.plot(x, y)
                     plt.xlabel(xlab)
                     plt.ylabel(header)
                     plt.title(f"{self.file_id}_{xlab} vs {header_lab}")
-                    plt.savefig(plot_name)
+                    fig_vs = f"{xlab}vs{header_lab}"
+                    plot_name = self.path_registry.write_file_name(
+                        type=FileType.FIGURE,
+                        Log_id=self.file_id,
+                        fig_analysis=fig_vs,
+                        file_format="png",
+                    )
+                    plot_id = self.path_registry.get_fileid(
+                        file_name=plot_name, type=FileType.FIGURE
+                    )
+                    if not os.path.exists("files/figures"):
+                        os.makedirs("files/figures")
+                    plt.savefig(f"files/figures/{plot_name}")
                     self.path_registry.map_path(
-                        plot_name,
-                        plot_name,
+                        plot_id,
+                        f"files/figures/{plot_name}",
                         (
                             f"Post Simulation Figure for {self.file_id}"
                             f" - {header_lab} vs {xlab}"

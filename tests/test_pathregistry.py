@@ -5,10 +5,6 @@ import pytest
 
 @pytest.mark.parametrize("with_files, raw_or_clean", [("raw", False), ("raw", True)])
 def test_registry_init(get_registry, with_files, raw_or_clean):
-    # make the test directory the cwd
-    # print(os.curdir)
-    # if os.curdir.split("/")[-1] != "tests":
-    #    os.chdir("tests")
     registry_without_files = get_registry(raw_or_clean, with_files)
     print(with_files, raw_or_clean)
     if not with_files:

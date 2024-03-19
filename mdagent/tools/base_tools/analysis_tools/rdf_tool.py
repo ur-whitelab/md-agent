@@ -15,39 +15,28 @@ class RDFToolInput(BaseModel):
 
     topology_fileid: Optional[str] = Field(None, description="Topology file")
     stride: Optional[int] = Field(None, description="Stride for reading trajectory")
-    selections: Optional[List[List[str]]] = Field(
-        [["protein", "water"]],
-        description="Selections for RDF. Do not use for now. As "
-        "it will only calculate RDF for protein and water molecules.",
+    atom_indices: Optional[List[int]] = Field(
+        None, description="Atom indices to load in the trajectory"
     )
-
     # TODO: Add pairs of atoms to calculate RDF within the tool
     ##pairs: Optional[str] = Field(None, description="Pairs of atoms to calculate RDF ")
+
+
+class RDFutils:
+    # get the expression for select pairs
+    pass
 
 
 class RDFTool(BaseTool):
     name = "RDFTool"
     description = (
         "Calculate the radial distribution function (RDF) of a trajectory "
-        "of a protein with respect to water molecules. \n\nInput Example 1: \n"
-        "trajectory_fileid: 'rec0_142404' \n"
-        "topology_fileid: 'top_sim0_142401' \n"
-        "stride: 2 \n"
-        "selections: None\n"
-        "Input Example 2: \n"
-        "trajectory_fileid: 'rec0_142404' \n"
-        "topology_fileid: 'top_sim0_142401' \n"
-        "\n\n"
-        "As you can see, the stride and selections are optional. "
+        "of a protein with respect to water molecules."
     )
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: PathRegistry):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, input):
+    def _run(self, **input):
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
@@ -57,25 +46,24 @@ class RDFTool(BaseTool):
             elif "Invalid file extension" in str(e):
                 print("File Extension Not Supported in RDF tool: ", str(e))
                 return ("File Extension Not Supported", str(e))
-            elif "Missing Inputs" in str(e):
-                print("Missing Inputs in RDF tool: ", str(e))
-                return ("Missing Inputs", str(e))
             else:
                 raise ValueError(f"Error during inputs in RDF tool {e}")
 
         trajectory_id = inputs["trajectory_fileid"]
         topology_id = inputs["topology_fileid"]
         stride = inputs["stride"]
-        inputs["selections"]  # not used at the moment
+        atom_indices = inputs["atom_indices"]
 
         path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
         ending = path_to_traj.split(".")[-1]
         if ending in ["dcd", "xtc", "xyz"]:
             path_to_top = self.path_registry.get_mapped_path(topology_id)
-            traj = md.load(path_to_traj, top=path_to_top, stride=stride)
+            traj = md.load(
+                path_to_traj, top=path_to_top, stride=stride, atom_indices=atom_indices
+            )
         else:
             # hdf5, h5, pdb already checked in validation of inputs
-            traj = md.load(path_to_traj, stride=stride)
+            traj = md.load(path_to_traj, stride=stride, atom_indices=atom_indices)
         try:
             r, gr = md.compute_rdf(
                 traj,
@@ -96,17 +84,11 @@ class RDFTool(BaseTool):
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
-        num = 0
-        image_name = "rdf{}_{}.png".format(num, trajectory_id)
-        while image_name in self.path_registry.list_path_names():
-            num += 1
-            image_name = "rdf_{}_{}.png".format(trajectory_id, num)
-
-        plt.savefig(image_name)
+        plt.savefig("rdf_{}.png".format(trajectory_id))
         plt.close()
         return (
             "RDF calculated successfully"
-            f"{image_name} has been saved in the current directory"
+            "rdf.png has been saved in the current directory"
         )
         # path_to_top = self.path_registry.get_mapped_path(topology_id)
 
@@ -114,23 +96,20 @@ class RDFTool(BaseTool):
         pass
 
     def validate_input(self, input):
-        if "action_input" in input:
-            input = input["action_input"]
-
         trajectory_id = input.get("trajectory_fileid", None)
 
         topology_id = input.get("topology_fileid", None)
 
         stride = input.get("stride", None)
 
-        selections = input.get("selections", [])
+        atom_indices = input.get("atom_indices", None)
 
         if not trajectory_id:
-            raise ValueError("Missing Inputs: Trajectory file ID is required")
+            raise ValueError("Incorrect Inputs: Trajectory file ID is required")
 
         # check if trajectory id is valid
         fileids = self.path_registry.list_path_names()
-        print("fileids: ", fileids)
+
         if trajectory_id not in fileids:
             raise ValueError("Trajectory File ID not in path registry")
 
@@ -141,7 +120,7 @@ class RDFTool(BaseTool):
             # requires topology
             if not topology_id:
                 raise ValueError(
-                    "Missing Inputs: "
+                    "Incorrect Inputs: "
                     "Topology file is required for trajectory "
                     "file with extension {}".format(ending)
                 )
@@ -180,21 +159,19 @@ class RDFTool(BaseTool):
                         "Incorrect Inputs: " "Stride must be a positive integer"
                     )
 
-        if selections:
+        if atom_indices:
             try:
-                selections = list(
-                    map(str, selection.split(",")) for selection in selections
-                )
+                atom_indices = list(map(int, atom_indices.split(",")))
             except ValueError:
                 raise ValueError(
-                    "Incorrect Inputs: Selections must be a list of comma "
-                    "separated lists of  or None for all atoms"
+                    "Incorrect Inputs: Atom indices must be a comma "
+                    "separated list of integers or None for all atoms"
                 )
         inputs = {
             "trajectory_fileid": trajectory_id,
             "topology_fileid": topology_id,
             "stride": stride,
-            "selections": selections,
+            "atom_indices": atom_indices,
         }
 
         return inputs
