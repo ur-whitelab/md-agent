@@ -17,23 +17,6 @@ def vis_fxns(get_registry):
     return VisFunctions(get_registry("raw", False))
 
 
-@pytest.fixture
-def path_to_cif():
-    # Save original working directory
-    original_cwd = os.getcwd()
-
-    # Change current working directory to the directory where the CIF file is located
-    tests_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(tests_dir)
-
-    # Yield the filename only
-    filename_only = "3pqr.cif"
-    yield filename_only
-
-    # Restore original working directory after the test is done
-    os.chdir(original_cwd)
-
-
 def test_process_csv(plotting_tools):
     mock_csv_content = "Time,Value1,Value2\n1,10,20\n2,15,25"
     mock_reader = MagicMock()

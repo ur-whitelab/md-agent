@@ -3,17 +3,11 @@ from openmm import unit
 from openmm.app import PME, HBonds
 
 from mdagent.tools.base_tools.simulation_tools import SetUpandRunFunction
-from mdagent.utils import PathRegistry
-
-
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
 
 
 @pytest.fixture
 def setupandrun(get_registry):
-    return SetUpandRunFunction(get_registry)
+    return SetUpandRunFunction(path_registry=get_registry("raw", False))
 
 
 @pytest.mark.parametrize(
