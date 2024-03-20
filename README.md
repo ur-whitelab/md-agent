@@ -7,8 +7,8 @@ To use the OpenMM features in the agent, please set up a conda environment, foll
 - Create conda environment: `conda env create -n mdagent -f environment.yaml`
 - Activate your environment: `conda activate mdagent`
 
-If you already have a conda environment, you can install, pdbfixer, a necessary dependency with the following steps.
-- Install the necessary conda dependencies: `conda install -c conda-forge pdbfixer`
+If you already have a conda environment, you can install dependencies with the following step.
+- Install the necessary conda dependencies: `conda install -c conda-forge openmm pdbfixer mdtraj`
 
 
 ## Installation

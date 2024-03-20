@@ -1,6 +1,5 @@
 name: my-environment
 channels:
-  #- omnia # outdated - we don't use omnia anymore
   - conda-forge
 dependencies:
   - openmm >= 7.6
