@@ -76,8 +76,6 @@ def make_all_tools(
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
-    # get path registry
-
     # add base tools
     base_tools = [
         Scholar2ResultLLM(llm=llm),

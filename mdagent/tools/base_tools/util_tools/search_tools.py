@@ -42,7 +42,7 @@ def scholar2result_llm(llm, query, k=5, max_sources=2):
     papers = paper_search(llm, query)
     if len(papers) == 0:
         return "Not enough papers found"
-    docs = paperqa.Docs(llm=llm)
+    docs = paperqa.Docs(llm=llm.model_name)
     not_loaded = 0
     for path, data in papers.items():
         try:
@@ -50,7 +50,10 @@ def scholar2result_llm(llm, query, k=5, max_sources=2):
         except (ValueError, FileNotFoundError, PdfReadError):
             not_loaded += 1
 
-    print(f"\nFound {len(papers.items())} papers but couldn't load {not_loaded}")
+    print(
+        f"\nFound {len(papers)} papers"
+        + (f" but couldn't load {not_loaded}" if not_loaded > 0 else "")
+    )
     answer = docs.query(query, k=k, max_sources=max_sources).formatted_answer
     return answer
 
