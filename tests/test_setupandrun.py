@@ -6,7 +6,6 @@ import pytest
 from mdagent.tools.base_tools.simulation_tools.setup_and_run import (
     OpenMMSimulation,
     SetUpandRunFunction,
-    SetUpandRunFunctionInput,
 )
 
 
@@ -86,10 +85,7 @@ def test_openmmsimulation_init(get_registry, string_input, raw, clean):
 
     registry = get_registry(clean, True)
     tool_input = json.loads(string_input(clean))
-    inputs = SetUpandRunFunctionInput(
-        **SetUpandRunFunction(path_registry=registry).check_system_params(tool_input)
-    )
-    print(tool_input)
+    inputs = SetUpandRunFunction(path_registry=registry).check_system_params(tool_input)
     registry.get_mapped_path(tool_input["pdb_id"])
     Simulation = OpenMMSimulation(
         input_params=inputs,

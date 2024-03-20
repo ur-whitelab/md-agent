@@ -23,10 +23,6 @@ jobs:
         environment-file: environment.yaml
         python-version: ${{ matrix.python-version }}
         auto-activate-base: true
-    - name: Install pdbfixer with conda
-      shell: bash -l {0}
-      run: |
-        conda install -c conda-forge pdbfixer
     - name: Install dependencies
       shell: bash -l {0}
       run: |
