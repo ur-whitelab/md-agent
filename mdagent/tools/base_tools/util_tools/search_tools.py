@@ -50,7 +50,6 @@ def scholar2result_llm(llm, query, k=5, max_sources=2):
         except (ValueError, FileNotFoundError, PdfReadError):
             not_loaded += 1
 
-    # print(f"\nFound {len(papers.items())} papers but couldn't load {not_loaded}")
     print(
         f"\nFound {len(papers)} papers"
         + (f" but couldn't load {not_loaded}" if not_loaded > 0 else "")
