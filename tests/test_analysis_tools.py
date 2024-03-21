@@ -119,6 +119,7 @@ def rmsd_functions(get_registry):
     rmsd_functions.pdb_file = pdb_file
     return rmsd_functions
 
+
 pdb_string = """
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
 ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C
@@ -139,8 +140,8 @@ u = mda.Universe(pdb_file_like, format="PDB")
 
 @pytest.fixture
 def mock_mda_universe(get_registry):
-    #reg = get_registry("raw", True)
-    #pdb_freg.get_mapped_path("ALA_123456")
+    # reg = get_registry("raw", True)
+    # pdb_freg.get_mapped_path("ALA_123456")
     with patch(
         "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.Universe", return_value=u
     ) as mock_universe:
@@ -260,9 +261,9 @@ def test_compute_rmsd(mock_mda_universe, mock_rmsd_run, mock_savetxt, rmsd_funct
 @pytest.mark.parametrize("plot_enabled", [True, False])
 def test_compute_rmsd_plotting(
     plot_enabled, mock_mda_universe, mock_plt_savefig, rmsd_functions
-):  
+):
     pdb_name = rmsd_functions.pdb_name
-    rmsd_functions.filename = f'rmsd_{pdb_name}'
+    rmsd_functions.filename = f"rmsd_{pdb_name}"
     message = rmsd_functions.compute_rmsd(selection="backbone", plot=plot_enabled)
     if plot_enabled:
         mock_plt_savefig.assert_called_once()

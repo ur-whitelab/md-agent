@@ -43,7 +43,6 @@ class RMSDFunctions:
         if self.ref_trajectory == "Name not found in path registry.":
             self.ref_trajectory = None
 
-
     def calculate_rmsd(
         self,
         rmsd_type="rmsd",
@@ -217,7 +216,6 @@ class RMSDFunctions:
         R = rms.RMSF(atoms).run()
         rmsf = R.results.rmsf
         self.process_rmsf_results(atoms, rmsf, selection=selection, plot=plot)
-
 
     def process_rmsf_results(self, atoms, rmsf, selection="backbone", plot=True):
         # Save to a text file
