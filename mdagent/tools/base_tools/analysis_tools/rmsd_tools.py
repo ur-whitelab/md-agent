@@ -42,8 +42,19 @@ class RMSDFunctions:
             self.ref_name = os.path.splitext(os.path.basename(self.ref_file))[0]
         if self.ref_trajectory == "Name not found in path registry.":
             self.ref_trajectory = None
-        self.figure_dir = "files/figures"  # TODO: rely on path_registry to provide dir
-        self.csv_dir = "files/records"
+        self.base_dir = "files"  # TODO: should update this to use checkpoint dir
+
+    @property
+    def figure_dir(self):
+        path = os.path.join(self.base_dir, "figures")
+        os.makedirs(path, exist_ok=True)  # only create if it doesn't exist
+        return path
+
+    @property
+    def csv_dir(self):
+        path = os.path.join(self.base_dir, "records")
+        os.makedirs(path, exist_ok=True)
+        return path
 
     def calculate_rmsd(
         self,
@@ -125,8 +136,10 @@ class RMSDFunctions:
         )
         avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
         final_rmsd = R.results.rmsd[-1, 2]
-        message = f"""Calculated RMSD for each timestep with respect\
-        to the initial frame. Saved to {csv_filename}. """
+        message = (
+            "Calculated RMSD for each timestep with respect"
+            f"to the initial frame. Saved to {csv_filename}. "
+        )
         self.path_registry.map_path(
             csv_filename, f"{self.csv_dir}/{csv_filename}", message
         )
@@ -210,10 +223,6 @@ class RMSDFunctions:
             self.path_registry.map_path(
                 fig_name, f"{self.figure_dir}/{fig_name}", plot_message
             )
-        print(message)
-        print(f"{self.csv_dir}/{csv_filename}")
-        if plot_heatmap:
-            print(f"{self.figure_dir}/{fig_name}")
         return message
 
     def compute_rmsf(self, selection="backbone", plot=True):
@@ -269,10 +278,6 @@ class RMSDFunctions:
             self.path_registry.map_path(
                 f"{self.filename}.png", f"{self.filename}.png", plot_message
             )
-        print(message)
-        print(f"{self.csv_dir}/{csv_filename}")
-        if plot:
-            print(f"{self.figure_dir}/{fig_name}")
         return message
 
 
