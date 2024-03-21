@@ -246,16 +246,19 @@ def test_compute_rmsd_2sets(mock_mda_universe, rmsd_functions):
 
 def test_compute_rmsd(mock_mda_universe, mock_rmsd_run, mock_savetxt, rmsd_functions):
     rmsd_functions.filename = "test_rmsd"
-    message = rmsd_functions.compute_rmsd(selection="backbone", plot=True)
+    message = rmsd_functions.compute_rmsd(selection="backbone", plot=False)
 
-    mock_mda_universe.assert_called()
-    mock_rmsd_run.assert_called()
-    mock_savetxt.assert_called()
+    mock_mda_universe.assert_called_once()
+    mock_rmsd_run.assert_called_once()
+    mock_savetxt.assert_called_once()
     args, kwargs = mock_savetxt.call_args
-    assert "test_rmsd.csv" in args, "Expected np.savetxt to save to correct file"
+    assert args[0].startswith(
+        f"{rmsd_functions.csv_dir}/{rmsd_functions.filename}_"
+    ), "np.savetxt called with unexpected file name"
+    # assert "test_rmsd.csv" in args, "Expected np.savetxt to save to correct file"
     assert "Average RMSD is 0.15" in message, "Expected correct average RMSD in message"
     assert "Final RMSD is 0.2" in message, "Expected correct final RMSD in message"
-    assert "Saved to test_rmsd.csv" in message, "Expected correct save file message"
+    assert "Saved to test_rmsd_" in message, "Expected correct save file message"
 
 
 @pytest.mark.parametrize("plot_enabled", [True, False])
@@ -267,10 +270,15 @@ def test_compute_rmsd_plotting(
     message = rmsd_functions.compute_rmsd(selection="backbone", plot=plot_enabled)
     if plot_enabled:
         mock_plt_savefig.assert_called_once()
+        args, _ = mock_plt_savefig.call_args
+        assert args[0].startswith(
+            f"{rmsd_functions.figure_dir}/FIG_{rmsd_functions.filename}_"
+        ), "plt.savefig called with unexpected file path"
         assert (
-            f"Plotted RMSD over time for {pdb_name}. Saved with plot id" in message
+            f"Plotted RMSD over time for {pdb_name}."
+            f" Saved to FIG_{rmsd_functions.filename}_" in message
         ), "Expected correct plotting message"
-        assert f"Saved to {rmsd_functions.filename}.csv" in message
+        assert f"Saved to {rmsd_functions.filename}_" in message  # csv file
     else:
         mock_plt_savefig.assert_not_called()
 
@@ -292,32 +300,6 @@ def test_compute_2d_rmsd(mock_mda_universe, mock_savetxt, rmsd_functions):
 
 
 @pytest.mark.parametrize("plot", [True, False])
-def test_process_rmsf_results(
-    rmsd_functions, tmp_path, mock_plt_savefig, mock_savetxt, plot
-):
-    mock_atoms = MagicMock()
-    mock_atoms.resids = np.arange(1, 11)
-    mock_atoms.resnums = np.arange(1, 11)
-    mock_rmsf_values = np.random.rand(10)
-    output_csv = tmp_path / "output_rmsf.csv"
-    output_png = tmp_path / "output_rmsf.png"
-    rmsd_functions.filename = str(tmp_path / "output_rmsf")
-    message = rmsd_functions.process_rmsf_results(
-        mock_atoms, mock_rmsf_values, plot=plot
-    )
-    mock_savetxt.assert_called_once()
-    args, _ = mock_savetxt.call_args
-    assert args[0] == str(output_csv), "CSV file path passed to np.savetxt don't match."
-
-    if plot:
-        mock_plt_savefig.assert_called_once_with(str(output_png))
-        assert "Plotted RMSF. Saved to" in message
-    else:
-        mock_plt_savefig.assert_not_called()
-    assert "Saved RMSF data to" in message
-
-
-@pytest.mark.parametrize("plot", [True, False])
 def test_compute_rmsf(rmsd_functions, mock_mda_universe, plot):
     with patch.object(
         rmsd_functions, "process_rmsf_results"
@@ -331,3 +313,31 @@ def test_compute_rmsf(rmsd_functions, mock_mda_universe, plot):
         plot_arg = kwargs["plot"]
         assert selection == "backbone"
         assert plot_arg is plot
+
+
+@pytest.mark.parametrize("plot", [True, False])
+def test_process_rmsf_results(rmsd_functions, mock_plt_savefig, mock_savetxt, plot):
+    rmsd_functions.filename = "test_rmsf"
+    mock_atoms = MagicMock()
+    mock_atoms.resids = np.arange(1, 11)
+    mock_atoms.resnums = np.arange(1, 11)
+    mock_rmsf_values = np.random.rand(10)
+    message = rmsd_functions.process_rmsf_results(
+        mock_atoms, mock_rmsf_values, plot=plot
+    )
+    mock_savetxt.assert_called_once()
+    args, _ = mock_savetxt.call_args
+    assert args[0].startswith(
+        f"{rmsd_functions.csv_dir}/{rmsd_functions.filename}_"
+    ), "CSV file path passed to np.savetxt doesn't match expected pattern."
+    assert "Saved RMSF data to" in message, "Expected save message not found in return."
+    if plot:
+        mock_plt_savefig.assert_called_once()
+        savefig_args, _ = mock_plt_savefig.call_args
+        assert savefig_args[0].startswith(
+            f"{rmsd_functions.figure_dir}/FIG_{rmsd_functions.filename}_"
+        ), "Plot file path passed to plt.savefig doesn't match expected pattern."
+        assert "Plotted RMSF. Saved to" in message, "Expected plot message not found."
+
+    else:
+        mock_plt_savefig.assert_not_called()
