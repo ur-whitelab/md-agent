@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 import langchain
 import paperqa
@@ -7,6 +8,8 @@ import paperscraper
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 from pypdf.errors import PdfReadError
+
+from mdagent.utils import PathRegistry
 
 
 def paper_scraper(search: str, pdir: str = "query") -> dict:
@@ -66,12 +69,12 @@ class Scholar2ResultLLM(BaseTool):
         "Useful to answer questions that require technical "
         "knowledge. Ask a specific question."
     )
-    path_registry = None
     llm: BaseLanguageModel = None
+    path_registry: Optional[PathRegistry]
 
     def __init__(self, llm, path_registry=None):
         super().__init__()
-        path_registry = path_registry
+        self.path_registry = path_registry
         self.llm = llm
 
     def _run(self, query) -> str:
