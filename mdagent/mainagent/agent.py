@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
@@ -5,7 +7,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.subagents import SubAgentSettings
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry, _make_llm, find_project_root
 
 from ..tools import get_tools, make_all_tools
 from .query_filter import make_prompt
@@ -43,7 +45,7 @@ class MDAgent:
         verbose=True,
         path_registry=None,
         subagents_model="gpt-4-1106-preview",
-        ckpt_dir="ckpt",
+        ckpt_dir="default",
         resume=False,
         learn=True,
         top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
@@ -51,17 +53,39 @@ class MDAgent:
         curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
     ):
-        if path_registry is None:
-            path_registry = PathRegistry.get_instance()
-        self.uploaded_files = uploaded_files
-        for file in uploaded_files:  # todo -> allow users to add descriptions?
-            path_registry.map_path(file, file, description="User uploaded file")
-
         self.agent_type = agent_type
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
+        root_dir = find_project_root("md-agent")
+
+        if resume:
+            if ckpt_dir == "default":
+                # find all /ckpt_dir_ and take the last one
+                i = 0
+                CKPT_DIR = root_dir + "/" + ckpt_dir + f"_{i}"
+                while os.path.exists(CKPT_DIR):
+                    i += 1
+                    CKPT_DIR = root_dir + "/" + ckpt_dir + f"_{i-1}"
+            else:
+                if not ckpt_dir.startswith("/"):
+                    CKPT_DIR = root_dir + ckpt_dir
+                else:
+                    CKPT_DIR = root_dir + "/" + ckpt_dir
+        else:
+            # create the ckpt_dir at the root directory
+            i = 0
+            CKPT_DIR = root_dir + "/" + ckpt_dir + f"_{i}"
+            while os.path.exists(CKPT_DIR):
+                i += 1
+                CKPT_DIR = root_dir + "/" + ckpt_dir + f"_{i}"
+        self.ckpt_dir = CKPT_DIR
+        if path_registry is None:
+            path_registry = PathRegistry.get_instance(init_dir=self.ckpt_dir)
+        self.uploaded_files = uploaded_files
+        for file in uploaded_files:  # todo -> allow users to add descriptions?
+            path_registry.map_path(file, file, description="User uploaded file")
 
         self.llm = ChatOpenAI(
             temperature=temp,

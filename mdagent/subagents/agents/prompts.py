@@ -31,7 +31,7 @@ action_template = PromptTemplate(
         4) To get the files from their IDs, use the paths_registry.json file.
         For example, if you need to access a file with ID XYZ_1234 try this:
         ```
-        with os.open('paths_registry.json') as f:
+        with os.open('{init_dir}/paths_registry.json') as f:
             path_registry = json.load(f)
             file_info = path_registry.get('XYZ_1234',None)
             if file_info:

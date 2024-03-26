@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 
 
 ##TODO: add method to get description from simulation inputs
@@ -14,21 +15,45 @@ class FileType(Enum):
     UNKNOWN = 5
 
 
+def find_project_root(stop_at):
+    """
+    Traverse up from the current_path to find the stop_at directory.
+
+    :param current_path: The starting point for the search.
+    :param stop_at: The directory name to stop the search at.
+    :return: The path to the directory named stop_at, or just current_path if not in
+    a directory named stop_at or any of its parents.
+    """
+    current_path = Path(os.getcwd())
+    print(current_path)
+    if current_path.name == stop_at:
+        return current_path
+    for parent in current_path.parents:
+        if parent.name == stop_at:
+            return parent
+    return current_path
+
+
 class PathRegistry:
     instance = None
+    init_dir = None
 
     @classmethod
-    def get_instance(cls):
+    def get_instance(cls, init_dir=None):
         if not cls.instance:
-            cls.instance = cls()
+            cls.instance = cls(init_dir=init_dir)
         return cls.instance
 
-    def __init__(self):
-        self.json_file_path = "paths_registry.json"
+    def __init__(self, init_dir=None):
+        self.init_dir = init_dir
+        if init_dir:
+            self.json_file_path = f"{self.init_dir}/paths_registry.json"
+        else:
+            self.json_file_path = "paths_registry.json"
         self._init_path_registry()
 
     def _init_path_registry(self):
-        base_directory = "files"
+        base_directory = self.init_dir + "/files"
         subdirectories = ["pdb", "records", "simulations", "figures"]
         existing_registry = self._load_existing_registry()
         file_names_in_registry = []
