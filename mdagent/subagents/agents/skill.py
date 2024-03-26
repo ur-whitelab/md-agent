@@ -122,11 +122,11 @@ class SkillManager:
         # store code
         with open(f"{self.dir_name}/code/{filename}.py", "w") as f0:
             f0.write(code_script)
-        self.path_registry.map_path(
-            name=fxn_name,
-            path=f"{self.dir_name}/code/{filename}.py",
-            description=f"Code for new tool {fxn_name}",
-        )
+        # self.path_registry.map_path(
+        #    name=fxn_name,
+        #    path=f"{self.dir_name}/code/{filename}.py",
+        #    description=f"Code for new tool {fxn_name}",
+        # )
 
         # store description - may remove in future
         with open(f"{self.dir_name}/description/{filename}.txt", "w") as f1:

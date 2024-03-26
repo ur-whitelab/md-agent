@@ -230,13 +230,16 @@ class CleaningToolFunctionInput(BaseModel):
 
 class CleaningToolFunction(BaseTool):
     name = "CleaningToolFunction"
-    description = """
-    This tool performs various cleaning operations on a PDB or CIF file.
-    Operations can include removing heterogens,
-    adding missing atoms and hydrogens,
-    replacing nonstandard residues, and/or removing water.
-
-    """
+    description = (
+        "This tool performs various cleaning operations on a PDB or CIF file."
+        "Operations can include removing heterogens,"
+        "adding missing atoms and hydrogens,"
+        "replacing nonstandard residues, and/or removing water."
+        "This is one tool to try if you see this kind of error messages:\n"
+        " 'No template found for residue ...', "
+        " 'Missing atoms for residue ...', "
+        " 'Missing hydrogens for residue ...'"
+    )
     args_schema: Type[BaseModel] = CleaningToolFunctionInput
 
     path_registry: Optional[PathRegistry]

@@ -7,6 +7,26 @@ structured_prompt = PromptTemplate(
         your task is to respond to the question or
         solve the problem to the best of your ability using
         the provided tools.
+        Try to break down the problem into its modular components:
+        The 'Main Task' is the user's request.
+
+        The Subtasks are (some of/all) the individual steps that may need to be taken
+        to complete the Main Task; 'Preprocessing/Preparation' usually involves
+        cleaning the initial pdb file (adding hydrogens, removing/adding water, etc.)
+        or making the required box for the simulation, 'Simulation' involves running the
+        simulation and/or modifying the simulation script, 'Postprocessing' involves
+        analyzing the results of the simulation (either using provided tools or figuring
+        it out on your own). Finally, the user may just be asking a 'Question'
+        than soliciting a request for a specific task.
+
+        the 'Target Proteins' are the protein(s) that the user wants to focus on,
+        the Parameters are the 'special' conditions that the user wants to set and use
+        for the simulation, preprocessing and or analysis.
+
+        Sometimes users already have an idea of what is needed to be done.
+        'Initial Plan' Proposed by User is the user's initial plan for the simulation.
+        You can use this as a guide to understand what the user wants to do.
+        You can also modify it if you think is necessary.
 
         You can only respond with a single complete
         'Thought, Action, Action Input' format

@@ -92,7 +92,9 @@ class ProteinName2PDBTool(BaseTool):
                     f"files/pdb/{filename}",
                     f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
                 )
-                return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
+                return (
+                    f"Name2PDB tool successful. downloaded the PDB file: {pdbfile_id}"
+                )
         except Exception as e:
             return f"Something went wrong. {e}"
 

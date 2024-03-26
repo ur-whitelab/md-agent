@@ -24,7 +24,6 @@ from .base_tools import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
-    RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -91,7 +90,7 @@ def make_all_tools(
         PPIDistance(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
-        RDFTool(path_registry=path_instance),
+        # RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
     ]
     if subagent_settings is None:
@@ -225,7 +224,15 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
+    # def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
+    def _run(self, **input):
+        task = input.get("task")
+        orig_prompt = input.get("orig_prompt")
+        curr_tools = input.get("curr_tools")
+        execute = input.get("execute", True)
+        args = input.get("args", None)
+        if not task or not orig_prompt or not curr_tools:
+            return "Provide task, orig_prompt, and curr_tools."
         # run iterator
         try:
             all_tools_string = self.get_all_tools_string()
@@ -233,6 +240,7 @@ class CreateNewTool(BaseTool):
                 self.subagent_settings,
                 all_tools_string=all_tools_string,
                 current_tools=curr_tools,
+                args=args,
             )
             print("running iterator to draft a new tool")
             st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
@@ -240,6 +248,10 @@ class CreateNewTool(BaseTool):
             if not tool_name:
                 return "The 'CreateNewTool' tool failed to build a new tool."
         except Exception as e:
+            print(f"Something went wrong while creating tool. {type(e).__name__}: {e}")
+            print("Error: ", e)
+            print("Traceback: ", e.__traceback__)
+
             return f"Something went wrong while creating tool. {type(e).__name__}: {e}"
 
         # execute the new tool code
