@@ -338,7 +338,8 @@ class CleaningToolFunction(BaseTool):
                 file_format=end,
             )
             file_id = self.path_registry.get_fileid(file_name, FileType.PROTEIN)
-            directory = "files/pdb"
+            init_dir = self.path_registry.init_dir
+            directory = os.path.join(init_dir, "files/pdb")
             if not os.path.exists(directory):
                 os.makedirs(directory)
             if end == "pdb":

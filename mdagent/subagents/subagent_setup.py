@@ -17,7 +17,10 @@ class SubAgentSettings:
         retrieval_top_k=5,
         curriculum=True,
     ):
-        self.path_registry = path_registry
+        if path_registry is None:
+            raise (ValueError("Path Registry is required for SubAgent Settings"))
+        else:
+            self.path_registry = path_registry
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations

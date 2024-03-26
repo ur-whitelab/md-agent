@@ -82,7 +82,7 @@ class MDAgent:
                 CKPT_DIR = root_dir + "/" + ckpt_dir + f"_{i}"
         self.ckpt_dir = CKPT_DIR
         if path_registry is None:
-            path_registry = PathRegistry.get_instance(init_dir=self.ckpt_dir)
+            self.path_registry = PathRegistry.get_instance(init_dir=self.ckpt_dir)
         self.uploaded_files = uploaded_files
         for file in uploaded_files:  # todo -> allow users to add descriptions?
             path_registry.map_path(file, file, description="User uploaded file")
@@ -101,7 +101,7 @@ class MDAgent:
             self.skip_subagents = True
 
         self.subagents_settings = SubAgentSettings(
-            path_registry=path_registry,
+            path_registry=self.path_registry,
             subagents_model=subagents_model,
             temp=temp,
             max_iterations=max_iterations,
@@ -124,6 +124,7 @@ class MDAgent:
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
                     skip_subagents=self.skip_subagents,
+                    path_registry=self.path_registry,
                 )
             else:
                 # retrieve all tools, including new tools if any
@@ -132,6 +133,7 @@ class MDAgent:
                     subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
                     skip_subagents=self.skip_subagents,
+                    path_registry=self.path_registry,
                 )
         return AgentExecutor.from_agent_and_tools(
             tools=self.tools,

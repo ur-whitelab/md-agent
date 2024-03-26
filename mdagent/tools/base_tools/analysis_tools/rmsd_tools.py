@@ -120,8 +120,12 @@ class RMSDFunctions:
             plt.title("Time-Dependent RMSD")
             plt.legend()
             plt.show()
-            if not os.path.exists("files/figures"):  # PR: Needed to avoid error
-                os.makedirs("files/figures")
+            ckpt_dir = self.path_registry.init_dir
+            fig_dir = os.path.join(ckpt_dir, "files/figures")
+            if not os.path.exists(fig_dir):
+                os.makedirs(fig_dir)
+            if not os.path.exists(fig_dir):  # PR: Needed to avoid error
+                os.makedirs(fig_dir)
             plot_name = self.path_registry.write_file_name(
                 type=FileType.FIGURE,
                 fig_analysis=self.filename,
@@ -130,15 +134,13 @@ class RMSDFunctions:
             plot_id = self.path_registry.get_fileid(
                 file_name=plot_name, type=FileType.FIGURE
             )
-            plt.savefig(f"files/figures/{plot_name}.png")
+            plt.savefig(f"{fig_dir}/{plot_name}.png")
             plot_message = (
                 f"Plotted RMSD over time for{self.pdb_file}."
                 f" Saved with plot id {plot_id}.\n"
             )
             message += plot_message
-            self.path_registry.map_path(
-                plot_id, f"files/figures/{plot_name}", plot_message
-            )
+            self.path_registry.map_path(plot_id, f"{fig_dir}/{plot_name}", plot_message)
         return message
 
     def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):

@@ -35,8 +35,8 @@ def find_project_root(stop_at):
 
 
 class PathRegistry:
+    init_dir = "."
     instance = None
-    init_dir = None
 
     @classmethod
     def get_instance(cls, init_dir=None):
@@ -45,7 +45,10 @@ class PathRegistry:
         return cls.instance
 
     def __init__(self, init_dir=None):
-        self.init_dir = init_dir
+        if init_dir:
+            self.init_dir = init_dir
+        else:
+            self.init_dir = find_project_root("md-agent")
         if init_dir:
             self.json_file_path = f"{self.init_dir}/paths_registry.json"
         else:

@@ -62,10 +62,14 @@ def make_all_tools(
     subagent_settings: Optional[SubAgentSettings] = None,
     skip_subagents=False,
     human=False,
+    path_registry=None,
 ):
     load_dotenv()
     all_tools = []
-    path_instance = PathRegistry.get_instance()  # get instance first
+    if path_registry is None:
+        raise ValueError("Path Registry is required for making tools.")
+    else:
+        path_instance = path_registry
     if llm:
         all_tools += agents.load_tools(["llm-math"], llm)
         # all_tools += [PythonREPLTool()]
@@ -77,7 +81,7 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
-        Scholar2ResultLLM(llm=llm),
+        Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
@@ -124,9 +128,10 @@ def get_tools(
     top_k_tools=15,
     skip_subagents=False,
     human=False,
+    path_registry: Optional[PathRegistry] = None,
 ):
     if subagent_settings:
-        ckpt_dir = subagent_settings.ckpt_dir
+        ckpt_dir = subagent_settings.path_registry.init_dir
     else:
         ckpt_dir = "ckpt"
 
@@ -141,11 +146,19 @@ def get_tools(
         ]
         top_k_tools -= len(retrieved_tools)
         all_tools = make_all_tools(
-            llm, subagent_settings, skip_subagents=True, human=human
+            llm,
+            subagent_settings,
+            skip_subagents=True,
+            human=human,
+            path_registry=path_registry,
         )
     else:
         all_tools = make_all_tools(
-            llm, subagent_settings, skip_subagents=False, human=human
+            llm,
+            subagent_settings,
+            skip_subagents=False,
+            human=human,
+            path_registry=path_registry,
         )
 
     # set vector DB for all tools
