@@ -209,7 +209,7 @@ class CreateNewToolInputSchema(BaseModel):
         description="Whether to execute the new tool or not.",
     )
     args: Optional[dict] = Field(
-        description="Input variables as a dictionary to pass to the skill"
+        None, description="Input variables as a dictionary to pass to the skill"
     )
 
 
@@ -229,9 +229,14 @@ class CreateNewTool(BaseTool):
         super().__init__()
         self.subagent_settings = subagent_settings
 
-    def get_all_tools_string(self):
+    def get_all_tools_string(self, path_registry=None):
         llm = _make_llm(model="gpt-3.5-turbo", temp=0.1, verbose=True)
-        all_tools = make_all_tools(llm, self.subagent_settings, skip_subagents=True)
+        all_tools = make_all_tools(
+            llm,
+            self.subagent_settings,
+            skip_subagents=True,
+            path_registry=path_registry,
+        )
         all_tools_string = ""
         for tool in all_tools:
             all_tools_string += f"{tool.name}: {tool.description}\n"
@@ -248,7 +253,9 @@ class CreateNewTool(BaseTool):
             return "Provide task, orig_prompt, and curr_tools."
         # run iterator
         try:
-            all_tools_string = self.get_all_tools_string()
+            all_tools_string = self.get_all_tools_string(
+                path_registry=self.subagent_settings.path_registry
+            )
             newcode_iterator = Iterator(
                 self.subagent_settings,
                 all_tools_string=all_tools_string,

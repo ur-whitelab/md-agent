@@ -25,7 +25,6 @@ def find_project_root(stop_at):
     a directory named stop_at or any of its parents.
     """
     current_path = Path(os.getcwd())
-    print(current_path)
     if current_path.name == stop_at:
         return current_path
     for parent in current_path.parents:
@@ -39,9 +38,13 @@ class PathRegistry:
     instance = None
 
     @classmethod
-    def get_instance(cls, init_dir=None):
+    def get_instance(cls, resume=True, init_dir=None):
+        if not resume:
+            cls.instance = None
         if not cls.instance:
             cls.instance = cls(init_dir=init_dir)
+        else:
+            print("Instance already exists")
         return cls.instance
 
     def __init__(self, init_dir=None):
@@ -58,6 +61,8 @@ class PathRegistry:
     def _init_path_registry(self):
         base_directory = self.init_dir + "/files"
         subdirectories = ["pdb", "records", "simulations", "figures"]
+        if not os.path.exists(base_directory):
+            os.makedirs(base_directory)
         existing_registry = self._load_existing_registry()
         file_names_in_registry = []
         if existing_registry != {}:
