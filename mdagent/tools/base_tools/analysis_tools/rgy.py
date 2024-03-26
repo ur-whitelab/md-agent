@@ -49,8 +49,9 @@ class RadiusofGyration:
     def rad_gyration_per_frame(self, pdb_id: str) -> str:
         self._load_traj(pdb_id)
         rg_per_frame = md.compute_rg(self.traj)
-
-        self.rgy_file = f"files/radii_of_gyration_{self.pdb_id}.csv"
+        # write file
+        file_dir = self.path_registry.init_dir + "/files/records"
+        self.rgy_file = f"{file_dir}/radii_of_gyration_{self.pdb_id}.csv"
 
         np.savetxt(
             self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
@@ -84,13 +85,14 @@ class RadiusofGyration:
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
         plt.title(f"{pdb_id} - Radius of Gyration Over Time")
-
-        if not os.path.exists("files/figures"):
-            os.makedirs("files/figures")
-        plt.savefig(f"files/figures/{plot_name}")
+        ckpt_dir = self.path_registry.init_dir
+        fig_dir = os.path.join(ckpt_dir, "files/figures")
+        if not os.path.exists(fig_dir):
+            os.makedirs(fig_dir)
+        plt.savefig(f"{fig_dir}/{plot_name}")
         self.path_registry.map_path(
             plot_id,
-            plot_name,
+            f"{fig_dir}/{plot_name}",
             description=f"Plot of radii of gyration over time for {self.pdb_id}",
         )
         return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"

@@ -45,17 +45,19 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
             file_format=filetype,
         )
         file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
-        directory = "files/pdb"
+        init_dir = path_registry.init_dir
+        pdb_dir = os.path.join(init_dir, "files/pdb")
         # Create the directory if it does not exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        if not os.path.exists(pdb_dir):
+            os.makedirs(pdb_dir)
 
-        with open(f"{directory}/{filename}", "w") as file:
+        with open(f"{pdb_dir}/{filename}", "w") as file:
             file.write(pdb.text)
         path_registry.map_path(
-            file_id, f"{directory}/{filename}", "PDB file downloaded from RSCB"
+            file_id,
+            f"{pdb_dir}/{filename}",
+            f"PDB file downloaded from RSCB, PDBFile ID: {file_id}",
         )
-
         return filename, file_id
     return None
 
@@ -83,15 +85,10 @@ class ProteinName2PDBTool(BaseTool):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Path registry not initialized"
-            filename, pdbfile_id = get_pdb(query, self.path_registry)
+            _, pdbfile_id = get_pdb(query, self.path_registry)
             if pdbfile_id is None:
                 return "Name2PDB tool failed to find and download PDB file."
             else:
-                self.path_registry.map_path(
-                    pdbfile_id,
-                    f"files/pdb/{filename}",
-                    f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
-                )
                 return (
                     f"Name2PDB tool successful. downloaded the PDB file: {pdbfile_id}"
                 )

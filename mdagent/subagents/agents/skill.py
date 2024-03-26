@@ -18,7 +18,7 @@ from .prompts import skill_template
 class SkillManager:
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
+        path_registry: Optional[PathRegistry] = None,
         model="gpt-3.5",
         temp=0.1,
         retrieval_top_k=5,
@@ -26,8 +26,12 @@ class SkillManager:
         resume=False,
     ):
         load_dotenv()
+        if path_registry is None:
+            raise (ValueError("Path Registry is required for Skill Manager"))
+        else:
+            self.path_registry = path_registry
+        ckpt_dir = self.path_registry.init_dir
         self.dir_name = f"{ckpt_dir}/skill_library"
-        self.path_registry = path_registry
         self.retrieval_top_k = retrieval_top_k
 
         llm = ChatOpenAI(

@@ -35,6 +35,7 @@ class Action:
     def _run(self, history, task, skills, args):
         # get files
         files = self.path_registry.list_path_names()
+        init_dir = self.path_registry.init_dir
         # get skills
         print("About to run the action agent")
         return self.llm_chain(
@@ -44,6 +45,7 @@ class Action:
                 "history": history,
                 "skills": skills,
                 "args": args,
+                "init_dir": init_dir,
             }
         )["text"]
 

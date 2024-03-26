@@ -91,14 +91,15 @@ class RDFTool(BaseTool):
             Log_id=trajectory_id,
         )
         fig_id = self.path_registry.get_fileid(plot_name, type=FileType.FIGURE)
+        ckpt_dir = self.path_registry.init_dir
+        fig_dir = os.path.join(ckpt_dir, "files/figures")
+        if not os.path.exists(fig_dir):
+            os.makedirs(fig_dir)
 
-        if not os.path.exists("files/figures"):
-            os.makedirs("files/figures")
-
-        plt.savefig(f"files/figures/{plot_name}")
+        plt.savefig(f"{fig_dir}/{plot_name}")
         self.path_registry.map_path(
             fig_id,
-            plot_name,
+            f"{fig_dir}/{plot_name}",
             description=f"RDF plot for the trajectory file with id: {trajectory_id}",
         )
         plt.close()

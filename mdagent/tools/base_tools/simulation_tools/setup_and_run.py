@@ -789,9 +789,11 @@ class OpenMMSimulation:
                 )
             )
             # "Holders because otherwise the ids are the same
+            init_dir = self.path_registry.init_dir
+            record_dir = os.path.join(init_dir, "files/records")
             self.registry_records = [
-                ["holder", f"files/records/{trajectory_name}", traj_desc],
-                ["holder", f"files/records/{log_name}", log_desc],
+                ["holder", f"{record_dir}/{trajectory_name}", traj_desc],
+                ["holder", f"{record_dir}/{log_name}", log_desc],
             ]
 
             # TODO add checkpoint too?
@@ -1124,14 +1126,15 @@ class OpenMMSimulation:
         script_content = textwrap.dedent(script_content).strip()
 
         # Write to file
-        directory = "files/simulations"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        init_dir = self.path_registry.init_dir
+        sim_dir = os.path.join(init_dir, "files/simulations")
+        if not os.path.exists(sim_dir):
+            os.makedirs(sim_dir)
 
-        with open(f"{directory}/{filename}", "w") as file:
+        with open(f"{sim_dir}/{filename}", "w") as file:
             file.write(script_content)
 
-        print(f"Standalone simulation script written to {directory}/{filename}")
+        print(f"Standalone simulation script written to {sim_dir}/{filename}")
         st.markdown("Standalone simulation script written", unsafe_allow_html=True)
 
     def run(self):
@@ -1141,7 +1144,11 @@ class OpenMMSimulation:
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
-        top_name = f"files/pdb/{self.sim_id}_initial_positions.pdb"
+        init_dir = self.path_registry.init_dir
+        pdb_path = os.path.join(init_dir, "files/pdb")
+        if not os.path.exists(pdb_path):
+            os.makedirs(pdb_path)
+        top_name = f"{pdb_path}/{self.sim_id}_initial_positions.pdb"
         top_description = f"Initial positions for simulation {self.sim_id}"
         with open(top_name, "w") as f:
             PDBFile.writeFile(
@@ -1255,6 +1262,7 @@ class SetUpandRunFunction(BaseTool):
         try:
             openmmsim.run()
         except Exception as e:
+            print(f"An exception was found:{e.__str__}.")
             return (
                 f"An exception was found: {str(e)}. Not a problem, thats one "
                 "purpose of this tool: to run a short simulation to check for correct "
@@ -1266,17 +1274,20 @@ class SetUpandRunFunction(BaseTool):
             )
         try:
             openmmsim.write_standalone_script(filename=file_name)
+            init_dir = self.path_registry.init_dir
+            sim_dir = os.path.join(init_dir, "files/simulations")
             self.path_registry.map_path(
                 sim_id,
-                f"files/simulations/{file_name}",
+                f"{sim_dir}/{file_name}",
                 f"Basic Simulation of Protein {pdb_id}",
             )
             if save:
                 records = openmmsim.registry_records
                 # move record files to files/records/
-                print(os.listdir("."))
-                if not os.path.exists("files/records"):
-                    os.makedirs("files/records")
+                init_dir = self.path_registry.init_dir
+                record_dir = os.path.join(init_dir, "files/records")
+                if not os.path.exists(record_dir):
+                    os.makedirs(record_dir, exist_ok=True)
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:

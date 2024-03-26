@@ -152,10 +152,12 @@ class PackmolBox:
                 os.remove(molecule.filename)
             # name of packed pdb file
             time_stamp = self.path_registry.get_timestamp()[-6:]
-            os.rename(self.final_name, f"files/pdb/{self.final_name}")
+            init_dir = self.path_registry.init_dir
+            final_dir = os.path.join(init_dir, "files/pdb")
+            os.rename(self.final_name, final_dir)
             self.path_registry.map_path(
                 f"PACKED_{time_stamp}",
-                f"files/pdb/{self.final_name}",
+                final_dir,
                 self.file_description,
             )
             # move file to files/pdb
