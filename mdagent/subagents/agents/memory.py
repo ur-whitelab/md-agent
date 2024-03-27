@@ -45,8 +45,8 @@ agent_summary_template = PromptTemplate(
     Your job is to summarize the
     history of an agent's attempts to
     solve a problem. Be sure to
-    include the prompt, every tool
-    used (in order), and the final
+    include the prompt, every step,
+    and the final
     solution. You may include other
     details as well, if you think
     they are relevant.
