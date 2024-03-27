@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import requests
@@ -46,9 +45,6 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
         )
         file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
         directory = f"{path_registry.ckpt_pdb}"
-        # Create the directory if it does not exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)

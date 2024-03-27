@@ -79,12 +79,13 @@ class RDFTool(BaseTool):
             print("Error in RDF calculation:", str(e))
             raise ("Error in RDF calculation: ", str(e))
         # save plot
+        plot_name = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
         fig, ax = plt.subplots()
         ax.plot(r, gr)
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
-        plt.savefig("rdf_{}.png".format(trajectory_id))
+        plt.savefig(plot_name)
         plt.close()
         return (
             "RDF calculated successfully"

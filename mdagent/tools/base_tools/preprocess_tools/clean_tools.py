@@ -1,4 +1,3 @@
-import os
 from typing import Optional, Type
 
 from langchain.tools import BaseTool
@@ -142,8 +141,6 @@ class CleaningToolFunction(BaseTool):
             )
             file_id = self.path_registry.get_fileid(file_name, FileType.PROTEIN)
             directory = f"{self.path_registry.ckpt_pdb}"
-            if not os.path.exists(directory):
-                os.makedirs(directory)
             if end == "pdb":
                 PDBFile.writeFile(
                     fixer.topology,
