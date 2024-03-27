@@ -635,16 +635,15 @@ class OpenMMSimulation:
         self.save = save
         self.sim_id = sim_id
         self.pdb_id = pdb_id
-        self.int_params = (
-            self.params["integrator_params"]
-            if self.params["integrator_params"] is not None
-            else {
+        self.int_params = self.params.get(
+            "integrator_params",
+            {
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
                 "Friction": 1.0 / picoseconds,
                 "Timestep": 0.002 * picoseconds,
                 "Pressure": 1.0 * bar,
-            }
+            },
         )
 
         self.sys_params = (
