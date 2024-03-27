@@ -55,11 +55,8 @@ class MDAgent:
         use_memory=True,
     ):
         self.use_memory = use_memory
-        if use_memory:
-            self.memory = MemoryManager(path_registry, run_id=run_id)
-            self.run_id = self.memory.run_id
-        else:
-            self.run_id = ""
+        self.memory = MemoryManager(path_registry, run_id=run_id)
+        self.run_id = self.memory.run_id
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
         self.uploaded_files = uploaded_files
@@ -94,6 +91,7 @@ class MDAgent:
             ckpt_dir=ckpt_dir,
             resume=resume,
             curriculum=curriculum,
+            memory=self.memory,
             run_id=self.run_id,
         )
 
@@ -138,4 +136,4 @@ class MDAgent:
         if self.use_memory:
             self.memory.write_all_summaries(model_output)
             print("Your run id is: ", self.run_id)
-        return model_output + "Your run id is: " + self.run_id
+        return model_output, self.run_id

@@ -16,6 +16,7 @@ class Iterator:
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
         self.path_registry = subagent_settings.path_registry
+        self.memory = subagent_settings.memory
         self.ckpt_dir = subagent_settings.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
@@ -26,7 +27,6 @@ class Iterator:
         self.action = subagents["action"]
         self.critic = subagents["critic"]
         self.skill = subagents["skill"]
-        self.memory = subagents["memory"]
 
     def _run_loop(self, task, full_history, skills):
         """

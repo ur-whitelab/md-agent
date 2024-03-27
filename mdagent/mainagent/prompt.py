@@ -32,6 +32,8 @@ structured_prompt = PromptTemplate(
         If you are asked to continue
         or reference previous runs,
         the context will be provided to you.
+        If context is provided, you should assume
+        you are continuing a chat.
 
         Here is the input:
         Previous Context: {context}
@@ -99,6 +101,8 @@ modular_analysis_prompt = PromptTemplate(
         If you are asked to continue
         or reference previous runs,
         the context will be provided to you.
+        If context is provided, you should assume
+        you are continuing a chat.
 
         Here is the input:
         Previous Context: {context}
@@ -116,6 +120,8 @@ openaifxn_prompt = PromptTemplate(
     If you are asked to continue or
     reference previous runs, the
     context will be provided to you.
+    If context is provided, you should assume
+    you are continuing a chat.
 
     Here is the input:
     Previous Context: {context}

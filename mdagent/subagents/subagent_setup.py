@@ -22,10 +22,12 @@ class SubAgentSettings:
         resume=False,
         retrieval_top_k=5,
         curriculum=True,
+        memory: Optional[MemoryManager] = None,
         run_id="",
     ):
         self.path_registry = path_registry
         self.run_id = run_id
+        self.memory = memory
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations
@@ -43,6 +45,7 @@ class SubAgentInitializer:
         if settings.path_registry is None:
             settings.path_registry = PathRegistry.get_instance()
         self.run_id = settings.run_id
+        self.memory = settings.memory
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp
@@ -97,22 +100,9 @@ class SubAgentInitializer:
         params.update(overrides)
         return SkillManager(**params)
 
-    def create_memory(self, **overrides):
-        params = {
-            "path_registry": self.path_registry,
-            "model": self.subagents_model,
-            "temp": self.temp,
-            "ckpt_dir": self.ckpt_dir,
-            "run_id": self.run_id,
-        }
-        # Update params with any overrides
-        params.update(overrides)
-        return MemoryManager(**params)
-
     def create_iteration_agents(self, **overrides):
         return {
             "action": self.create_action(**overrides),
             "critic": self.create_critic(**overrides),
             "skill": self.create_skill_manager(**overrides),
-            "memory": self.create_memory(**overrides),
         }

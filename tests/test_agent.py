@@ -73,6 +73,10 @@ def test_pull_information(iterator):
             iterator.skill.get_skills.return_value = ["skill1", "skill2"]
             iterator.path_registry = MagicMock()
             iterator.path_registry.list_path_names.return_value = ["file1", "file2"]
+            iterator.memory = MagicMock()
+            iterator.memory.retrieve_recent_memory_iterator.return_value = (
+                "line1\nline2\nline3"
+            )
             iterator.current_tools = {"tool1": "config1"}
             iterator.all_tools_string = "all_tools_string"
             info = iterator._pull_information()

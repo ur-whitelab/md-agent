@@ -56,11 +56,11 @@ def test_write_to_and_retrieve_from_history(memory_manager):
     memory_manager._write_history_iterator(**input_dict)
     assert os.path.exists(memory_manager.memory_path)
     with open(memory_manager.memory_path, "r") as f:
-        data = f.readlines()
-    assert data[-1] == json.dumps(input_dict)
+        data = json.load(f)
+    assert data["prompt__1"] == input_dict
 
     memory = memory_manager.retrieve_recent_memory_iterator(last_only=True)
-    assert memory.strip() == json.dumps(input_dict)
+    assert str(memory) == str(input_dict)
 
 
 def test_pull_memory_summary(memory_manager, get_registry):
@@ -73,4 +73,9 @@ def test_pull_memory_summary(memory_manager, get_registry):
 
     mm_mem = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
     assert mm_mem.pull_memory_summary() == "fake_summary"
+
+    with open(memory_manager.agent_summary_path, "w") as f:
+        f.write(json.dumps(fake_summaries))
+    mm_mem = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
+    assert mm_mem.pull_agent_summary_from_mem() == "fake_summary"
     assert mm_mem.run_id_mem == "fake_summary"
