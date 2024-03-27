@@ -6,6 +6,22 @@ import pytest
 
 from mdagent.utils import PathRegistry
 
+pytest.fixture
+def path_to_cif():
+    # Save original working directory
+    original_cwd = os.getcwd()
+
+    # Change current working directory to the directory where the CIF file is located
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(tests_dir)
+
+    # Yield the filename only
+    filename_only = "3pqr.cif"
+    yield filename_only
+
+    # Restore original working directory after the test is done
+    os.chdir(original_cwd)
+
 
 @pytest.fixture(scope="module")
 def raw_alanine_pdb_file(request):
@@ -196,7 +212,8 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
     created_paths = []  # Keep track of created directories for cleanup
 
     def create(raw_or_clean, with_files):
-        base_path = "files"
+        registry = PathRegistry("ckpt_test")
+        base_path = registry.ckpt_files
         if with_files:
             pdb_path = Path(base_path) / "pdb"
             record_path = Path(base_path) / "records"
@@ -213,7 +230,7 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
                 shutil.copy(clean_alanine_pdb_file, pdb_path)
 
         # Assuming PathRegistry is defined elsewhere and properly implemented
-        return PathRegistry()
+        return PathRegistry().get_instance()
 
     # Cleanup: Remove created directories and the copied pdb file
     def cleanup():

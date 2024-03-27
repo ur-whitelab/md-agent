@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from enum import Enum
+from .set_ckpt import SetCheckpoint
 
 
 ##TODO: add method to get description from simulation inputs
@@ -18,13 +19,26 @@ class PathRegistry:
     instance = None
 
     @classmethod
-    def get_instance(cls):
-        if not cls.instance:
-            cls.instance = cls()
+    def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
+        if not cls.instance or not resume:
+            cls.instance = cls(resume, ckpt_dir)
         return cls.instance
 
-    def __init__(self):
-        self.json_file_path = "paths_registry.json"
+    def __init__(self, resume: bool = True, ckpt_dir: str = "ckpt"):
+        self.ckpt_dir = ckpt_dir
+        if resume:
+            self.ckpt = self.set_ckpt.get_resume_ckpt()
+            if self.ckpt is None:
+                self.ckpt = self.set_ckpt.set_ckpt_subdir(ckpt_dir=self.ckpt_dir)
+        else:
+            self.ckpt = self.set_ckpt.set_ckpt_subdir(ckpt_dir=self.ckpt_dir)
+        self.json_file_path = os.path.join(self.ckpt, "paths_registry.json")
+        self.ckpt_files = os.path.join(self.ckpt, "files")
+        self.ckpt_figures = os.path.join(self.ckpt, "figs")
+        if not os.path.exists(self.ckpt_files):
+            os.makedirs(self.ckpt_files)
+        if not os.path.exists(self.ckpt_figures):
+            os.makedirs(self.ckpt_figures)
         self._init_path_registry()
 
     def _init_path_registry(self):

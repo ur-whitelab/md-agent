@@ -36,8 +36,8 @@ def test_small_molecule_pdb(molpdb):
         "files/pdb/benzene.pdb."
     )
     assert molpdb.small_molecule_pdb(valid_smiles) == expected_output
-    assert os.path.exists("files/pdb/benzene.pdb")
-    os.remove("files/pdb/benzene.pdb")  # Clean up
+    assert os.path.exists(f"{molpdb.path_registry.ckpt_files}/pdb/benzene.pdb")
+    os.remove(f"{molpdb.path_registry.ckpt_files}/pdb/benzene.pdb")  # Clean up
 
     # test with invalid SMILES string and invalid molecule name
     invalid_smiles = "C1=CC=CC=C1X"
@@ -51,11 +51,11 @@ def test_small_molecule_pdb(molpdb):
     # test with valid molecule name
     valid_name = "water"
     expected_output = (
-        "PDB file for water successfully created and " "saved to files/pdb/water.pdb."
+        "PDB file for water successfully created and " "saved to water.pdb."
     )
     assert molpdb.small_molecule_pdb(valid_name) == expected_output
-    assert os.path.exists("files/pdb/water.pdb")
-    os.remove("files/pdb/water.pdb")  # Clean up
+    assert os.path.exists(f"{molpdb.path_registry.ckpt_files}/pdb/water.pdb")
+    os.remove(f"{molpdb.path_registry.ckpt_files}/pdb/water.pdb")
 
 
 def test_packmol_pdb_download_only(packmol):
@@ -63,24 +63,34 @@ def test_packmol_pdb_download_only(packmol):
     packmol.path_registry._remove_path_from_json("benzene")
     small_molecules = ["water", "benzene"]
     packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    assert os.path.exists("files/pdb/benzene.pdb")
-    os.remove("files/pdb/water.pdb")
-    os.remove("files/pdb/benzene.pdb")
+    assert os.path.exists(f"{packmol.path_registry.ckpt_files}/pdb/water.pdb")
+    assert os.path.exists(f"{packmol.path_registry.ckpt_files}/pdb/benzene.pdb")
+    os.remove(f"{packmol.path_registry.ckpt_files}/pdb/water.pdb")
+    os.remove(f"{packmol.path_registry.ckpt_files}/pdb/benzene.pdb")
 
 
 def test_packmol_download_only_once(packmol):
     packmol.path_registry._remove_path_from_json("water")
     small_molecules = ["water"]
     packmol._get_sm_pdbs(small_molecules)
-    assert os.path.exists("files/pdb/water.pdb")
-    water_time = os.path.getmtime("files/pdb/water.pdb")
-    time.sleep(5)
+    assert os.path.exists(f"{packmol.path_registry.ckpt_files}/pdb/water.pdb")
+    os.path.getmtime(f"{packmol.path_registry.ckpt_files}/pdb/water.pdb")
 
     # Call the function again with the same molecule
     packmol._get_sm_pdbs(small_molecules)
-    water_time_after = os.path.getmtime("files/pdb/water.pdb")
+    os.path.getmtime(f"{packmol.path_registry.ckpt_files}/pdb/water.pdb")
 
-    assert water_time == water_time_after
-    # Clean up
-    os.remove("files/pdb/water.pdb")
+    assert os.path.exists(
+        f"{packmol.path_registry.ckpt_files}/pdb/{small_molecules[0]}.pdb"
+    )
+
+    time_before = os.path.getmtime(
+        f"{packmol.path_registry.ckpt_files}/pdb/{small_molecules[0]}.pdb"
+    )
+    time.sleep(3)
+    packmol._get_sm_pdbs(small_molecules)
+    time_after = os.path.getmtime(
+        f"{packmol.path_registry.ckpt_files}/pdb/{small_molecules[0]}.pdb"
+    )
+    assert time_before == time_after
+    os.remove(f"{packmol.path_registry.ckpt_files}/pdb/{small_molecules[0]}.pdb")

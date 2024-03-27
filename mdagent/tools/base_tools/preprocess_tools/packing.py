@@ -96,7 +96,9 @@ class PackmolBox:
                 ]
             )
         )
-        while os.path.exists(f"files/pdb/{_final_name}_v{self.file_number}.pdb"):
+        while os.path.exists(
+            f"{self.path_registry.ckpt_files}/pdb/{_final_name}_v{self.file_number}.pdb"
+        ):
             self.file_number += 1
 
         self.final_name = f"{_final_name}_v{self.file_number}.pdb"
@@ -152,10 +154,13 @@ class PackmolBox:
                 os.remove(molecule.filename)
             # name of packed pdb file
             time_stamp = self.path_registry.get_timestamp()[-6:]
-            os.rename(self.final_name, f"files/pdb/{self.final_name}")
+            os.rename(
+                self.final_name,
+                f"{self.path_registry.ckpt_files}/pdb/{self.final_name}",
+            )
             self.path_registry.map_path(
                 f"PACKED_{time_stamp}",
-                f"files/pdb/{self.final_name}",
+                f"{self.path_registry.ckpt_files}/pdb/{self.final_name}",
                 self.file_description,
             )
             # move file to files/pdb
@@ -170,9 +175,6 @@ class PackmolBox:
             print("errors:", f"{errors}")
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
-
-# define function that takes in a list of
-#  molecules and a list of instructions and returns a pdb file
 
 
 def packmol_wrapper(
@@ -301,7 +303,7 @@ class PackMolTool(BaseTool):
         pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
         # copy them to the current directory with temp_ names
 
-        pdbfile_names = [f"temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
+        pdbfile_names = [f"{self.path_registry.ckpt_files}/temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
         small_molecules = values.get("small_molecules", [])
@@ -314,7 +316,7 @@ class PackMolTool(BaseTool):
             small_molecule.split("/")[-1] for small_molecule in small_molecules_files
         ]
         small_molecules_file_names = [
-            f"temp_{small_molecule_file_name}"
+            f"{self.path_registry.ckpt_files}/temp_{small_molecule_file_name}"
             for small_molecule_file_name in small_molecules_file_names
         ]
         # append small molecules to pdbfiles

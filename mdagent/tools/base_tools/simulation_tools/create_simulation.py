@@ -129,7 +129,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
             type=FileType.SIMULATION, Sim_id=base_script_id, modified=True
         )
         file_id = self.path_registry.get_fileid(filename, type=FileType.SIMULATION)
-        directory = "files/simulations"
+        directory = f"{self.path_registry.ckpt_files}/simulations"
         if not os.path.exists(directory):
             os.makedirs(directory)
         with open(f"{directory}/{filename}", "w") as file:

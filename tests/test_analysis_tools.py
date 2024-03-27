@@ -17,23 +17,6 @@ def vis_fxns(get_registry):
     return VisFunctions(get_registry("raw", False))
 
 
-@pytest.fixture
-def path_to_cif():
-    # Save original working directory
-    original_cwd = os.getcwd()
-
-    # Change current working directory to the directory where the CIF file is located
-    tests_dir = os.path.dirname(os.path.abspath(__file__))
-    os.chdir(tests_dir)
-
-    # Yield the filename only
-    filename_only = "3pqr.cif"
-    yield filename_only
-
-    # Restore original working directory after the test is done
-    os.chdir(original_cwd)
-
-
 def test_process_csv(plotting_tools):
     mock_csv_content = "Time,Value1,Value2\n1,10,20\n2,15,25"
     mock_reader = MagicMock()
@@ -80,8 +63,8 @@ def test_plot_data(plotting_tools):
         plotting_tools.headers = headers
         plotting_tools.matched_headers = matched_headers
         created_plots = plotting_tools.plot_data()
-        assert "FIG_timevsvalue1" in created_plots
-        assert "FIG_timevsvalue2" in created_plots
+        assert "timevsvalue1" in created_plots
+        assert "timevsvalue2" in created_plots
 
     # Test failure due to non-numeric data
     data_failure = [
@@ -117,6 +100,8 @@ def test_find_png(vis_fxns):
 
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
-    path_to_notebook = path_to_cif.split(".")[0] + "_vis.ipynb"
+    path_to_notebook = (
+        f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb"
+    )
     os.remove(path_to_notebook)
     assert result == "Visualization Complete"

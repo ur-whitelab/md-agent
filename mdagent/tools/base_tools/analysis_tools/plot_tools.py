@@ -78,12 +78,10 @@ class PlottingTools:
                     plot_id = self.path_registry.get_fileid(
                         file_name=plot_name, type=FileType.FIGURE
                     )
-                    if not os.path.exists("files/figures"):
-                        os.makedirs("files/figures")
-                    plt.savefig(f"files/figures/{plot_name}")
+                    plt.savefig(f"{self.path_registry.ckpt_figures}/{plot_name}")
                     self.path_registry.map_path(
                         plot_id,
-                        f"files/figures/{plot_name}",
+                        f"{self.path_registry.ckpt_figures}/{plot_name}",
                         (
                             f"Post Simulation Figure for {self.file_id}"
                             f" - {header_lab} vs {xlab}"

@@ -8,6 +8,7 @@ from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 from pypdf.errors import PdfReadError
 
+from mdagent.utils import PathRegistry
 
 def paper_scraper(search: str, pdir: str = "query") -> dict:
     try:
@@ -16,7 +17,7 @@ def paper_scraper(search: str, pdir: str = "query") -> dict:
         return {}
 
 
-def paper_search(llm, query):
+def paper_search(llm, query, path_registry):
     prompt = langchain.prompts.PromptTemplate(
         input_variables=["question"],
         template="""
@@ -27,19 +28,20 @@ def paper_search(llm, query):
         this question would be: '""",
     )
 
+    path = f"{path_registry.ckpt_files}/query"
     query_chain = langchain.chains.llm.LLMChain(llm=llm, prompt=prompt)
-    if not os.path.isdir("./query"):  # todo: move to ckpt
-        os.mkdir("query/")
+    if not os.path.isdir(path):
+        os.mkdir(path)
     search = query_chain.run(query)
     print("\nSearch:", search)
-    papers = paper_scraper(search, pdir=f"query/{re.sub(' ', '', search)}")
+    papers = paper_scraper(search, pdir=f"{path}/{re.sub(' ', '', search)}")
     return papers
 
 
-def scholar2result_llm(llm, query, k=5, max_sources=2):
+def scholar2result_llm(llm, query, path_registry, k=5, max_sources=2):
     """Useful to answer questions that require
     technical knowledge. Ask a specific question."""
-    papers = paper_search(llm, query)
+    papers = paper_search(llm, query, path_registry)
     if len(papers) == 0:
         return "Not enough papers found"
     docs = paperqa.Docs(llm=llm)
@@ -62,13 +64,15 @@ class Scholar2ResultLLM(BaseTool):
         "knowledge. Ask a specific question."
     )
     llm: BaseLanguageModel = None
+    path_registry: PathRegistry
 
-    def __init__(self, llm):
+    def __init__(self, llm, path_registry):
         super().__init__()
         self.llm = llm
+        self.path_registry = path_registry
 
     def _run(self, query) -> str:
-        return scholar2result_llm(self.llm, query)
+        return scholar2result_llm(self.llm, query, self.path_registry)
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
