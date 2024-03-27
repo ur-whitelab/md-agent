@@ -15,9 +15,7 @@ def todays_date():
     return str(datetime.today().strftime("%Y%m%d"))
 
 
-pytest.fixture()
-
-
+@pytest.fixture()
 def set_ckpt():
     return SetCheckpoint()
 
@@ -197,6 +195,8 @@ def test_map_path(get_registry):
 
                 # Check the result message
                 assert result == "Path successfully mapped to name: new_name"
+    if os.path.exists(registry.json_file_path):
+        os.remove(registry.json_file_path)
 
 
 def test_init_path_registry(get_registry):
@@ -205,7 +205,29 @@ def test_init_path_registry(get_registry):
     registry.map_path("temp_path", str(temp_path), "temp file")
     assert "temp_path" in registry.list_path_names()
     os.close(temp_file)
-    os.remove(temp_path)
+
+
+def test_path_registry_ckpt(get_registry):
+    registry = get_registry("raw", False)
+    ckpt_dir = registry.ckpt_dir
+    ckpt_files = registry.ckpt_files
+    ckpt_figures = registry.ckpt_figures
+    ckpt_pdb = registry.ckpt_pdb
+    ckpt_simulations = registry.ckpt_simulations
+    ckpt_records = registry.ckpt_records
+    all_ckpts = [
+        ckpt_dir,
+        ckpt_files,
+        ckpt_figures,
+        ckpt_pdb,
+        ckpt_simulations,
+        ckpt_records,
+    ]
+
+    for ckpt in all_ckpts:
+        assert ckpt
+        assert os.path.exists(ckpt)
+        assert os.path.isdir(ckpt)
 
 
 @pytest.fixture

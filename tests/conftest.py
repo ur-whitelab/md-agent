@@ -6,9 +6,8 @@ import pytest
 
 from mdagent.utils import PathRegistry
 
-pytest.fixture
 
-
+@pytest.fixture
 def path_to_cif():
     # Save original working directory
     original_cwd = os.getcwd()
@@ -213,9 +212,14 @@ ALA "Modify backbone"   2023-11-03 PDBE
 def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
     created_paths = []  # Keep track of created directories for cleanup
 
-    def create(raw_or_clean, with_files):
-        registry = PathRegistry("ckpt_test")
+    def get_new_ckpt():
+        registry = PathRegistry.get_instance(ckpt_dir="ckpt_test", resume=False)
         base_path = registry.ckpt_files
+        return base_path, registry.ckpt_dir
+
+    def create(raw_or_clean, with_files):
+        base_path, ckpt_dir = get_new_ckpt()
+        created_paths.append(ckpt_dir)
         if with_files:
             pdb_path = Path(base_path) / "pdb"
             record_path = Path(base_path) / "records"
@@ -232,7 +236,7 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
                 shutil.copy(clean_alanine_pdb_file, pdb_path)
 
         # Assuming PathRegistry is defined elsewhere and properly implemented
-        return PathRegistry().get_instance()
+        return PathRegistry().get_instance(resume=True)
 
     # Cleanup: Remove created directories and the copied pdb file
     def cleanup():

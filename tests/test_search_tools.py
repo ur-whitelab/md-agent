@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from langchain.chat_models import ChatOpenAI
 
@@ -23,5 +21,3 @@ def test_litsearch(questions, get_registry):
         ans = searchtool._run(q)
         assert isinstance(ans, str)
         assert len(ans) > 0
-    if os.path.exists("../query"):
-        os.rmdir("../query")

@@ -1,5 +1,5 @@
 import os
-from typing import Type
+from typing import Optional, Type
 
 from langchain.tools import BaseTool
 from openmm.app import PDBFile, PDBxFile
@@ -45,7 +45,7 @@ class CleaningToolFunction(BaseTool):
     """
     args_schema: Type[BaseModel] = CleaningToolFunctionInput
 
-    path_registry: PathRegistry
+    path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry):
         super().__init__()
@@ -141,7 +141,7 @@ class CleaningToolFunction(BaseTool):
                 file_format=end,
             )
             file_id = self.path_registry.get_fileid(file_name, FileType.PROTEIN)
-            directory = f"{self.path_registry.ckpt_files}/pdb"
+            directory = f"{self.path_registry.ckpt_pdb}"
             if not os.path.exists(directory):
                 os.makedirs(directory)
             if end == "pdb":

@@ -54,7 +54,7 @@ class MDAgent:
         self.path_registry = PathRegistry.get_instance(
             resume=self.resume, ckpt_dir=self.ckpt_dir
         )
-        self.ckpt_dir = self.path_registry.ckpt
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.uploaded_files = uploaded_files
         for file in uploaded_files:  # todo -> allow users to add descriptions?
             self.path_registry.map_path(file, file, description="User uploaded file")
@@ -127,9 +127,9 @@ class MDAgent:
 
     def force_clear_mem(self, all=False) -> str:
         if all:
-            ckpt_dir = os.path.abspath(os.path.dirname(self.path_registry.ckpt))
+            ckpt_dir = os.path.abspath(os.path.dirname(self.path_registry.ckpt_dir))
         else:
-            ckpt_dir = self.path_registry.ckpt
+            ckpt_dir = self.path_registry.ckpt_dir
         confirmation = "nonsense"
         while confirmation.lower() not in ["yes", "no"]:
             confirmation = input(

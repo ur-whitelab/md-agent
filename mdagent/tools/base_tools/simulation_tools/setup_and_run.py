@@ -794,17 +794,17 @@ class OpenMMSimulation:
             self.registry_records = [
                 (
                     "holder",
-                    f"{self.path_registry.ckpt_files}/records/{trajectory_name}",
+                    f"{self.path_registry.ckpt_records}/{trajectory_name}",
                     traj_desc,
                 ),
                 (
                     "holder",
-                    f"{self.path_registry.ckpt_files}/records/{log_name}",
+                    f"{self.path_registry.ckpt_records}/{log_name}",
                     log_desc,
                 ),
                 (
                     "holder",
-                    f"{self.path_registry.ckpt_files}/records/{topology_name}",
+                    f"{self.path_registry.ckpt_records}/{topology_name}",
                     top_desc,
                 ),
             ]
@@ -1137,9 +1137,7 @@ class OpenMMSimulation:
         script_content = textwrap.dedent(script_content).strip()
 
         # Write to file
-        directory = f"{self.path_registry.ckpt_files}/simulations"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        directory = f"{self.path_registry.ckpt_simulations}"
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(script_content)
@@ -1154,9 +1152,7 @@ class OpenMMSimulation:
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
-        top_name = (
-            f"{self.path_registry.ckpt_files}/pdb/{self.sim_id}_initial_positions.pdb"
-        )
+        top_name = f"{self.path_registry.ckpt_pdb}/{self.sim_id}_initial_positions.pdb"
         top_description = f"Initial positions for simulation {self.sim_id}"
         with open(top_name, "w") as f:
             PDBFile.writeFile(
@@ -1283,15 +1279,13 @@ class SetUpandRunFunction(BaseTool):
             openmmsim.write_standalone_script(filename=file_name)
             self.path_registry.map_path(
                 sim_id,
-                f"{self.path_registry.ckpt_files}/simulations/{file_name}",
+                f"{self.path_registry.ckpt_simulations}/{file_name}",
                 f"Basic Simulation of Protein {pdb_id}",
             )
             if save:
                 records = openmmsim.registry_records
                 # move record files to files/records/
                 print(os.listdir("."))
-                if not os.path.exists(f"{self.path_registry.ckpt_files}/records"):
-                    os.makedirs(f"{self.path_registry.ckpt_files}/records")
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:

@@ -156,11 +156,11 @@ class PackmolBox:
             time_stamp = self.path_registry.get_timestamp()[-6:]
             os.rename(
                 self.final_name,
-                f"{self.path_registry.ckpt_files}/pdb/{self.final_name}",
+                f"{self.path_registry.ckpt_pdb}/{self.final_name}",
             )
             self.path_registry.map_path(
                 f"PACKED_{time_stamp}",
-                f"{self.path_registry.ckpt_files}/pdb/{self.final_name}",
+                f"{self.path_registry.ckpt_pdb}/{self.final_name}",
                 self.file_description,
             )
             # move file to files/pdb

@@ -19,7 +19,7 @@ class Iterator:
         self.path_registry = subagent_settings.path_registry
         if not self.path_registry:
             raise ValueError("Path registry not found")
-        self.ckpt_dir = self.path_registry.ckpt
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
         os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)

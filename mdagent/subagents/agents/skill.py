@@ -23,7 +23,7 @@ class SkillManager:
         resume=False,
     ):
         self.path_registry = path_registry
-        self.ckpt_dir = self.path_registry.ckpt
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.dir_name = f"{self.ckpt_dir}/skill_library"
         self.retrieval_top_k = retrieval_top_k
 

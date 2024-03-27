@@ -20,7 +20,7 @@ class SubAgentSettings:
         self.path_registry = path_registry
         if self.path_registry is None:
             self.path_registry = PathRegistry.get_instance()
-        self.ckpt_dir = self.path_registry.ckpt
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations

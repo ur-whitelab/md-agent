@@ -129,7 +129,7 @@ def get_tools(
     if subagent_settings:
         ckpt_dir = subagent_settings.ckpt_dir
     else:
-        ckpt_dir = PathRegistry.get_instance().ckpt
+        ckpt_dir = PathRegistry.get_instance().ckpt_dir
 
     retrieved_tools = []
     if not skip_subagents:

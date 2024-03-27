@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -235,8 +234,6 @@ def test_mdagent_learn_init():
     assert mdagent_skill.skip_subagents is True
     mdagent_learn = MDAgent(learn=True)
     assert mdagent_learn.skip_subagents is False
-    shutil.rmtree(mdagent_skill.path_registry.ckpt)
-    shutil.rmtree(mdagent_learn.path_registry.ckpt)
 
 
 def test_mdagent_curriculum():
@@ -244,17 +241,14 @@ def test_mdagent_curriculum():
     mdagent_no_curr = MDAgent(curriculum=False)
     assert mdagent_curr.subagents_settings.curriculum is True
     assert mdagent_no_curr.subagents_settings.curriculum is False
-    shutil.rmtree(mdagent_curr.path_registry.ckpt)
-    shutil.rmtree(mdagent_no_curr.path_registry.ckpt)
 
 
 def test_mdagent_w_ckpt():
     dummy_test_dir = "ckpt_test"
     mdagent = MDAgent(resume=False, ckpt_dir=dummy_test_dir)
-    dummy_test_path = mdagent.path_registry.ckpt
+    dummy_test_path = mdagent.path_registry.ckpt_dir
     assert os.path.exists(dummy_test_path)
     assert dummy_test_dir in dummy_test_path
-    shutil.rmtree(dummy_test_path)
 
 
 def test_force_clear_mem(monkeypatch):
@@ -264,13 +258,15 @@ def test_force_clear_mem(monkeypatch):
     monkeypatch.setattr("builtins.input", lambda _: "yes")
 
     mdagent.force_clear_mem(all=False)
-    assert not os.path.exists(mdagent.path_registry.ckpt)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
     assert not os.path.exists(mdagent.path_registry.json_file_path)
-    assert os.path.exists(os.path.basename(os.path.dirname(mdagent.path_registry.ckpt)))
+    assert os.path.exists(
+        os.path.basename(os.path.dirname(mdagent.path_registry.ckpt_dir))
+    )
 
     mdagent = MDAgent(resume=False, ckpt_dir=dummy_test_dir)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
     mdagent.force_clear_mem(all=True)
-    assert not os.path.exists(mdagent.path_registry.ckpt)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
     assert not os.path.exists(mdagent.path_registry.json_file_path)
-    assert not os.path.exists(os.path.dirname(mdagent.path_registry.ckpt))
+    assert not os.path.exists(os.path.dirname(mdagent.path_registry.ckpt_dir))

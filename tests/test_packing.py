@@ -7,22 +7,16 @@ from mdagent.tools.base_tools.preprocess_tools.packing import (
     PackmolBox,
     PackMolTool,
 )
-from mdagent.utils import PathRegistry
-
-
-@pytest.fixture
-def get_registry():
-    return PathRegistry()
 
 
 @pytest.fixture
 def packmolbox(get_registry):
-    return PackmolBox(get_registry)
+    return PackmolBox(get_registry("raw", False))
 
 
 @pytest.fixture
 def packmoltool(get_registry):
-    return PackMolTool(get_registry)
+    return PackMolTool(get_registry("raw", False))
 
 
 @pytest.fixture
@@ -66,9 +60,7 @@ def test_packmol_generate_input(packmolbox, dummy_molecule):
     assert "end structure" in output
 
 
-def test_packmol_validate_input_missing_info(
-    packmoltool, packmol_valid_input, get_registry
-):
+def test_packmol_validate_input_missing_info(packmoltool, packmol_valid_input):
     example_input = packmol_valid_input
     example_input["pdbfiles_id"] = []
     input_valid = packmoltool.validate_input(example_input)
@@ -99,8 +91,8 @@ def test_packmol_validate_input_missing_info(
         "pdbfiles and 2 small molecules" in input_valid["error"]
     )
 
-    get_registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
-    packmoltool = PackMolTool(get_registry)
+    packmoltool.path_registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
+    packmoltool = PackMolTool(packmoltool.path_registry)
     example_input["pdbfiles_id"] = ["3pqr_test"]
     example_input["small_molecules"] = ["nonsense"]
     input_valid = packmoltool.validate_input(example_input)
@@ -139,9 +131,10 @@ def test_pacmol_validate_input_instruction_fail(packmoltool, packmol_valid_input
 
 
 def test_packmol_validate_input_valid(get_registry):
-    get_registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
-    get_registry.map_path("water", "water.pdb", "fake_water_test_file")
-    packmoltool = PackMolTool(get_registry)
+    registry = get_registry("raw", False)
+    registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
+    registry.map_path("water", "water.pdb", "fake_water_test_file")
+    packmoltool = PackMolTool(registry)
     example_input = {
         "pdbfiles_id": ["3pqr_test"],
         "small_molecules": ["water"],
@@ -155,7 +148,7 @@ def test_packmol_validate_input_valid(get_registry):
     assert input_valid == example_input
 
     example_input["small_molecules"] = ["water", "urea"]
-    get_registry.map_path("urea", "urea.pdb", "fake_urea_test_file")
+    registry.map_path("urea", "urea.pdb", "fake_urea_test_file")
     example_input["instructions"] = [
         example_input["instructions"][0],
         example_input["instructions"][0],

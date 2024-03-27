@@ -94,14 +94,10 @@ def test_find_png(vis_fxns):
         f.write("")
     png_files = vis_fxns._find_png()
     assert test_file in png_files
-
     os.remove(test_file)
 
 
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
-    path_to_notebook = (
-        f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb"
-    )
-    os.remove(path_to_notebook)
+    (f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb")
     assert result == "Visualization Complete"
