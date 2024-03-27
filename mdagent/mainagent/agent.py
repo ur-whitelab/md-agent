@@ -5,6 +5,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.subagents import SubAgentSettings
+from mdagent.subagents.agents import MemoryManager
 from mdagent.utils import PathRegistry, _make_llm
 
 from ..tools import get_tools, make_all_tools
@@ -50,7 +51,15 @@ class MDAgent:
         use_human_tool=False,
         curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
+        run_id="",
+        use_memory=True,
     ):
+        self.use_memory = use_memory
+        if use_memory:
+            self.memory = MemoryManager(path_registry, run_id=run_id)
+            self.run_id = self.memory.run_id
+        else:
+            self.run_id = ""
         if path_registry is None:
             path_registry = PathRegistry.get_instance()
         self.uploaded_files = uploaded_files
@@ -85,6 +94,7 @@ class MDAgent:
             ckpt_dir=ckpt_dir,
             resume=resume,
             curriculum=curriculum,
+            run_id=self.run_id,
         )
 
     def _initialize_tools_and_agent(self, user_input=None):
@@ -119,6 +129,12 @@ class MDAgent:
         )
 
     def run(self, user_input, callbacks=None):
-        self.prompt = make_prompt(user_input, self.agent_type, model="gpt-3.5-turbo")
+        run_memory = self.memory.run_id_mem if self.use_memory else None
+        self.prompt = make_prompt(
+            user_input, self.agent_type, model="gpt-3.5-turbo", run_memory=run_memory
+        )
         self.agent = self._initialize_tools_and_agent(user_input)
-        return self.agent.run(self.prompt, callbacks=callbacks)
+        model_output = self.agent.run(self.prompt, callbacks=callbacks)
+        if self.use_memory:
+            self.memory.write_all_summaries(model_output)
+        return model_output
