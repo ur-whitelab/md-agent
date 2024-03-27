@@ -293,7 +293,9 @@ class SimulationFunctions:
 
     def _instruction_summary(self, query: str):
         summary = self._prompt_summary(query)
-        self._save_to_file(summary, f"{self.path_registry.ckpt_files}/simulation_parameters.json")
+        self._save_to_file(
+            summary, f"{self.path_registry.ckpt_files}/simulation_parameters.json"
+        )
         return summary
 
     def _setup_simulation_from_json(self, file_name):
@@ -789,7 +791,8 @@ class OpenMMSimulation:
                     separator="\t",
                 )
             )
-            self.registry_records = [(
+            self.registry_records = [
+                (
                     "holder",
                     f"{self.path_registry.ckpt_files}/records/{trajectory_name}",
                     traj_desc,

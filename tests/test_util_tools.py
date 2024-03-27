@@ -1,13 +1,13 @@
 import json
 import os
+import shutil
 import tempfile
 from datetime import datetime
 from unittest.mock import mock_open, patch
-import shutil 
 
 import pytest
-from mdagent.utils import FileType
-from mdagent.utils.set_ckpt import SetCheckpoint
+
+from mdagent.utils import FileType, PathRegistry, SetCheckpoint
 
 
 @pytest.fixture
@@ -16,6 +16,8 @@ def todays_date():
 
 
 pytest.fixture()
+
+
 def set_ckpt():
     return SetCheckpoint()
 
@@ -30,6 +32,7 @@ def test_setckpt_root_dir(set_ckpt):
     root_dir = set_ckpt.find_root_dir()
     assert root_dir
     assert "setup.py" in os.listdir(root_dir)
+
 
 def test_write_to_file(get_registry):
     registry = get_registry("raw", False)
@@ -204,9 +207,11 @@ def test_init_path_registry(get_registry):
     os.close(temp_file)
     os.remove(temp_path)
 
+
 @pytest.fixture
 def root_dir(set_ckpt):
     return set_ckpt.find_root_dir()
+
 
 def test_setckpt_make_ckpt_parent_folder(set_ckpt, root_dir):
     dir_test = "nonsense_dir"

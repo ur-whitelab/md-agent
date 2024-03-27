@@ -53,7 +53,9 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
         with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
         path_registry.map_path(
-            file_id, {path_registry.ckpt_files}/pdb/{filename}, "PDB file downloaded from RSCB"
+            file_id,
+            f"{path_registry.ckpt_files}/pdb/{filename}",
+            "PDB file downloaded from RSCB",
         )
 
         return filename, file_id
@@ -193,7 +195,8 @@ class MolPDB:
             return (
                 f"PDB file for {mol_str} "
                 "successfully created and saved "
-                f"to {mol_name}.pdb.")
+                f"to {mol_name}.pdb."
+            )
         except Exception:
             print(
                 "There was an error getting pdb. Please input a single molecule name."

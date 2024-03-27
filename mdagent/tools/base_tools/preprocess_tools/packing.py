@@ -176,7 +176,6 @@ class PackmolBox:
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
 
 
-
 def packmol_wrapper(
     path_registry,
     pdbfiles: List,
@@ -303,7 +302,10 @@ class PackMolTool(BaseTool):
         pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
         # copy them to the current directory with temp_ names
 
-        pdbfile_names = [f"{self.path_registry.ckpt_files}/temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
+        pdbfile_names = [
+            f"{self.path_registry.ckpt_files}/temp_{pdbfile_name}"
+            for pdbfile_name in pdbfile_names
+        ]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
         small_molecules = values.get("small_molecules", [])

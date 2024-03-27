@@ -135,8 +135,9 @@ class RMSDFunctions:
             )
             message += plot_message
             self.path_registry.map_path(
-                plot_id, 
-                f"{self.path_registry.ckpt_figures}/{plot_name}.png", plot_message
+                plot_id,
+                f"{self.path_registry.ckpt_figures}/{plot_name}.png",
+                plot_message,
             )
         return message
 

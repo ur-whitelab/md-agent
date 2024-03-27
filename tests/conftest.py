@@ -7,6 +7,8 @@ import pytest
 from mdagent.utils import PathRegistry
 
 pytest.fixture
+
+
 def path_to_cif():
     # Save original working directory
     original_cwd = os.getcwd()

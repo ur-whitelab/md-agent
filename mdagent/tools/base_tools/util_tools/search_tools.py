@@ -10,6 +10,7 @@ from pypdf.errors import PdfReadError
 
 from mdagent.utils import PathRegistry
 
+
 def paper_scraper(search: str, pdir: str = "query") -> dict:
     try:
         return paperscraper.search_papers(search, pdir=pdir)

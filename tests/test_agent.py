@@ -1,7 +1,8 @@
 import json
-from unittest.mock import MagicMock, mock_open, patch
 import os
 import shutil
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
 
 from mdagent.mainagent.agent import MDAgent
@@ -245,7 +246,7 @@ def test_mdagent_curriculum():
     assert mdagent_no_curr.subagents_settings.curriculum is False
     shutil.rmtree(mdagent_curr.path_registry.ckpt)
     shutil.rmtree(mdagent_no_curr.path_registry.ckpt)
-    
+
 
 def test_mdagent_w_ckpt():
     dummy_test_dir = "ckpt_test"

@@ -7,12 +7,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 from langchain.chat_models import ChatOpenAI
 
-from mdagent.tools.base_tools import (
-    CleaningTools,
-    Scholar2ResultLLM,
-    VisFunctions,
-    get_pdb,
-)
+from mdagent.tools.base_tools import Scholar2ResultLLM, VisFunctions, get_pdb
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.preprocess_tools.packing import PackMolTool
 from mdagent.tools.base_tools.preprocess_tools.pdb_get import MolPDB
@@ -61,11 +56,6 @@ def packmol(get_registry):
 @pytest.fixture
 def molpdb(get_registry):
     return MolPDB(get_registry("raw", False))
-
-
-@pytest.fixture
-def cleaning_fxns(get_registry):
-    return CleaningTools(get_registry("raw", True))
 
 
 def test_process_csv(plotting_tools):

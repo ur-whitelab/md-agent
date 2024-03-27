@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -58,7 +57,6 @@ class RadiusofGyration:
             self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
         )
         self.path_registry.map_path(
-            
             f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv",
             self.rgy_file,
             description=f"Radii of gyration per frame for {self.pdb_id}",

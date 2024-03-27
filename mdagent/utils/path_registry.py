@@ -2,7 +2,8 @@ import json
 import os
 from datetime import datetime
 from enum import Enum
-from .set_ckpt import SetCheckpoint
+
+from mdagent.utils.set_ckpt import SetCheckpoint
 
 
 ##TODO: add method to get description from simulation inputs
@@ -17,6 +18,7 @@ class FileType(Enum):
 
 class PathRegistry:
     instance = None
+    set_ckpt = SetCheckpoint()
 
     @classmethod
     def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
