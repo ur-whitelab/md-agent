@@ -137,4 +137,5 @@ class MDAgent:
         model_output = self.agent.run(self.prompt, callbacks=callbacks)
         if self.use_memory:
             self.memory.write_all_summaries(model_output)
-        return model_output
+            print("Your run id is: ", self.run_id)
+        return model_output + "Your run id is: " + self.run_id
