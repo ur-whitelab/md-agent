@@ -257,7 +257,7 @@ def create_filtered_query(raw_query, model="gpt-3.5-turbo", examples=examples):
     return generator(query_filter(raw_query, examples=examples))
 
 
-def make_prompt(user_input, agent_type, model="gpt-3.5-turbo"):
+def make_prompt(user_input, agent_type, model="gpt-3.5-turbo", run_memory=None):
     if agent_type == "Structured":
         tries = 1
 
@@ -315,6 +315,7 @@ def make_prompt(user_input, agent_type, model="gpt-3.5-turbo"):
                     Proteins=_proteins,
                     Parameters=_parameters,
                     UserProposedPlan=_plan,
+                    context=run_memory,
                 )
                 break
             except ValueError as e:
@@ -333,8 +334,8 @@ def make_prompt(user_input, agent_type, model="gpt-3.5-turbo"):
                 "Failed to structure query after 3 attempts."
                 "Input will be used as is."
             )
-            return structured_prompt.format(input=user_input)
+            return structured_prompt.format(input=user_input, context=run_memory)
         else:
             return prompt
     elif agent_type == "OpenAIFunctionsAgent":
-        return openaifxn_prompt.format(input=user_input)
+        return openaifxn_prompt.format(input=user_input, context=run_memory)

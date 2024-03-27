@@ -19,7 +19,7 @@ class SkillManager:
     def __init__(
         self,
         path_registry: Optional[PathRegistry],
-        model="gpt-3.5",
+        model="gpt-3.5-turbo",
         temp=0.1,
         retrieval_top_k=5,
         ckpt_dir="ckpt",

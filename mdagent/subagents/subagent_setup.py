@@ -1,6 +1,12 @@
 from typing import Optional
 
-from mdagent.subagents.agents import Action, Critic, Curriculum, SkillManager
+from mdagent.subagents.agents import (
+    Action,
+    Critic,
+    Curriculum,
+    MemoryManager,
+    SkillManager,
+)
 from mdagent.utils import PathRegistry
 
 
@@ -16,8 +22,12 @@ class SubAgentSettings:
         resume=False,
         retrieval_top_k=5,
         curriculum=True,
+        memory: Optional[MemoryManager] = None,
+        run_id="",
     ):
         self.path_registry = path_registry
+        self.run_id = run_id
+        self.memory = memory
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations
@@ -34,6 +44,8 @@ class SubAgentInitializer:
             settings = SubAgentSettings()
         if settings.path_registry is None:
             settings.path_registry = PathRegistry.get_instance()
+        self.run_id = settings.run_id
+        self.memory = settings.memory
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp
