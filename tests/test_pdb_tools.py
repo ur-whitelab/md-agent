@@ -1,5 +1,6 @@
 import os
 import time
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -85,3 +86,48 @@ def test_packmol_download_only_once(packmol):
         f"{packmol.path_registry.ckpt_pdb}/{small_molecules[0]}.pdb"
     )
     assert time_before == time_after
+
+
+def test_packmol_sm_download_called(packmol):
+    packmol.path_registry.map_path(
+        "1A3N_144150", f"{packmol.path_registry.ckpt_pdb}/1A3N_144150.pdb", "pdb"
+    )
+    with patch(
+        "mdagent.tools.base_tools.preprocess_tools.packing.PackMolTool._get_sm_pdbs",
+        new=MagicMock(),
+    ) as mock_get_sm_pdbs:
+        test_values = {
+            "pdbfiles_id": ["1A3N_144150"],
+            "small_molecules": ["water", "benzene"],
+            "number_of_molecules": [1, 10, 10],
+            "instructions": [
+                ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
+                ["inside box 0. 0. 0. 100. 100. 100."],
+            ],
+        }
+
+        packmol._run(**test_values)
+
+        mock_get_sm_pdbs.assert_called_with(["water", "benzene"])
+
+
+@pytest.mark.parametrize("small_molecule", [["water"], ["benzene"]])
+def test_packmol_download_only(packmol, small_molecule):
+    packmol.path_registry._remove_path_from_json(f"{small_molecule[0]}")
+
+    packmol._get_sm_pdbs(small_molecule)
+
+    here = os.path.exists(f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb")
+    os.path.exists(f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb")
+    assert here  # or maybe_here
+    time_before = os.path.getmtime(
+        f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb"
+    )
+    time.sleep(3)
+    packmol._get_sm_pdbs(small_molecule)
+    time_after = os.path.getmtime(
+        f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb"
+    )
+    assert time_before == time_after
+    os.remove(f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb")

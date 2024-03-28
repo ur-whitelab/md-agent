@@ -11,12 +11,12 @@ from mdagent.tools.base_tools.preprocess_tools.packing import (
 
 @pytest.fixture
 def packmolbox(get_registry):
-    return PackmolBox(get_registry("raw", False))
+    return PackmolBox(path_registry=get_registry("raw", False))
 
 
 @pytest.fixture
 def packmoltool(get_registry):
-    return PackMolTool(get_registry("raw", False))
+    return PackMolTool(path_registry=get_registry("raw", False))
 
 
 @pytest.fixture

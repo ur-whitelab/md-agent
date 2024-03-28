@@ -96,7 +96,6 @@ class MDAgent:
             if self.top_k_tools != "all" and user_input is not None:
                 # retrieve only tools relevant to user input
                 self.tools = get_tools(
-                    ckpt=self.ckpt_dir,
                     query=user_input,
                     llm=self.tools_llm,
                     subagent_settings=self.subagents_settings,

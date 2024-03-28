@@ -12,7 +12,6 @@ class SubAgentSettings:
         temp=0.1,
         max_iterations=40,
         verbose=True,
-        ckpt_dir="ckpt",
         resume=False,
         retrieval_top_k=5,
         curriculum=True,

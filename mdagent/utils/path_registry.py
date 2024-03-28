@@ -209,7 +209,7 @@ class PathRegistry:
             "Names found in registry: " + ", ".join(filesids)
             if filesids
             else "No names found. The JSON file is empty or does not"
-            "contain name mappings."
+            " contain name mappings."
         )
         return msg
 
@@ -228,7 +228,7 @@ class PathRegistry:
             "Files found in registry: " + ", ".join(fileid_w_descriptions)
             if filesids
             else "No names found. The JSON file is empty or does not"
-            "contain name mappings."
+            " contain name mappings."
         )
 
     def get_timestamp(self):
@@ -245,6 +245,8 @@ class PathRegistry:
         parts, ending = file_name.split(".")
         parts_list = parts.split("_")
         current_ids = self.list_path_names()
+        current_ids = self.list_path_names()
+        print(current_ids)
         # Extract the timestamp (assuming it's always in the second to last part)
         timestamp_part = parts_list[-1]
         # Get the last 6 digits of the timestamp

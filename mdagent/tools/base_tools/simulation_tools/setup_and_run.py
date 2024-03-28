@@ -635,8 +635,8 @@ class OpenMMSimulation:
         self.sim_id = sim_id
         self.pdb_id = pdb_id
         self.int_params = (
-            self.params.integrator_params
-            if self.params.integrator_params is not None
+            self.params["integrator_params"]
+            if self.params["integrator_params"] is not None
             else {
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
@@ -647,8 +647,8 @@ class OpenMMSimulation:
         )
 
         self.sys_params = (
-            self.params.system_params
-            if self.params.system_params is not None
+            self.params["system_params"]
+            if self.params["system_params"] is not None
             else {
                 "nonbondedMethod": NoCutoff,
                 "nonbondedCutoff": 1 * nanometers,
@@ -661,8 +661,8 @@ class OpenMMSimulation:
         )
 
         self.sim_params = (
-            self.params.simulation_params
-            if self.params.simulation_params is not None
+            self.params["simulation_params"]
+            if self.params["simulation_params"] is not None
             else {
                 "Ensemble": "NVT",
                 "Number of Steps": 5000,
@@ -676,10 +676,10 @@ class OpenMMSimulation:
     def setup_system(self):
         print("Building system...")
         st.markdown("Building system", unsafe_allow_html=True)
-        self.pdb_id = self.params.pdb_id
+        self.pdb_id = self.params["pdb_id"]
         self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
-        self.forcefield = ForceField(*self.params.forcefield_files)
+        self.forcefield = ForceField(*self.params["forcefield_files"])
         self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
 
         if self.sys_params.get("nonbondedMethod", None) in [
@@ -760,10 +760,6 @@ class OpenMMSimulation:
                 f"Simulation trajectory for protein {self.pdb_id}"
                 f" and simulation {self.sim_id}"
             )
-            top_desc = (
-                f"Simulation topology for protein"
-                f"{self.pdb_id} and simulation {self.sim_id}"
-            )
             log_desc = (
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
@@ -791,22 +787,14 @@ class OpenMMSimulation:
                     separator="\t",
                 )
             )
+            # "Holders because otherwise the ids are the same
             self.registry_records = [
-                (
+                [
                     "holder",
                     f"{self.path_registry.ckpt_records}/{trajectory_name}",
                     traj_desc,
-                ),
-                (
-                    "holder",
-                    f"{self.path_registry.ckpt_records}/{log_name}",
-                    log_desc,
-                ),
-                (
-                    "holder",
-                    f"{self.path_registry.ckpt_records}/{topology_name}",
-                    top_desc,
-                ),
+                ],
+                ["holder", f"{self.path_registry.ckpt_records}/{log_name}", log_desc],
             ]
 
         else:
@@ -1289,11 +1277,10 @@ class SetUpandRunFunction(BaseTool):
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
-                    record_list = list(record)
-                    record_list[0] = self.path_registry.get_fileid(
-                        record_list[1].split("/")[-1], FileType.RECORD
+                    record[0] = self.path_registry.get_fileid(  # Step necessary here to
+                        record[1].split("/")[-1],  # avoid id being repeated
+                        FileType.RECORD,
                     )
-                    record = tuple(record_list)
                     self.path_registry.map_path(*record)
             return (
                 "Simulation done! \n Summary: \n"

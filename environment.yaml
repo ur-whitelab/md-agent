@@ -1,11 +1,10 @@
 name: my-environment
 channels:
-  - omnia
   - conda-forge
 dependencies:
   - openmm >= 7.6
   - pdbfixer >= 1.5
-  - mdanalysis
+  - mdtraj
   - pip
   - pip:
     - flake8

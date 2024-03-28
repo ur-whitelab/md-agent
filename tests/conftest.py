@@ -224,9 +224,10 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
             pdb_path = Path(base_path) / "pdb"
             record_path = Path(base_path) / "records"
             simulation_path = Path(base_path) / "simulation"
+            figure_path = Path(base_path) / "figures"
 
             # Create directories
-            for path in [pdb_path, record_path, simulation_path]:
+            for path in [pdb_path, record_path, simulation_path, figure_path]:
                 os.makedirs(path, exist_ok=True)
                 created_paths.append(path)
             if raw_or_clean == "raw":
