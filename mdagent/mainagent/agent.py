@@ -1,16 +1,15 @@
-from dotenv import load_dotenv
+import os
+
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.subagents import SubAgentSettings
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry, SetCheckpoint, _make_llm
 
 from ..tools import get_tools, make_all_tools
 from .query_filter import make_prompt
-
-load_dotenv()
 
 
 class AgentType:
@@ -41,7 +40,6 @@ class MDAgent:
         temp=0.1,
         max_iterations=40,
         verbose=True,
-        path_registry=None,
         subagents_model="gpt-4-1106-preview",
         ckpt_dir="ckpt",
         resume=False,
@@ -51,11 +49,15 @@ class MDAgent:
         curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
     ):
-        if path_registry is None:
-            path_registry = PathRegistry.get_instance()
+        self.resume = resume
+        self.ckpt_dir = ckpt_dir
+        self.path_registry = PathRegistry.get_instance(
+            resume=self.resume, ckpt_dir=self.ckpt_dir
+        )
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.uploaded_files = uploaded_files
         for file in uploaded_files:  # todo -> allow users to add descriptions?
-            path_registry.map_path(file, file, description="User uploaded file")
+            self.path_registry.map_path(file, file, description="User uploaded file")
 
         self.agent_type = agent_type
         self.user_tools = tools
@@ -77,13 +79,12 @@ class MDAgent:
             self.skip_subagents = True
 
         self.subagents_settings = SubAgentSettings(
-            path_registry=path_registry,
+            path_registry=self.path_registry,
             subagents_model=subagents_model,
             temp=temp,
             max_iterations=max_iterations,
             verbose=verbose,
-            ckpt_dir=ckpt_dir,
-            resume=resume,
+            resume=self.resume,
             curriculum=curriculum,
         )
 
@@ -122,3 +123,24 @@ class MDAgent:
         self.prompt = make_prompt(user_input, self.agent_type, model="gpt-3.5-turbo")
         self.agent = self._initialize_tools_and_agent(user_input)
         return self.agent.run(self.prompt, callbacks=callbacks)
+
+    def force_clear_mem(self, all=False) -> str:
+        if all:
+            ckpt_dir = os.path.abspath(os.path.dirname(self.path_registry.ckpt_dir))
+        else:
+            ckpt_dir = self.path_registry.ckpt_dir
+        confirmation = "nonsense"
+        while confirmation.lower() not in ["yes", "no"]:
+            confirmation = input(
+                "Are you sure you want to"
+                "clear memory? This will "
+                "remove all saved "
+                "checkpoints? (yes/no): "
+            )
+
+        if confirmation.lower() == "yes":
+            set_ckpt = SetCheckpoint()
+            set_ckpt.clear_all_ckpts(ckpt_dir)
+            return "All checkpoints have been removed."
+        else:
+            return "Action canceled."

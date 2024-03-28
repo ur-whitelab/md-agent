@@ -1,4 +1,3 @@
-import os
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
@@ -79,11 +78,13 @@ class RDFTool(BaseTool):
             print("Error in RDF calculation:", str(e))
             raise ("Error in RDF calculation: ", str(e))
         # save plot
+        plot_name_save = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
         fig, ax = plt.subplots()
         ax.plot(r, gr)
         ax.set_xlabel(r"$r$ (nm)")
         ax.set_ylabel(r"$g(r)$")
         ax.set_title("RDF")
+        plt.savefig(plot_name_save)
         plot_name = self.path_registry.write_file_name(
             type=FileType.FIGURE,
             fig_analysis="rdf",
@@ -92,10 +93,7 @@ class RDFTool(BaseTool):
         )
         fig_id = self.path_registry.get_fileid(plot_name, type=FileType.FIGURE)
 
-        if not os.path.exists("files/figures"):
-            os.makedirs("files/figures")
-
-        plt.savefig(f"files/figures/{plot_name}")
+        plt.savefig(f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png")
         self.path_registry.map_path(
             fig_id,
             plot_name,

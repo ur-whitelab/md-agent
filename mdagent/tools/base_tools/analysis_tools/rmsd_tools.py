@@ -44,18 +44,6 @@ class RMSDFunctions:
             self.ref_trajectory = None
         self.base_dir = "files"  # TODO: should update this to use checkpoint dir
 
-    @property
-    def figure_dir(self):
-        path = os.path.join(self.base_dir, "figures")
-        os.makedirs(path, exist_ok=True)  # only create if it doesn't exist
-        return path
-
-    @property
-    def csv_dir(self):
-        path = os.path.join(self.base_dir, "records")
-        os.makedirs(path, exist_ok=True)
-        return path
-
     def calculate_rmsd(
         self,
         rmsd_type="rmsd",
@@ -127,7 +115,7 @@ class RMSDFunctions:
         time_stamp = self.path_registry.get_timestamp()
         csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.csv_dir}/{csv_filename}",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             R.results.rmsd,
             fmt=["%d", "%f", "%f"],
             delimiter=",",
@@ -137,11 +125,11 @@ class RMSDFunctions:
         avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
         final_rmsd = R.results.rmsd[-1, 2]
         message = (
-            "Calculated RMSD for each timestep with respect"
+            "Calculated RMSD for each timestep with respect "
             f"to the initial frame. Saved to {csv_filename}. "
         )
         self.path_registry.map_path(
-            csv_filename, f"{self.csv_dir}/{csv_filename}", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
         message += f"Average RMSD is {avg_rmsd} \u212B. "
         message += f"Final RMSD is {final_rmsd} \u212B.\n"
@@ -152,24 +140,23 @@ class RMSDFunctions:
             plt.ylabel("RMSD ($\AA$)")
             plt.title("Time-Dependent RMSD")
             plt.legend()
+
             fig_name = self.path_registry.write_file_name(
                 type=FileType.FIGURE,
                 fig_analysis=self.filename,
                 file_format="png",
             )
-            plt.savefig(f"{self.figure_dir}/{fig_name}")
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{self.filename}.png")
             plot_message = (
                 f"Plotted RMSD over time for {self.pdb_name}."
-                f" Saved to {fig_name}.\n"
+                f" Saved to {self.filename}.png.\n"
             )
             self.path_registry.map_path(
-                fig_name, f"{self.figure_dir}/{fig_name}", plot_message
+                fig_name,
+                f"{self.path_registry.ckpt_figures}/{self.filename}.png",
+                plot_message,
             )
             message += plot_message
-        print(message)
-        print(f"{self.csv_dir}/{csv_filename}")
-        if plot:
-            print(f"{self.figure_dir}/{fig_name}")
         return message
 
     def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):
@@ -199,13 +186,13 @@ class RMSDFunctions:
         time_stamp = self.path_registry.get_timestamp()
         csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.csv_dir}/{csv_filename}",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             pairwise_matrix,
             delimiter=",",
         )
         message = f"Saved pairwise RMSD matrix to {csv_filename}.\n"
         self.path_registry.map_path(
-            csv_filename, f"{self.csv_dir}/{csv_filename}", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
         if plot_heatmap:
             plt.imshow(pairwise_matrix, cmap="viridis")
@@ -217,11 +204,11 @@ class RMSDFunctions:
                 fig_analysis=self.filename,
                 file_format="png",
             )
-            plt.savefig(f"{self.figure_dir}/{fig_name}")
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
             plot_message = f"Plotted pairwise RMSD matrix. Saved to {fig_name}.\n"
             message += plot_message
             self.path_registry.map_path(
-                fig_name, f"{self.figure_dir}/{fig_name}", plot_message
+                fig_name, f"{self.path_registry.ckpt_figures}/{fig_name}", plot_message
             )
         return message
 
@@ -248,7 +235,7 @@ class RMSDFunctions:
         time_stamp = self.path_registry.get_timestamp()
         csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.csv_dir}/{csv_filename}",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             rmsf_data,
             delimiter=",",
             header="Residue_ID,RMSF",
@@ -256,7 +243,7 @@ class RMSDFunctions:
         )
         message = f"Saved RMSF data to {csv_filename}.\n"
         self.path_registry.map_path(
-            csv_filename, f"{self.csv_dir}/{csv_filename}", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
 
         # Plot RMSF
@@ -272,7 +259,7 @@ class RMSDFunctions:
                 fig_analysis=self.filename,
                 file_format="png",
             )
-            plt.savefig(f"{self.figure_dir}/{fig_name}")
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
             plot_message = f"Plotted RMSF. Saved to {fig_name}.\n"
             message += plot_message
             self.path_registry.map_path(

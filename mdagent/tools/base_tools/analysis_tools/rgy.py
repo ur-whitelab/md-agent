@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -50,13 +49,15 @@ class RadiusofGyration:
         self._load_traj(pdb_id)
         rg_per_frame = md.compute_rg(self.traj)
 
-        self.rgy_file = f"files/radii_of_gyration_{self.pdb_id}.csv"
+        self.rgy_file = (
+            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv"
+        )
 
         np.savetxt(
             self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
         )
         self.path_registry.map_path(
-            f"radii_of_gyration_{self.pdb_id}",
+            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv",
             self.rgy_file,
             description=f"Radii of gyration per frame for {self.pdb_id}",
         )
@@ -85,12 +86,10 @@ class RadiusofGyration:
         plt.ylabel("Radius of Gyration (nm)")
         plt.title(f"{pdb_id} - Radius of Gyration Over Time")
 
-        if not os.path.exists("files/figures"):
-            os.makedirs("files/figures")
-        plt.savefig(f"files/figures/{plot_name}")
+        plt.savefig(f"{self.path_registry.ckpt_figures}/{plot_name}")
         self.path_registry.map_path(
             plot_id,
-            plot_name,
+            f"{self.path_registry.ckpt_figures}/{plot_name}",
             description=f"Plot of radii of gyration over time for {self.pdb_id}",
         )
         return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"

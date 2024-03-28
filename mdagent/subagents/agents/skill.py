@@ -1,9 +1,7 @@
 import inspect
 import json
 import os
-from typing import Optional
 
-from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -18,16 +16,15 @@ from .prompts import skill_template
 class SkillManager:
     def __init__(
         self,
-        path_registry: Optional[PathRegistry],
+        path_registry: PathRegistry,
         model="gpt-3.5",
         temp=0.1,
         retrieval_top_k=5,
-        ckpt_dir="ckpt",
         resume=False,
     ):
-        load_dotenv()
-        self.dir_name = f"{ckpt_dir}/skill_library"
         self.path_registry = path_registry
+        self.ckpt_dir = self.path_registry.ckpt_dir
+        self.dir_name = f"{self.ckpt_dir}/skill_library"
         self.retrieval_top_k = retrieval_top_k
 
         llm = ChatOpenAI(
@@ -60,7 +57,7 @@ class SkillManager:
         self.vectordb = Chroma(
             collection_name="skill_vectordb",
             embedding_function=OpenAIEmbeddings(),
-            persist_directory=f"{ckpt_dir}/skill_library/vectordb",
+            persist_directory=f"{self.ckpt_dir}/skill_library/vectordb",
         )
 
     def get_skills(self):

@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from typing import Optional
 
@@ -37,10 +38,14 @@ class VisFunctions:
         file_name = self._find_png()
         if not file_name:
             raise FileNotFoundError("No .png files were created")
+        shutil.move(file_name[0], f"{self.path_registry.ckpt_figures}/{file_name[0]}")
         self.path_registry.map_path(
             f"mol_render_{self.cif_file_name}",
-            file_name[0],
-            "Visualization of cif file {cif_file_name} as png file. using molrender.",
+            f"{self.path_registry.ckpt_figures}/{file_name[0]}",
+            (
+                f"Visualization of cif file {self.cif_file_name}"
+                "as png file. using molrender."
+            ),
         )
 
         if result.returncode != 0:
@@ -49,7 +54,7 @@ class VisFunctions:
             print(f"Output: {result.stdout}")
         return (
             "Visualization using molrender complete, "
-            "saved as: mol_render_{self.cif_file_name}"
+            f"saved as: mol_render_{self.cif_file_name}"
         )
 
     def create_notebook(self, cif_file: str) -> str:
@@ -82,7 +87,10 @@ view
         nb.cells.extend([install_cell, import_cell])
 
         # Write the notebook to a file
-        notebook_name = self.cif_file_name.split(".")[0] + "_vis.ipynb"
+        notebook_name = (
+            f"{self.path_registry.ckpt_figures}"
+            f"/{self.cif_file_name.split('.')[0]}_vis.ipynb"
+        )
         with open(notebook_name, "w") as f:
             nbf.write(nb, f)
 
