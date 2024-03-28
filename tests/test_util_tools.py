@@ -1,19 +1,35 @@
 import json
 import os
+import shutil
 import tempfile
 from datetime import datetime
 from unittest.mock import mock_open, patch
 
 import pytest
-from langchain.chat_models import ChatOpenAI
 
-from mdagent.tools.base_tools import Scholar2ResultLLM
-from mdagent.utils import FileType
+from mdagent.utils import FileType, PathRegistry, SetCheckpoint
 
 
 @pytest.fixture
 def todays_date():
     return str(datetime.today().strftime("%Y%m%d"))
+
+
+@pytest.fixture()
+def set_ckpt():
+    return SetCheckpoint()
+
+
+def clear_ckpt(child: str = "ckpt_test"):
+    for dir in os.listdir("ckpt"):
+        if child in dir:
+            shutil.rmtree(os.path.join("ckpt", dir))
+
+
+def test_setckpt_root_dir(set_ckpt):
+    root_dir = set_ckpt.find_root_dir()
+    assert root_dir
+    assert "setup.py" in os.listdir(root_dir)
 
 
 def test_write_to_file(get_registry):
@@ -179,6 +195,8 @@ def test_map_path(get_registry):
 
                 # Check the result message
                 assert result == "Path successfully mapped to name: new_name"
+    if os.path.exists(registry.json_file_path):
+        os.remove(registry.json_file_path)
 
 
 def test_init_path_registry(get_registry):
@@ -187,25 +205,97 @@ def test_init_path_registry(get_registry):
     registry.map_path("temp_path", str(temp_path), "temp file")
     assert "temp_path" in registry.list_path_names()
     os.close(temp_file)
-    os.remove(temp_path)
+
+
+def test_path_registry_ckpt(get_registry):
+    registry = get_registry("raw", False)
+    ckpt_dir = registry.ckpt_dir
+    ckpt_files = registry.ckpt_files
+    ckpt_figures = registry.ckpt_figures
+    ckpt_pdb = registry.ckpt_pdb
+    ckpt_simulations = registry.ckpt_simulations
+    ckpt_records = registry.ckpt_records
+    all_ckpts = [
+        ckpt_dir,
+        ckpt_files,
+        ckpt_figures,
+        ckpt_pdb,
+        ckpt_simulations,
+        ckpt_records,
+    ]
+
+    for ckpt in all_ckpts:
+        assert ckpt
+        assert os.path.exists(ckpt)
+        assert os.path.isdir(ckpt)
 
 
 @pytest.fixture
-def questions():
-    qs = [
-        "What are the effects of norhalichondrin B in mammals?",
-    ]
-    return qs[0]
+def root_dir(set_ckpt):
+    return set_ckpt.find_root_dir()
 
 
-@pytest.mark.skip(reason="This requires an API call")
-def test_litsearch(questions):
-    llm = ChatOpenAI()
+def test_setckpt_make_ckpt_parent_folder(set_ckpt, root_dir):
+    dir_test = "nonsense_dir"
+    # test make_ckpt_parent_folder
+    test_ckpt_dir = os.path.join(root_dir, dir_test)
+    if os.path.exists(test_ckpt_dir):
+        shutil.rmtree(test_ckpt_dir)
+    ckpt_path = set_ckpt.make_ckpt_parent_folder(dir_test)
+    assert os.path.exists(ckpt_path)
+    shutil.rmtree(os.path.join(root_dir, dir_test))
 
-    searchtool = Scholar2ResultLLM(llm=llm)
-    for q in questions:
-        ans = searchtool._run(q)
-        assert isinstance(ans, str)
-        assert len(ans) > 0
-    if os.path.exists("../query"):
-        os.rmdir("../query")
+
+def test_set_ckpt_subdir_single(set_ckpt, root_dir):
+    dir_test = "ckpt_test"
+    default = "ckpt"
+
+    ckpt_subdir_1 = set_ckpt.set_ckpt_subdir(ckpt_dir=dir_test)
+    expected_subdir_1 = os.path.join(root_dir, f"{default}/{dir_test}_")
+    assert os.path.exists(ckpt_subdir_1)
+    assert expected_subdir_1 in ckpt_subdir_1
+    shutil.rmtree(os.path.dirname(ckpt_subdir_1))
+
+    ckpt_subdir_2 = set_ckpt.set_ckpt_subdir(ckpt_parent_folder=dir_test)
+    expected_subdir_2 = os.path.join(root_dir, f"{dir_test}/{default}_")
+    assert os.path.exists(ckpt_subdir_2)
+    assert expected_subdir_2 in ckpt_subdir_2
+    shutil.rmtree(os.path.dirname(ckpt_subdir_2))
+
+    ckpt_subdir_3 = set_ckpt.set_ckpt_subdir()
+    expected_subdir_3 = os.path.join(root_dir, f"{default}/{default}_")
+    assert os.path.exists(ckpt_subdir_3)
+    assert expected_subdir_3 in ckpt_subdir_3
+    shutil.rmtree(os.path.dirname(ckpt_subdir_3))
+
+
+def test_set_ckpt_subdir_multiple_and_resume(set_ckpt, root_dir):
+    dir_test = "ckpt_test"
+    default = "ckpt"
+    expected_subdir_0 = os.path.join(root_dir, f"{dir_test}/{default}_")
+
+    ckpt_subdir_0 = set_ckpt.set_ckpt_subdir(ckpt_parent_folder=dir_test)
+
+    ckpt_subdir_1 = set_ckpt.set_ckpt_subdir(ckpt_parent_folder=dir_test)
+
+    assert int(ckpt_subdir_1.split("_")[-1]) > int(ckpt_subdir_0.split("_")[-1])
+    assert expected_subdir_0 in ckpt_subdir_0
+    assert expected_subdir_0 in ckpt_subdir_1
+
+    resume = set_ckpt.get_resume_ckpt(ckpt_parent_folder=dir_test)
+    assert resume == ckpt_subdir_1
+    shutil.rmtree(os.path.join(root_dir, dir_test))
+    resume = set_ckpt.get_resume_ckpt(ckpt_parent_folder=dir_test)
+    assert not resume
+    shutil.rmtree(os.path.join(root_dir, dir_test))
+
+
+def test_path_registry_w_ckpt():
+    ckpt_dir = "ckpt_test"
+    path_registry = PathRegistry(resume=False, ckpt_dir=ckpt_dir)
+    assert os.path.exists(path_registry.json_file_path)
+    assert path_registry.json_file_path.endswith("paths_registry.json")
+    assert f"{ckpt_dir}_" in os.path.basename(
+        os.path.dirname(path_registry.json_file_path)
+    )
+    shutil.rmtree(os.path.dirname(path_registry.json_file_path))
