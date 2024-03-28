@@ -635,9 +635,10 @@ class OpenMMSimulation:
         self.save = save
         self.sim_id = sim_id
         self.pdb_id = pdb_id
+        int_params = self.params.get("integrator_params")
         self.int_params = (
-            self.params["integrator_params"]
-            if self.params["integrator_params"] is not None
+            int_params
+            if int_params is not None
             else {
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
@@ -647,9 +648,10 @@ class OpenMMSimulation:
             }
         )
 
+        sys_params = self.params.get("system_params")
         self.sys_params = (
-            self.params["system_params"]
-            if self.params["system_params"] is not None
+            sys_params
+            if sys_params is not None
             else {
                 "nonbondedMethod": NoCutoff,
                 "nonbondedCutoff": 1 * nanometers,
@@ -661,9 +663,10 @@ class OpenMMSimulation:
             }
         )
 
+        sim_params = self.params.get("simulation_params")
         self.sim_params = (
-            self.params["simulation_params"]
-            if self.params["simulation_params"] is not None
+            sim_params
+            if sim_params is not None
             else {
                 "Ensemble": "NVT",
                 "Number of Steps": 5000,
