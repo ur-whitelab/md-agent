@@ -11,7 +11,9 @@ def test_registry_init(get_registry, with_files, raw_or_clean):
         assert registry_without_files._load_existing_registry() == {}
     else:
         if raw_or_clean == "raw":
-            absolute_path = os.path.abspath("files/pdb/ALA_raw_123456.pdb")
+            absolute_path = os.path.abspath(
+                f"{registry_without_files.ckpt_pdb}/ALA_raw_123456.pdb"
+            )
             expected_json = {
                 "ALA_123456": {
                     "path": f"{absolute_path}",
@@ -24,7 +26,9 @@ def test_registry_init(get_registry, with_files, raw_or_clean):
             }
             assert registry_without_files._load_existing_registry() == expected_json
         elif raw_or_clean == "clean":
-            absolute_path = os.path.abspath("files/pdb/ALA_clean_654321.pdb")
+            absolute_path = os.path.abspath(
+                f"{registry_without_files.ckpt_pdb}/ALA_clean_654321.pdb"
+            )
             expected_json = {
                 "ALA_654321": {
                     "path": f"{absolute_path}",

@@ -18,7 +18,6 @@ class SubAgentSettings:
         temp=0.1,
         max_iterations=40,
         verbose=True,
-        ckpt_dir="ckpt",
         resume=False,
         retrieval_top_k=5,
         curriculum=True,
@@ -28,11 +27,13 @@ class SubAgentSettings:
         self.path_registry = path_registry
         self.run_id = run_id
         self.memory = memory
+        if self.path_registry is None:
+            self.path_registry = PathRegistry.get_instance()
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.subagents_model = subagents_model
         self.temp = temp
         self.max_iterations = max_iterations
         self.verbose = verbose
-        self.ckpt_dir = ckpt_dir
         self.resume = resume
         self.retrieval_top_k = retrieval_top_k
         self.curriculum = curriculum
@@ -42,8 +43,6 @@ class SubAgentInitializer:
     def __init__(self, settings: Optional[SubAgentSettings] = None):
         if settings is None:
             settings = SubAgentSettings()
-        if settings.path_registry is None:
-            settings.path_registry = PathRegistry.get_instance()
         self.run_id = settings.run_id
         self.memory = settings.memory
         self.path_registry = settings.path_registry
@@ -92,7 +91,6 @@ class SubAgentInitializer:
             "path_registry": self.path_registry,
             "model": self.subagents_model,
             "temp": self.temp,
-            "ckpt_dir": self.ckpt_dir,
             "resume": self.resume,
             "retrieval_top_k": self.retrieval_top_k,
         }

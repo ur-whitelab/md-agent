@@ -46,8 +46,6 @@ from openmm.app import (
 from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
 from pydantic import BaseModel, Field
 
-from mdagent.tools.base_tools.preprocess_tools import CleaningTools
-
 # Local Library/Application Imports
 from mdagent.utils import FileType, PathRegistry
 
@@ -295,7 +293,9 @@ class SimulationFunctions:
 
     def _instruction_summary(self, query: str):
         summary = self._prompt_summary(query)
-        self._save_to_file(summary, "simulation_parameters.json")
+        self._save_to_file(
+            summary, f"{self.path_registry.ckpt_files}/simulation_parameters.json"
+        )
         return summary
 
     def _setup_simulation_from_json(self, file_name):
@@ -342,7 +342,6 @@ class SimulationFunctions:
         # adding forcefield to registry
 
         # Load the PDB file
-        CleaningTools(self.path_registry)
         pdbfile = self.path_registry.get_mapped_path(params["File Path"])
         name = pdbfile.split(".")[0]
         end = pdbfile.split(".")[1]
@@ -635,9 +634,10 @@ class OpenMMSimulation:
         self.save = save
         self.sim_id = sim_id
         self.pdb_id = pdb_id
+        int_params = self.params.get("integrator_params")
         self.int_params = (
-            self.params["integrator_params"]
-            if self.params["integrator_params"] is not None
+            int_params
+            if int_params is not None
             else {
                 "integrator_type": "LangevinMiddle",
                 "Temperature": 300 * kelvin,
@@ -647,9 +647,10 @@ class OpenMMSimulation:
             }
         )
 
+        sys_params = self.params.get("system_params")
         self.sys_params = (
-            self.params["system_params"]
-            if self.params["system_params"] is not None
+            sys_params
+            if sys_params is not None
             else {
                 "nonbondedMethod": NoCutoff,
                 "nonbondedCutoff": 1 * nanometers,
@@ -661,9 +662,10 @@ class OpenMMSimulation:
             }
         )
 
+        sim_params = self.params.get("simulation_params")
         self.sim_params = (
-            self.params["simulation_params"]
-            if self.params["simulation_params"] is not None
+            sim_params
+            if sim_params is not None
             else {
                 "Ensemble": "NVT",
                 "Number of Steps": 5000,
@@ -790,11 +792,13 @@ class OpenMMSimulation:
             )
             # "Holders because otherwise the ids are the same
             self.registry_records = [
-                ["holder", f"files/records/{trajectory_name}", traj_desc],
-                ["holder", f"files/records/{log_name}", log_desc],
+                [
+                    "holder",
+                    f"{self.path_registry.ckpt_records}/{trajectory_name}",
+                    traj_desc,
+                ],
+                ["holder", f"{self.path_registry.ckpt_records}/{log_name}", log_desc],
             ]
-
-            # TODO add checkpoint too?
 
         else:
             self.simulation.reporters.append(
@@ -1124,9 +1128,7 @@ class OpenMMSimulation:
         script_content = textwrap.dedent(script_content).strip()
 
         # Write to file
-        directory = "files/simulations"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        directory = f"{self.path_registry.ckpt_simulations}"
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(script_content)
@@ -1141,7 +1143,7 @@ class OpenMMSimulation:
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
-        top_name = f"files/pdb/{self.sim_id}_initial_positions.pdb"
+        top_name = f"{self.path_registry.ckpt_pdb}/{self.sim_id}_initial_positions.pdb"
         top_description = f"Initial positions for simulation {self.sim_id}"
         with open(top_name, "w") as f:
             PDBFile.writeFile(
@@ -1268,15 +1270,13 @@ class SetUpandRunFunction(BaseTool):
             openmmsim.write_standalone_script(filename=file_name)
             self.path_registry.map_path(
                 sim_id,
-                f"files/simulations/{file_name}",
+                f"{self.path_registry.ckpt_simulations}/{file_name}",
                 f"Basic Simulation of Protein {pdb_id}",
             )
             if save:
                 records = openmmsim.registry_records
                 # move record files to files/records/
                 print(os.listdir("."))
-                if not os.path.exists("files/records"):
-                    os.makedirs("files/records")
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:

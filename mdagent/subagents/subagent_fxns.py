@@ -17,7 +17,9 @@ class Iterator:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
         self.path_registry = subagent_settings.path_registry
         self.memory = subagent_settings.memory
-        self.ckpt_dir = subagent_settings.ckpt_dir
+        if not self.path_registry:
+            raise ValueError("Path registry not found")
+        self.ckpt_dir = self.path_registry.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
 

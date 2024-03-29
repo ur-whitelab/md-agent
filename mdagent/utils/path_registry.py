@@ -3,6 +3,8 @@ import os
 from datetime import datetime
 from enum import Enum
 
+from mdagent.utils.set_ckpt import SetCheckpoint
+
 
 ##TODO: add method to get description from simulation inputs
 ##TODO: add method to get conditions from simulation outputs
@@ -16,16 +18,45 @@ class FileType(Enum):
 
 class PathRegistry:
     instance = None
+    set_ckpt = SetCheckpoint()
 
     @classmethod
-    def get_instance(cls):
-        if not cls.instance:
-            cls.instance = cls()
+    def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
+        if not cls.instance or not resume:
+            cls.instance = cls(resume, ckpt_dir)
         return cls.instance
 
-    def __init__(self):
-        self.json_file_path = "paths_registry.json"
+    def __init__(self, resume: bool = True, ckpt_dir: str = "ckpt"):
+        self._set_ckpt(ckpt_dir, resume)
+        self._make_all_dirs()
         self._init_path_registry()
+
+    def _set_ckpt(self, ckpt: str, resume: bool):
+        if resume:
+            self.ckpt_dir = self.set_ckpt.get_resume_ckpt()
+            if self.ckpt_dir is None:
+                self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
+        else:
+            self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
+        return None
+
+    def _make_all_dirs(self):
+        self.json_file_path = os.path.join(self.ckpt_dir, "paths_registry.json")
+        self.ckpt_files = os.path.join(self.ckpt_dir, "files")
+        self.ckpt_figures = os.path.join(self.ckpt_dir, "figures")
+        self.ckpt_pdb = os.path.join(self.ckpt_dir, "pdb")
+        self.ckpt_records = os.path.join(self.ckpt_dir, "records")
+        self.ckpt_simulations = os.path.join(self.ckpt_dir, "simulations")
+        for path in [
+            self.ckpt_files,
+            self.ckpt_figures,
+            self.ckpt_pdb,
+            self.ckpt_records,
+            self.ckpt_simulations,
+        ]:
+            if not os.path.exists(path):
+                os.makedirs(path)
+        return None
 
     def _init_path_registry(self):
         base_directory = "files"
@@ -178,7 +209,7 @@ class PathRegistry:
             "Names found in registry: " + ", ".join(filesids)
             if filesids
             else "No names found. The JSON file is empty or does not"
-            "contain name mappings."
+            " contain name mappings."
         )
         return msg
 
@@ -197,7 +228,7 @@ class PathRegistry:
             "Files found in registry: " + ", ".join(fileid_w_descriptions)
             if filesids
             else "No names found. The JSON file is empty or does not"
-            "contain name mappings."
+            " contain name mappings."
         )
 
     def get_timestamp(self):

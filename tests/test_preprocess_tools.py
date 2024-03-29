@@ -1,16 +1,14 @@
-import os
-
 from mdagent.tools.base_tools import CleaningToolFunction
 
 
 def test_cleaning_function(get_registry):
     reg = get_registry("raw", True)
+    # map path to registry
+    reg.map_path("ALA_123456", "ALA_raw_123456.pdb")
     tool = CleaningToolFunction(path_registry=reg)
+    assert tool.path_registry
     assert tool.name == "CleaningToolFunction"
     assert tool.path_registry == reg
-    print(reg.get_mapped_path("ALA_123456"))
-    print(os.listdir("."))
-    print(os.listdir("files/pdb/."))
     prompt = {
         "pdb_id": "ALA_123456",
         "replace_nonstandard_residues": True,

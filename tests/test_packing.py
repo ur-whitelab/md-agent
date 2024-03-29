@@ -60,9 +60,7 @@ def test_packmol_generate_input(packmolbox, dummy_molecule):
     assert "end structure" in output
 
 
-def test_packmol_validate_input_missing_info(
-    packmoltool, packmol_valid_input, get_registry
-):
+def test_packmol_validate_input_missing_info(packmoltool, packmol_valid_input):
     example_input = packmol_valid_input
     example_input["pdbfiles_id"] = []
     input_valid = packmoltool.validate_input(example_input)
@@ -92,9 +90,9 @@ def test_packmol_validate_input_missing_info(
         "of species in the system. You have 3 from 1 "
         "pdbfiles and 2 small molecules" in input_valid["error"]
     )
-    registry = get_registry("raw", False)
-    registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
-    packmoltool = PackMolTool(get_registry)
+
+    packmoltool.path_registry.map_path("3pqr_test", "3pqr.cif", "cif_test_file")
+    packmoltool = PackMolTool(packmoltool.path_registry)
     example_input["pdbfiles_id"] = ["3pqr_test"]
     example_input["small_molecules"] = ["nonsense"]
     input_valid = packmoltool.validate_input(example_input)
