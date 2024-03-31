@@ -1,4 +1,5 @@
 import json
+import os
 from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
@@ -240,3 +241,32 @@ def test_mdagent_curriculum():
     mdagent_no_curr = MDAgent(curriculum=False)
     assert mdagent_curr.subagents_settings.curriculum is True
     assert mdagent_no_curr.subagents_settings.curriculum is False
+
+
+def test_mdagent_w_ckpt():
+    dummy_test_dir = "ckpt_test"
+    mdagent = MDAgent(resume=False, ckpt_dir=dummy_test_dir)
+    dummy_test_path = mdagent.path_registry.ckpt_dir
+    assert os.path.exists(dummy_test_path)
+    assert dummy_test_dir in dummy_test_path
+
+
+def test_force_clear_mem(monkeypatch):
+    dummy_test_dir = "ckpt_test"
+
+    mdagent = MDAgent(resume=False, ckpt_dir=dummy_test_dir)
+    monkeypatch.setattr("builtins.input", lambda _: "yes")
+
+    mdagent.force_clear_mem(all=False)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
+    assert not os.path.exists(mdagent.path_registry.json_file_path)
+    assert os.path.exists(
+        os.path.basename(os.path.dirname(mdagent.path_registry.ckpt_dir))
+    )
+
+    mdagent = MDAgent(resume=False, ckpt_dir=dummy_test_dir)
+    monkeypatch.setattr("builtins.input", lambda _: "yes")
+    mdagent.force_clear_mem(all=True)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
+    assert not os.path.exists(mdagent.path_registry.json_file_path)
+    assert not os.path.exists(os.path.dirname(mdagent.path_registry.ckpt_dir))

@@ -68,8 +68,8 @@ def test_plot_data(plotting_tools):
         plotting_tools.headers = headers
         plotting_tools.matched_headers = matched_headers
         created_plots = plotting_tools.plot_data()
-        assert "FIG_timevsvalue1" in created_plots
-        assert "FIG_timevsvalue2" in created_plots
+        assert "timevsvalue1" in created_plots
+        assert "timevsvalue2" in created_plots
 
     # Test failure due to non-numeric data
     data_failure = [
@@ -99,14 +99,12 @@ def test_find_png(vis_fxns):
         f.write("")
     png_files = vis_fxns._find_png()
     assert test_file in png_files
-
     os.remove(test_file)
 
 
 def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
-    path_to_notebook = path_to_cif.split(".")[0] + "_vis.ipynb"
-    os.remove(path_to_notebook)
+    (f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb")
     assert result == "Visualization Complete"
 
 
@@ -253,7 +251,7 @@ def test_compute_rmsd(mock_mda_universe, mock_rmsd_run, mock_savetxt, rmsd_funct
     mock_savetxt.assert_called_once()
     args, kwargs = mock_savetxt.call_args
     assert args[0].startswith(
-        f"{rmsd_functions.csv_dir}/{rmsd_functions.filename}_"
+        f"{rmsd_functions.path_registry.ckpt_records}/{rmsd_functions.filename}_"
     ), "np.savetxt called with unexpected file name"
     # assert "test_rmsd.csv" in args, "Expected np.savetxt to save to correct file"
     assert "Average RMSD is 0.15" in message, "Expected correct average RMSD in message"
@@ -272,13 +270,13 @@ def test_compute_rmsd_plotting(
         mock_plt_savefig.assert_called_once()
         args, _ = mock_plt_savefig.call_args
         assert args[0].startswith(
-            f"{rmsd_functions.figure_dir}/FIG_{rmsd_functions.filename}_"
+            f"{rmsd_functions.path_registry.ckpt_figures}/{rmsd_functions.filename}"
         ), "plt.savefig called with unexpected file path"
         assert (
             f"Plotted RMSD over time for {pdb_name}."
-            f" Saved to FIG_{rmsd_functions.filename}_" in message
+            f" Saved to {rmsd_functions.filename}" in message
         ), "Expected correct plotting message"
-        assert f"Saved to {rmsd_functions.filename}_" in message  # csv file
+        assert f"Saved to {rmsd_functions.filename}" in message  # csv file
     else:
         mock_plt_savefig.assert_not_called()
 
@@ -328,14 +326,14 @@ def test_process_rmsf_results(rmsd_functions, mock_plt_savefig, mock_savetxt, pl
     mock_savetxt.assert_called_once()
     args, _ = mock_savetxt.call_args
     assert args[0].startswith(
-        f"{rmsd_functions.csv_dir}/{rmsd_functions.filename}_"
+        f"{rmsd_functions.path_registry.ckpt_records}/{rmsd_functions.filename}_"
     ), "CSV file path passed to np.savetxt doesn't match expected pattern."
     assert "Saved RMSF data to" in message, "Expected save message not found in return."
     if plot:
         mock_plt_savefig.assert_called_once()
         savefig_args, _ = mock_plt_savefig.call_args
         assert savefig_args[0].startswith(
-            f"{rmsd_functions.figure_dir}/FIG_{rmsd_functions.filename}_"
+            f"{rmsd_functions.path_registry.ckpt_figures}/FIG_{rmsd_functions.filename}_"
         ), "Plot file path passed to plt.savefig doesn't match expected pattern."
         assert "Plotted RMSF. Saved to" in message, "Expected plot message not found."
 
