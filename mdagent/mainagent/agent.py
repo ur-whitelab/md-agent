@@ -132,12 +132,72 @@ class MDAgent:
         self.agent = self._initialize_tools_and_agent(user_input)
         return self.agent.run(self.prompt.format(input=user_input), callbacks=callbacks)
 
-    def run_and_eval(self, user_input, callbacks=None):
+    # def run_and_eval(self, user_input, callbacks=None):
+    #     self.agent = self._initialize_tools_and_agent(user_input)
+    #     num_steps = 0
+    #     tools_used = {}
+    #     tools_details = {}
+    #     step_start_time = start_time = time.time()
+    #     for step in self.agent.iter({"input": user_input}, include_run_info=True):
+    #         output = step.get("intermediate_step")
+    #         if output:
+    #             num_steps += 1
+    #             action, observation = output[0]
+    #             current_time = time.time()
+    #             step_elapsed_time = current_time - step_start_time
+    #             step_start_time = current_time
+    #             tools_used[action.tool] = tools_used.get(action.tool, 0) + 1
+    #             tools_details[f"Step {num_steps}"] = {
+    #                 "tool": action.tool,
+    #                 "tool_input": action.tool_input,
+    #                 "observation": observation,
+    #                 "step_elapsed_time (sec)": step_elapsed_time,
+    #                 "timestamp_from_start (sec)": current_time - start_time,
+    #             }
+    #     final_output = step["output"]
+    #     run_id = step["__run"].run_id
+    #     total_seconds = time.time() - start_time
+    #     total_mins = total_seconds / 60
+
+    #     agent_settings = {
+    #         "llm": self.llm.model_name,
+    #         "agent_type": self.agent_type,
+    #         "resume": self.subagents_settings.resume,
+    #         "learn": not self.skip_subagents,
+    #         "curriculum": self.subagents_settings.curriculum,
+    #     }
+    #     print("\n----- Evaluation Summary -----")
+    #     print(f"Total Steps: {num_steps+1}")
+    #     print(f"Total Time: {total_seconds:.2f} seconds ({total_mins:.2f} minutes)")
+
+    #     summary = {
+    #         "agent_settings": agent_settings,
+    #         "total_steps": num_steps,
+    #         "total_time_seconds": f"{total_seconds:.3f}",
+    #         "total_time_minutes": f"{total_mins:.3f}",
+    #         "final_answer": final_output,
+    #         "tools_used": tools_used,
+    #         "tools_details": tools_details,
+    #         "run_id": str(run_id),
+    #     }
+    #     timestamp = time.strftime("%Y%m%d-%H%M%S")
+    #     os.makedirs(f"{self.ckpt_dir}/eval", exist_ok=True)
+    #     filename = f"{self.ckpt_dir}/eval/evaluation_{timestamp}.json"
+    #     with open(filename, "w") as f:
+    #         json.dump(summary, f, indent=4)
+    #     print(f"Summary saved to {filename}")
+    #     return final_output
+
+    def run_and_eval(self, user_input, callbacks=None, return_eval=False):
         self.agent = self._initialize_tools_and_agent(user_input)
         num_steps = 0
         tools_used = {}
         tools_details = {}
+        failed_steps = 0
         step_start_time = start_time = time.time()
+        last_step_status = ""
+        second_last_step_status = ""
+
         for step in self.agent.iter({"input": user_input}, include_run_info=True):
             output = step.get("intermediate_step")
             if output:
@@ -147,24 +207,48 @@ class MDAgent:
                 step_elapsed_time = current_time - step_start_time
                 step_start_time = current_time
                 tools_used[action.tool] = tools_used.get(action.tool, 0) + 1
+
+                # Determine success or failure from the first sentence of the output
+                first_sentence = observation.split(".")[
+                    0
+                ]  # Assuming sentences end with '.'
+                status = "Failed" if "Failed" in first_sentence else "Succeeded"
+                if "Failed" in status:
+                    failed_steps += 1
+
+                # Update step statuses
+                second_last_step_status = last_step_status
+                last_step_status = status
+
                 tools_details[f"Step {num_steps}"] = {
                     "tool": action.tool,
                     "tool_input": action.tool_input,
                     "observation": observation,
-                    "step_elapsed_time (sec)": step_elapsed_time,
-                    "timestamp_from_start (sec)": current_time - start_time,
+                    "status": status,  # Include success/failure status
+                    "step_elapsed_time (sec)": f"{step_elapsed_time:.3f}",
+                    "timestamp_from_start (sec)": f"{current_time - start_time:.3f}",
                 }
-        final_output = step["output"]
-        run_id = step["__run"].run_id
+
+        final_output = step.get("output", "")
+        if "Succeeded" in final_output.split(".")[0]:
+            prompt_passed = True
+        elif "Failed" in final_output.split(".")[0]:
+            prompt_passed = False
+        else:
+            # If the last step output doesn't explicitly state "Succeeded" or "Failed",
+            # determine the success of the prompt based on the second last step status.
+            prompt_passed = second_last_step_status != "Failed"
+
+        run_id = step.get("__run", {}).get("run_id", "")
         total_seconds = time.time() - start_time
         total_mins = total_seconds / 60
-
         agent_settings = {
             "llm": self.llm.model_name,
             "agent_type": self.agent_type,
             "resume": self.subagents_settings.resume,
             "learn": not self.skip_subagents,
             "curriculum": self.subagents_settings.curriculum,
+            "memory": self.subagents_settings.memory,
         }
         print("\n----- Evaluation Summary -----")
         print(f"Total Steps: {num_steps+1}")
@@ -172,7 +256,10 @@ class MDAgent:
 
         summary = {
             "agent_settings": agent_settings,
+            "prompt": user_input,
+            "prompt_success": prompt_passed,
             "total_steps": num_steps,
+            "failed_steps": failed_steps,
             "total_time_seconds": f"{total_seconds:.3f}",
             "total_time_minutes": f"{total_mins:.3f}",
             "final_answer": final_output,
@@ -180,10 +267,22 @@ class MDAgent:
             "tools_details": tools_details,
             "run_id": str(run_id),
         }
+
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         os.makedirs(f"{self.ckpt_dir}/eval", exist_ok=True)
-        filename = f"{self.ckpt_dir}/eval/evaluation_{timestamp}.json"
+        filename = f"{self.ckpt_dir}/eval/eval_{timestamp}.json"
         with open(filename, "w") as f:
             json.dump(summary, f, indent=4)
-        print(f"Summary saved to {filename}")
+
+        if return_eval:
+            brief_summary = {
+                "agent_settings": agent_settings,
+                "prompt_success": prompt_passed,
+                "total_steps": num_steps,
+                "failed_steps": failed_steps,
+                "total_time_seconds": f"{total_seconds:.3f}",
+                "run_id": str(run_id),
+                "final_answer": final_output,
+            }
+            return final_output, brief_summary
         return final_output
