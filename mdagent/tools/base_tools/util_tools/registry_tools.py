@@ -27,14 +27,14 @@ class MapPath2Name(BaseTool):
         """Use the tool"""
         try:
             if self.path_registry is None:
-                return "Path registry not initialized"
+                return "Failed. Path registry not initialized"
             if "," not in file_and_path:
-                return "Please separate filename and path with a comma"
+                return "Failed. Please separate filename and path with a comma"
             file, path = file_and_path.split(",")
             map_name = self.path_registry.map_path(file, path)
-            return map_name
+            return "Succeeded. " + map_name
         except Exception:
-            return "Error writing paths to file"
+            return "Failed. Error writing paths to file"
 
     async def _arun(self, file_name: str) -> str:
         """Use the tool asynchronously"""
@@ -56,10 +56,10 @@ class ListRegistryPaths(BaseTool):
         """Use the tool"""
         try:
             if self.path_registry is None:
-                return "Path registry not initialized"
-            return self.path_registry.list_path_names_and_descriptions()
+                return "Failed. Path registry not initialized"
+            return "Succeeded. " + self.path_registry.list_path_names_and_descriptions()
         except Exception:
-            return "Error listing paths"
+            return "Failed. Error listing paths"
 
     async def _arun(self, paths: str) -> str:
         """Use the tool asynchronously"""

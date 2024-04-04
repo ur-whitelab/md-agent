@@ -149,17 +149,19 @@ class RemoveWaterCleaningTool(BaseTool):
     def _run(self, file_name: str) -> str:
         """use the tool."""
         if self.path_registry is None:
-            return "Path registry not initialized"
+            return "Failed. Path registry not initialized"
         try:
             file_path = self.path_registry.get_mapped_path(file_name)
             if file_path is None:
-                return "File not found"
+                return "Failed. File not found"
             clean_tools = CleaningTools(self.path_registry)
-            return clean_tools._add_hydrogens_and_remove_water(file_path)
+            return "Succeeded. " + clean_tools._add_hydrogens_and_remove_water(
+                file_path
+            )
         except FileNotFoundError:
-            return "Check your file path. File not found."
+            return "Failed. Check your file path. File not found."
         except Exception as e:
-            return f"Something went wrong. {e}"
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -186,17 +188,17 @@ class AddHydrogensCleaningTool(BaseTool):
     def _run(self, file_name: str) -> str:
         """use the tool."""
         if self.path_registry is None:
-            return "Path registry not initialized"
+            return "Failed. Path registry not initialized"
         try:
             file_path = self.path_registry.get_mapped_path(file_name)
             if file_path is None:
-                return "File not found"
+                return "Failed. File not found"
             clean_tools = CleaningTools(self.path_registry)
-            return clean_tools._add_hydrogens(file_path)
+            return "Succeeded. " + clean_tools._add_hydrogens(file_path)
         except FileNotFoundError:
-            return "Check your file path. File not found."
+            return "Failed. Check your file path. File not found."
         except Exception as e:
-            return f"Something went wrong. {e}"
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -276,7 +278,7 @@ class CleaningToolFunction(BaseTool):
             input_args.get("output_path", None)
 
             if self.path_registry is None:
-                return "Path registry not initialized"
+                return "Failed. Path registry not initialized"
             file_description = "Cleaned File: "
             try:
                 pdbfile_path = self.path_registry.get_mapped_path(pdbfile_id)
@@ -288,7 +290,7 @@ class CleaningToolFunction(BaseTool):
 
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
-                return "File not found in path registry. "
+                return "Failed. File not found in path registry. "
             fixer = PDBFixer(filename=pdbfile_path)
             try:
                 fixer.findMissingResidues()
@@ -368,12 +370,15 @@ class CleaningToolFunction(BaseTool):
             self.path_registry.map_path(
                 file_id, f"{directory}/{file_name}", file_description
             )
-            return f"File cleaned!\nFile ID:{file_id}\nPath:{directory}/{file_name}"
+            return (
+                "Succeeded. File cleaned!"
+                "\nFile ID:{file_id}\nPath:{directory}/{file_name}"
+            )
         except FileNotFoundError:
-            return "Check your file path. File not found."
+            return "Failed. Check your file path. File not found."
         except Exception as e:
             print(e)
-            return f"Something went wrong. {e}"
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(
         self, query: str, remove_water: bool = False, add_hydrogens: bool = False

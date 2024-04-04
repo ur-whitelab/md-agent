@@ -68,7 +68,7 @@ class Scholar2ResultLLM(BaseTool):
         self.llm = llm
 
     def _run(self, query) -> str:
-        return scholar2result_llm(self.llm, query)
+        return "Succeeded. " + scholar2result_llm(self.llm, query)
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""

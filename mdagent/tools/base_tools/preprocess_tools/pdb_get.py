@@ -82,19 +82,19 @@ class ProteinName2PDBTool(BaseTool):
         """Use the tool."""
         try:
             if self.path_registry is None:  # this should not happen
-                return "Path registry not initialized"
+                return "Failed. Path registry not initialized"
             filename, pdbfile_id = get_pdb(query, self.path_registry)
             if pdbfile_id is None:
-                return "Name2PDB tool failed to find and download PDB file."
+                return "Failed. Name2PDB tool failed to find and download PDB file."
             else:
                 self.path_registry.map_path(
                     pdbfile_id,
                     f"files/pdb/{filename}",
                     f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
                 )
-                return f"Name2PDB tool successful. downloaded the PDB file:{pdbfile_id}"
+                return f"Succeeded. Downloaded the PDB file:{pdbfile_id}"
         except Exception as e:
-            return f"Something went wrong. {e}"
+            return f"Failed. {type(e).__name__}: {str(e)}"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
@@ -190,15 +190,18 @@ class MolPDB:
                 mol_name, file_name, f"pdb file for the small molecule {mol_name}"
             )
             return (
-                f"PDB file for {mol_str} successfully created and saved to {file_name}."
+                f"Succeeded. PDB file for {mol_str} successfully "
+                "created and saved to {file_name}."
             )
         except Exception:
             print(
-                "There was an error getting pdb. Please input a single molecule name."
+                "Failed. There was an error getting pdb. "
+                "Please input a single molecule name."
                 f"{mol_str},{mol_name}, {smi}"
             )
             return (
-                "There was an error getting pdb. Please input a single molecule name."
+                "Failed. There was an error getting pdb. "
+                "Please input a single molecule name."
             )
 
 

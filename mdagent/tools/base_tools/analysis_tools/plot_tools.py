@@ -117,11 +117,11 @@ class SimulationOutputFigures(BaseTool):
             plotting_tools.process_csv()
             plot_result = plotting_tools.plot_data()
             if type(plot_result) == str:
-                return "Figures created: " + plot_result
+                return "Succeeded. Figures created: " + plot_result
             else:
-                return "No figures created."
+                return "Failed. No figures created."
         except Exception as e:
-            return str(e)
+            return "Failed. " + str(e)
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

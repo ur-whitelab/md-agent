@@ -725,12 +725,12 @@ class FixPDBFile(BaseTool):
         pdb_ff = Validate_Fix_PDB()
         error_msg = query.get("error")
         if error_msg:
-            return error_msg
+            return "Failed. " + error_msg
         pdbfile = query.pop("pdbfile")
         if len(query.keys()) == 0:
             validation = pdb_ff.validate_pdb_format(pdbfile)
             if validation[0] == 0:
-                return "PDB file is valid, no need to fix it"
+                return "Succeeded. PDB file is valid, no need to fix it"
 
             if validation[0] == 1:
                 # Convert summarized_errors into a set for O(1) lookups
@@ -749,9 +749,9 @@ class FixPDBFile(BaseTool):
                     name = pdbfile + "-fixed.pdb"
                     description = "PDB file fixed"
                     self.path_registry.map_path(name, name, description)
-                    return "PDB file fixed"
+                    return "Succeeded. PDB file fixed"
                 else:
-                    return "PDB not fully fixed"
+                    return "Failed. PDB not fully fixed"
         else:
             pdb_ff.apply_fixes(pdbfile, query)
             validate = pdb_ff.validate_pdb_format(pdbfile + "-fixed.pdb")
@@ -759,6 +759,6 @@ class FixPDBFile(BaseTool):
                 name = pdbfile + "-fixed.pdb"
                 description = "PDB file fixed"
                 self.path_registry.map_path(name, name, description)
-                return "PDB file fixed"
+                return "Succeeded. PDB file fixed"
             else:
-                return "PDB not fully fixed"
+                return "Failed. PDB not fully fixed"

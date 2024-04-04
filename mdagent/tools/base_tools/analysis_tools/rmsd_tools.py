@@ -283,14 +283,17 @@ class RMSDCalculator(BaseTool):
             message = rmsd.calculate_rmsd(rmsd_type, selection, plot)
         except ValueError as e:
             return (
-                f"ValueError: {e}. \nMake sure to provide valid PBD "
+                f"Failed. ValueError: {e}. Make sure to provide valid PBD "
                 "file and binding site using MDAnalysis selection syntax."
             )
         except FileNotFoundError as e:
-            return str(e)
+            return (
+                f"Failed. FileNotFoundError: {e}. "
+                "Make sure to provide all necessary files."
+            )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
-        return message
+            return f"Failed. {type(e).__name__}: {e}"
+        return "Succeeded. " + message
 
     def _arun(self, **query):
         """Use the tool asynchronously."""

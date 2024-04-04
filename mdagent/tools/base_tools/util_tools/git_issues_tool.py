@@ -98,9 +98,9 @@ class SerpGitTool(BaseTool):
         organic_results = results.get("organic_results")
         if organic_results is None:
             if results.get("error"):
-                return "error: " + results.get("error")
+                return "Failed. Error: " + results.get("error")
             else:
-                return "Error: No 'organic_results' found"
+                return "Failed. Error: No 'organic_results' found"
         issues_numbers: List = (
             []
         )  # list that will contain issue id numbers retrieved from the google search
@@ -165,9 +165,12 @@ class SerpGitTool(BaseTool):
             if num_tokens > 4000:
                 # summarize output
                 output = fxns._prompt_summary(query, output)
-            return output
+            return "Succeeded. " + output
         else:
-            return "Not enough requests remaining for Github API. Try again later"
+            return (
+                "Failed. Not enough requests remaining for Github API. "
+                "Try again later"
+            )
 
     def _arun(self, query) -> str:
         """Use the tool asynchronously."""

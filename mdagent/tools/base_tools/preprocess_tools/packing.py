@@ -289,11 +289,11 @@ class PackMolTool(BaseTool):
         try:
             values = self.validate_input(values)
         except ValidationError as e:
-            return str(e)
+            return f"Failed. ValidationError: {e}"
         error_msg = values.get("error", None)
         if error_msg:
             print("Error in Packmol inputs:", error_msg)
-            return f"Error in inputs: {error_msg}"
+            return f"Failed. Error in inputs: {error_msg}"
         print("Starting Packmol Tool!")
         pdbfile_ids = values.get("pdbfiles_id", [])
         pdbfiles = [
@@ -334,13 +334,13 @@ class PackMolTool(BaseTool):
             )
             if result.returncode != 0:
                 return (
-                    "Packmol is not installed. Please install"
+                    "Failed. Packmol is not installed. Please install"
                     "packmol at "
                     "'https://m3g.github.io/packmol/download.shtml'"
                     "and try again."
                 )
         try:
-            return packmol_wrapper(
+            return "Succeeded. " + packmol_wrapper(
                 self.path_registry,
                 pdbfiles=pdbfile_names,
                 files_id=pdbfile_ids,
@@ -348,7 +348,7 @@ class PackMolTool(BaseTool):
                 instructions=instructions,
             )
         except RuntimeError as e:
-            return f"Packmol failed to run with error: {e}"
+            return f"Failed. Packmol failed to run with error: {e}"
 
     def validate_input(cls, values: Union[str, Dict[str, Any]]) -> Dict:
         # check if is only a string

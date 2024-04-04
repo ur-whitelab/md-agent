@@ -238,9 +238,9 @@ class CreateNewTool(BaseTool):
             st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
             tool_name = newcode_iterator.run(task, orig_prompt)
             if not tool_name:
-                return "The 'CreateNewTool' tool failed to build a new tool."
+                return "Failed. The 'CreateNewTool' tool failed to build a new tool."
         except Exception as e:
-            return f"Something went wrong while creating tool. {type(e).__name__}: {e}"
+            return f"Failed. Error while creating tool. {type(e).__name__}: {e}"
 
         # execute the new tool code
         if execute:
@@ -250,21 +250,31 @@ class CreateNewTool(BaseTool):
                 agent_initializer = SubAgentInitializer(self.subagent_settings)
                 skill = agent_initializer.create_skill_manager(resume=True)
                 if skill is None:
-                    return "SubAgent for this tool not initialized"
+                    return "Failed. SubAgent for this tool not initialized"
                 if args is not None:
                     print("input args: ", args)
-                    return skill.execute_skill_function(tool_name, **args)
+                    return "Succeeded. " + skill.execute_skill_function(
+                        tool_name, **args
+                    )
                 else:
-                    return skill.execute_skill_function(tool_name)
+                    return "Succeeded " + skill.execute_skill_function(tool_name)
             except TypeError as e:
-                return f"""{type(e).__name__}: {e}. Executing new tool failed.
-                    Please check your inputs and make sure to use a dictionary.\n"""
+                return (
+                    f"Failed. {type(e).__name__}: {e}. Executing new tool failed. "
+                    "Please check your inputs and make sure to use a dictionary.\n"
+                )
             except ValueError as e:
-                return f"{type(e).__name__}: {e}. Provide correct arguments for tool.\n"
+                return (
+                    f"Failed. {type(e).__name__}: {e}. "
+                    "Provide correct arguments for tool.\n"
+                )
             except Exception as e:
-                return f"Something went wrong while executing. {type(e).__name__}:{e}\n"
+                return f"Failed. Error while executing. {type(e).__name__}:{e}\n"
         else:
-            return f"A new tool is created: {tool_name}. You can use it in next prompt."
+            return (
+                f"Succeeded. A new tool is created: {tool_name}. "
+                "You can use it in next prompt."
+            )
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
