@@ -9,7 +9,7 @@ from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 # all things related to RMSD as 'standard deviation'
 # 1  RMSD between two protein conformations or trajectories (1D scalar value)
@@ -23,11 +23,26 @@ class RMSDFunctions:
         self.path_registry = path_registry
         self.pdb_file = self.path_registry.get_mapped_path(pdb)
         self.trajectory = self.path_registry.get_mapped_path(traj)
-        self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
         self.ref_file = self.path_registry.get_mapped_path(ref)
         self.ref_trajectory = self.path_registry.get_mapped_path(ref_traj)
-        if self.ref_file:
+
+        # manually check for missing paths
+        if self.pdb_file == "Name not found in path registry.":
+            # set that file to None
+            self.pdb_file = None
+            self.pdb_name = None
+        else:
+            self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
+        if self.trajectory == "Name not found in path registry.":
+            self.trajectory = None
+        if self.ref_file == "Name not found in path registry." or self.ref_file is None:
+            self.ref_file = None
+            self.ref_name = None
+        else:
             self.ref_name = os.path.splitext(os.path.basename(self.ref_file))[0]
+        if self.ref_trajectory == "Name not found in path registry.":
+            self.ref_trajectory = None
+        self.base_dir = "files"  # TODO: should update this to use checkpoint dir
 
     def calculate_rmsd(
         self,
@@ -35,8 +50,8 @@ class RMSDFunctions:
         selection="backbone",
         plot=True,
     ):
-        if self.trajectory is None or self.pdb_file is None:
-            raise FileNotFoundError("PDB and trajectory files are required.")
+        if self.pdb_file is None:
+            raise FileNotFoundError("PDB file is required.")
         self.filename = f"{rmsd_type}_{self.pdb_name}"
 
         if rmsd_type == "rmsd":
@@ -89,14 +104,18 @@ class RMSDFunctions:
     def compute_rmsd(self, selection="backbone", plot=True):
         # 1D time-dependent RMSD, gives one scalar value for each timestep
         if self.trajectory is None:
-            raise ValueError("trajectory file is required for time-dependent 1D RMSD")
+            raise FileNotFoundError(
+                "trajectory file is required for time-dependent 1D RMSD"
+            )
         u = mda.Universe(self.pdb_file, self.trajectory)
         R = rms.RMSD(u, select=selection)
         R.run()
 
         # save to file
+        time_stamp = self.path_registry.get_timestamp()
+        csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.filename}.csv",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             R.results.rmsd,
             fmt=["%d", "%f", "%f"],
             delimiter=",",
@@ -105,10 +124,12 @@ class RMSDFunctions:
         )
         avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
         final_rmsd = R.results.rmsd[-1, 2]
-        message = f"""Calculated RMSD for each timestep with respect\
-        to the initial frame. Saved to {self.filename}.csv. """
+        message = (
+            "Calculated RMSD for each timestep with respect "
+            f"to the initial frame. Saved to {csv_filename}. "
+        )
         self.path_registry.map_path(
-            f"{self.filename}.csv", f"{self.filename}.csv", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
         message += f"Average RMSD is {avg_rmsd} \u212B. "
         message += f"Final RMSD is {final_rmsd} \u212B.\n"
@@ -119,19 +140,29 @@ class RMSDFunctions:
             plt.ylabel("RMSD ($\AA$)")
             plt.title("Time-Dependent RMSD")
             plt.legend()
-            plt.show()
-            plt.savefig(f"{self.filename}.png")
-            # plt.close() # if you don't want to show the plot in notebooks
-            message += f"Plotted RMSD over time. Saved to {self.filename}.png.\n"
-            self.path_registry.map_path(
-                f"{self.filename}.png", f"{self.filename}.png", message
+
+            fig_name = self.path_registry.write_file_name(
+                type=FileType.FIGURE,
+                fig_analysis=self.filename,
+                file_format="png",
             )
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{self.filename}.png")
+            plot_message = (
+                f"Plotted RMSD over time for {self.pdb_name}."
+                f" Saved to {self.filename}.png.\n"
+            )
+            self.path_registry.map_path(
+                fig_name,
+                f"{self.path_registry.ckpt_figures}/{self.filename}.png",
+                plot_message,
+            )
+            message += plot_message
         return message
 
     def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):
         # pairwise RMSD, also known as 2D RMSD, gives a matrix of RMSD values
         if self.trajectory is None:
-            raise ValueError("trajectory file is required for pairwise RMSD")
+            raise FileNotFoundError("trajectory file is required for pairwise RMSD")
         u = mda.Universe(self.pdb_file, self.trajectory)
         if self.ref_file and self.ref_trajectory:
             ref = mda.Universe(self.ref_file, self.ref_trajectory)
@@ -151,30 +182,40 @@ class RMSDFunctions:
                 pairwise_matrix[i] = r.results.rmsd[:, 2]
             x_label = f"Frame ({self.ref_name})"
             y_label = f"Frame ({self.pdb_name})"
+
+        time_stamp = self.path_registry.get_timestamp()
+        csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.filename}.csv",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             pairwise_matrix,
             delimiter=",",
         )
-        message = f"Saved pairwise RMSD matrix to {self.filename}.csv.\n"
+        message = f"Saved pairwise RMSD matrix to {csv_filename}.\n"
         self.path_registry.map_path(
-            f"{self.filename}.csv", f"{self.filename}.csv", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
         if plot_heatmap:
             plt.imshow(pairwise_matrix, cmap="viridis")
             plt.xlabel(x_label)
             plt.ylabel(y_label)
             plt.colorbar(label=r"RMSD ($\AA$)")
-            plt.show()
-            plt.savefig(f"{self.filename}.png")
-            message += f"Plotted pairwise RMSD matrix. Saved to {self.filename}.png.\n"
+            fig_name = self.path_registry.write_file_name(
+                type=FileType.FIGURE,
+                fig_analysis=self.filename,
+                file_format="png",
+            )
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
+            plot_message = f"Plotted pairwise RMSD matrix. Saved to {fig_name}.\n"
+            message += plot_message
             self.path_registry.map_path(
-                f"{self.filename}.png", f"{self.filename}.png", message
+                fig_name, f"{self.path_registry.ckpt_figures}/{fig_name}", plot_message
             )
         return message
 
     def compute_rmsf(self, selection="backbone", plot=True):
         # calculate RMSF (root mean square fluctuation)
+        if self.trajectory is None:
+            raise FileNotFoundError("trajectory file is required for RMSF")
         u = mda.Universe(self.pdb_file, self.trajectory)
 
         # use averages as a reference for aligning
@@ -186,19 +227,23 @@ class RMSDFunctions:
         atoms = u.select_atoms(selection)
         R = rms.RMSF(atoms).run()
         rmsf = R.results.rmsf
+        self.process_rmsf_results(atoms, rmsf, selection=selection, plot=plot)
 
+    def process_rmsf_results(self, atoms, rmsf, selection="backbone", plot=True):
         # Save to a text file
         rmsf_data = np.column_stack((atoms.resids, rmsf))
+        time_stamp = self.path_registry.get_timestamp()
+        csv_filename = f"{self.filename}_{time_stamp}.csv"
         np.savetxt(
-            f"{self.filename}.csv",
+            f"{self.path_registry.ckpt_records}/{csv_filename}",
             rmsf_data,
             delimiter=",",
             header="Residue_ID,RMSF",
             comments="",
         )
-        message = f"Saved RMSF data to {self.filename}.csv.\n"
+        message = f"Saved RMSF data to {csv_filename}.\n"
         self.path_registry.map_path(
-            f"{self.filename}.csv", f"{self.filename}.csv", message
+            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
         )
 
         # Plot RMSF
@@ -209,11 +254,16 @@ class RMSDFunctions:
             plt.ylabel("RMSF ($\AA$)")
             plt.title("Root Mean Square Fluctuation")
             plt.legend()
-            plt.show()
-            plt.savefig(f"{self.filename}.png")
-            message += f"Plotted RMSF. Saved to {self.filename}.png.\n"
+            fig_name = self.path_registry.write_file_name(
+                type=FileType.FIGURE,
+                fig_analysis=self.filename,
+                file_format="png",
+            )
+            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
+            plot_message = f"Plotted RMSF. Saved to {fig_name}.\n"
+            message += plot_message
             self.path_registry.map_path(
-                f"{self.filename}.png", f"{self.filename}.png", message
+                f"{self.filename}.png", f"{self.filename}.png", plot_message
             )
         return message
 
@@ -234,20 +284,21 @@ class RMSDInputSchema(BaseModel):
         description="file with .pdb extension contain protein of interest"
     )
     trajectory: Optional[str] = Field(
-        description="trajectory file for protein of interest"
+        None, description="trajectory file for protein of interest"
     )
     ref_file: Optional[str] = Field(
-        description="file with .pdb extension used as reference"
+        None, description="file with .pdb extension used as reference"
     )
     ref_trajectory: Optional[str] = Field(
-        description="trajectory file used as reference"
+        None, description="trajectory file used as reference"
     )
     selection: Optional[str] = Field(
-        description="""selected atoms using MDAnalysis selection syntax."""
+        None, description="""selected atoms using MDAnalysis selection syntax."""
     )
     plot: Optional[bool] = Field(
+        None,
         description="""Only use it to set False
-        to disable making plots if prompted."""
+        to disable making plots if prompted.""",
     )
 
 

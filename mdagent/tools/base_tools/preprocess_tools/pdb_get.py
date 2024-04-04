@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import requests
@@ -45,15 +44,14 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
             file_format=filetype,
         )
         file_id = path_registry.get_fileid(filename, FileType.PROTEIN)
-        directory = "files/pdb"
-        # Create the directory if it does not exist
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        directory = f"{path_registry.ckpt_pdb}"
 
         with open(f"{directory}/{filename}", "w") as file:
             file.write(pdb.text)
         path_registry.map_path(
-            file_id, f"{directory}/{filename}", "PDB file downloaded from RSCB"
+            file_id,
+            f"{path_registry.ckpt_pdb}/{filename}",
+            "PDB file downloaded from RSCB",
         )
 
         return filename, file_id
@@ -89,7 +87,7 @@ class ProteinName2PDBTool(BaseTool):
             else:
                 self.path_registry.map_path(
                     pdbfile_id,
-                    f"files/pdb/{filename}",
+                    f"{self.path_registry.ckpt_pdb}/{filename}",
                     f"PDB file downloaded from RSCB, PDBFile ID: {pdbfile_id}",
                 )
                 return f"Succeeded. Downloaded the PDB file:{pdbfile_id}"
@@ -184,24 +182,26 @@ class MolPDB:
             except Exception:
                 pass
             Chem.AllChem.EmbedMolecule(m)
-            file_name = f"files/pdb/{mol_name}.pdb"
+            file_name = f"{self.path_registry.ckpt_pdb}/{mol_name}.pdb"
             Chem.MolToPDBFile(m, file_name)
+            print("finished writing pdb file")
             self.path_registry.map_path(
                 mol_name, file_name, f"pdb file for the small molecule {mol_name}"
             )
             return (
-                f"Succeeded. PDB file for {mol_str} successfully "
-                "created and saved to {file_name}."
+                f"Succeeded. PDB file for {mol_str} "
+                "successfully created and saved "
+                f"to {mol_name}.pdb."
             )
-        except Exception:
+        except Exception as e:
             print(
-                "Failed. There was an error getting pdb. "
-                "Please input a single molecule name."
-                f"{mol_str},{mol_name}, {smi}"
+                "There was an error getting pdb. Please input a single molecule name."
+                f"{mol_str},{mol_name}"
             )
             return (
                 "Failed. There was an error getting pdb. "
                 "Please input a single molecule name."
+                "Error: " + str(e)
             )
 
 

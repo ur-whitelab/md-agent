@@ -67,7 +67,7 @@ class PackmolBox:
     ):
         self.path_registry = path_registry
         self.molecules = []
-        self.file_number = 1
+        self.file_number = file_number
         self.file_description = file_description
         self.final_name = None
 
@@ -96,7 +96,9 @@ class PackmolBox:
                 ]
             )
         )
-        while os.path.exists(f"files/pdb/{_final_name}_v{self.file_number}.pdb"):
+        while os.path.exists(
+            f"{self.path_registry.ckpt_files}/pdb/{_final_name}_v{self.file_number}.pdb"
+        ):
             self.file_number += 1
 
         self.final_name = f"{_final_name}_v{self.file_number}.pdb"
@@ -152,10 +154,13 @@ class PackmolBox:
                 os.remove(molecule.filename)
             # name of packed pdb file
             time_stamp = self.path_registry.get_timestamp()[-6:]
-            os.rename(self.final_name, f"files/pdb/{self.final_name}")
+            os.rename(
+                self.final_name,
+                f"{self.path_registry.ckpt_pdb}/{self.final_name}",
+            )
             self.path_registry.map_path(
                 f"PACKED_{time_stamp}",
-                f"files/pdb/{self.final_name}",
+                f"{self.path_registry.ckpt_pdb}/{self.final_name}",
                 self.file_description,
             )
             # move file to files/pdb
@@ -169,10 +174,6 @@ class PackmolBox:
             # os.remove("packmol.inp")
             print("errors:", f"{errors}")
             return "PDB file not validated, errors found {}".format(("\n").join(errors))
-
-
-# define function that takes in a list of
-#  molecules and a list of instructions and returns a pdb file
 
 
 def packmol_wrapper(
@@ -205,7 +206,6 @@ def packmol_wrapper(
 
 
 """Args schema for packmol_wrapper tool. Useful for OpenAI functions"""
-##TODO
 
 
 class PackmolInput(BaseModel):
@@ -302,7 +302,10 @@ class PackMolTool(BaseTool):
         pdbfile_names = [pdbfile.split("/")[-1] for pdbfile in pdbfiles]
         # copy them to the current directory with temp_ names
 
-        pdbfile_names = [f"temp_{pdbfile_name}" for pdbfile_name in pdbfile_names]
+        pdbfile_names = [
+            f"{self.path_registry.ckpt_files}/temp_{pdbfile_name}"
+            for pdbfile_name in pdbfile_names
+        ]
         number_of_molecules = values.get("number_of_molecules", [])
         instructions = values.get("instructions", [])
         small_molecules = values.get("small_molecules", [])
@@ -315,7 +318,7 @@ class PackMolTool(BaseTool):
             small_molecule.split("/")[-1] for small_molecule in small_molecules_files
         ]
         small_molecules_file_names = [
-            f"temp_{small_molecule_file_name}"
+            f"{self.path_registry.ckpt_files}/temp_{small_molecule_file_name}"
             for small_molecule_file_name in small_molecules_file_names
         ]
         # append small molecules to pdbfiles
@@ -369,7 +372,10 @@ class PackMolTool(BaseTool):
                         "must be equal to the number of species in the system. "
                         f"You have {number_of_species} "
                         f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                        "small molecules"
+                        "small molecules. You have included "
+                        f"{len(number_of_molecules)} values for "
+                        f"number_of_molecules and {len(instructions)}"
+                        "instructions."
                     )
                 }
             return {
@@ -377,7 +383,9 @@ class PackMolTool(BaseTool):
                     "The length of number_of_molecules must be equal to the "
                     f"number of species in the system. You have {number_of_species} "
                     f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                    "small molecules"
+                    f"small molecules. You have included "
+                    f"{len(number_of_molecules)} values "
+                    "for number_of_molecules"
                 )
             }
         elif not number_of_species == len(instructions):
@@ -386,7 +394,8 @@ class PackMolTool(BaseTool):
                     "The length of instructions must be equal to the "
                     f"number of species in the system. You have {number_of_species} "
                     f"from {len(pdbfiles)} pdbfiles and {len(small_molecules)} "
-                    "small molecules"
+                    "small molecules. You have included "
+                    f"{len(instructions)} instructions."
                 )
             }
         registry = PathRegistry.get_instance()
@@ -405,8 +414,9 @@ class PackMolTool(BaseTool):
                 if len(instruction[0].split(" ")) == 1:
                     return {
                         "error": (
-                            "The instruction 'center' must be accompanied by more "
-                            "instructions. Example 'fixed 0. 0. 0. 0. 0. 0.' "
+                            "The instruction 'center' must be "
+                            "accompanied by more instructions. "
+                            "Example 'fixed 0. 0. 0. 0. 0. 0.' "
                             "The complete instruction would be: 'center \n fixed 0. 0. "
                             "0. 0. 0. 0.' with a newline separating the two "
                             "instructions."

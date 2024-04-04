@@ -1,4 +1,3 @@
-import os
 import textwrap
 from typing import Optional
 
@@ -132,9 +131,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
             type=FileType.SIMULATION, Sim_id=base_script_id, modified=True
         )
         file_id = self.path_registry.get_fileid(filename, type=FileType.SIMULATION)
-        directory = "files/simulations"
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        directory = f"{self.path_registry.ckpt_simulations}"
         with open(f"{directory}/{filename}", "w") as file:
             file.write(script_content)
 

@@ -5,7 +5,7 @@ import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 
 class RadiusofGyration:
@@ -49,13 +49,15 @@ class RadiusofGyration:
         self._load_traj(pdb_id)
         rg_per_frame = md.compute_rg(self.traj)
 
-        self.rgy_file = f"files/radii_of_gyration_{self.pdb_id}.csv"
+        self.rgy_file = (
+            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv"
+        )
 
         np.savetxt(
             self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
         )
         self.path_registry.map_path(
-            f"radii_of_gyration_{self.pdb_id}",
+            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv",
             self.rgy_file,
             description=f"Radii of gyration per frame for {self.pdb_id}",
         )
@@ -71,20 +73,26 @@ class RadiusofGyration:
     def plot_rad_gyration(self, pdb_id: str) -> str:
         _ = self.rad_gyration_per_frame(pdb_id)
         rg_per_frame = np.loadtxt(self.rgy_file, delimiter=",", skiprows=1)
-        plot_name = f"{self.pdb_id}_rgy.png"
+        fig_analysis = f"rgy_{self.pdb_id}"
+        plot_name = self.path_registry.write_file_name(
+            type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
+        )
+        plot_id = self.path_registry.get_fileid(
+            file_name=plot_name, type=FileType.FIGURE
+        )
 
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
         plt.title(f"{pdb_id} - Radius of Gyration Over Time")
 
-        plt.savefig(plot_name)
+        plt.savefig(f"{self.path_registry.ckpt_figures}/{plot_name}")
         self.path_registry.map_path(
-            f"{self.pdb_id}_radii_of_gyration_plot",
-            plot_name,
+            plot_id,
+            f"{self.path_registry.ckpt_figures}/{plot_name}",
             description=f"Plot of radii of gyration over time for {self.pdb_id}",
         )
-        return "Plot saved as: " + f"{plot_name}.png"
+        return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"
 
 
 class RadiusofGyrationAverage(BaseTool):

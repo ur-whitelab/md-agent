@@ -9,8 +9,8 @@ def set_env():
     load_dotenv()
 
 
-def test_subagent_setup():
-    settings = SubAgentSettings(path_registry=None)
+def test_subagent_setup(get_registry):
+    settings = SubAgentSettings(get_registry("raw", False))
     initializer = SubAgentInitializer(settings)
     subagents = initializer.create_iteration_agents()
     action = subagents["action"]

@@ -24,6 +24,7 @@ from .base_tools import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
+    RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -34,7 +35,7 @@ from .base_tools import (
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
 
 
-def get_learned_tools(ckpt_dir="ckpt"):
+def get_learned_tools(ckpt_dir: str):
     skill_file_path = f"{ckpt_dir}/skill_library/skills.json"
     if os.path.exists(skill_file_path):
         with open(skill_file_path, "r") as f1:
@@ -50,7 +51,7 @@ def get_learned_tools(ckpt_dir="ckpt"):
     for key in skills:
         fxn_name = key
         code = skills[fxn_name]["code"]
-        namespace = {}
+        namespace: dict = {}
         exec(code, namespace)
         function = namespace[fxn_name]
         learned_tools.append(StructuredTool.from_function(func=function))
@@ -75,11 +76,9 @@ def make_all_tools(
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
-    # get path registry
-
     # add base tools
     base_tools = [
-        Scholar2ResultLLM(llm=llm),
+        Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
@@ -92,6 +91,7 @@ def make_all_tools(
         PPIDistance(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
+        RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
     ]
     if subagent_settings is None:
@@ -129,7 +129,7 @@ def get_tools(
     if subagent_settings:
         ckpt_dir = subagent_settings.ckpt_dir
     else:
-        ckpt_dir = "ckpt"
+        ckpt_dir = PathRegistry.get_instance().ckpt_dir
 
     retrieved_tools = []
     if not skip_subagents:
@@ -197,7 +197,7 @@ class CreateNewToolInputSchema(BaseModel):
         description="Whether to execute the new tool or not.",
     )
     args: Optional[dict] = Field(
-        description="Input variables as a dictionary to pass to the skill"
+        None, description="Input variables as a dictionary to pass to the skill"
     )
 
 
