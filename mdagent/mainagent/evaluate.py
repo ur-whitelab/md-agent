@@ -4,9 +4,11 @@ import time
 
 import pandas as pd
 
-from mdagent import MDAgent
+from .agent import MDAgent
 
 
+# TODO: turn off verbose for LLM Chain
+# TODO: add write_to_notebooks flag
 class Evaluator:
     def __init__(self, base_dir="evaluation_results"):
         self.base_dir = base_dir
@@ -28,7 +30,7 @@ class Evaluator:
         tools_used = {}
         tools_details = {}
         failed_steps = 0
-        status = "Unclear"
+        status_complete = "Unclear"
         step_start_time = start_time = time.time()
         for step in agent.iter(user_prompt):
             step_output = step.get("intermediate_step")
@@ -46,17 +48,17 @@ class Evaluator:
                     0
                 ]  # Assuming sentences end with '.'
                 if "Failed" in first_sentence or "Error" in first_sentence:
-                    status = "Failed"
+                    status_complete = False
                 elif "Succeeded" in first_sentence:
-                    status = "Succeeded"
+                    status_complete = True
                 else:
-                    status = "Unclear"
+                    status_complete = "Unclear"
 
                 tools_details[f"Step {num_steps}"] = {
                     "tool": action.tool,
                     "tool_input": action.tool_input,
                     "observation": observation,
-                    "status": status,  # Include success/failure status
+                    "status_complete": status_complete,
                     "step_elapsed_time (sec)": f"{step_elapsed_time:.3f}",
                     "timestamp_from_start (sec)": f"{current_time - start_time:.3f}",
                 }
@@ -68,7 +70,7 @@ class Evaluator:
         else:
             # If the last step output doesn't explicitly state "Succeeded" or "Failed",
             # determine the success of the prompt based on the previous step' status.
-            prompt_passed = status
+            prompt_passed = status_complete
 
         run_id = str(getattr(step.get("__run"), "run_id", None))
         print("Run ID: ", run_id)
@@ -117,11 +119,11 @@ class Evaluator:
         }
         return brief_summary
 
-    def run_evaluation(self, prompts, agent_params=None, same_ckpt=False):
+    def run_evaluation(self, prompts, agent_params={}, same_ckpt=False):
         """
         Evaluate the agent with given parameters across multiple prompts.
         """
-        agent = self.create_agent(agent_params)
+        agent = self.create_agent(**agent_params)
         # TODO: get number of skills from skills.json if it exists in each ckpt
 
         for count, prompt in enumerate(prompts):
@@ -135,9 +137,13 @@ class Evaluator:
                 self.evaluations.append(
                     {
                         "execution_success": True,
-                        "agent_settings": brief_summary["agent_settings"],
+                        "agent_settings": brief_summary.get(
+                            "agent_settings", "Not given"
+                        ),
                         "prompt": prompt,
-                        "prompt_success": brief_summary["prompt_success"],
+                        "prompt_success": brief_summary.get(
+                            "prompt_success", "Not given"
+                        ),
                         "summary": brief_summary,
                     }
                 )
@@ -148,7 +154,7 @@ class Evaluator:
                     "resume": agent.subagents_settings.resume,
                     "learn": not agent.skip_subagents,
                     "curriculum": agent.subagents_settings.curriculum,
-                    "memory": agent.subagents_settings.memory,
+                    # "memory": agent.subagents_settings.memory,
                 }
                 self.evaluations.append(
                     {
@@ -190,7 +196,7 @@ class Evaluator:
             if eval["execution_success"]
         ]
 
-        # TODO: deal with failed evaluations
+        # TODO: deal with failed evaluations properly
 
         df = pd.DataFrame(data)
 
@@ -241,7 +247,7 @@ class Evaluator:
         for agent in agent_params_list:
             self.run_evaluation(prompts, agent)
         self.summarize_and_save()
-        # TODO: add a function to create a agent-focused table
+        # TODO: add a function to create agent-focused table to eval diff agent types
 
 
 # Example usage

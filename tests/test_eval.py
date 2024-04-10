@@ -1,0 +1,133 @@
+from unittest.mock import MagicMock, mock_open, patch
+
+import pandas as pd
+import pytest
+
+from mdagent.mainagent.evaluate import Evaluator
+
+
+@pytest.fixture
+def evaluator():
+    with patch("os.makedirs"):
+        yield Evaluator()
+
+
+@pytest.fixture
+def mock_os_makedirs():
+    with patch("os.makedirs", MagicMock()) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_open_json():
+    with patch("builtins.open", mock_open()) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_json_dump():
+    with patch("json.dump", MagicMock()) as mock:
+        yield mock
+
+
+@pytest.fixture
+def mock_agent(tmp_path):
+    mock_action = MagicMock()
+    mock_action.tool = "some_tool"
+    mock_action.tool_input = "some_input"
+    agent = MagicMock()
+    agent.iter.return_value = iter(
+        [
+            {"intermediate_step": [(mock_action, "Succeeded. some obervation.")]},
+            {"output": "Succeeded. Some final answer."},
+        ]
+    )
+    agent.ckpt_dir = tmp_path / "fake_dir"
+    agent.llm.model_name = "test_model"
+    agent.agent_type = "test_agent_type"
+    agent.subagents_settings.resume = False
+    agent.subagents_settings.curriculum = True
+    return agent
+
+
+@patch("mdagent.mainagent.evaluate.MDAgent")
+def test_create_agent(mock_mdagent, evaluator):
+    agent_params = {"model_name": "test_model"}
+    evaluator.create_agent(agent_params)
+    mock_mdagent.assert_called_once_with(**agent_params)
+
+
+def test_reset(evaluator):
+    evaluator.evaluations = ["dummy"]
+    evaluator.reset()
+    assert evaluator.evaluations == []
+
+
+def test_summarize_and_save(evaluator, mock_open_json, mock_json_dump):
+    evaluator.evaluations = [{"test_key": "test_value"}]
+    evaluator.summarize_and_save("test_file")
+    mock_open_json.assert_called()
+    mock_json_dump.assert_called()
+
+
+def test_evaluate_all_steps(evaluator, mock_agent, mock_os_makedirs, mock_open_json):
+    user_prompt = "Test prompt"
+    result = evaluator._evaluate_all_steps(mock_agent, user_prompt)
+    assert result["prompt_success"] is True, "The prompt should be marked as succeeded."
+
+
+def test_evaluate_all_steps_contents(
+    evaluator, mock_agent, mock_os_makedirs, mock_open_json, mock_json_dump
+):
+    user_prompt = "Test some prompt"
+    evaluator._evaluate_all_steps(mock_agent, user_prompt)
+    assert mock_json_dump.call_count == 1
+    args, kwargs = mock_json_dump.call_args
+    data_to_dump = args[0]
+    assert data_to_dump["prompt_success"] is True
+    assert "Step 1" in data_to_dump["tools_details"]
+    assert data_to_dump["tools_details"]["Step 1"]["status_complete"] is True
+    assert data_to_dump["total_steps"] == 1
+
+
+def test_run_evaluation(evaluator, mock_os_makedirs, mock_open_json):
+    with patch(
+        "mdagent.mainagent.evaluate.Evaluator._evaluate_all_steps"
+    ) as mock_evaluate_all_steps:
+        mock_evaluate_all_steps.side_effect = [
+            {"prompt_success": True},
+            Exception("Test error"),
+        ]
+        prompts = ["Prompt 1", "Prompt 2"]
+        evaluator.run_evaluation(prompts)
+        assert len(evaluator.evaluations) == 2
+        assert evaluator.evaluations[0]["execution_success"] is True
+        assert evaluator.evaluations[1]["execution_success"] is False
+        assert "Test error" in evaluator.evaluations[1]["error_msg"]
+
+
+@patch("pandas.DataFrame.to_json", MagicMock())
+def test_create_prompt_table(evaluator):
+    evaluator.evaluations = [
+        {
+            "execution_success": True,
+            "summary": {
+                "total_steps": 1,
+                "failed_steps": 0,
+                "prompt_success": True,
+                "total_time_seconds": "10.0",
+            },
+        },
+        {
+            "execution_success": True,
+            "summary": {
+                "total_steps": 2,
+                "failed_steps": 1,
+                "prompt_success": False,
+                "total_time_seconds": "20.0",
+            },
+        },
+    ]
+    df = evaluator.create_prompt_table()
+    assert len(df) == 2
+    pd.DataFrame.to_json.assert_called_once()
