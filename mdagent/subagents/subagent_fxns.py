@@ -13,6 +13,7 @@ class Iterator:
         subagent_settings: Optional[SubAgentSettings],
         all_tools_string: Optional[str] = None,
         current_tools: Optional[dict] = None,
+        args: Optional[dict] = None,
     ):
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
@@ -22,6 +23,7 @@ class Iterator:
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
+        self.args = args or {}
         os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
 
         # initialize agents
@@ -74,7 +76,7 @@ class Iterator:
                 f.write("\n" + msg + "\n")
             return None
 
-    def _run_loop(self, task, full_history, skills):
+    def _run_loop(self, task, full_history, skills, args):
         """
         this function just runs the iteration 1 time
         """
@@ -82,7 +84,7 @@ class Iterator:
         print("\n\033[46m action agent is running, writing code\033[0m")
         st.markdown("action agent is running, writing code", unsafe_allow_html=True)
         success, code, fxn_name, code_output = self.action._run_code(
-            full_history, task, skills
+            full_history, task, skills, args
         )
         print("\nCode Output: ", code_output)
         critique = self.critic._run(code, task, code_output)
@@ -97,7 +99,7 @@ class Iterator:
             success = False
         return success, code, fxn_name, code_output, task, critique, suggestions
 
-    def _run_iterations(self, run, task):
+    def _run_iterations(self, run, task, args):
         iterations = 5
         self._save_failures(None, f"Run {run}")
         iter = 0
@@ -113,7 +115,7 @@ class Iterator:
                 task,
                 critique,
                 suggestions,
-            ) = self._run_loop(task, full_history, skills)
+            ) = self._run_loop(task, full_history, skills, args)
 
             # save to history
             full_history = self._add_to_history(
@@ -164,6 +166,7 @@ class Iterator:
         success, tool_name = self._run_iterations(
             task,
             user_prompt,
+            self.args,
         )
         if success:
             return tool_name
