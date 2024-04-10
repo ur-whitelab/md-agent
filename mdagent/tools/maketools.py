@@ -197,7 +197,7 @@ class CreateNewToolInputSchema(BaseModel):
         description="Whether to execute the new tool or not.",
     )
     args: Optional[dict] = Field(
-        description="Input variables as a dictionary to pass to the skill"
+        None, description="Input variables as a dictionary to pass to the skill"
     )
 
 
