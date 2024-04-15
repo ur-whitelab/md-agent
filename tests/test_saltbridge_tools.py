@@ -1,6 +1,47 @@
 from unittest.mock import Mock
-
+import mdtraj as md 
 import pytest
+
+from mdagent.tools.base_tools.analysis_tools.salt_bridge_tool import SaltBridgeFunction
+from mdagent.utils import PathRegistry
+
+# define test data
+
+traj_file = "test_trajectory.dcd"
+top_file = "test_topology.pdb"
+
+#Test saltbridgefunction class
+
+def test_salt_bridge_function():
+    #initalize SaltBridgeFunction
+    salt_bridge_function = SaltBridgeFunction(path_registry=None)
+
+#load traj using MDtraj 
+    traj = md.load(traj_file, top=top_file)
+
+#perform salt bridge analysis 
+
+    salt_bridges, unpaired_residues, residue_pairs = salt_bridge_function.find.salt_bridges(traj, top=top_file)
+
+#check to see if we get a list in our results
+
+    assert isinstance(salt_bridges, list)
+
+#Check to make sure residue pairs cant be changed ( tuple)
+
+    for pair in residue_pairs:
+         assert isinstance(pair, tuple) 
+
+# check to make sure unpaired residue is assigned a number to identify it by the number (integer)
+# to ensure the code works
+
+    for residue in unpaired_residues:
+        assert isinstance( residue, int)
+
+# Finally, run the test
+    if __name__ == "__main__":
+        test_salt_bridge_function()
+    
 
 
 @pytest.fixture
@@ -16,6 +57,7 @@ def test_find_salt_bridges(mock_traj):
     salt_bridge_function = SaltBridgeFunction(path_registry=None)
 
     # Call find_salt_bridges method
+    traj = md.load(traj_file,top=top_file)  
     salt_bridges = salt_bridge_function.find_salt_bridges(traj=mock_traj)
 
     # Assert that salt_bridges contain the expected values
@@ -45,3 +87,4 @@ def test_count_salt_bridges():
     ]  # Example salt bridges
     count = salt_bridge_function.count_salt_bridges(salt_bridges)
     assert count == 6  # Example expected count
+
