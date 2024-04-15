@@ -9,8 +9,8 @@ from langchain.tools import BaseTool
 from mdagent.utils import FileType, PathRegistry
 
  # Load trajectory using MDTraj
-        traj = md.load("trajectory.dcd", top="topology.pdb") # or
-        traj = md.load(traj_file, top= top_file)
+        traj = md.load("trajectory.dcd", top ="topology.pdb") # or
+        traj = md.load(traj_file, top = top_file)
 
 class SaltBridgeFunction:
     def __init__(self, path_registry):
@@ -19,7 +19,7 @@ class SaltBridgeFunction:
         self.paired_salt_bridges=[] #stores paired salt bridges
         self.unpaired_residues=set() #store unpaired residues
 
-    def find_salt_bridges(traj_file, top_file, threshold_distance=0.4, residue_pairs=None):
+    def find_salt_bridges(self, traj, top , threshold_distance=0.4, residue_pairs=None):
         salt_bridges = []
 
         if residue_pairs is None:
@@ -56,7 +56,7 @@ class SaltBridgeTool(BaseTool): #why cant I expand or condense this class like o
         name = "salt_bridge_tool"
         description = "A tool to find salt bridge in a protein trajectory"
 
-        def __init_(self, path_registry):
+        def __init__(self, path_registry):
             self.salt_bridge_function = SaltBridgeFunction(path_registry)
 
         def _run(self, traj_file, top_file, threshold_distance=0.4, residue_pairs=None):
