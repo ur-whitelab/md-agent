@@ -2,15 +2,9 @@ import json
 import os
 
 import pytest
-from dotenv import load_dotenv
 
 from mdagent.subagents.agents import MemoryManager
 from mdagent.subagents.subagent_setup import SubAgentInitializer, SubAgentSettings
-
-
-@pytest.fixture(scope="session", autouse=True)
-def set_env():
-    load_dotenv()
 
 
 @pytest.fixture
@@ -36,46 +30,59 @@ def test_memory_init(memory_manager, get_registry):
     assert memory_manager is not None
     assert memory_manager.run_id is not None
     assert len(memory_manager.run_id) == 8
+    assert os.path.exists(memory_manager.cnt_history_dir)
+    assert os.path.exists(memory_manager.cnt_history_details_dir)
 
     mm_path_id = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
     assert mm_path_id.run_id == "TESTRUNN"
 
-    assert os.path.exists(f"{mm_path_id.dir_name}/memories/memory_details")
-    assert os.path.exists(f"{mm_path_id.dir_name}/memories")
 
-
-def test_write_to_and_retrieve_from_history(memory_manager):
+def test_write_to_and_retrieve_from_history_cnt(memory_manager):
     input_dict = {
         "prompt": "prompt_",
-        "attempt_number": 1,
         "code": "code_",
         "output": "output_",
         "critique": "critique_",
         "success": True,
     }
     memory_manager._write_history_iterator(**input_dict)
-    assert os.path.exists(memory_manager.memory_path)
-    with open(memory_manager.memory_path, "r") as f:
+    assert os.path.exists(memory_manager.cnt_history_details)
+    with open(memory_manager.cnt_history_details, "r") as f:
         data = json.load(f)
-    assert data["prompt__1"] == input_dict
+    input_dict["summary"] = None
+    assert data["0.0"] == input_dict
 
     memory = memory_manager.retrieve_recent_memory_iterator(last_only=True)
     assert str(memory) == str(input_dict)
 
 
-def test_pull_memory_summary(memory_manager, get_registry):
-    # write fake summary
-    fake_summaries = {"TESTRUNN": "fake_summary"}
-    with open(memory_manager.memory_summary_path, "w") as f:
-        f.write(json.dumps(fake_summaries))
-    assert memory_manager.pull_memory_summary("NOTARUNN") is None
-    assert memory_manager.run_id_mem is None
+def test_write_to_json_new_file(tmp_path, memory_manager):
+    file_path = tmp_path / "test.json"
+    test_data = {"key": "value"}
+    memory_manager._write_to_json(test_data, str(file_path))
+    with open(file_path, "r") as f:
+        data = json.load(f)
+    assert data == test_data
 
-    mm_mem = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
-    assert mm_mem.pull_memory_summary() == "fake_summary"
 
-    with open(memory_manager.agent_summary_path, "w") as f:
-        f.write(json.dumps(fake_summaries))
+def test_write_to_json_existing_file(tmp_path, memory_manager):
+    file_path = tmp_path / "test.json"
+    initial_data = {"initial_key": "initial_value"}
+    update_data = {"updated_key": "updated_value"}
+    with open(file_path, "w") as f:
+        json.dump(initial_data, f)
+
+    memory_manager._write_to_json(update_data, str(file_path))
+    with open(file_path, "r") as f:
+        data = json.load(f)
+    assert data == {**initial_data, **update_data}
+
+
+def test_pull_memory_summary(get_registry):
     mm_mem = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
-    assert mm_mem.pull_agent_summary_from_mem() == "fake_summary"
-    assert mm_mem.run_id_mem == "fake_summary"
+    fake_summaries = {"TESTRUNN.0": "fake_summary"}
+    with open(mm_mem.agent_trace_summary, "w") as f:
+        f.write(json.dumps(fake_summaries))
+    output = mm_mem.pull_agent_summary_from_mem(run_id="TESTRUNN")
+    assert output == "fake_summary"
+    assert mm_mem.pull_agent_summary_from_mem(run_id="TESTRUNN") == "fake_summary"

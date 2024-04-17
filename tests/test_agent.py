@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from mdagent.mainagent.agent import MDAgent
-from mdagent.subagents.agents import Action, MemoryManager, SkillManager
+from mdagent.subagents.agents import Action, SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
 from mdagent.subagents.subagent_setup import SubAgentSettings
 
@@ -13,11 +13,6 @@ from mdagent.subagents.subagent_setup import SubAgentSettings
 @pytest.fixture
 def skill_manager(get_registry):
     return SkillManager(path_registry=get_registry("raw", False))
-
-
-@pytest.fixture
-def memory_manager(get_registry):
-    return MemoryManager(path_registry=get_registry("raw", False))
 
 
 @pytest.fixture
