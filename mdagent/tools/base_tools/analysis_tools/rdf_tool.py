@@ -5,15 +5,15 @@ import mdtraj as md
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, validate_arguments
 
 
 class RDFToolInput(BaseModel):
     trajectory_fileid: str = Field(
-        None, description="Trajectory file. Either dcd, hdf5, xtc oe xyz"
+        None, description="Trajectory file ID. Either dcd, hdf5, xtc oe xyz"
     )
 
-    topology_fileid: Optional[str] = Field(None, description="Topology file")
+    topology_fileid: Optional[str] = Field(None, description="Topology file ID")
     stride: Optional[int] = Field(None, description="Stride for reading trajectory")
     atom_indices: Optional[List[int]] = Field(
         None, description="Atom indices to load in the trajectory"
@@ -36,6 +36,20 @@ class RDFTool(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, **input):
+        input = input.get("input", input)
+
+        try:
+            self.validate_arguments(**input)
+        except ValueError as e:
+            if "Invalid argument(s) provided" in str(e):
+                if "maybe you mean:" in str(e):
+                    print("Invalid Arguments in RDF tool: ", str(e))
+                    return str(e)
+                if "it will be ignored" in str(e):
+                    print("Arguments Not used in RDF tool: ", str(e))
+                    pass
+            else:
+                raise ValueError(f"Error during arguments validation in RDF tool {e}")
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
@@ -107,6 +121,18 @@ class RDFTool(BaseTool):
 
     def _arun(self, input):
         pass
+
+    @validate_arguments(
+        ["trajectory_fileid", "topology_fileid", "stride", "atom_indices"]
+    )
+    def validate_arguments(
+        self, trajectory_fileid, topology_fileid, stride, atom_indices
+    ):
+        """This checks if the input arguments are correct, but not complete.
+        Catches mistakes like "trajectory_file" instead of "trajectory_fileid" and
+        suggests the closest match.
+        """
+        return None
 
     def validate_input(self, input):
         trajectory_id = input.get("trajectory_fileid", None)
