@@ -299,3 +299,7 @@ def test_path_registry_w_ckpt():
         os.path.dirname(path_registry.json_file_path)
     )
     shutil.rmtree(os.path.dirname(path_registry.json_file_path))
+
+
+def test_get_iteration_number():
+    pass

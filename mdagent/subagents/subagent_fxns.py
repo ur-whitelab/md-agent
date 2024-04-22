@@ -1,5 +1,4 @@
 import json
-import os
 from typing import Optional
 
 import streamlit as st
@@ -18,13 +17,13 @@ class Iterator:
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
         self.path_registry = subagent_settings.path_registry
+        self.memory = subagent_settings.memory
         if not self.path_registry:
             raise ValueError("Path registry not found")
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
         self.args = args or {}
-        os.makedirs(f"{self.ckpt_dir}/history/", exist_ok=True)
 
         # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
@@ -32,49 +31,6 @@ class Iterator:
         self.action = subagents["action"]
         self.critic = subagents["critic"]
         self.skill = subagents["skill"]
-
-    def _add_to_history(
-        self,
-        existing_history,
-        iter,
-        task,
-        code_history,
-        output_history,
-        critique,
-        suggestions,
-    ):
-        # Initialize the output dictionary
-        files_history = self.path_registry.list_path_names()
-        if existing_history is None:
-            existing_history = []
-
-        # Initialize the output dictionary
-        output_dict = {
-            "iteration": iter,
-            "task": task,
-            "code": code_history,
-            "output": output_history,
-            "files": files_history,
-            "critique": critique,
-            "suggestions": suggestions,
-        }
-        # Append to the existing history
-        output_json_string = json.dumps(output_dict, indent=4)
-        existing_history.append(output_json_string)
-        return existing_history
-
-    def _save_failures(self, history, msg):
-        if msg is None:
-            # save to file
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
-                history_string = json.dumps(history)
-                f.write("\n" + history_string + "\n")
-            return "failed history saved to file"
-        else:
-            # save to file
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "a") as f:
-                f.write("\n" + msg + "\n")
-            return None
 
     def _run_loop(self, task, full_history, skills, args):
         """
@@ -101,7 +57,6 @@ class Iterator:
 
     def _run_iterations(self, run, task, args):
         iterations = 5
-        self._save_failures(None, f"Run {run}")
         iter = 0
         success = False
         full_history = None
@@ -118,19 +73,15 @@ class Iterator:
             ) = self._run_loop(task, full_history, skills, args)
 
             # save to history
-            full_history = self._add_to_history(
-                full_history,
-                iter,
-                task,
-                code,
-                code_output,
-                critique,
-                suggestions,
+            full_history = self.memory._write_history_iterator(
+                prompt=task,
+                attempt_number=iter,
+                code=code,
+                output=code_output,
+                critique=critique + suggestions,
+                success=success,
             )
             if success:
-                # update variables and save to file
-                self._save_failures(full_history, None)
-
                 # give successful code to tool/skill manager
                 print("\n\033[46mThe new code is complete, running skill agent\033[0m")
                 st.markdown(
@@ -148,16 +99,6 @@ class Iterator:
             unsafe_allow_html=True,
         )
         tool_name = None
-        full_failed = self._add_to_history(
-            full_history,
-            iter,
-            task,
-            code,
-            code_output,
-            critique,
-            suggestions,
-        )
-        self._save_failures(full_failed, None)
         return success, tool_name
 
     # run da whole thing
@@ -174,14 +115,7 @@ class Iterator:
             return None
 
     def _pull_information(self):
-        # pull info of strings to pass to llm agents
-        recent_history_string = ""
-        full_history_string = ""
-        if os.path.exists(f"{self.ckpt_dir}/history/failed_history.json"):
-            with open(f"{self.ckpt_dir}/history/failed_history.json", "r") as f:
-                full_history_string = f.read()
-                lines = full_history_string.splitlines()
-                recent_history_string = lines[-1] if lines else None
+        full_history_string = self.memory.retrieve_recent_memory_iterator()
 
         skills = self.skill.get_skills()
         if skills:
@@ -200,7 +134,6 @@ class Iterator:
             current_tools_string = json.dumps(self.current_tools)
 
         info = {
-            "recent_history": recent_history_string,
             "full_history": full_history_string,
             "skills": skills_string,
             "files": files_string,
