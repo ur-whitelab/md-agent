@@ -225,14 +225,22 @@ class CreateNewTool(BaseTool):
             all_tools_string += f"{tool.name}: {tool.description}\n"
         return all_tools_string
 
-    def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
-        # run iterator
+    # def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
+    def _run(self, **input):
+        task = input.get("task")
+        orig_prompt = input.get("orig_prompt")
+        curr_tools = input.get("curr_tools")
+        execute = input.get("execute", True)
+        args = input.get("args", None)
+        if not task or not orig_prompt or not curr_tools:
+            return "Provide task, orig_prompt, and curr_tools."  # run iterator
         try:
             all_tools_string = self.get_all_tools_string()
             newcode_iterator = Iterator(
                 self.subagent_settings,
                 all_tools_string=all_tools_string,
                 current_tools=curr_tools,
+                args=args,
             )
             print("running iterator to draft a new tool")
             st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
