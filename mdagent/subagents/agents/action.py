@@ -32,12 +32,19 @@ class Action:
         self.llm_chain = LLMChain(llm=llm, prompt=action_template)
         self.path_registry = path_registry
 
-    def _run(self, history, task, skills):
+    def _run(self, history, task, skills, args):
         # get files
         files = self.path_registry.list_path_names()
         # get skills
         return self.llm_chain(
-            {"files": files, "task": task, "history": history, "skills": skills}
+            {
+                "files": files,
+                "task": task,
+                "history": history,
+                "skills": skills,
+                "args": args,
+                "init_dir": self.path_registry.ckpt_dir,
+            }
         )["text"]
 
     # function that runs the code
@@ -71,9 +78,9 @@ class Action:
         else:
             return None, None
 
-    def _run_code(self, history, task, skills):
+    def _run_code(self, history, task, skills, args):
         # run agent
-        output = self._run(history, task, skills)
+        output = self._run(history, task, skills, args)
         # extract code part
         code, fxn_name = self._extract_code(output)
         # run code

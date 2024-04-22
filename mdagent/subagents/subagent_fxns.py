@@ -12,6 +12,7 @@ class Iterator:
         subagent_settings: Optional[SubAgentSettings],
         all_tools_string: Optional[str] = None,
         current_tools: Optional[dict] = None,
+        args: Optional[dict] = None,
     ):
         if subagent_settings is None:
             raise ValueError("Subagent settings cannot be None")  # shouldn't happen
@@ -38,7 +39,7 @@ class Iterator:
         print("\n\033[46m action agent is running, writing code\033[0m")
         st.markdown("action agent is running, writing code", unsafe_allow_html=True)
         success, code, fxn_name, code_output = self.action._run_code(
-            full_history, task, skills
+            full_history, task, skills, args
         )
         print("\nCode Output: ", code_output)
         critique = self.critic._run(code, task, code_output)
@@ -53,7 +54,7 @@ class Iterator:
             success = False
         return success, code, fxn_name, code_output, task, critique, suggestions
 
-    def _run_iterations(self, run, task):
+    def _run_iterations(self, run, task, args):
         iterations = 5
         iter = 0
         success = False
@@ -68,7 +69,7 @@ class Iterator:
                 task,
                 critique,
                 suggestions,
-            ) = self._run_loop(task, full_history, skills)
+            ) = self._run_loop(task, full_history, skills, args)
 
             # save to history
             full_history = self.memory._write_history_iterator(
@@ -105,6 +106,7 @@ class Iterator:
         success, tool_name = self._run_iterations(
             task,
             user_prompt,
+            self.args,
         )
         if success:
             return tool_name
