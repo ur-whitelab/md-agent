@@ -8,9 +8,7 @@ from langchain.tools import BaseTool
 
 from mdagent.utils import FileType, PathRegistry
 
- # Load trajectory using MDTraj
-        traj = md.load("trajectory.dcd", top="topology.pdb") # or
-        traj = md.load(traj_file, top= top_file)
+ 
 class SaltBridgeFunction: #this class defines a method called find_salt_bridge
     #using MD traj and top files and threshold distance default, residue pair list
     # used to account for salt bridge analysis
@@ -20,9 +18,10 @@ class SaltBridgeFunction: #this class defines a method called find_salt_bridge
         self.paired_salt_bridges=[] #stores paired salt bridges
         self.unpaired_residues=set() #store unpaired residues
 
-    def find_salt_bridges(self, traj, top , threshold_distance=0.4, residue_pairs=None):
+    def find_salt_bridges(self, traj_file, top_file , threshold_distance=0.4, residue_pairs=None):
         salt_bridges = []
-
+        # load trajectory using MDTraj
+        traj = md.load(traj_file, top= top_file)
         if residue_pairs is None:
             residue_pairs = [("ARG", "ASP"), ("ARG", "GLU"), ("LYS", "ASP"), ("LYS", "GLU")]
 
@@ -45,12 +44,22 @@ class SaltBridgeFunction: #this class defines a method called find_salt_bridge
                             # If not, add them to the unpaired set
                             self.unpaired_residues.add(donor_idx)  # Add donor to unpaired residues set
                             self.unpaired_residues.add(acceptor_idx)  # Add acceptor to unpaired residues set
+        print("Salt bridges found:")
+        for bridge in salt_bridges:
+            print(
+                f"Residue {traj.topology.atom(bridge[0]).residue.index + 1} ({traj.topology.atom(bridge[0]).residue.name}) - "
+                f"Residue {traj.topology.atom(bridge[1]).residue.index + 1} ({traj.topology.atom(bridge[1]).residue.name})"
+            )
+
+            #Print unpaired residues
+        print("Unpaired_residues:")
+        salt_bridge_function = salt_bridge_tool.salt_bridge_function
+        for residue_idx in salt_bridge_function.unpaired_residues:
+            print(f"Residue {traj.topology.atom(residue_idx).residue.index + 1} ({traj.topology.atom(residue_idx).residue.name})")
 
         return salt_bridges, list(self.unpaired_residues), list(residue_pairs)
 
 
- # Perform salt bridge analysis
-        salt_bridges = find_salt_bridges(traj)
 
 class SaltBridgeTool(BaseTool):
         name = "salt_bridge_tool"
@@ -75,16 +84,12 @@ class SaltBridgeTool(BaseTool):
         return self._agg_result(result)
 
 
-#create an instance (files?) of the salt bridge tool
 
-path_registry = PathRegistry()
-salt_bridge_tool = SaltBridgeTool(path_registry)
-
-#to use tool to find salt bridges
-
-salt_bridges = salt_bridge_tool(traj, "topology.pdb")
 
 # Print identified salt bridges
+
+# this need to be moved under class somewhere.  move it 
+
 print("Salt bridges found:")
 for bridge in salt_bridges:
     print(
