@@ -23,6 +23,7 @@ class Iterator:
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.all_tools_string = all_tools_string
         self.current_tools = current_tools
+        self.args = args or {}
 
         # initialize agents
         initializer = SubAgentInitializer(subagent_settings)
@@ -31,7 +32,7 @@ class Iterator:
         self.critic = subagents["critic"]
         self.skill = subagents["skill"]
 
-    def _run_loop(self, task, full_history, skills):
+    def _run_loop(self, task, full_history, skills, args):
         """
         this function just runs the iteration 1 time
         """
