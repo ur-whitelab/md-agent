@@ -139,7 +139,7 @@ class MemoryManager:
         else:
             data_original = data
         with open(path, "w") as f:
-            f.write(json.dumps(data_original)indent=4, sort_keys=True)))
+            f.write(json.dumps(data_original, indent=4, sort_keys=True))
 
     ### Iterator/CreateNewTool Functions ###
 
