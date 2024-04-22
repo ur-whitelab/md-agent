@@ -45,6 +45,8 @@ def test_write_to_and_retrieve_from_history_cnt(memory_manager):
         "critique": "critique_",
         "success": True,
     }
+    # sort by key
+    input_dict = dict(sorted(input_dict.items()))
     memory_manager._write_history_iterator(**input_dict)
     assert os.path.exists(memory_manager.cnt_history_details)
     with open(memory_manager.cnt_history_details, "r") as f:
