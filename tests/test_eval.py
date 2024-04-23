@@ -36,6 +36,12 @@ def mock_json_dump():
 
 
 @pytest.fixture
+def mock_os_path_exists():
+    with patch("os.path.exists", return_value=True) as mock:
+        yield mock
+
+
+@pytest.fixture
 def mock_agent(tmp_path):
     mock_action = MagicMock()
     mock_action.tool = "some_tool"
@@ -79,9 +85,10 @@ def test_save(evaluator, mock_open_json, mock_json_dump):
     mock_json_dump.assert_called()
 
 
-def test_load(evaluator, mock_open_json, mock_json_load):
+def test_load(evaluator, mock_open_json, mock_json_load, mock_os_path_exists):
     filename = "dummy_data.json"
     evaluator.load(filename)
+    mock_os_path_exists.assert_called_once_with(filename)
     mock_open_json.assert_called_once_with(filename, "r")
     mock_json_load.assert_called_once()
     assert evaluator.evaluations == [{"key": "value"}]
