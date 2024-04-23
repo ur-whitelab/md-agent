@@ -133,6 +133,7 @@ class Evaluator:
         }
         print("\n----- Evaluation Summary -----")
         print("Run ID: ", run_id)
+        print("Prompt success: ", prompt_passed)
         print(f"Total Steps: {num_steps+1}")
         print(f"Total Time: {total_seconds:.2f} seconds ({total_mins:.2f} minutes)")
 
