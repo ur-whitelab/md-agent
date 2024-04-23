@@ -33,20 +33,25 @@ class RetryExecuteSkill(BaseTool):
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill = agent_initializer.create_skill_manager(resume=True)
             if skill is None:
-                return "SubAgent for this tool not initialized"
+                return "Failed. SubAgent for this tool not initialized"
             if args is not None:
                 print("args: ", args)
                 code_result = skill.execute_skill_function(skill_name, **args)
             else:
                 code_result = skill.execute_skill_function(skill_name)
-            return code_result
+            return "Succeeded executing. Result: " + code_result
         except TypeError as e:
-            return f"""{type(e).__name__}: {e}. Please check your inputs
-            and make sure to use a dictionary.\n"""
+            return (
+                f"Failed. {type(e).__name__}: {e}. Please check your inputs "
+                "and make sure to use a dictionary.\n"
+            )
         except ValueError as e:
-            return f"{type(e).__name__}: {e}. Provide correct arguments of the skill.\n"
+            return (
+                f"Failed. {type(e).__name__}: {e}. "
+                "Provide correct arguments of the skill.\n"
+            )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e} \n"
+            return f"Failed. Something went wrong. {type(e).__name__}: {e} \n"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously"""
@@ -77,13 +82,16 @@ class SkillRetrieval(BaseTool):
             agent_initializer = SubAgentInitializer(self.subagent_settings)
             skill = agent_initializer.create_skill_manager(resume=True)
             if skill is None:
-                return "SubAgent for this tool not initialized"
+                return "Failed. SubAgent for this tool not initialized"
             skills = skill.retrieve_skills(query)
             if skills is None:
-                return "No skills found for this query"
-            return f"\nFound {len(skills)} skills.\033[0m\n{list(skills.keys())}"
+                return "Failed. No skills found for this query"
+            return (
+                f"Successful. \nFound {len(skills)} skills. "
+                f"\033[0m\n{list(skills.keys())}"
+            )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
+            return f"Failed. Something went wrong. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously"""
@@ -132,10 +140,13 @@ class WorkflowPlan(BaseTool):
             rationale, decomposed_tasks = curriculum.run(
                 task, curr_tools, files, failed_tasks
             )
-            return f"""Here's the list of subtasks decomposed from the main task:\n
-                {decomposed_tasks}. \n Now, do these subtasks one by one."""
+            return (
+                "Succeeded planning. Here's the list of subtasks decomposed "
+                "from the main task:\n{decomposed_tasks}.\n"
+                "Now, do these subtasks one by one."
+            )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
+            return f"Failed. Something went wrong. {type(e).__name__}: {e}"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""

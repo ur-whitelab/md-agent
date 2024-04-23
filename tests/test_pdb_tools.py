@@ -49,7 +49,7 @@ def test_small_molecule_pdb(molpdb):
     # test with valid molecule name
     valid_name = "water"
     expected_output = (
-        "PDB file for water successfully created and " "saved to water.pdb."
+        "Succeeded. PDB file for water successfully created and " "saved to water.pdb."
     )
     assert molpdb.small_molecule_pdb(valid_name) == expected_output
     assert os.path.exists(f"{molpdb.path_registry.ckpt_pdb}/water.pdb")

@@ -41,10 +41,10 @@ class RDFTool(BaseTool):
         except ValueError as e:
             if "Incorrect Inputs" in str(e):
                 print("Error in Inputs in RDF tool: ", str(e))
-                return ("Error in Inputs", str(e))
+                return ("Failed. Error in Inputs", str(e))
             elif "Invalid file extension" in str(e):
                 print("File Extension Not Supported in RDF tool: ", str(e))
-                return ("File Extension Not Supported", str(e))
+                return ("Failed. File Extension Not Supported", str(e))
             else:
                 raise ValueError(f"Error during inputs in RDF tool {e}")
 
@@ -76,7 +76,7 @@ class RDFTool(BaseTool):
         except Exception as e:
             # not sure what exceptions to catch for now, will handle them as they come
             print("Error in RDF calculation:", str(e))
-            raise ("Error in RDF calculation: ", str(e))
+            raise ("Failed. Error in RDF calculation: ", str(e))
         # save plot
         plot_name_save = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
         fig, ax = plt.subplots()
@@ -101,7 +101,7 @@ class RDFTool(BaseTool):
         )
         plt.close()
         return (
-            "RDF calculated successfully"
+            "Succeeded. RDF calculated."
             "rdf.png has been saved in the current directory"
         )
 
