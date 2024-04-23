@@ -118,7 +118,7 @@ class Evaluator:
             # determine the success of the prompt based on the previous step' status.
             prompt_passed = status_complete
 
-        run_id = str(getattr(step.get("__run"), "run_id", None))
+        run_id = agent.run_id
         total_seconds = time.time() - start_time
         total_mins = total_seconds / 60
         agent_settings = {
@@ -129,7 +129,7 @@ class Evaluator:
             "resume": agent.subagents_settings.resume,
             "learn": not agent.skip_subagents,
             "curriculum": agent.subagents_settings.curriculum,
-            # "memory": agent.subagents_settings.memory,
+            "use_memory": agent.use_memory,
         }
         print("\n----- Evaluation Summary -----")
         print("Run ID: ", run_id)
@@ -176,7 +176,7 @@ class Evaluator:
                     "resume": agent.subagents_settings.resume,
                     "learn": not agent.skip_subagents,
                     "curriculum": agent.subagents_settings.curriculum,
-                    # "memory": agent.subagents_settings.memory,
+                    "memory": agent.use_memory,
                 }
                 self.evaluations.append(
                     {

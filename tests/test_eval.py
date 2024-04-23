@@ -54,6 +54,7 @@ def mock_agent(tmp_path):
     agent.agent_type = "test_agent_type"
     agent.subagents_settings.resume = False
     agent.subagents_settings.curriculum = True
+    agent.use_memory = False
     return agent
 
 
