@@ -137,8 +137,8 @@ class Iterator:
                     "The new code is complete, running skill agent",
                     unsafe_allow_html=True,
                 )
-                tool_name = self.skill.add_new_tool(fxn_name, code)
-                return success, tool_name
+                tool_name, final_args = self.skill.add_new_tool(fxn_name, code)
+                return success, tool_name, final_args
             iter += 1
 
         # if max iterations reached without success, save failures to file
@@ -158,18 +158,18 @@ class Iterator:
             suggestions,
         )
         self._save_failures(full_failed, None)
-        return success, tool_name
+        return success, tool_name, None
 
     # run da whole thing
     def run(self, task, user_prompt):
         # info = self._pull_information() # if you want to pass any of these info
-        success, tool_name = self._run_iterations(
+        success, tool_name, final_args = self._run_iterations(
             task,
             user_prompt,
             self.args,
         )
         if success:
-            return tool_name
+            return tool_name, final_args
         else:
             return None
 

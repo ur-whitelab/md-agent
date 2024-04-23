@@ -24,7 +24,6 @@ from .base_tools import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
-    RDFTool,
     RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -91,7 +90,7 @@ def make_all_tools(
         PPIDistance(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
-        RDFTool(path_registry=path_instance),
+        # RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
     ]
     if subagent_settings is None:
@@ -193,8 +192,8 @@ class CreateNewToolInputSchema(BaseModel):
         'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
     )
     execute: Optional[bool] = Field(
-        True,
-        description="Whether to execute the new tool or not.",
+        False,
+        description="Whether to execute the new tool multiple times or not.",
     )
     args: Optional[dict] = Field(
         None, description="Input variables as a dictionary to pass to the skill"
@@ -230,7 +229,7 @@ class CreateNewTool(BaseTool):
         task = input.get("task")
         orig_prompt = input.get("orig_prompt")
         curr_tools = input.get("curr_tools")
-        execute = input.get("execute", True)
+        execute = input.get("execute", False)
         args = input.get("args", None)
         if not task or not orig_prompt or not curr_tools:
             return "Provide task, orig_prompt, and curr_tools."  # run iterator
@@ -244,10 +243,12 @@ class CreateNewTool(BaseTool):
             )
             print("running iterator to draft a new tool")
             st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
-            tool_name = newcode_iterator.run(task, orig_prompt)
+            tool_name, final_args = newcode_iterator.run(task, orig_prompt)
             if not tool_name:
                 return "The 'CreateNewTool' tool failed to build a new tool."
         except Exception as e:
+            print(f"Something went wrong while creating tool. {type(e).__name__}: {e}")
+
             return f"Something went wrong while creating tool. {type(e).__name__}: {e}"
 
         # execute the new tool code
@@ -260,7 +261,20 @@ class CreateNewTool(BaseTool):
                 if skill is None:
                     return "SubAgent for this tool not initialized"
                 if args is not None:
-                    print("input args: ", args)
+                    for key, _ in args.items():
+                        if key in final_args:
+                            continue
+                        else:
+                            print("Final Arguments are not the same as input args")
+                            print("Skipping second execution")
+                            print("original input args: ", args.keys())
+                            print("final args: ", (",").join(final_args))
+                            return (
+                                f"A new tool is created: {tool_name}."
+                                "You can use it in next prompt."
+                                "The arguments for this tool are:"
+                                f"{final_args.keys()}"
+                            )
                     return skill.execute_skill_function(tool_name, **args)
                 else:
                     return skill.execute_skill_function(tool_name)

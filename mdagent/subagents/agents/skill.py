@@ -67,7 +67,12 @@ class SkillManager:
         """Given the code snippet, it asks the agent to provide a tool description"""
         return self.llm_chain({"code": fxn_code})["text"]
 
-    def add_new_tool(self, fxn_name, code, new_description=False):
+    def add_new_tool(
+        self,
+        fxn_name,
+        code,
+        new_description=False,
+    ):
         # execute the code to get function
         namespace = {}
         exec(code, namespace)
@@ -85,6 +90,7 @@ class SkillManager:
         # Get the parameters of the function
         args = inspect.signature(function).parameters
         arguments = []
+        arguments_names = []
         for param in args.values():
             annotation = param.annotation
             param_type = "Any" if annotation == param.empty else str(annotation)
@@ -96,8 +102,9 @@ class SkillManager:
                     "default": default_value,
                 }
             )
+            arguments_names.append(param.name)
         self.update_skill_library(function, code, description, arguments)
-        return fxn_name
+        return fxn_name, arguments_names
 
     def update_skill_library(self, function, code_script, description, arguments):
         fxn_name = function.__name__
@@ -120,7 +127,7 @@ class SkillManager:
         with open(f"{self.dir_name}/code/{filename}.py", "w") as f0:
             f0.write(code_script)
         self.path_registry.map_path(
-            name=fxn_name,
+            file_id=fxn_name,
             path=f"{self.dir_name}/code/{filename}.py",
             description=f"Code for new tool {fxn_name}",
         )

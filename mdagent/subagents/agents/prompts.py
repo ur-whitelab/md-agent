@@ -23,13 +23,13 @@ action_template = PromptTemplate(
         what you files you have access to.
         The task completeness check partially depends on your final files list.
     Code:
-        1) Write a function taking a string as the only argument.
+        1) Write a function taking strings as the arguments.
         2) Your function will be reused for building more complex functions.
             Therefore, you should make it generic and reusable.
             You should always check whether you have
             the required files before using them.
         3) To get the files from their IDs, use the paths_registry.json file.
-        For example, if you need to access a file with ID XYZ_1234 try this:
+        For example, if you need to access a file with ID XYZ_1234 USE this:
         ```
         with os.open('{init_dir}/paths_registry.json') as f:
             path_registry = json.load(f)
@@ -58,6 +58,10 @@ action_template = PromptTemplate(
         10) At the end of your code, call the function you defined with the input.
         11) Don't use ... in any of your code. It should be complete and ready
             for execution.
+        12) When indicating paths to save files, DO NOT use "/path/to/save" holders.
+        Go from the current directory instead, or it will raise errors.
+        13) When saving files, do not use generic names, identify the name with repect
+        to the protein, analysis or simulation ids.
     You should only respond the following format:
     Explain: ...
     Plan:
@@ -74,7 +78,7 @@ action_template = PromptTemplate(
     # ...
     ```
     Here is the input:
-    files ID: {files},
+    files ID,Descriptions: {files},
     task: {task},
     history: {history},
     skills: {skills},
@@ -110,9 +114,24 @@ critic_template = PromptTemplate(
     code_output: {code_output},
     task: {task},
 
-    IMPORTANT: the code author is a student, so you
+    IMPORTANT: the code author is a machine, so you
     should not be too strict when assigning the task
-    relevance or providing critique.
+    relevance or providing critique, and your suggestions have to
+    specific on where and how to improve/change the code.
+
+    Frequent issues to consider and solutions:
+    - Is the path to the path_registry incorrect?
+    The path is '{init_dir}/paths_registry.json'
+    - A file path to save a file is incorrect?
+    use 'os.getcwd()' in the code to get the valid current directory.
+    - Some errors occur because the files are not compatible, examples: a) a simulation
+    trajectory of a processed pdb file and the original pdb file downloaded from
+    the database.
+    - Topology and trajectory files have different number of atoms.
+    If using MDAnalysis, the universe is created using topology and trajectory
+    files. If the number of atoms is different, the topology is wrong, the file needed
+    is the topology file created at the initial stage of the simulation (e.g. a file
+    ending in _initial_positions.pdb)
     """,
 )
 

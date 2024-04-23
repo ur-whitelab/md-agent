@@ -767,6 +767,10 @@ class OpenMMSimulation:
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
             )
+            top_desc = (
+                f"Simulation topology for protein {self.pdb_id} "
+                f"and simulation {self.sim_id}"
+            )
 
             self.simulation.reporters.append(
                 DCDReporter(
@@ -798,6 +802,11 @@ class OpenMMSimulation:
                     traj_desc,
                 ],
                 ["holder", f"{self.path_registry.ckpt_records}/{log_name}", log_desc],
+                [
+                    "holder",
+                    f"{self.path_registry.ckpt_records}/{topology_name}",
+                    top_desc,
+                ],
             ]
 
         else:
@@ -881,6 +890,20 @@ class OpenMMSimulation:
                     except Exception as e:
                         print("Error adding solvent", type(e).__name__, "–", e)
                         raise (e)
+            except Exception as e:
+                print("Error adding solvent", type(e).__name__, "–", e)
+                if "Cannot neutralize the system because the" in str(e):
+                    try:
+                        box_size = self.modeller.topology.getUnitCellDimensions()
+                        # multiple by 1.1 the box size
+                        box_size = [i * 1.25 for i in box_size]
+                        self.modeller.addSolvent(forcefield, box_size=box_size)
+                    except Exception as e:
+                        print("Error adding solvent", type(e).__name__, "–", e)
+                        raise (e)
+                else:
+                    raise (e)
+
             system = forcefield.createSystem(self.modeller.topology, **system_params)
         else:
             system = forcefield.createSystem(self.modeller.topology, **system_params)
@@ -1144,7 +1167,11 @@ class OpenMMSimulation:
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
         top_name = f"{self.path_registry.ckpt_pdb}/{self.sim_id}_initial_positions.pdb"
-        top_description = f"Initial positions for simulation {self.sim_id}"
+        top_description = (
+            f"Initial topology for simulation {self.sim_id} "
+            f"and from protein {self.pdb_id}. Use this when analyzing the "
+            "trajectory of the simulation."
+        )
         with open(top_name, "w") as f:
             PDBFile.writeFile(
                 self.simulation.topology,
@@ -1271,28 +1298,37 @@ class SetUpandRunFunction(BaseTool):
             self.path_registry.map_path(
                 sim_id,
                 f"{self.path_registry.ckpt_simulations}/{file_name}",
-                f"Basic Simulation of Protein {pdb_id}",
+                f"Script of Simulation of Protein {pdb_id}",
             )
             if save:
                 records = openmmsim.registry_records
-                # move record files to files/records/
-                print(os.listdir("."))
+                # move record from cwd to records directory
                 for record in records:
                     os.rename(record[1].split("/")[-1], f"{record[1]}")
                 for record in records:
                     record[0] = self.path_registry.get_fileid(  # Step necessary here to
-                        record[1].split("/")[-1],  # avoid id being repeated
+                        record[1].split("/")[-1],  # avoid ID being repeated
                         FileType.RECORD,
                     )
                     self.path_registry.map_path(*record)
-            return (
-                "Simulation done! \n Summary: \n"
-                "Record files written to files/records/ with IDs and descriptions: "
-                f"{[(record[0],record[2]) for record in records]}\n"
-                "Standalone script written to files/simulations/ with ID: "
-                f"{sim_id}.\n"
-                f"The initial topology file ID is top_{sim_id} saved in files/pdb/"
-            )
+                return (
+                    "Simulation done! \n Summary: \n"
+                    "Record files written with IDs and descriptions: "
+                    f"{[(record[0],record[2]) for record in records]}\n"
+                    "Standalone python script written with ID: "
+                    f"{sim_id}.\n"
+                )
+            else:
+                # delete record files
+                for record in records:
+                    os.remove(record[1].split("/")[-1])
+
+                return (
+                    "Simulation done! \n Summary: \n"
+                    "Standalone python script written with ID: "
+                    f"{sim_id}.\n"
+                    f"The initial topology file ID is top_{sim_id} saved "
+                )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
             return f"An exception was found trying to write the filenames: {str(e)}."

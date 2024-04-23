@@ -55,6 +55,7 @@ class SubAgentInitializer:
 
     def create_critic(self, **overrides):
         params = {
+            "path_registry": self.path_registry,
             "model": self.subagents_model,
             "temp": self.temp,
         }

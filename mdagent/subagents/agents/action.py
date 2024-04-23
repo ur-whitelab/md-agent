@@ -34,7 +34,7 @@ class Action:
 
     def _run(self, history, task, skills, args):
         # get files
-        files = self.path_registry.list_path_names()
+        files = self.path_registry.list_path_names_and_descriptions()
         # get skills
         return self.llm_chain(
             {
