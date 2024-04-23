@@ -26,27 +26,82 @@ class Evaluator:
         self.evaluations = []
 
     def create_agent(self, agent_params={}):
+        """
+        initializes MDAgent with given parameters
+
+        Parameters:
+        - agent_params (dict): dictionary of parameters to initialize MDAgent
+
+        Returns:
+        - initialized MDAgent object
+        """
         # initialize MDAgent with given parameters.
         if agent_params is None:  # this shouldn't happen though
             agent_params = {}
         return MDAgent(**agent_params)
 
     def reset(self):
+        """
+        empties the evaluations list
+
+        Parameters:
+        - None
+
+        Returns:
+        - None
+        """
         self.evaluations = []
 
-    def save(self, filename="mega_eval"):
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        filename = os.path.join(self.base_dir, f"{filename}_{timestamp}.json")
-        with open(filename, "w") as f:
+    def save(self, filename="mega_eval", add_timestamp=True):
+        """
+        save all evaluations to a json file
+
+        Parameters:
+        - filename (str): name of the file to save evaluations to
+        - add_timestamp (bool): whether to add a timestamp to the filename
+
+        Returns:
+        - None
+        """
+        if filename.endswith(".json"):
+            filename = filename[:-5]
+        if add_timestamp:
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            filename = f"{filename}_{timestamp}"
+        full_path = os.path.join(self.base_dir, f"{filename}.json")
+        with open(full_path, "w") as f:
             json.dump(self.evaluations, f, indent=4)
-        print(f"All evaluations saved to {filename}.")
+        print(f"All evaluations saved to {full_path}.")
 
     def load(self, filename):
+        """
+        load past evaluations from a json file. Appends to the current evaluations list.
+
+        Parameters:
+        - filename (str): name of the file to load evaluations from
+
+        Returns:
+        - None
+        """
+        if not os.path.exists(filename):
+            print(f"File {filename} not found. Please provide a valid file path.")
+            return
         with open(filename, "r") as f:
             data = json.load(f)
         self.evaluations.extend(data)
 
     def _flatten_dict(self, d, sep="_"):
+        """
+        flattens evaluations dictionary up to 3 levels deep.
+        Used in create_table method.
+
+        Parameters:
+        - d (dict): dictionary to flatten
+        - sep (str): separator to use when flattening
+
+        Returns:
+        - flattened dictionary
+        """
         flat_dict = {}
         for k1, v1 in d.items():
             if isinstance(v1, dict):
@@ -64,6 +119,15 @@ class Evaluator:
         return flat_dict
 
     def _get_number_of_skills(self, agent):
+        """
+        get the number of skills in MDAgent's skill library
+
+        Parameters:
+        - agent (MDAgent): MDAgent object
+
+        Returns:
+        - number of skills in the skill library
+        """
         skills = []
         skill_file_path = f"{agent.ckpt_dir}/skill_library/skills.json"
         if os.path.exists(skill_file_path):
@@ -74,6 +138,23 @@ class Evaluator:
         return len(skills) if skills else 0
 
     def _evaluate_all_steps(self, agent, user_prompt):
+        """
+        core function that evaluates while iterating every step of
+        MDAgent's response to a user prompt. Evaluation details are
+        saved to json file.
+        Used in run_and_evaluate method.
+
+        NOTE: This is not meant to be used directly. Use run_and_evaluate
+        instead, since that method can capture exceptions and save to evaluations,
+        which can be used to create a table.
+
+        Parameters:
+        - agent (MDAgent): MDAgent object
+        - user_prompt (str): user prompt to evaluate
+
+        Returns:
+        - evaluation report (dict) containing details of the evaluation
+        """
         num_steps = 0
         tools_used = {}
         tools_details = {}
@@ -163,7 +244,15 @@ class Evaluator:
 
     def run_and_evaluate(self, prompts, agent_params={}):
         """
-        Evaluate the agent with given parameters across multiple prompts.
+        run and evaluate the agent with given parameters across multiple
+        prompts. Appends to the evaluations list.
+
+        Parameters:
+        - prompts (list): list of prompts to evaluate
+        - agent_params (dict): dictionary of parameters to initialize MDAgent
+
+        Returns:
+        - None
         """
         agent = self.create_agent(agent_params)
         for prompt in prompts:
@@ -192,6 +281,16 @@ class Evaluator:
                 print(f"Error occurred while running MDAgent. {type(e).__name__}: {e}")
 
     def create_table(self, simple=True):
+        """
+        creates DataFrame table from evaluations list. Note that evaluations
+        have to be loaded or generated first.
+
+        Parameters:
+        - simple (bool): whether to return a simplified table with fewer columns
+
+        Returns:
+        - DataFrame table of evaluations
+        """
         evals = [self._flatten_dict(eval) for eval in self.evaluations]
         if not simple:
             return pd.DataFrame(evals)
@@ -209,18 +308,43 @@ class Evaluator:
                     "Failed Steps": eval.get("failed_steps"),
                     "Time (s)": eval.get("total_time_seconds"),
                     "Time (min)": eval.get("total_time_minutes"),
+                    "Run ID": eval.get("run_id"),
                 }
             )
         return pd.DataFrame(data)
 
     def automate(self, prompts, agent_params={}):
+        """
+        this automates the entire evaluation process for a given agent
+        and prompts. It runs and evaluates, save the evaluations to a
+        json file, and creates a table.
+
+        Parameters:
+        - prompts (list): list of prompts to evaluate
+        - agent_params (dict): dictionary of parameters to initialize MDAgent
+
+        Returns:
+        - DataFrame table of evaluations
+        """
         self.run_and_evaluate(prompts, agent_params)
         self.save()
         dataframe = self.create_table()
         return dataframe
 
     def automate_all(self, prompts, agent_params_list=None):
-        # automate evals with different agent types
+        """
+        it automates the entire evaluation process for a list of agents.
+        After evaluating all prompts with each agent, it saves the evaluations
+        to a json file and creates a table containing all evaluations.
+
+        Parameters:
+        - prompts (list): list of prompts to evaluate
+        - agent_params_list (list): list of dictionaries containing parameters
+            to initialize MDAgent. If None, it will evaluate with default agents.
+
+        Returns:
+        - DataFrame table of evaluations
+        """
         if agent_params_list is None:
             agent_params_list = [
                 {
