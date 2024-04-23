@@ -22,7 +22,7 @@ df = evaluator.automate(prompts)
 df # this displays DataFrame table in Jupyter notebook
 ```
 This will run MDAgent and evaluate the prompts using the default settings. The results will be
-saved to json file in the `evaluation_results` directory and used to create pandas DataFrame.
+saved to json file in the "evaluation_results" directory and used to create pandas DataFrame.
 
 ### Example 2: Evaluate Prompts with specific MD-Agent Parameters
 Evaluate specific prompts using single agent instance with specified parameters:
@@ -40,6 +40,7 @@ prompts = [
     'Simulate 1A3N in water for 100 ns.',
 ]
 df = evaluator.automate(prompts, agent_params=agent_params)
+df_full = evaluator.create_table(simple=False) # to get a table with all details
 ```
 
 ### Example 3: Evaluate Prompts with Multiple Agent Parameters
@@ -100,7 +101,7 @@ prompt_set2 = ['Calculate RMSD for 1A3N simulation over time.']
 df2 = evaluator.automate(prompt_set2, agent_params2)
 df2 # display results from both prompts
 ```
-Another way to get run_id: you could access `evaluator.evaluations` list and pull the key
+Another way to get run_id: you can access `evaluator.evaluations` list and pull the key
 `run_id` from the dictionary that contains the results of the first prompt.
 
 ## Additional Information
