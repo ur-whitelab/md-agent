@@ -7,7 +7,7 @@ import pandas as pd
 from .agent import MDAgent
 
 
-# TODO: turn off verbose for LLM Chain
+# TODO: turn off verbose for MD-Agent -- verbose option doesn't work
 # TODO: later, add write_to_notebooks option
 class Evaluator:
     def __init__(self, base_dir="evaluation_results"):
@@ -83,6 +83,7 @@ class Evaluator:
                 first_sentence = observation.split(".")[0]
                 if "Failed" in first_sentence or "Error" in first_sentence:
                     status_complete = False
+                    failed_steps += 1
                 elif "Succeeded" in first_sentence:
                     status_complete = True
                 else:
