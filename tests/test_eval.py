@@ -55,6 +55,7 @@ def mock_agent(tmp_path):
     agent.subagents_settings.resume = False
     agent.subagents_settings.curriculum = True
     agent.use_memory = False
+    agent.run_id = "test_run_id"
     return agent
 
 
