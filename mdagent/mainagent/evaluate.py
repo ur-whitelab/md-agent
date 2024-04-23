@@ -27,6 +27,8 @@ class Evaluator:
 
     def create_agent(self, agent_params={}):
         # initialize MDAgent with given parameters.
+        if agent_params is None:  # this shouldn't happen though
+            agent_params = {}
         return MDAgent(**agent_params)
 
     def reset(self):
@@ -211,7 +213,7 @@ class Evaluator:
             )
         return pd.DataFrame(data)
 
-    def automate(self, prompts, agent_params=None):
+    def automate(self, prompts, agent_params={}):
         self.run_and_evaluate(prompts, agent_params)
         self.save()
         dataframe = self.create_table()
