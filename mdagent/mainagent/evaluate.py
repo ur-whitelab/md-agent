@@ -10,8 +10,18 @@ from .agent import MDAgent
 # TODO: turn off verbose for MD-Agent -- verbose option doesn't work
 # TODO: later, add write_to_notebooks option
 class Evaluator:
-    def __init__(self, base_dir="evaluation_results"):
-        self.base_dir = base_dir
+    def __init__(self, eval_dir="evaluation_results"):
+        # find root directory
+        eval_path = eval_dir
+        current_dir = os.getcwd()
+        while current_dir != "/":
+            if "setup.py" in os.listdir(current_dir):
+                root_dir = os.path.abspath(current_dir)
+                eval_path = os.path.join(root_dir, eval_dir)
+                break
+            else:
+                current_dir = os.path.dirname(current_dir)
+        self.base_dir = eval_path
         os.makedirs(self.base_dir, exist_ok=True)
         self.evaluations = []
 
@@ -141,7 +151,6 @@ class Evaluator:
             "tools_details": tools_details,
             "run_id": run_id,
         }
-
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         os.makedirs(f"{agent.ckpt_dir}/evals", exist_ok=True)
         filename = f"{agent.ckpt_dir}/evals/individual_eval_{timestamp}.json"
@@ -149,17 +158,13 @@ class Evaluator:
             json.dump(eval_report, f, indent=4)
         return eval_report
 
-    def run_and_evaluate(self, prompts, agent_params={}, same_ckpt=True):
+    def run_and_evaluate(self, prompts, agent_params={}):
         """
         Evaluate the agent with given parameters across multiple prompts.
         """
         agent = self.create_agent(agent_params)
-        for count, prompt in enumerate(prompts):
+        for prompt in prompts:
             print(f"Evaluating prompt: {prompt}")
-            if not same_ckpt:
-                agent.ckpt_dir = (
-                    f"{agent.ckpt_dir}_{count+1}"  # unique ckpt dir for each prompt
-                )
             try:
                 eval_report = self._evaluate_all_steps(agent, prompt)
                 eval_report["execution_success"] = True

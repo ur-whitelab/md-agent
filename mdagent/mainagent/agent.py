@@ -54,10 +54,7 @@ class MDAgent:
     ):
         self.use_memory = use_memory
         self.resume = resume
-        self.ckpt_dir = ckpt_dir
-        self.path_registry = PathRegistry.get_instance(
-            resume=self.resume, ckpt_dir=self.ckpt_dir
-        )
+        self.path_registry = PathRegistry.get_instance(resume=resume, ckpt_dir=ckpt_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.memory = MemoryManager(self.path_registry, run_id=run_id)
         self.run_id = self.memory.run_id
@@ -68,7 +65,6 @@ class MDAgent:
 
         self.agent = None
         self.agent_type = agent_type
-        self.ckpt_dir = ckpt_dir
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
