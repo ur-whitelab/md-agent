@@ -39,18 +39,6 @@ class RDFTool(BaseTool):
     def _run(self, **input):
         input = input.get("input", input)
 
-        # try:
-        #    self.validate_arguments(**input)
-        # except ValueError as e:
-        #    if "Invalid argument(s) provided" in str(e):
-        #        if "maybe you mean:" in str(e):
-        #            print("Invalid Arguments in RDF tool: ", str(e))
-        #            return str(e)
-        #        if "it will be ignored" in str(e):
-        #            print("Arguments Not used in RDF tool: ", str(e))
-        #            pass
-        #    else:
-        #        raise ValueError(f"Error during arguments validation in RDF tool {e}")
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
