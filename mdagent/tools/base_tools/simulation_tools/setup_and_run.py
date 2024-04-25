@@ -47,7 +47,7 @@ from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picos
 from pydantic import BaseModel, Field
 
 # Local Library/Application Imports
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, validate_tool_args
 
 # TODO delete files created from the simulation if not needed.
 
@@ -1195,6 +1195,7 @@ class SetUpandRunFunction(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, **input_args):
         if self.path_registry is None:
             return "Path registry not initialized"

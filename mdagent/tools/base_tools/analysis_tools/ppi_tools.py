@@ -6,7 +6,7 @@ import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import PathRegistry, validate_tool_args
 
 
 def ppi_distance(file_path, binding_site="protein"):
@@ -60,6 +60,7 @@ class PPIDistance(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, pdb_file: str, binding_site: str = "protein"):
         if not self.path_registry:
             return "Error: Path registry is not set"  # this should not happen

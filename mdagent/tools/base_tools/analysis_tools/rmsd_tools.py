@@ -9,7 +9,7 @@ from langchain.tools import BaseTool
 from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, validate_tool_args
 
 # all things related to RMSD as 'standard deviation'
 # 1  RMSD between two protein conformations or trajectories (1D scalar value)
@@ -316,6 +316,7 @@ class RMSDCalculator(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(
         self,
         rmsd_type: str,

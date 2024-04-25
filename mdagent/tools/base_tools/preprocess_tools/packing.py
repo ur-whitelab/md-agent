@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Type, Union
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field, ValidationError
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import PathRegistry, validate_tool_args
 
 from .pdb_fix import Validate_Fix_PDB
 from .pdb_get import MolPDB
@@ -281,6 +281,7 @@ class PackMolTool(BaseTool):
                 molpdb.small_molecule_pdb(molecule)
         print("Small molecules PDBs created successfully")
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, **values) -> str:
         """use the tool."""
 

@@ -35,7 +35,7 @@ class RDFTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    @validate_tool_args(args_schema)
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, **input):
         input = input.get("input", input)
 
