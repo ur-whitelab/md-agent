@@ -273,7 +273,7 @@ class CreateNewTool(BaseTool):
                                 f"A new tool is created: {tool_name}."
                                 "You can use it in next prompt."
                                 "The arguments for this tool are:"
-                                f"{final_args.keys()}"
+                                f"{(',').join(final_args)}"
                             )
                     return skill.execute_skill_function(tool_name, **args)
                 else:

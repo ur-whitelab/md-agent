@@ -58,8 +58,7 @@ action_template = PromptTemplate(
         10) At the end of your code, call the function you defined with the input.
         11) Don't use ... in any of your code. It should be complete and ready
             for execution.
-        12) When indicating paths to save files, DO NOT use "/path/to/save" holders.
-        Go from the current directory instead, or it will raise errors.
+        12) When indicating paths to save files, DO NOT use holders.
         13) When saving files, do not use generic names, identify the name with repect
         to the protein, analysis or simulation ids.
     You should only respond the following format:

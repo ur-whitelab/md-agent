@@ -891,17 +891,14 @@ class OpenMMSimulation:
                         print("Error adding solvent", type(e).__name__, "–", e)
                         raise (e)
             except Exception as e:
-                print("Error adding solvent", type(e).__name__, "–", e)
                 if "Cannot neutralize the system because the" in str(e):
                     try:
-                        box_size = self.modeller.topology.getUnitCellDimensions()
-                        # multiple by 1.1 the box size
-                        box_size = [i * 1.25 for i in box_size]
-                        self.modeller.addSolvent(forcefield, box_size=box_size)
+                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
                     except Exception as e:
                         print("Error adding solvent", type(e).__name__, "–", e)
                         raise (e)
                 else:
+                    print("Error adding solvent", type(e).__name__, "–", e)
                     raise (e)
 
             system = forcefield.createSystem(self.modeller.topology, **system_params)
