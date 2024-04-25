@@ -1,6 +1,12 @@
 from typing import Optional
 
-from mdagent.subagents.agents import Action, Critic, Curriculum, SkillManager
+from mdagent.subagents.agents import (
+    Action,
+    Critic,
+    Curriculum,
+    MemoryManager,
+    SkillManager,
+)
 from mdagent.utils import PathRegistry
 
 
@@ -15,8 +21,12 @@ class SubAgentSettings:
         resume=False,
         retrieval_top_k=5,
         curriculum=True,
+        memory: Optional[MemoryManager] = None,
+        run_id="",
     ):
         self.path_registry = path_registry
+        self.run_id = run_id
+        self.memory = memory
         if self.path_registry is None:
             self.path_registry = PathRegistry.get_instance()
         self.ckpt_dir = self.path_registry.ckpt_dir
@@ -33,6 +43,8 @@ class SubAgentInitializer:
     def __init__(self, settings: Optional[SubAgentSettings] = None):
         if settings is None:
             settings = SubAgentSettings()
+        self.run_id = settings.run_id
+        self.memory = settings.memory
         self.path_registry = settings.path_registry
         self.subagents_model = settings.subagents_model
         self.temp = settings.temp

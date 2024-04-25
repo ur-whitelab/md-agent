@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from mdagent.mainagent.agent import MDAgent
-from mdagent.subagents.agents.action import Action
-from mdagent.subagents.agents.skill import SkillManager
+from mdagent.subagents.agents import Action, SkillManager
 from mdagent.subagents.subagent_fxns import Iterator
 from mdagent.subagents.subagent_setup import SubAgentSettings
 
@@ -63,39 +62,6 @@ def test_extract_code(action):
     assert fxn_name_2 is None
 
 
-def test_add_to_history(iterator):
-    iterator.path_registry = MagicMock()
-    iterator.path_registry.list_path_names.return_value = ["file1.txt", "file2.txt"]
-
-    existing_history = []
-    iter = 1
-    task = "Sample Task"
-    code_history = "print('Hello, World!')"
-    output_history = "Hello, World!"
-    critique = "Good code"
-    suggestions = "None"
-
-    updated_history = iterator._add_to_history(
-        existing_history,
-        iter,
-        task,
-        code_history,
-        output_history,
-        critique,
-        suggestions,
-    )
-
-    assert len(updated_history) == 1
-    history_item = json.loads(updated_history[0])
-    assert history_item["iteration"] == iter
-    assert history_item["task"] == task
-    assert history_item["code"] == code_history
-    assert history_item["output"] == output_history
-    assert history_item["files"] == ["file1.txt", "file2.txt"]
-    assert history_item["critique"] == critique
-    assert history_item["suggestions"] == suggestions
-
-
 def test_pull_information(iterator):
     with patch("os.path.exists", return_value=True):
         with patch("builtins.open", mock_open(read_data="line1\nline2\nline3")):
@@ -103,12 +69,19 @@ def test_pull_information(iterator):
             iterator.skill.get_skills.return_value = ["skill1", "skill2"]
             iterator.path_registry = MagicMock()
             iterator.path_registry.list_path_names.return_value = ["file1", "file2"]
+            iterator.memory = MagicMock()
+            iterator.memory.retrieve_recent_memory_iterator.return_value = (
+                "line1\nline2\nline3"
+            )
             iterator.current_tools = {"tool1": "config1"}
             iterator.all_tools_string = "all_tools_string"
             info = iterator._pull_information()
 
-            assert info["recent_history"] == "line3"
-            assert info["full_history"] == "line1\nline2\nline3"
+            assert (
+                "line1" in info["full_history"]
+                and "line2" in info["full_history"]
+                and "line3" in info["full_history"]
+            )
             assert info["skills"] == json.dumps(["skill1", "skill2"])
             assert info["files"] == json.dumps(["file1", "file2"])
             assert info["current_tools"] == json.dumps({"tool1": "config1"})
@@ -241,6 +214,19 @@ def test_mdagent_curriculum():
     mdagent_no_curr = MDAgent(curriculum=False)
     assert mdagent_curr.subagents_settings.curriculum is True
     assert mdagent_no_curr.subagents_settings.curriculum is False
+
+
+def test_mdagent_memory():
+    mdagent_memory = MDAgent(use_memory=True)
+    mdagent_no_memory = MDAgent(use_memory=False)
+    assert mdagent_memory.use_memory is True
+    assert mdagent_no_memory.use_memory is False
+
+    mdagent_memory = MDAgent(use_memory=True, run_id="TESTRUNN")
+    assert mdagent_memory.run_id == "TESTRUNN"
+
+    mdagent_memory = MDAgent(use_memory=True, run_id="")
+    assert mdagent_memory.run_id
 
 
 def test_mdagent_w_ckpt():
