@@ -8,6 +8,7 @@ def validate_func_args(args_schema=None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(**kwargs):
+            kwargs = kwargs.get("input", kwargs)
             if not args_schema:  # use for functions without args_schema
                 num_args = func.__code__.co_argcount
                 varnames = list(func.__code__.co_varnames)
@@ -36,9 +37,11 @@ def validate_func_args(args_schema=None):
                         suggestions.append(
                             f"{k}: This argument is not recognized and will be ignored."
                         )
+                print(error_message + ", ".join(suggestions))
                 return error_message + ", ".join(suggestions)
             # Filter the kwargs and args and call the original function
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in valid_args}
+
             return func(**filtered_kwargs)
 
         return wrapper
@@ -50,6 +53,7 @@ def validate_tool_args(args_schema):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, **kwargs):
+            kwargs = kwargs.get("input", kwargs)
             if issubclass(args_schema, BaseModel):
                 valid_args = list(args_schema.model_json_schema()["properties"].keys())
             elif type(args_schema) == dict:
@@ -60,7 +64,7 @@ def validate_tool_args(args_schema):
             # valid_args = list(args_schema.model_json_schema()['properties'].keys())
             incorrect_args = {k: v for k, v in kwargs.items() if k not in valid_args}
             if incorrect_args:
-                error_message = "Invalid argument(s) provided: "
+                error_message = "Invalid Tool argument(s) provided: "
                 suggestions = []
                 for k in incorrect_args:
                     close_matches = difflib.get_close_matches(
@@ -72,6 +76,8 @@ def validate_tool_args(args_schema):
                         suggestions.append(
                             f"{k}: This argument is not recognized and will be ignored."
                         )
+
+                print(error_message + ", ".join(suggestions))
                 return error_message + ", ".join(suggestions)
 
             # Filter the kwargs and args and call the original function
