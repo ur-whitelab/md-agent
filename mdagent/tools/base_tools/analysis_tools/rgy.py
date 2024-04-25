@@ -111,9 +111,11 @@ class RadiusofGyrationAverage(BaseTool):
         """use the tool."""
         try:
             RGY = RadiusofGyration(self.path_registry)
-            return RGY.rad_gyration_average(pdb_id)
+            return "Succeeded. " + RGY.rad_gyration_average(pdb_id)
         except ValueError as e:
-            return str(e)
+            return f"Failed. ValueError: {e}"
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -138,9 +140,11 @@ class RadiusofGyrationPerFrame(BaseTool):
         """use the tool."""
         try:
             RGY = RadiusofGyration(self.path_registry)
-            return RGY.rad_gyration_per_frame(pdb_id)
+            return "Succeeded. " + RGY.rad_gyration_per_frame(pdb_id)
         except ValueError as e:
-            return str(e)
+            return f"Failed. ValueError: {e}"
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
@@ -165,9 +169,11 @@ class RadiusofGyrationPlot(BaseTool):
         """use the tool."""
         try:
             RGY = RadiusofGyration(self.path_registry)
-            return RGY.plot_rad_gyration(pdb_id)
+            return "Succeeded. " + RGY.plot_rad_gyration(pdb_id)
         except ValueError as e:
-            return str(e)
+            return f"Failed. ValueError: {e}"
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

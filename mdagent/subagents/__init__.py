@@ -1,4 +1,4 @@
-from .agents import Action, Critic, Curriculum, SkillManager
+from .agents import Action, Critic, Curriculum, MemoryManager, SkillManager
 from .subagent_fxns import Iterator
 from .subagent_setup import SubAgentInitializer, SubAgentSettings
 
@@ -10,4 +10,5 @@ __all__ = [
     "Iterator",
     "SubAgentInitializer",
     "SubAgentSettings",
+    "MemoryManager",
 ]

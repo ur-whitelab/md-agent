@@ -130,20 +130,20 @@ class VisualizeProtein(BaseTool):
     def _run(self, cif_file_name: str) -> str:
         """use the tool."""
         if not self.path_registry:
-            return "Error: Path registry is not set"  # this should not happen
+            return "Failed. Error: Path registry is not set"
         cif_path = self.path_registry.get_mapped_path(cif_file_name)
         if not cif_path:
-            return f"File not found: {cif_file_name}"
+            return f"Failed. File not found: {cif_file_name}"
         vis = VisFunctions(self.path_registry)
         try:
-            return vis.run_molrender(cif_path)
+            return "Succeeded. " + vis.run_molrender(cif_path)
         except (RuntimeError, FileNotFoundError) as e:
             print(f"Error running molrender: {str(e)}. Using NGLView instead.")
             try:
                 vis.create_notebook(cif_path)
-                return "Visualization created as notebook"
+                return "Succeeded. Visualization created as notebook"
             except Exception as e:
-                return f"An error occurred {str(e)}"
+                return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""

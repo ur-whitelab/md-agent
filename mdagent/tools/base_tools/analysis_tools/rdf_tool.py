@@ -5,7 +5,7 @@ import mdtraj as md
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry, validate_arguments
+from mdagent.utils import FileType, PathRegistry, validate_tool_args
 
 
 class RDFToolInput(BaseModel):
@@ -35,30 +35,19 @@ class RDFTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, **input):
         input = input.get("input", input)
 
-        try:
-            self.validate_arguments(**input)
-        except ValueError as e:
-            if "Invalid argument(s) provided" in str(e):
-                if "maybe you mean:" in str(e):
-                    print("Invalid Arguments in RDF tool: ", str(e))
-                    return str(e)
-                if "it will be ignored" in str(e):
-                    print("Arguments Not used in RDF tool: ", str(e))
-                    pass
-            else:
-                raise ValueError(f"Error during arguments validation in RDF tool {e}")
         try:
             inputs = self.validate_input(input)
         except ValueError as e:
             if "Incorrect Inputs" in str(e):
                 print("Error in Inputs in RDF tool: ", str(e))
-                return ("Error in Inputs", str(e))
+                return ("Failed. Error in Inputs", str(e))
             elif "Invalid file extension" in str(e):
                 print("File Extension Not Supported in RDF tool: ", str(e))
-                return ("File Extension Not Supported", str(e))
+                return ("Failed. File Extension Not Supported", str(e))
             else:
                 raise ValueError(f"Error during inputs in RDF tool {e}")
 
@@ -90,7 +79,7 @@ class RDFTool(BaseTool):
         except Exception as e:
             # not sure what exceptions to catch for now, will handle them as they come
             print("Error in RDF calculation:", str(e))
-            raise ("Error in RDF calculation: ", str(e))
+            raise ("Failed. Error in RDF calculation: ", str(e))
         # save plot
         plot_name_save = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
         fig, ax = plt.subplots()
@@ -115,24 +104,23 @@ class RDFTool(BaseTool):
         )
         plt.close()
         return (
-            "RDF calculated successfully"
+            "Succeeded. RDF calculated."
             "rdf.png has been saved in the current directory"
         )
 
     def _arun(self, input):
         pass
 
-    @validate_arguments(
-        ["trajectory_fileid", "topology_fileid", "stride", "atom_indices"]
-    )
-    def validate_arguments(
-        self, trajectory_fileid, topology_fileid, stride, atom_indices
-    ):
-        """This checks if the input arguments are correct, but not complete.
-        Catches mistakes like "trajectory_file" instead of "trajectory_fileid" and
-        suggests the closest match.
-        """
-        return None
+    # _arguments = list(args_schema.model_json_schema ()['properties'].keys())
+    # @validate_arguments(_arguments)
+    # def _validate_arguments(
+    #    self, *_arguments
+    # ):
+    #    """This checks if the input arguments are correct, but not complete.
+    #    Catches mistakes like "trajectory_file" instead of "trajectory_fileid" and
+    #    suggests the closest match.
+    #    """
+    #    return None
 
     def validate_input(self, input):
         trajectory_id = input.get("trajectory_fileid", None)

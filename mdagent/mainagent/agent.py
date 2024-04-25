@@ -6,6 +6,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
 from mdagent.subagents import SubAgentSettings
+from mdagent.subagents.agents import MemoryManager
 from mdagent.utils import PathRegistry, SetCheckpoint, _make_llm
 
 from ..tools import get_tools, make_all_tools
@@ -48,17 +49,21 @@ class MDAgent:
         use_human_tool=False,
         curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
+        run_id="",
+        use_memory=True,
     ):
+        self.use_memory = use_memory
         self.resume = resume
-        self.ckpt_dir = ckpt_dir
-        self.path_registry = PathRegistry.get_instance(
-            resume=self.resume, ckpt_dir=self.ckpt_dir
-        )
+        self.path_registry = PathRegistry.get_instance(resume=resume, ckpt_dir=ckpt_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
+        self.memory = MemoryManager(self.path_registry, run_id=run_id)
+        self.run_id = self.memory.run_id
+
         self.uploaded_files = uploaded_files
         for file in uploaded_files:  # todo -> allow users to add descriptions?
             self.path_registry.map_path(file, file, description="User uploaded file")
 
+        self.agent = None
         self.agent_type = agent_type
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
@@ -86,6 +91,8 @@ class MDAgent:
             verbose=verbose,
             resume=self.resume,
             curriculum=curriculum,
+            memory=self.memory,
+            run_id=self.run_id,
         )
 
     def _initialize_tools_and_agent(self, user_input=None):
@@ -120,9 +127,25 @@ class MDAgent:
         )
 
     def run(self, user_input, callbacks=None):
-        self.prompt = make_prompt(user_input, self.agent_type, model="gpt-3.5-turbo")
+        run_memory = self.memory.run_id_mem if self.use_memory else None
+        self.prompt = make_prompt(
+            user_input, self.agent_type, model="gpt-3.5-turbo", run_memory=run_memory
+        )
         self.agent = self._initialize_tools_and_agent(user_input)
-        return self.agent.run(self.prompt, callbacks=callbacks)
+        model_output = self.agent.run(self.prompt, callbacks=callbacks)
+        if self.use_memory:
+            self.memory.generate_agent_summary(model_output)
+            print("Your run id is: ", self.run_id)
+        return model_output, self.run_id
+
+    def iter(self, user_input, include_run_info=True):
+        if self.agent is None:
+            self.prompt = make_prompt(
+                user_input, self.agent_type, model="gpt-3.5-turbo"
+            )
+            self.agent = self._initialize_tools_and_agent(user_input)
+        for step in self.agent.iter(self.prompt, include_run_info=include_run_info):
+            yield step
 
     def force_clear_mem(self, all=False) -> str:
         if all:

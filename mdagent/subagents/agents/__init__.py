@@ -1,6 +1,7 @@
 from .action import Action
 from .critic import Critic
 from .curriculum import Curriculum
+from .memory import MemoryManager
 from .skill import SkillManager
 
 __all__ = [
@@ -8,4 +9,5 @@ __all__ = [
     "Critic",
     "Curriculum",
     "SkillManager",
+    "MemoryManager",
 ]

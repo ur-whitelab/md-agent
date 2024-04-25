@@ -47,12 +47,14 @@ class PathRegistry:
         self.ckpt_pdb = os.path.join(self.ckpt_dir, "pdb")
         self.ckpt_records = os.path.join(self.ckpt_dir, "records")
         self.ckpt_simulations = os.path.join(self.ckpt_dir, "simulations")
+        self.ckpt_memory = os.path.join(self.ckpt_dir, "memory")
         for path in [
             self.ckpt_files,
             self.ckpt_figures,
             self.ckpt_pdb,
             self.ckpt_records,
             self.ckpt_simulations,
+            self.ckpt_memory,
         ]:
             if not os.path.exists(path):
                 os.makedirs(path)
