@@ -53,8 +53,8 @@ class SaltBridgeFunction: #this class defines a method called find_salt_bridge
 
             #Print unpaired residues
         print("Unpaired_residues:")
-        salt_bridge_function = salt_bridge_tool.salt_bridge_function
-        for residue_idx in salt_bridge_function.unpaired_residues:
+    
+        for residue_idx in self.unpaired_residues:
             print(f"Residue {traj.topology.atom(residue_idx).residue.index + 1} ({traj.topology.atom(residue_idx).residue.name})")
 
         return salt_bridges, list(self.unpaired_residues), list(residue_pairs)
@@ -62,11 +62,17 @@ class SaltBridgeFunction: #this class defines a method called find_salt_bridge
 
 
 class SaltBridgeTool(BaseTool):
-        name = "salt_bridge_tool"
-        description = "A tool to find salt bridge in a protein trajectory"
+    name = "salt_bridge_tool"
+    description = "A tool to find salt bridge in a protein trajectory"
+    path_registry: Optional[PathRegistry]
 
-     def __init__(self, path_registry):
-         self.salt_bridge_function = SaltBridgeFunction(path_registry)
+    
+    def __init__(self, path_registry:Optional[PathRegistry]):
+        super().___init__()
+        self.path_registry = path_registry
+
+
+         # This line is not correct self.salt_bridge_function = SaltBridgeFunction(path_registry)
 
     def _run(self, traj_file, top_file, threshold_distance=0.4, residue_pairs=None):
          # Load trajectory using MDTraj
@@ -86,19 +92,3 @@ class SaltBridgeTool(BaseTool):
 
 
 
-# Print identified salt bridges
-
-# this need to be moved under class somewhere.  move it 
-
-print("Salt bridges found:")
-for bridge in salt_bridges:
-    print(
-        f"Residue {traj.topology.atom(bridge[0]).residue.index + 1} ({traj.topology.atom(bridge[0]).residue.name}) - "
-        f"Residue {traj.topology.atom(bridge[1]).residue.index + 1} ({traj.topology.atom(bridge[1]).residue.name})"
-    )
-
-    #Print unpaired residues
-print("Unpaired_residues:")
-salt_bridge_function = salt_bridge_tool.salt_bridge_function
-for residue_idx in salt_bridge_function.unpaired_residues:
-    print(f"Residue {traj.topology.atom(residue_idx).residue.index + 1} ({traj.topology.atom(residue_idx).residue.name})")
