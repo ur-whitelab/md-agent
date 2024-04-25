@@ -1198,20 +1198,23 @@ class SetUpandRunFunction(BaseTool):
     @validate_tool_args(args_schema=args_schema)
     def _run(self, **input_args):
         if self.path_registry is None:
-            return "Path registry not initialized"
+            return "Failed. Path registry not initialized"
         input = self.check_system_params(input_args)
         error = input.get("error", None)
         if error:
             print(f"error found: {error}")
-            return error
+            return "Failed. " + error
 
         try:
             pdb_id = input["pdb_id"]
             # check if pdb_id is in the registry or as 1XYZ_112233 format
             if pdb_id not in self.path_registry.list_path_names():
-                return "No pdb_id found in input, use the file id not the file name"
+                return (
+                    "Failed. No pdb_id found in input, "
+                    "use the file id not the file name"
+                )
         except KeyError:
-            return "No pdb_id found in input"
+            return "Failed. No pdb_id found in input"
         try:
             save = input["save"]  # either this simulation
             # to save or not the output files from this simulation
@@ -1231,7 +1234,10 @@ class SetUpandRunFunction(BaseTool):
             sim_id = self.path_registry.get_fileid(file_name, FileType.SIMULATION)
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
-            return f"An exception was found trying to write the filenames: {str(e)}."
+            return (
+                f"Failed. An exception was found trying to write the filenames: "
+                f"{str(e)}."
+            )
         try:
             openmmsim = OpenMMSimulation(
                 input, self.path_registry, save, sim_id, pdb_id
@@ -1250,16 +1256,22 @@ class SetUpandRunFunction(BaseTool):
                     "in the protein, if you havent done it yet, try "
                     "cleaning the pdb file using the cleaning tool"
                 )
-            return msg
+            return "Failed. " + msg
         except FileNotFoundError:
-            return f"File not found, check File id. This were the inputs {input_args}"
+            return (
+                "Failed. File not found, check File id. "
+                f"This were the inputs {input_args}"
+            )
         except OpenMMException as e:
-            return f"OpenMM Exception: {str(e)}. This were the inputs {input_args}"
+            return (
+                f"Failed. OpenMM Exception: {str(e)}. "
+                f"This were the inputs {input_args}"
+            )
         try:
             openmmsim.run()
         except Exception as e:
             return (
-                f"An exception was found: {str(e)}. Not a problem, thats one "
+                f"Failed. An exception was found: {str(e)}. Not a problem, thats one "
                 "purpose of this tool: to run a short simulation to check for correct "
                 "initialization. "
                 ""
@@ -1287,7 +1299,7 @@ class SetUpandRunFunction(BaseTool):
                     )
                     self.path_registry.map_path(*record)
             return (
-                "Simulation done! \n Summary: \n"
+                "Succeeded. Simulation done! \n Summary: \n"
                 "Record files written to files/records/ with IDs and descriptions: "
                 f"{[(record[0],record[2]) for record in records]}\n"
                 "Standalone script written to files/simulations/ with ID: "
@@ -1296,7 +1308,10 @@ class SetUpandRunFunction(BaseTool):
             )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")
-            return f"An exception was found trying to write the filenames: {str(e)}."
+            return (
+                f"Failed. An exception was found trying to write the filenames: "
+                f"{str(e)}."
+            )
 
     def _parse_cutoff(self, cutoff):
         # Check if cutoff is already an OpenMM Quantity (has a unit)

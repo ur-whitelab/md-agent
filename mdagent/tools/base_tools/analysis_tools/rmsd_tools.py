@@ -284,20 +284,21 @@ class RMSDInputSchema(BaseModel):
         description="file with .pdb extension contain protein of interest"
     )
     trajectory: Optional[str] = Field(
-        description="trajectory file for protein of interest"
+        None, description="trajectory file for protein of interest"
     )
     ref_file: Optional[str] = Field(
-        description="file with .pdb extension used as reference"
+        None, description="file with .pdb extension used as reference"
     )
     ref_trajectory: Optional[str] = Field(
-        description="trajectory file used as reference"
+        None, description="trajectory file used as reference"
     )
     selection: Optional[str] = Field(
-        description="""selected atoms using MDAnalysis selection syntax."""
+        None, description="""selected atoms using MDAnalysis selection syntax."""
     )
     plot: Optional[bool] = Field(
+        None,
         description="""Only use it to set False
-        to disable making plots if prompted."""
+        to disable making plots if prompted.""",
     )
 
 
@@ -334,14 +335,17 @@ class RMSDCalculator(BaseTool):
             message = rmsd.calculate_rmsd(rmsd_type, selection, plot)
         except ValueError as e:
             return (
-                f"ValueError: {e}. \nMake sure to provide valid PBD "
+                f"Failed. ValueError: {e}. Make sure to provide valid PBD "
                 "file and binding site using MDAnalysis selection syntax."
             )
         except FileNotFoundError as e:
-            return str(e)
+            return (
+                f"Failed. FileNotFoundError: {e}. "
+                "Make sure to provide all necessary files."
+            )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
-        return message
+            return f"Failed. {type(e).__name__}: {e}"
+        return "Succeeded. " + message
 
     def _arun(self, **query):
         """Use the tool asynchronously."""

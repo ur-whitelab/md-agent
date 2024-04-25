@@ -28,6 +28,7 @@ setup(
         "outlines",
         "paper-qa==4.0.0rc8 ",
         "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
+        "pandas",
         "pydantic>=2.6",
         "python-dotenv",
         "rdkit",

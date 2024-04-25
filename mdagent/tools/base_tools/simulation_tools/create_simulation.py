@@ -92,21 +92,24 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     def _run(self, *args, **input):
         if len(args) > 0:
             return (
-                "This tool expects you to provide the input as a "
+                "Failed. This tool expects you to provide the input as a "
                 "dictionary: {'query': 'your query', 'script': 'script id'}"
             )
         if not self.path_registry:
-            return "No path registry provided"  # this should not happen
+            return "Failed. No path registry provided"  # this should not happen
         base_script_id = input.get("script")
         if not base_script_id:
-            return "No id provided. The keys for the input are: " "query' and 'script'"
+            return (
+                "Failed. No id provided. The keys for the input are: "
+                "query' and 'script'"
+            )
         try:
             base_script_path = self.path_registry.get_mapped_path(base_script_id)
             parts = base_script_path.split("/")
             if len(parts) > 1:
                 parts[-1]
         except Exception as e:
-            return f"Error getting path from file id: {e}"
+            return f"Failed. Error getting path from file id: {e}"
         with open(base_script_path, "r") as file:
             base_script = file.read()
         base_script = "".join(base_script)
@@ -134,7 +137,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
             file.write(script_content)
 
         self.path_registry.map_path(file_id, filename, description)
-        return "Script modified successfully"
+        return "Succeeded. Script modified successfully"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""

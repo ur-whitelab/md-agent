@@ -54,10 +54,7 @@ class MDAgent:
     ):
         self.use_memory = use_memory
         self.resume = resume
-        self.ckpt_dir = ckpt_dir
-        self.path_registry = PathRegistry.get_instance(
-            resume=self.resume, ckpt_dir=self.ckpt_dir
-        )
+        self.path_registry = PathRegistry.get_instance(resume=resume, ckpt_dir=ckpt_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.memory = MemoryManager(self.path_registry, run_id=run_id)
         self.run_id = self.memory.run_id
@@ -66,6 +63,7 @@ class MDAgent:
         for file in uploaded_files:  # todo -> allow users to add descriptions?
             self.path_registry.map_path(file, file, description="User uploaded file")
 
+        self.agent = None
         self.agent_type = agent_type
         self.user_tools = tools
         self.tools_llm = _make_llm(tools_model, temp, verbose)
@@ -139,6 +137,15 @@ class MDAgent:
             self.memory.generate_agent_summary(model_output)
             print("Your run id is: ", self.run_id)
         return model_output, self.run_id
+
+    def iter(self, user_input, include_run_info=True):
+        if self.agent is None:
+            self.prompt = make_prompt(
+                user_input, self.agent_type, model="gpt-3.5-turbo"
+            )
+            self.agent = self._initialize_tools_and_agent(user_input)
+        for step in self.agent.iter(self.prompt, include_run_info=include_run_info):
+            yield step
 
     def force_clear_mem(self, all=False) -> str:
         if all:
