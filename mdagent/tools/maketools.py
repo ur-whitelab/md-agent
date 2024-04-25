@@ -31,6 +31,7 @@ from .base_tools import (
     SimulationOutputFigures,
     SmallMolPDB,
     VisualizeProtein,
+    SaltBridgeTool,
 )
 from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
 
@@ -93,6 +94,7 @@ def make_all_tools(
         SetUpandRunFunction(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
+        SaltBridgeTool(path_registry=path_instance),
     ]
     if subagent_settings is None:
         subagent_settings = SubAgentSettings(path_registry=path_instance)
