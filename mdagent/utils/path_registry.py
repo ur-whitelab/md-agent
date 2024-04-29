@@ -21,8 +21,8 @@ class PathRegistry:
     set_ckpt = SetCheckpoint()
 
     @classmethod
-    def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
-        if not cls.instance or not resume:
+    def get_instance(cls, resume: bool = False, ckpt_dir: str = "ckpt"):
+        if not cls.instance or resume:
             cls.instance = cls(resume, ckpt_dir)
         return cls.instance
 
@@ -311,10 +311,21 @@ class PathRegistry:
         if type == FileType.RECORD:
             record_type_name = kwargs.get("record_type", "RECORD")
             term = kwargs.get("term", "term")  # Default term if not provided
-
-            file_name = (
-                f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
-            )
+            if Sim_id and protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{Sim_id}_{protein_file_id}"
+                    f"_{term}_{time_stamp}.{term}"
+                )
+            elif Sim_id and protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{Sim_id}_{protein_file_id}_{time_stamp}.{term}"
+                )
+            elif Sim_id:
+                file_name = f"{record_type_name}_{Sim_id}_{time_stamp}.{term}"
+            elif protein_file_id:
+                file_name = f"{record_type_name}_{protein_file_id}_{time_stamp}.{term}"
+            else:
+                file_name = f"{record_type_name}_{time_stamp}.{term}"
         if type == FileType.FIGURE:
             if fig_analysis:
                 if Sim_id:

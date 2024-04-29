@@ -134,6 +134,66 @@ critic_template = PromptTemplate(
     """,
 )
 
+path_registry_template = PromptTemplate(
+    input_variables=["code", "code_output", "task"],
+    template="""
+    You are a code write assistant that will add the path registry functionality
+    to the given code, so that the code can access and save files correctly.
+
+    I will give you the following information:
+    Code: The source code
+    Task: The objective that the code needs to accomplish
+    Your job is to identify the sections of the code that need to be modified and modify
+    it to include the path registry functionality. The rest of the code has to be kept
+    as is. You should only modify the code where necessary to include the path registry.
+    and the write the improved version of the code that is more general.
+
+    Specific hints:
+    - PathRegistry: Use the path_registry to access files with their respective file ID
+
+    #Initialization
+    from mdagent.utils.path_registry import PathRegistry, FileType
+    path_registry = PathRegistry(resume=True)
+
+    #getting files path from file ID
+    file_paths = path_registry.get_mapped_path(file_id)
+
+    #getting files descriptors
+    if its a Record file (log, trajectory, results)
+    file_name = path_registry.write_file_name(type=FileType.Record,
+                                        Sim_id=sim_id,   #Optional: the simulation ID
+                                        pdb_id = pdb_id, #Optional: the pdb ID
+                                        Term = log, #Optional: the file extension
+                                        )
+    if its an image/plot/figure
+    file_name = path_registry.write_file_name(type=FileType.FIGURE,
+                                Log_id=log_id, #Optional: the log ID used
+                                fig_analysis=fig_analysis, #Optional: the analysis type
+                                file_format=png, #Optional: the file extension
+                                Sim_id=sim_id, #Optional: the simulation ID
+                                protein_file_id=pdb_id, #Optional: the protein file ID
+                                )
+
+    Then, to get the File Id
+    file_id = path_registry.get_fileid(file_name, FileType.Record or FileType.FIGURE)
+
+    #finally, map the path to the registry
+    path_registry.map_path(file_id, file_name, description)
+
+    The format of the code should be as follows:
+    ...
+    Code:
+    ```
+    def originalFunctionName(argument1, argument2):
+    # ...
+    ```
+    # ...
+    ```
+        Here is the input:
+    code: {code}
+    """,
+)
+
 skill_template = PromptTemplate(
     input_variables=["code"],
     template="""

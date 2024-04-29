@@ -76,10 +76,14 @@ def validate_tool_args(args_schema):
                         suggestions.append(
                             f"{k}: This argument is not recognized and will be ignored."
                         )
+                error_message = error_message + ", ".join(suggestions)
+                filtered_kwargs = {k: v for k, v in kwargs.items() if k in valid_args}
 
-                print(error_message + ", ".join(suggestions))
-                return error_message + ", ".join(suggestions)
+                if "Did you mean" not in error_message:
+                    print(error_message + "Continuing with the valid arguments")
+                    return func(self, **filtered_kwargs)
 
+                return error_message
             # Filter the kwargs and args and call the original function
             filtered_kwargs = {k: v for k, v in kwargs.items() if k in valid_args}
             return func(self, **filtered_kwargs)
