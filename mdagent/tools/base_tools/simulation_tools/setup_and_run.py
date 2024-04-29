@@ -741,14 +741,14 @@ class OpenMMSimulation:
                 record_type="TRAJ",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="dcd",
+                file_format="dcd",
             )
             topology_name = self.path_registry.write_file_name(
                 type=FileType.RECORD,
                 record_type="TOP",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="pdb",
+                file_format="pdb",
             )
 
             log_name = self.path_registry.write_file_name(
@@ -756,7 +756,7 @@ class OpenMMSimulation:
                 record_type="LOG",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="txt",
+                file_format="txt",
             )
 
             traj_desc = (
