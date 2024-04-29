@@ -9,17 +9,17 @@ action_template_1 = PromptTemplate(
     1. The files ID you may access in your code
     2. The task you must complete
     3. The previous iterations in the conversation. You should learn from these.
+    4. The previous generated code that you will build upon, if any.
     4. The skills you have learned so far. You may reuse them in your code or use them
         to help you write your code if needed.
     5. The arguments you may need to use in your code.
     You should then respond to me with
     Explain (if applicable):
-        1. Are there any steps missing in your plan?
-        2. Why does the code not complete the task?
-        3. What does the code and execution error imply?
+        1. Why does the code not complete the task?
+        2. What does the code and execution errors, if any, imply?
     Plan: How to complete the task step by step.
         If there was an execution error, you should try to solve it.
-        You should pay attention to files since it tells
+        You should pay attention to files and their descriptions since it tells
         what you files you have access to.
         The task completeness check partially depends on your final files list.
     Code:
@@ -75,6 +75,7 @@ action_template_1 = PromptTemplate(
     task: {task},
     history: {history},
     skills: {skills},
+    code: {code},
     args: {args}
         """,
 )
