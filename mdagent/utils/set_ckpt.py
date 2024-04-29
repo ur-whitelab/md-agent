@@ -36,8 +36,12 @@ class SetCheckpoint:
         ckpt_list = [ckpt for ckpt in os.listdir(ckpt_path) if "ckpt" in ckpt]
         if not ckpt_list:
             return None
-        ckpt_list.sort()
+        # Sort ckpt_list using a key that extracts the numerical part of the folder name
+        ckpt_list.sort(key=lambda x: int(x.split("_")[1]))
+
         return os.path.join(ckpt_path, ckpt_list[-1])
+        # ckpt_list.sort()
+        # return os.path.join(ckpt_path, ckpt_list[-1])
 
     def clear_ckpt(
         self,

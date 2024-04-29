@@ -767,10 +767,7 @@ class OpenMMSimulation:
                 f"Simulation state log for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
             )
-            top_desc = (
-                f"Simulation topology for protein {self.pdb_id} "
-                f"and simulation {self.sim_id}"
-            )
+            top_desc = f"Simulation frames of the simulation {self.sim_id}"
 
             self.simulation.reporters.append(
                 DCDReporter(
@@ -1337,7 +1334,8 @@ class SetUpandRunFunction(BaseTool):
                     "Simulation done! \n Summary: \n"
                     "Standalone python script written with ID: "
                     f"{sim_id}.\n"
-                    f"The initial topology file ID is top_{sim_id} saved "
+                    f"The initial topology file ID of the simmulation"
+                    f" is top_{sim_id} saved "
                 )
         except Exception as e:
             print(f"An exception was found: {str(e)}.")

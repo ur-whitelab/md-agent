@@ -28,16 +28,13 @@ action_template_1 = PromptTemplate(
             Therefore, you should make it generic and reusable.
             You should always check whether you have
             the required files before using them.
-        3) To get the files from their IDs, use the paths_registry.json file.
-        For example, if you need to access a file with ID XYZ_1234 USE this:
+        3) To get the files from their IDs, use the PathRegistry class.
         ```
-        with os.open('{init_dir}/paths_registry.json') as f:
-            path_registry = json.load(f)
-            file_info = path_registry.get('XYZ_1234',None)
-            if file_info:
-                file_path = file_info.get('path')
-            else:
-                raise ValueError('File ID not found in the path registry.')
+        from mdagent.utils.path_registry import PathRegistry
+
+        ... inside your main function ...
+        path_registry = PathRegistry(resume=True)
+        file_paths = path_registry.get_mapped_path(file_id)
         ```
         4) Functions in the given history summary
             section will not be saved or executed.
@@ -46,21 +43,18 @@ action_template_1 = PromptTemplate(
             define all your variables inside your functions.
         6) Your function input and output MUST be a string.
             If you need to pass in an object, you should convert it to a string first.
-            If you need to pass in a file, you should pass in the
-            path to the file as a string.
+            If you need to pass in a file, you should pass in the file ID as a string.
             If you need to output a file, you should instead save the file
-            and return the path to the file as a string.
+            and return the File ID as a string with its description.
         7) Do not write infinite loops or recursive functions.
         8) Name your function in a meaningful way (can infer the task from the name).
         9) Include all imports necessary for your code to run.
-            If possible, include these
-            imports in the function itself.
+            If possible, include these imports in the function itself.
         10) At the end of your code, call the function you defined with the input.
         11) Don't use ... in any of your code. It should be complete and ready
             for execution.
         12) When indicating paths to save files, DO NOT use holders.
-        13) When saving files, do not use generic names, identify the name with repect
-        to the protein, analysis or simulation ids.
+
     You should only respond the following format:
     Explain: ...
     Plan:
@@ -143,7 +137,7 @@ action_template_2 = PromptTemplate(
     Return the COMPLETE code, without placeholder
 
     Here is the input:
-    files ID,Descriptions: {files},
+    files ID and Descriptions: {files},
     task: {task},
     code: {code},
     args: {args}
@@ -184,13 +178,10 @@ critic_template = PromptTemplate(
     specific on where and how to improve/change the code.
 
     Frequent issues to consider and solutions:
-    - Is the path to the path_registry incorrect?
-    The path is '{init_dir}/paths_registry.json'
-    - A file path to save a file is incorrect?
-    use 'os.getcwd()' in the code to get the valid current directory.
     - Some errors occur because the files are not compatible, examples: a) a simulation
-    trajectory of a processed pdb file and the original pdb file downloaded from
-    the database.
+    trajectory of a processed pdb file processed together with
+    the original pdb file downloaded from the database will raise an error as the pdb
+    has gone through changes.
     - Topology and trajectory files have different number of atoms.
     If using MDAnalysis, the universe is created using topology and trajectory
     files. If the number of atoms is different, the topology is wrong, the file needed

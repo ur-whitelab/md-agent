@@ -75,7 +75,6 @@ class Iterator:
             # save to history
             full_history = self.memory._write_history_iterator(
                 prompt=task,
-                attempt_number=iter,
                 code=code,
                 output=code_output,
                 critique=critique + suggestions,
