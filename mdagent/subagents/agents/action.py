@@ -112,28 +112,52 @@ class Action:
     def _extract_code(self, output):
         # Regular expression to match a code block with optional 'python' keyword
         code_match = re.search(r"Code:\n```(?:python)?\n(.+?)\n```", output, re.DOTALL)
-
+        # extract also the function called at the end
         if code_match:
             code = code_match.group(1)
             # Regular expression to extract the function name from the 'def' line
-            fxn_match = re.search(r"def (\w+)\(", code)
+            fxn_match = re.search(r"def (\w+)\((.*?)\)", code)
             fxn_name = fxn_match.group(1) if fxn_match else None
-            return code, fxn_name
+            fxn_args = fxn_match.group(2).split(",") if fxn_match else None
+            if fxn_args:
+                fxn_args = [fxn_args.strip() for fxn_args in fxn_args]
+            fxn_call_pattern = rf"^(?!.*\bdef\b).*({re.escape(fxn_name)})\((.*?)\)"
+            # print(output)
+            calls = [
+                re.search(fxn_call_pattern, output, re.DOTALL)
+                for output in output.split("\n")
+            ]
+            for call in calls:
+                if call:
+                    for match in call.groups():
+                        if match and match != fxn_name:
+                            arguments_vals = match.split(",")
+            # remove unncessary quotatioin marks in arguments
+            if arguments_vals:
+                arguments_vals = [
+                    arg.strip().strip("'").strip('"') for arg in arguments_vals
+                ]
+            else:
+                arguments_vals = None
+            return code, fxn_name, fxn_args, arguments_vals
+
         else:
-            return None, None
+            return None, None, None, None
 
     def _run_code(self, history, task, skills, args, new_task, code=""):
         # run agent
         output = self._run_action_writer_1(history, task, skills, args, code)
         # extract code part
-        code, _ = self._extract_code(output)
+        code, _, args, arg_vals = self._extract_code(output)
         # run code
+        args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         ###here we're adding the second llm refinement
         output = self._run_action_writer_paths(task, code, args)
-        code, _ = self._extract_code(output)
-
+        code, _, args, arg_vals = self._extract_code(output)
+        args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         output = self._run_md_expert_writer(task, code, new_task, args)
-        code, fxn_name = self._extract_code(output)
+        code, fxn_name, args, arg_vals = self._extract_code(output)
+        args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         ### here we change paths to use the path registry for saving and loading
         success, code_output = self._exec_code(code)
-        return success, code, fxn_name, code_output
+        return success, code, fxn_name, code_output, args

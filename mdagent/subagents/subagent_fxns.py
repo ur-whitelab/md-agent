@@ -39,7 +39,7 @@ class Iterator:
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
         st.markdown("action agent is running, writing code", unsafe_allow_html=True)
-        success, code, fxn_name, code_output = self.action._run_code(
+        success, code, fxn_name, code_output, curr_args = self.action._run_code(
             full_history, task, skills, args, new_task, code=code
         )
         print("\nCode Output: ", code_output)
@@ -53,7 +53,16 @@ class Iterator:
             success = True
         else:
             success = False
-        return success, code, fxn_name, code_output, task, critique, suggestions
+        return (
+            success,
+            code,
+            fxn_name,
+            code_output,
+            task,
+            critique,
+            suggestions,
+            curr_args,
+        )
 
     def _run_iterations(self, run, task, args):
         iterations = 5
@@ -63,6 +72,7 @@ class Iterator:
         code = ""
         skills = self._pull_information()["skills"]
         new_task = True
+        curr_args = args
         while iter < iterations and success is False:
             (
                 success,
@@ -72,7 +82,10 @@ class Iterator:
                 task,
                 critique,
                 suggestions,
-            ) = self._run_loop(task, full_history, skills, args, new_task, code=code)
+                curr_args,
+            ) = self._run_loop(
+                task, full_history, skills, curr_args, new_task, code=code
+            )
             new_task = False
             # save to history
             full_history = self.memory._write_history_iterator(
@@ -89,8 +102,8 @@ class Iterator:
                     "The new code is complete, running skill agent",
                     unsafe_allow_html=True,
                 )
-                tool_name, final_args = self.skill.add_new_tool(fxn_name, code)
-                return success, tool_name, final_args
+                tool_name, _ = self.skill.add_new_tool(fxn_name, code)
+                return success, tool_name, curr_args
             iter += 1
 
         # if max iterations reached without success, save failures to file

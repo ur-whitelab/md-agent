@@ -261,18 +261,18 @@ class CreateNewTool(BaseTool):
                     return "Failed. SubAgent for this tool not initialized"
                 if args is not None:
                     for key, _ in args.items():
-                        if key in final_args:
+                        if key in final_args.keys():
                             continue
                         else:
                             print("Final Arguments are not the same as input args")
                             print("Skipping second execution")
                             print("original input args: ", args.keys())
-                            print("final args: ", (",").join(final_args))
+                            print("final args: ", (",").join(final_args.items()))
                             return (
-                                f"A new tool is created: {tool_name}."
+                                f"A new tool was created: {tool_name}."
                                 "You can use it in next prompt."
-                                "The arguments for this tool are:"
-                                f"{(',').join(final_args)}"
+                                "The arguments used for this tool are:"
+                                f"{final_args.items()}"
                             )
                     return skill.execute_skill_function(tool_name, **args)
                 else:
