@@ -102,7 +102,7 @@ class Iterator:
                     "The new code is complete, running skill agent",
                     unsafe_allow_html=True,
                 )
-                tool_name, _ = self.skill.add_new_tool(fxn_name, code)
+                tool_name, _ = self.skill.add_new_tool(fxn_name, code, curr_args)
                 return success, tool_name, curr_args
             iter += 1
 

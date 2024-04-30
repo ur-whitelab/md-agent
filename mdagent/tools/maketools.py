@@ -43,7 +43,7 @@ def get_learned_tools(ckpt_dir: str):
     learned_tools = []
     for key in skills:
         fxn_name = key
-        code = skills[fxn_name]["code"]
+        code = skills[fxn_name]["description"]
         namespace: dict = {}
         exec(code, namespace)
         function = namespace[fxn_name]

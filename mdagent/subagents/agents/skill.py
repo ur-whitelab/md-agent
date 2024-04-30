@@ -63,14 +63,15 @@ class SkillManager:
     def get_skills(self):
         return self.skills
 
-    def _generate_tool_description(self, fxn_code):
+    def _generate_tool_description(self, fxn_code, args=""):
         """Given the code snippet, it asks the agent to provide a tool description"""
-        return self.llm_chain({"code": fxn_code})["text"]
+        return self.llm_chain({"code": fxn_code, "args": args})["text"]
 
     def add_new_tool(
         self,
         fxn_name,
         code,
+        args,
         new_description=False,
     ):
         # execute the code to get function
@@ -80,10 +81,10 @@ class SkillManager:
 
         # get description
         if new_description:  # useful if we need to update description
-            description = self._generate_tool_description(code)
+            description = self._generate_tool_description(code, args=args)
         else:
             if function.__doc__ is None:
-                description = self._generate_tool_description(code)
+                description = self._generate_tool_description(code, args=args)
             else:
                 description = function.__doc__
 
