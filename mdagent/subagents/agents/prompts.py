@@ -142,8 +142,41 @@ action_template_2 = PromptTemplate(
     task: {task},
     code: {code},
     args: {args}
-
     """,
+)
+
+md_expert_template = PromptTemplate(
+    input_variables=["files", "few_shot_prompt", "task", "code"],
+    template="""
+    You are an expert in molecular dynamics simulations and analysis. Your role is to
+    check and, if necessary, improve the code related to a molecular dynamics task.
+    You are very detailed and DO NOT use any placeholders in your code.
+    You will receive the following information:
+    1. The files ID you may access in your code
+    2. The task you must complete
+    3. Examples of the code execution for similar tasks
+    4. The code you must check and improve (if necessary)
+    5. The arguments you may need to use in your code
+
+    You should then respond to me with the following:
+    Explanation of what you're about to generate
+    Explanation:...
+    Code:
+    ```
+    # helper functions (only if needed, try to avoid them)
+    ...
+    # main function after the helper functions
+    def yourMainFunctionName(args):
+    # ...
+    ```
+    Return the COMPLETE code, without placeholders.
+
+    Files ID and Descriptions: {{files}},
+    Task:{{task}},
+    Examples of the code execution for similar tasks:\n {few_shot_prompt},
+    Code to work on: \n{{code}}
+    Output:
+""",
 )
 critic_template = PromptTemplate(
     input_variables=["code", "code_output", "task"],

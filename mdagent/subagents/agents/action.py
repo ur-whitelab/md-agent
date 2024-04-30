@@ -10,7 +10,8 @@ from langchain.chat_models import ChatOpenAI
 
 from mdagent.utils import PathRegistry
 
-from .prompts import action_template_1, action_template_2
+from .examples import few_shot_prompt
+from .prompts import action_template_1, action_template_2, md_expert_template
 
 load_dotenv()
 
@@ -22,15 +23,16 @@ class Action:
         model="gpt-4",
         temp=0.1,
     ):
-        llm = ChatOpenAI(
+        self.llm = ChatOpenAI(
             temperature=temp,
             model=model,
             client=None,
             streaming=True,
             callbacks=[StreamingStdOutCallbackHandler()],
         )
-        self.llm_chain_1 = LLMChain(llm=llm, prompt=action_template_1)
-        self.llm_chain_2 = LLMChain(llm=llm, prompt=action_template_2)
+        self.llm_chain_1 = LLMChain(llm=self.llm, prompt=action_template_1)
+        self.llm_chain_2 = LLMChain(llm=self.llm, prompt=action_template_2)
+
         self.path_registry = path_registry
 
     def _run_action_writer_1(self, history, task, skills, args, code=""):
@@ -54,6 +56,28 @@ class Action:
         files = self.path_registry.list_path_names_and_descriptions()
         # get skills
         return self.llm_chain_2(
+            {
+                "files": files,
+                "task": task,
+                "code": code,
+                "args": args,
+            }
+        )["text"]
+
+    def _run_md_expert_writer(self, task, code, args):
+        files = self.path_registry.list_path_names_and_descriptions()
+        if not self.llm_chain_3:
+            _few_shot_examples = (
+                few_shot_prompt.format(input=task)
+                .replace("Human:", " Task Example: ")
+                .replace("AI:", " Generation Example:")
+            )
+            md_expert_prompt = md_expert_template.format(
+                few_shot_prompt=_few_shot_examples
+            )
+            self.llm_chain_3 = LLMChain(llm=self.llm, prompt=md_expert_prompt)
+
+        return self.llm_chain_3(
             {
                 "files": files,
                 "task": task,
