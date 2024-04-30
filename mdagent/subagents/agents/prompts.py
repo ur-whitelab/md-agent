@@ -145,9 +145,7 @@ action_template_2 = PromptTemplate(
     """,
 )
 
-md_expert_template = PromptTemplate(
-    input_variables=["files", "few_shot_prompt", "task", "code"],
-    template="""
+md_expert_template = """
     You are an expert in molecular dynamics simulations and analysis. Your role is to
     check and, if necessary, improve the code related to a molecular dynamics task.
     You are very detailed and DO NOT use any placeholders in your code.
@@ -176,8 +174,7 @@ md_expert_template = PromptTemplate(
     Examples of the code execution for similar tasks:\n {few_shot_prompt},
     Code to work on: \n{{code}}
     Output:
-""",
-)
+"""
 critic_template = PromptTemplate(
     input_variables=["code", "code_output", "task"],
     template="""

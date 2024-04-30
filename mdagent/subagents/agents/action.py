@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
+from langchain.prompts import PromptTemplate
 
 from mdagent.utils import PathRegistry
 
@@ -32,7 +33,7 @@ class Action:
         )
         self.llm_chain_1 = LLMChain(llm=self.llm, prompt=action_template_1)
         self.llm_chain_2 = LLMChain(llm=self.llm, prompt=action_template_2)
-
+        self.llm_chain_3 = None
         self.path_registry = path_registry
 
     def _run_action_writer_1(self, history, task, skills, args, code=""):
@@ -75,7 +76,12 @@ class Action:
             md_expert_prompt = md_expert_template.format(
                 few_shot_prompt=_few_shot_examples
             )
-            self.llm_chain_3 = LLMChain(llm=self.llm, prompt=md_expert_prompt)
+            self.llm_chain_3 = LLMChain(
+                llm=self.llm,
+                prompt=PromptTemplate(
+                    input=["files", "task", "code"], template=md_expert_prompt
+                ),
+            )
 
         return self.llm_chain_3(
             {
@@ -121,12 +127,14 @@ class Action:
         # run agent
         output = self._run_action_writer_1(history, task, skills, args, code)
         # extract code part
-        code, fxn_name = self._extract_code(output)
+        code, _ = self._extract_code(output)
         # run code
         ###here we're adding the second llm refinement
         output = self._run_action_writer_paths(task, code, args)
-        code, fxn_name = self._extract_code(output)
+        code, _ = self._extract_code(output)
 
+        output = self._run_md_expert_writer(task, code, args)
+        code, fxn_name = self._extract_code(output)
         ### here we change paths to use the path registry for saving and loading
         success, code_output = self._exec_code(code)
         return success, code, fxn_name, code_output
