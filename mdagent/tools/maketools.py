@@ -37,10 +37,9 @@ def get_learned_tools(ckpt_dir: str):
             if content:
                 skills = json.loads(content)
     else:
-        raise FileNotFoundError(
-            f"Could not find learned tools at {skill_file_path}."
-            "Please check your 'ckpt_dir' path."
-        )
+        print(f"Could not find learned tools at {skill_file_path}.")
+        return []
+
     learned_tools = []
     for key in skills:
         fxn_name = key
@@ -49,6 +48,7 @@ def get_learned_tools(ckpt_dir: str):
         exec(code, namespace)
         function = namespace[fxn_name]
         learned_tools.append(StructuredTool.from_function(func=function))
+
     return learned_tools
 
 
@@ -106,8 +106,12 @@ def make_all_tools(
     # disclaimer: assume they don't need path_registry
     learned_tools = []
     if subagent_settings.resume:
-        learned_tools = get_learned_tools(subagent_settings.ckpt_dir)
-
+        skills_dir = f"{subagent_settings.ckpt_dir}/skill_library"
+        if os.path.exists(skills_dir):
+            learned_tools = get_learned_tools(subagent_settings.ckpt_dir)
+        else:
+            print("No learned tools found.")
+            learned_tools = []
     all_tools += base_tools + subagents_tools + learned_tools
     return all_tools
 

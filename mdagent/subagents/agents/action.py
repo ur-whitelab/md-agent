@@ -65,9 +65,9 @@ class Action:
             }
         )["text"]
 
-    def _run_md_expert_writer(self, task, code, args):
+    def _run_md_expert_writer(self, task, code, new_task, args):
         files = self.path_registry.list_path_names_and_descriptions()
-        if not self.llm_chain_3:
+        if not self.llm_chain_3 or new_task:
             _few_shot_examples = (
                 few_shot_prompt.format(input=task)
                 .replace("Human:", " Task Example: ")
@@ -79,7 +79,7 @@ class Action:
             self.llm_chain_3 = LLMChain(
                 llm=self.llm,
                 prompt=PromptTemplate(
-                    input=["files", "task", "code"], template=md_expert_prompt
+                    input_variables=["files", "task", "code"], template=md_expert_prompt
                 ),
             )
 
@@ -88,7 +88,6 @@ class Action:
                 "files": files,
                 "task": task,
                 "code": code,
-                "args": args,
             }
         )["text"]
 
@@ -123,7 +122,7 @@ class Action:
         else:
             return None, None
 
-    def _run_code(self, history, task, skills, args, code=""):
+    def _run_code(self, history, task, skills, args, new_task, code=""):
         # run agent
         output = self._run_action_writer_1(history, task, skills, args, code)
         # extract code part
@@ -133,7 +132,7 @@ class Action:
         output = self._run_action_writer_paths(task, code, args)
         code, _ = self._extract_code(output)
 
-        output = self._run_md_expert_writer(task, code, args)
+        output = self._run_md_expert_writer(task, code, new_task, args)
         code, fxn_name = self._extract_code(output)
         ### here we change paths to use the path registry for saving and loading
         success, code_output = self._exec_code(code)

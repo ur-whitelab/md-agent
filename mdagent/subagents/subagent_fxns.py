@@ -32,7 +32,7 @@ class Iterator:
         self.critic = subagents["critic"]
         self.skill = subagents["skill"]
 
-    def _run_loop(self, task, full_history, skills, args, code=""):
+    def _run_loop(self, task, full_history, skills, args, new_task, code=""):
         """
         this function just runs the iteration 1 time
         """
@@ -40,7 +40,7 @@ class Iterator:
         print("\n\033[46m action agent is running, writing code\033[0m")
         st.markdown("action agent is running, writing code", unsafe_allow_html=True)
         success, code, fxn_name, code_output = self.action._run_code(
-            full_history, task, skills, args, code=code
+            full_history, task, skills, args, new_task, code=code
         )
         print("\nCode Output: ", code_output)
         critique = self.critic._run(code, task, code_output)
@@ -62,6 +62,7 @@ class Iterator:
         full_history = None
         code = ""
         skills = self._pull_information()["skills"]
+        new_task = True
         while iter < iterations and success is False:
             (
                 success,
@@ -71,8 +72,8 @@ class Iterator:
                 task,
                 critique,
                 suggestions,
-            ) = self._run_loop(task, full_history, skills, args, code=code)
-
+            ) = self._run_loop(task, full_history, skills, args, new_task, code=code)
+            new_task = False
             # save to history
             full_history = self.memory._write_history_iterator(
                 prompt=task,

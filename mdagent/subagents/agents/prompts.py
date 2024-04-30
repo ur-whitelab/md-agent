@@ -46,14 +46,12 @@ action_template_1 = PromptTemplate(
             If you need to pass in a file, you should pass in the file ID as a string.
             If you need to output a file, you should instead save the file
             and return the File ID as a string with its description.
-        7) Do not write infinite loops or recursive functions.
-        8) Name your function in a meaningful way (can infer the task from the name).
-        9) Include all imports necessary for your code to run.
+        7) Name your function in a meaningful way (can infer the task from the name).
+        8) Include all imports necessary for your code to run.
             If possible, include these imports in the function itself.
-        10) At the end of your code, call the function you defined with the input.
-        11) Don't use ... in any of your code. It should be complete and ready
+        9) At the end of your code, call the function you defined with the input.
+        10) Don't use ... in any of your code. It should be complete and ready
             for execution.
-        12) When indicating paths to save files, DO NOT use holders.
 
     You should only respond the following format:
     Explain: ...
@@ -156,7 +154,12 @@ md_expert_template = """
     4. The code you must check and improve (if necessary)
     5. The arguments you may need to use in your code
 
-    You should then respond to me with the following:
+    Check and correct (if necessary) if the files used are the ones necessary
+    for the task, it is not uncommon for the wrong files to be used. For example, using
+    the pdb file downloaded from the database instead of the topology file processed
+    just before the simulation.
+
+    You should then respond to me with the following format:
     Explanation of what you're about to generate
     Explanation:...
     Code:
@@ -172,8 +175,8 @@ md_expert_template = """
     Files ID and Descriptions: {{files}},
     Task:{{task}},
     Examples of the code execution for similar tasks:\n {few_shot_prompt},
-    Code to work on: \n{{code}}
-    Output:
+    Code to revise: \n{{code}}
+
 """
 critic_template = PromptTemplate(
     input_variables=["code", "code_output", "task"],
