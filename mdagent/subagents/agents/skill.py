@@ -81,13 +81,14 @@ class SkillManager:
 
         # get description
         if new_description:  # useful if we need to update description
-            description = self._generate_tool_description(code, args=args)
+            _description = self._generate_tool_description(code, args=args)
         else:
             if function.__doc__ is None:
-                description = self._generate_tool_description(code, args=args)
+                _description = self._generate_tool_description(code, args=args)
             else:
-                description = function.__doc__
+                _description = function.__doc__
 
+        description = _description.strip().replace("python", "").replace("", "").strip()
         # Get the parameters of the function
         args = inspect.signature(function).parameters
         arguments = []

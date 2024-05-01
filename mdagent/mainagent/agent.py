@@ -132,6 +132,7 @@ class MDAgent:
             user_input, self.agent_type, model="gpt-3.5-turbo", run_memory=run_memory
         )
         self.agent = self._initialize_tools_and_agent(user_input)
+        print(self.prompt)
         model_output = self.agent.run(self.prompt, callbacks=callbacks)
         if self.use_memory:
             self.memory.generate_agent_summary(model_output)
