@@ -43,11 +43,14 @@ def get_learned_tools(ckpt_dir: str):
     learned_tools = []
     for key in skills:
         fxn_name = key
-        code = skills[fxn_name]["description"]
+        code = skills[fxn_name]["code"]
+        description = skills[fxn_name]["description"]
         namespace: dict = {}
         exec(code, namespace)
         function = namespace[fxn_name]
-        learned_tools.append(StructuredTool.from_function(func=function))
+        learned_tools.append(
+            StructuredTool.from_function(func=function, description=description)
+        )
 
     return learned_tools
 
