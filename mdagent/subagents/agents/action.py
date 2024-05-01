@@ -115,6 +115,12 @@ class Action:
         # extract also the function called at the end
         if code_match:
             code = code_match.group(1)
+            code_lines = code.split("\n")
+            last_return_index = 0
+            for i, line in enumerate(code_lines):
+                if "return" in line:
+                    last_return_index = i
+            code_fxn = "\n".join(code_lines[: last_return_index + 1])
             # Regular expression to extract the function name from the 'def' line
             fxn_match = re.search(r"def (\w+)\((.*?)\)", code)
             fxn_name = fxn_match.group(1) if fxn_match else None
@@ -139,7 +145,7 @@ class Action:
                 ]
             else:
                 arguments_vals = None
-            return code, fxn_name, fxn_args, arguments_vals
+            return code, code_fxn, fxn_name, fxn_args, arguments_vals
 
         else:
             return None, None, None, None
@@ -148,16 +154,16 @@ class Action:
         # run agent
         output = self._run_action_writer_1(history, task, skills, args, code)
         # extract code part
-        code, _, args, arg_vals = self._extract_code(output)
+        code, _, _, args, arg_vals = self._extract_code(output)
         # run code
         args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         ###here we're adding the second llm refinement
         output = self._run_action_writer_paths(task, code, args)
-        code, _, args, arg_vals = self._extract_code(output)
+        code, _, _, args, arg_vals = self._extract_code(output)
         args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         output = self._run_md_expert_writer(task, code, new_task, args)
-        code, fxn_name, args, arg_vals = self._extract_code(output)
+        code, code_fxn, fxn_name, args, arg_vals = self._extract_code(output)
         args = {arg: arg_val for arg, arg_val in zip(args, arg_vals)}
         ### here we change paths to use the path registry for saving and loading
         success, code_output = self._exec_code(code)
-        return success, code, fxn_name, code_output, args
+        return success, code, code_fxn, fxn_name, code_output, args

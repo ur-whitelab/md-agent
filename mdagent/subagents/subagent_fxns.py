@@ -39,9 +39,14 @@ class Iterator:
         critique = None
         print("\n\033[46m action agent is running, writing code\033[0m")
         st.markdown("action agent is running, writing code", unsafe_allow_html=True)
-        success, code, fxn_name, code_output, curr_args = self.action._run_code(
-            full_history, task, skills, args, new_task, code=code
-        )
+        (
+            success,
+            code,
+            code_func,
+            fxn_name,
+            code_output,
+            curr_args,
+        ) = self.action._run_code(full_history, task, skills, args, new_task, code=code)
         print("\nCode Output: ", code_output)
         critique = self.critic._run(code, task, code_output)
         critique = critique.replace("```json", "").replace("```", "").strip()
@@ -56,6 +61,7 @@ class Iterator:
         return (
             success,
             code,
+            code_func,
             fxn_name,
             code_output,
             task,
@@ -77,6 +83,7 @@ class Iterator:
             (
                 success,
                 code,
+                code_func,
                 fxn_name,
                 code_output,
                 task,
@@ -102,7 +109,7 @@ class Iterator:
                     "The new code is complete, running skill agent",
                     unsafe_allow_html=True,
                 )
-                tool_name, _ = self.skill.add_new_tool(fxn_name, code, curr_args)
+                tool_name, _ = self.skill.add_new_tool(fxn_name, code_func, curr_args)
                 return success, tool_name, curr_args
             iter += 1
 
