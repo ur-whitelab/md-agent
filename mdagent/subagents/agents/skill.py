@@ -88,7 +88,9 @@ class SkillManager:
             else:
                 _description = function.__doc__
 
-        description = _description.strip().replace("python", "").replace("", "").strip()
+        description = (
+            _description.strip().replace("python", "").replace("`", "").strip()
+        )
         # Get the parameters of the function
         args = inspect.signature(function).parameters
         arguments = []

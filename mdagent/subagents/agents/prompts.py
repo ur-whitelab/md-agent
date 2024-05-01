@@ -297,7 +297,7 @@ skill_template = PromptTemplate(
     clearly what the code does.
     3) Description should be in docstrings with up to 80 characters per line.
     You should only respond with docstrings:
-    4) Put an example of how to use the function at the end of the docstring.
+    4) Put an example of the inputs of the function at the end of the docstring.
         for example:
         ```
         arg_1 = "rec0_123456" # File ID of the trajectory file (description of arg 1)
