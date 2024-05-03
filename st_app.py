@@ -17,19 +17,6 @@ st_callback = StreamlitCallbackHandler(st.container())
 # Streamlit app
 st.title("MDAgent")
 
-option = st.selectbox("Choose an option:", ["Explore & Learn", "Use Learned Skills"])
-if option == "Explore & Learn":
-    learn = True
-else:
-    learn = False
-
-resume_op = st.selectbox("Resume:", ["False", "True"])
-if resume_op == "True":
-    resume = True
-else:
-    resume = False
-
-
 # for now I'm just going to allow  pdb and cif files - we can add more later
 uploaded_files = st.file_uploader(
     "Upload a .pdb or .cif file", type=["pdb", "cif"], accept_multiple_files=True
@@ -46,7 +33,7 @@ if uploaded_files:
 else:
     uploaded_file = []
 
-mdagent = MDAgent(resume=resume, uploaded_files=uploaded_file, learn=learn)
+mdagent = MDAgent(uploaded_files=uploaded_file)
 
 
 def generate_response(prompt):

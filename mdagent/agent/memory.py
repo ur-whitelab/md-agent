@@ -96,15 +96,7 @@ class MemoryManager:
         Returns:
         - None
         """
-        self.cnt_history_dir = f"{self.dir_name}/cnt_history"
-        self.cnt_history_details_dir = f"{self.dir_name}/cnt_history/details"
-
-        os.makedirs(self.cnt_history_dir, exist_ok=True)
-        os.makedirs(self.cnt_history_details_dir, exist_ok=True)
-
-        self.cnt_history_details = (
-            f"{self.cnt_history_details_dir}/run_{self.run_id}.json"
-        )
+        # add history dirs here
         self.agent_trace_summary = f"{self.dir_name}/agent_run_summaries.json"
 
     def new_run_id(self) -> str:
@@ -143,156 +135,156 @@ class MemoryManager:
 
     ### Iterator/CreateNewTool Functions ###
 
-    # not currently used
-    def _generate_summary_iterator(self, history: dict = {}):
-        """ "
-        This function generates a summary of the iterator history.
+    # # not currently used
+    # def _generate_summary_iterator(self, history: dict = {}):
+    #     """ "
+    #     This function generates a summary of the iterator history.
 
-        Parameters:
-        - history (dict): The history of the iterator.
+    #     Parameters:
+    #     - history (dict): The history of the iterator.
 
-        Returns:
-        - str: The summary of the iterator history.
-        """
-        if not history:
-            # get last history
-            history = self.retrieve_recent_memory_iterator(last_only=True)
-        llm_out = self.llm_iterator({"history": json.dumps(history)})["text"]
-        return llm_out
+    #     Returns:
+    #     - str: The summary of the iterator history.
+    #     """
+    #     if not history:
+    #         # get last history
+    #         history = self.retrieve_recent_memory_iterator(last_only=True)
+    #     llm_out = self.llm_iterator({"history": json.dumps(history)})["text"]
+    #     return llm_out
 
-    def _write_history_iterator(
-        self,
-        prompt,
-        code,
-        output,
-        critique,
-        success=True,
-        summary=False,
-        new_iteration=False,
-    ):
-        """
-        This function writes the iteration (create new tool)
-        history to a json file.
-        These files will live within the cnt_history/details
-        directory of the
-        current ckpt_dir and will be identified by the run_id.
+    # def _write_history_iterator(
+    #     self,
+    #     prompt,
+    #     code,
+    #     output,
+    #     critique,
+    #     success=True,
+    #     summary=False,
+    #     new_iteration=False,
+    # ):
+    #     """
+    #     This function writes the iteration (create new tool)
+    #     history to a json file.
+    #     These files will live within the cnt_history/details
+    #     directory of the
+    #     current ckpt_dir and will be identified by the run_id.
 
-        Parameters:
-        - prompt (str): The prompt given to the solver.
-        - code (str): The code written by the solver.
-        - output (str): The output of the code.
-        - critique (str): The critique of the code.
-        - success (bool): A flag indicating whether the
-        attempt was successful. Default is True.
-        - summary (bool): A flag indicating whether to
-        generate a summary of the history. Default is False.
-        - new_iteration (bool): A flag indicating whether
-        to start a new iteration instance (True)
-        or to continue with the current iteration instance
-        by incrementing the attempt count (False). Default is False.
+    #     Parameters:
+    #     - prompt (str): The prompt given to the solver.
+    #     - code (str): The code written by the solver.
+    #     - output (str): The output of the code.
+    #     - critique (str): The critique of the code.
+    #     - success (bool): A flag indicating whether the
+    #     attempt was successful. Default is True.
+    #     - summary (bool): A flag indicating whether to
+    #     generate a summary of the history. Default is False.
+    #     - new_iteration (bool): A flag indicating whether
+    #     to start a new iteration instance (True)
+    #     or to continue with the current iteration instance
+    #     by incrementing the attempt count (False). Default is False.
 
-        Returns:
-        - None"""
+    #     Returns:
+    #     - None"""
 
-        history = {
-            "prompt": prompt,
-            "code": code,
-            "output": output,
-            "critique": critique,
-            "success": success,
-        }
-        if summary:  # not currently used
-            llm_summary = self._generate_summary_iterator(history)
-            history["summary"] = llm_summary
-        else:
-            history["summary"] = None
+    #     history = {
+    #         "prompt": prompt,
+    #         "code": code,
+    #         "output": output,
+    #         "critique": critique,
+    #         "success": success,
+    #     }
+    #     if summary:  # not currently used
+    #         llm_summary = self._generate_summary_iterator(history)
+    #         history["summary"] = llm_summary
+    #     else:
+    #         history["summary"] = None
 
-        iter_num = self.get_iteration_number(new_iteration=new_iteration)
-        data = {iter_num: history}
-        self._write_to_json(data, self.cnt_history_details)
+    #     iter_num = self.get_iteration_number(new_iteration=new_iteration)
+    #     data = {iter_num: history}
+    #     self._write_to_json(data, self.cnt_history_details)
 
-    def get_iteration_number(self, new_iteration=False):
-        """
-        Retrieves the next number for iteration.
+    # def get_iteration_number(self, new_iteration=False):
+    #     """
+    #     Retrieves the next number for iteration.
 
-        Parameters:
-        - new_iteration (bool): A flag indicating whether
-        to start a new iteration instance (True)
-        or to continue with the current iteration instance
-        by incrementing the attempt count (False). Default is False.
+    #     Parameters:
+    #     - new_iteration (bool): A flag indicating whether
+    #     to start a new iteration instance (True)
+    #     or to continue with the current iteration instance
+    #     by incrementing the attempt count (False). Default is False.
 
-        Returns:
-        - str: The next iteration number in the format "instance.attempt".
-        If no previous history exists or the history file
-        is empty, it returns "0.0".
-        """
+    #     Returns:
+    #     - str: The next iteration number in the format "instance.attempt".
+    #     If no previous history exists or the history file
+    #     is empty, it returns "0.0".
+    #     """
 
-        if not os.path.exists(self.cnt_history_details):
-            return str(0.0)
-        with open(self.cnt_history_details, "r") as f:
-            details = json.load(f)
-        if not details:
-            return str(0.0)
-        keys = list(details.keys())
-        instance, attempt = keys[-1].split(".")
-        if new_iteration:
-            instance = str(int(instance) + 1)
-            attempt = "0"
-            return f"{instance}.{attempt}"
-        else:
-            attempt = str(int(attempt) + 1)
-            return f"{instance}.{attempt}"
+    #     if not os.path.exists(self.cnt_history_details):
+    #         return str(0.0)
+    #     with open(self.cnt_history_details, "r") as f:
+    #         details = json.load(f)
+    #     if not details:
+    #         return str(0.0)
+    #     keys = list(details.keys())
+    #     instance, attempt = keys[-1].split(".")
+    #     if new_iteration:
+    #         instance = str(int(instance) + 1)
+    #         attempt = "0"
+    #         return f"{instance}.{attempt}"
+    #     else:
+    #         attempt = str(int(attempt) + 1)
+    #         return f"{instance}.{attempt}"
 
-    def retrieve_iterator_details(self, run_id: str = "", iter_num: str = ""):
-        """
-        This function pulls the iterator details for a given
-        run_id from the cnt_history/details directory of the
-        current ckpt_dir.
+    # def retrieve_iterator_details(self, run_id: str = "", iter_num: str = ""):
+    #     """
+    #     This function pulls the iterator details for a given
+    #     run_id from the cnt_history/details directory of the
+    #     current ckpt_dir.
 
-        Parameters:
-        - run_id (str): The run_id to pull the details for.
-        Default is "".
-        - iter_num (str): The iteration number to pull the
-        details for. Default is "".
+    #     Parameters:
+    #     - run_id (str): The run_id to pull the details for.
+    #     Default is "".
+    #     - iter_num (str): The iteration number to pull the
+    #     details for. Default is "".
 
-        Returns:
-        - dict: The iterator details for the given run_id and
-        iteration number.
-        If no previous history exists or the history file is
-        empty, it returns None.
-        """
-        if not run_id:
-            run_id = self.run_id
-        if not os.path.exists(self.cnt_history_details):
-            return None
-        with open(self.cnt_history_details, "r") as f:
-            details = json.load(f)
-        if iter_num:
-            details = {k: v for k, v in details.items() if f"{iter_num}." in k}
-        return details
+    #     Returns:
+    #     - dict: The iterator details for the given run_id and
+    #     iteration number.
+    #     If no previous history exists or the history file is
+    #     empty, it returns None.
+    #     """
+    #     if not run_id:
+    #         run_id = self.run_id
+    #     if not os.path.exists(self.cnt_history_details):
+    #         return None
+    #     with open(self.cnt_history_details, "r") as f:
+    #         details = json.load(f)
+    #     if iter_num:
+    #         details = {k: v for k, v in details.items() if f"{iter_num}." in k}
+    #     return details
 
-    def retrieve_recent_memory_iterator(self, last_only=False):
-        """
-        This function pulls the most recent memory from the
-        memory file.
+    # def retrieve_recent_memory_iterator(self, last_only=False):
+    #     """
+    #     This function pulls the most recent memory from the
+    #     memory file.
 
-        Parameters:
-        - last_only (bool): A flag indicating whether to pull
-        the most recent memory only (True)
-        or to pull all memories (False). Default is False.
+    #     Parameters:
+    #     - last_only (bool): A flag indicating whether to pull
+    #     the most recent memory only (True)
+    #     or to pull all memories (False). Default is False.
 
-        Returns:
-        - str: The most recent memory in the format "memory".
-        If no previous history exists or the history file is
-        empty, it returns "{}".
-        """
-        if not os.path.exists(self.cnt_history_details):
-            return str({})
-        with open(self.cnt_history_details, "r") as f:
-            memories = json.load(f)
-        if last_only:
-            return str(memories[list(memories.keys())[-1]])
-        return json.dumps(memories)
+    #     Returns:
+    #     - str: The most recent memory in the format "memory".
+    #     If no previous history exists or the history file is
+    #     empty, it returns "{}".
+    #     """
+    #     if not os.path.exists(self.cnt_history_details):
+    #         return str({})
+    #     with open(self.cnt_history_details, "r") as f:
+    #         memories = json.load(f)
+    #     if last_only:
+    #         return str(memories[list(memories.keys())[-1]])
+    #     return json.dumps(memories)
 
     ### Agent/Run Summary Functions ###
 

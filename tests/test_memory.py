@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-from mdagent.subagents.agents import MemoryManager
-from mdagent.subagents.subagent_setup import SubAgentInitializer, SubAgentSettings
+from mdagent.agent.agent import MDAgent
+from mdagent.agent.memory import MemoryManager
 
 
 @pytest.fixture
@@ -12,50 +12,55 @@ def memory_manager(get_registry):
     return MemoryManager(get_registry("raw", False))
 
 
-def test_subagent_setup(get_registry):
-    settings = SubAgentSettings(get_registry("raw", False))
-    initializer = SubAgentInitializer(settings)
-    subagents = initializer.create_iteration_agents()
-    action = subagents["action"]
-    skill = subagents["skill"]
-    critic = subagents["critic"]
-    curriculum = initializer.create_curriculum()
-    assert action is not None
-    assert critic is not None
-    assert curriculum is not None
-    assert skill is not None
+def test_mdagent_memory():
+    mdagent_memory = MDAgent(use_memory=True)
+    mdagent_no_memory = MDAgent(use_memory=False)
+    assert mdagent_memory.use_memory is True
+    assert mdagent_no_memory.use_memory is False
+
+    mdagent_memory = MDAgent(use_memory=True, run_id="TESTRUNN")
+    assert mdagent_memory.run_id == "TESTRUNN"
+
+    mdagent_memory = MDAgent(use_memory=True, run_id="")
+    assert mdagent_memory.run_id
+
+
+def test_mdagent_w_ckpt():
+    dummy_test_dir = "ckpt_test"
+    mdagent = MDAgent(ckpt_dir=dummy_test_dir)
+    dummy_test_path = mdagent.path_registry.ckpt_dir
+    assert os.path.exists(dummy_test_path)
+    assert dummy_test_dir in dummy_test_path
 
 
 def test_memory_init(memory_manager, get_registry):
     assert memory_manager is not None
     assert memory_manager.run_id is not None
     assert len(memory_manager.run_id) == 8
-    assert os.path.exists(memory_manager.cnt_history_dir)
-    assert os.path.exists(memory_manager.cnt_history_details_dir)
 
     mm_path_id = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
     assert mm_path_id.run_id == "TESTRUNN"
 
 
-def test_write_to_and_retrieve_from_history_cnt(memory_manager):
-    input_dict = {
-        "prompt": "prompt_",
-        "code": "code_",
-        "output": "output_",
-        "critique": "critique_",
-        "success": True,
-    }
-    # sort by key
-    input_dict = dict(sorted(input_dict.items()))
-    memory_manager._write_history_iterator(**input_dict)
-    assert os.path.exists(memory_manager.cnt_history_details)
-    with open(memory_manager.cnt_history_details, "r") as f:
-        data = json.load(f)
-    input_dict["summary"] = None
-    assert data["0.0"] == input_dict
+def test_force_clear_mem(monkeypatch):
+    dummy_test_dir = "ckpt_test"
 
-    memory = memory_manager.retrieve_recent_memory_iterator(last_only=True)
-    assert str(memory) == str(input_dict)
+    mdagent = MDAgent(ckpt_dir=dummy_test_dir)
+    monkeypatch.setattr("builtins.input", lambda _: "yes")
+
+    mdagent.force_clear_mem(all=False)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
+    assert not os.path.exists(mdagent.path_registry.json_file_path)
+    assert os.path.exists(
+        os.path.basename(os.path.dirname(mdagent.path_registry.ckpt_dir))
+    )
+
+    mdagent = MDAgent(ckpt_dir=dummy_test_dir)
+    monkeypatch.setattr("builtins.input", lambda _: "yes")
+    mdagent.force_clear_mem(all=True)
+    assert not os.path.exists(mdagent.path_registry.ckpt_dir)
+    assert not os.path.exists(mdagent.path_registry.json_file_path)
+    assert not os.path.exists(os.path.dirname(mdagent.path_registry.ckpt_dir))
 
 
 def test_write_to_json_new_file(tmp_path, memory_manager):

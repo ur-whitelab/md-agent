@@ -269,7 +269,7 @@ def test_set_ckpt_subdir_single(set_ckpt, root_dir):
     shutil.rmtree(os.path.dirname(ckpt_subdir_3))
 
 
-def test_set_ckpt_subdir_multiple_and_resume(set_ckpt, root_dir):
+def test_set_ckpt_subdir_multiple(set_ckpt, root_dir):
     dir_test = "ckpt_test"
     default = "ckpt"
     expected_subdir_0 = os.path.join(root_dir, f"{dir_test}/{default}_")
@@ -281,18 +281,12 @@ def test_set_ckpt_subdir_multiple_and_resume(set_ckpt, root_dir):
     assert int(ckpt_subdir_1.split("_")[-1]) > int(ckpt_subdir_0.split("_")[-1])
     assert expected_subdir_0 in ckpt_subdir_0
     assert expected_subdir_0 in ckpt_subdir_1
-
-    resume = set_ckpt.get_resume_ckpt(ckpt_parent_folder=dir_test)
-    assert resume == ckpt_subdir_1
-    shutil.rmtree(os.path.join(root_dir, dir_test))
-    resume = set_ckpt.get_resume_ckpt(ckpt_parent_folder=dir_test)
-    assert not resume
     shutil.rmtree(os.path.join(root_dir, dir_test))
 
 
 def test_path_registry_w_ckpt():
     ckpt_dir = "ckpt_test"
-    path_registry = PathRegistry(resume=False, ckpt_dir=ckpt_dir)
+    path_registry = PathRegistry(ckpt_dir=ckpt_dir)
     assert os.path.exists(path_registry.json_file_path)
     assert path_registry.json_file_path.endswith("paths_registry.json")
     assert f"{ckpt_dir}_" in os.path.basename(

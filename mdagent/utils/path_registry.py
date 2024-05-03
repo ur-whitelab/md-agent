@@ -21,24 +21,18 @@ class PathRegistry:
     set_ckpt = SetCheckpoint()
 
     @classmethod
-    def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
-        if not cls.instance or not resume:
-            cls.instance = cls(resume, ckpt_dir)
+    def get_instance(cls, ckpt_dir: str = "ckpt"):
+        if not cls.instance:
+            cls.instance = cls(ckpt_dir)
         return cls.instance
 
-    def __init__(self, resume: bool = True, ckpt_dir: str = "ckpt"):
-        self._set_ckpt(ckpt_dir, resume)
+    def __init__(self, ckpt_dir: str = "ckpt"):
+        self._set_ckpt(ckpt_dir)
         self._make_all_dirs()
         self._init_path_registry()
 
-    def _set_ckpt(self, ckpt: str, resume: bool):
-        if resume:
-            self.ckpt_dir = self.set_ckpt.get_resume_ckpt()
-            if self.ckpt_dir is None:
-                self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
-        else:
-            self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
-        return None
+    def _set_ckpt(self, ckpt: str):
+        self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
 
     def _make_all_dirs(self):
         self.json_file_path = os.path.join(self.ckpt_dir, "paths_registry.json")
