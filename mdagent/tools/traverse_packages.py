@@ -10,9 +10,27 @@ class TraversePackages:
     def __init__(self):
         pass
 
-    def list_attributes(self, package):
-        all_attributes = dir(package)
-        return all_attributes
+    def list_attributes(self, module, depth=0, max_depth=5):
+        if depth > max_depth:  # Prevent excessively deep recursion
+            return {}
+
+        attribute_list = {}
+        # dir is string -> convert to actual package
+        if isinstance(module, str):
+            module = self.import_module(module)
+            if not module:
+                return {}
+        for attribute_name in dir(module):
+            attribute = getattr(module, attribute_name)
+            if inspect.ismodule(attribute) and depth < max_depth:
+                # Recurse into submodules
+                attribute_list[attribute_name] = self.list_attributes(
+                    attribute, depth + 1, max_depth
+                )
+            elif inspect.isfunction(attribute) or inspect.isclass(attribute):
+                attribute_list[attribute_name] = type(attribute).__name__
+
+        return attribute_list
 
     def import_module(self, module_name):
         try:
