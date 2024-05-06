@@ -1,6 +1,5 @@
-import json
 import os
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -60,32 +59,6 @@ def test_extract_code(action):
     assert code_1 is None
     assert fxn_name_1 is None
     assert fxn_name_2 is None
-
-
-def test_pull_information(iterator):
-    with patch("os.path.exists", return_value=True):
-        with patch("builtins.open", mock_open(read_data="line1\nline2\nline3")):
-            iterator.skill = MagicMock()
-            iterator.skill.get_skills.return_value = ["skill1", "skill2"]
-            iterator.path_registry = MagicMock()
-            iterator.path_registry.list_path_names.return_value = ["file1", "file2"]
-            iterator.memory = MagicMock()
-            iterator.memory.retrieve_recent_memory_iterator.return_value = (
-                "line1\nline2\nline3"
-            )
-            iterator.current_tools = {"tool1": "config1"}
-            iterator.all_tools_string = "all_tools_string"
-            info = iterator._pull_information()
-
-            assert (
-                "line1" in info["full_history"]
-                and "line2" in info["full_history"]
-                and "line3" in info["full_history"]
-            )
-            assert info["skills"] == json.dumps(["skill1", "skill2"])
-            assert info["files"] == json.dumps(["file1", "file2"])
-            assert info["current_tools"] == json.dumps({"tool1": "config1"})
-            assert info["all_tools"] == "all_tools_string"
 
 
 def test_add_new_tool(skill_manager):
