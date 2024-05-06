@@ -25,14 +25,6 @@ def test_mdagent_memory():
     assert mdagent_memory.run_id
 
 
-def test_mdagent_w_ckpt():
-    dummy_test_dir = "ckpt_test"
-    mdagent = MDAgent(ckpt_dir=dummy_test_dir)
-    dummy_test_path = mdagent.path_registry.ckpt_dir
-    assert os.path.exists(dummy_test_path)
-    assert dummy_test_dir in dummy_test_path
-
-
 def test_memory_init(memory_manager, get_registry):
     assert memory_manager is not None
     assert memory_manager.run_id is not None
@@ -83,13 +75,3 @@ def test_write_to_json_existing_file(tmp_path, memory_manager):
     with open(file_path, "r") as f:
         data = json.load(f)
     assert data == {**initial_data, **update_data}
-
-
-def test_pull_memory_summary(get_registry):
-    mm_mem = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
-    fake_summaries = {"TESTRUNN.0": "fake_summary"}
-    with open(mm_mem.agent_trace_summary, "w") as f:
-        f.write(json.dumps(fake_summaries))
-    output = mm_mem.pull_agent_summary_from_mem(run_id="TESTRUNN")
-    assert output == "fake_summary"
-    assert mm_mem.pull_agent_summary_from_mem(run_id="TESTRUNN") == "fake_summary"

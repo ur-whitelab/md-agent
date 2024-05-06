@@ -7,6 +7,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
+from mdagent.agent.agent import MDAgent
 from mdagent.utils import FileType, PathRegistry, SetCheckpoint
 
 
@@ -228,6 +229,14 @@ def test_path_registry_ckpt(get_registry):
         assert ckpt
         assert os.path.exists(ckpt)
         assert os.path.isdir(ckpt)
+
+
+def test_mdagent_w_ckpt():
+    dummy_test_dir = "ckpt_test"
+    mdagent = MDAgent(ckpt_dir=dummy_test_dir)
+    dummy_test_path = mdagent.path_registry.ckpt_dir
+    assert os.path.exists(dummy_test_path)
+    assert dummy_test_dir in dummy_test_path
 
 
 @pytest.fixture
