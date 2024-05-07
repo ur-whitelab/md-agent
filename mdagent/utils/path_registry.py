@@ -21,11 +21,11 @@ class PathRegistry:
     set_ckpt = SetCheckpoint()
 
     @classmethod
-    def get_instance(cls, ckpt_dir: str = "ckpt"):
-        # caveat: if instance already exists, "ckpt_dir" argument is ignored
-        if not cls.instance:
+    # set ckpt_dir to None by default
+    def get_instance(cls, ckpt_dir=None):
+        # todo: use same ckpt if run_id is given
+        if not cls.instance or ckpt_dir is not None:
             cls.instance = cls(ckpt_dir)
-        cls.instance.ckpt_dir = cls.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt_dir)
         return cls.instance
 
     def __init__(self, ckpt_dir: str = "ckpt"):

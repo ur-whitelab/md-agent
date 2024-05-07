@@ -39,7 +39,9 @@ def test_force_clear_mem(monkeypatch):
 
     mdagent = MDAgent(ckpt_dir=dummy_test_dir)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
-
+    print(mdagent.path_registry.ckpt_dir)
+    print(mdagent.path_registry.json_file_path)
+    print(os.path.dirname(mdagent.path_registry.ckpt_dir))
     mdagent.force_clear_mem(all=False)
     assert not os.path.exists(mdagent.path_registry.ckpt_dir)
     assert not os.path.exists(mdagent.path_registry.json_file_path)
@@ -50,6 +52,9 @@ def test_force_clear_mem(monkeypatch):
     mdagent = MDAgent(ckpt_dir=dummy_test_dir)
     monkeypatch.setattr("builtins.input", lambda _: "yes")
     mdagent.force_clear_mem(all=True)
+    print(mdagent.path_registry.ckpt_dir)
+    print(mdagent.path_registry.json_file_path)
+    print(os.path.dirname(mdagent.path_registry.ckpt_dir))
     assert not os.path.exists(mdagent.path_registry.ckpt_dir)
     assert not os.path.exists(mdagent.path_registry.json_file_path)
     assert not os.path.exists(os.path.dirname(mdagent.path_registry.ckpt_dir))
