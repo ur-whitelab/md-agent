@@ -1,10 +1,5 @@
 # test_query_filter.py
-from mdagent.mainagent.query_filter import (
-    Example,
-    FilteredQuery,
-    Parameters,
-    query_filter,
-)
+from mdagent.agent.query_filter import Example, FilteredQuery, Parameters, query_filter
 
 
 def test_parameters_repr():

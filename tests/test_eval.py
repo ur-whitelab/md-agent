@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from mdagent.mainagent.evaluate import Evaluator
+from mdagent.agent.evaluate import Evaluator
 
 
 @pytest.fixture
@@ -56,16 +56,13 @@ def mock_agent(tmp_path):
     agent.ckpt_dir = tmp_path / "fake_dir"
     agent.llm.model_name = "test_model"
     agent.tools_llm.model_name = "some_tool_model"
-    agent.subagents_settings.subagents_model = "test_subagent_model"
     agent.agent_type = "test_agent_type"
-    agent.subagents_settings.resume = False
-    agent.subagents_settings.curriculum = True
     agent.use_memory = False
     agent.run_id = "test_run_id"
     return agent
 
 
-@patch("mdagent.mainagent.evaluate.MDAgent")
+@patch("mdagent.agent.evaluate.MDAgent")
 def test_create_agent(mock_mdagent, evaluator):
     agent_params = {"model_name": "test_model"}
     evaluator.create_agent(agent_params)
@@ -116,7 +113,7 @@ def test_evaluate_all_steps_contents(
 
 def test_run_and_evaluate(evaluator, mock_os_makedirs, mock_open_json):
     with patch(
-        "mdagent.mainagent.evaluate.Evaluator._evaluate_all_steps"
+        "mdagent.agent.evaluate.Evaluator._evaluate_all_steps"
     ) as mock_evaluate_all_steps:
         mock_evaluate_all_steps.side_effect = [
             {"prompt_success": True},

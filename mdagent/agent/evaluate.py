@@ -118,25 +118,6 @@ class Evaluator:
                 flat_dict[flat_key] = v1
         return flat_dict
 
-    def _get_number_of_skills(self, agent):
-        """
-        get the number of skills in MDAgent's skill library
-
-        Parameters:
-        - agent (MDAgent): MDAgent object
-
-        Returns:
-        - number of skills in the skill library
-        """
-        skills = []
-        skill_file_path = f"{agent.ckpt_dir}/skill_library/skills.json"
-        if os.path.exists(skill_file_path):
-            with open(skill_file_path, "r") as f1:
-                content = f1.read().strip()
-                if content:
-                    skills = json.loads(content)
-        return len(skills) if skills else 0
-
     def _evaluate_all_steps(self, agent, user_prompt):
         """
         core function that evaluates while iterating every step of
@@ -161,7 +142,6 @@ class Evaluator:
         failed_steps = 0
         status_complete = "Unclear"
         step_start_time = start_time = time.time()
-        num_skills = self._get_number_of_skills(agent)
         for step in agent.iter(user_prompt):
             step_output = step.get("intermediate_step")
             if step_output:
@@ -190,7 +170,6 @@ class Evaluator:
                     "step_elapsed_time (sec)": f"{step_elapsed_time:.3f}",
                     "timestamp_from_start (sec)": f"{current_time - start_time:.3f}",
                 }
-        new_num_skills = self._get_number_of_skills(agent)
         final_output = step.get("output", "")
         if "Succeeded" in final_output.split(".")[0]:
             prompt_passed = True
@@ -208,10 +187,6 @@ class Evaluator:
             "llm": agent.llm.model_name,
             "agent_type": agent.agent_type,
             "tools_llm": agent.tools_llm.model_name,
-            "subagents_llm": agent.subagents_settings.subagents_model,
-            "resume": agent.subagents_settings.resume,
-            "learn": not agent.skip_subagents,
-            "curriculum": agent.subagents_settings.curriculum,
             "use_memory": agent.use_memory,
         }
         print("\n----- Evaluation Summary -----")
@@ -230,8 +205,6 @@ class Evaluator:
             "total_time_minutes": f"{total_mins:.3f}",
             "final_answer": final_output,
             "tools_used": tools_used,
-            "num_skills_before": num_skills,
-            "num_skills_after": new_num_skills,
             "tools_details": tools_details,
             "run_id": run_id,
         }
@@ -265,9 +238,6 @@ class Evaluator:
                 agent_settings = {
                     "llm": agent.llm.model_name,
                     "agent_type": agent.agent_type,
-                    "resume": agent.subagents_settings.resume,
-                    "learn": not agent.skip_subagents,
-                    "curriculum": agent.subagents_settings.curriculum,
                     "memory": agent.use_memory,
                 }
                 self.evaluations.append(

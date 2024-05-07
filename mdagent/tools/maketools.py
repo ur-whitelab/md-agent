@@ -1,18 +1,11 @@
-import json
-import os
-from typing import Optional, Type
-
 import streamlit as st
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.tools import BaseTool, StructuredTool
 from langchain.vectorstores import Chroma
-from pydantic import BaseModel, Field
 
-from mdagent.subagents import Iterator, SubAgentInitializer, SubAgentSettings
-from mdagent.utils import PathRegistry, _make_llm
+from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
@@ -32,36 +25,10 @@ from .base_tools import (
     SmallMolPDB,
     VisualizeProtein,
 )
-from .subagent_tools import RetryExecuteSkill, SkillRetrieval, WorkflowPlan
-
-
-def get_learned_tools(ckpt_dir: str):
-    skill_file_path = f"{ckpt_dir}/skill_library/skills.json"
-    if os.path.exists(skill_file_path):
-        with open(skill_file_path, "r") as f1:
-            content = f1.read().strip()
-            if content:
-                skills = json.loads(content)
-    else:
-        raise FileNotFoundError(
-            f"Could not find learned tools at {skill_file_path}."
-            "Please check your 'ckpt_dir' path."
-        )
-    learned_tools = []
-    for key in skills:
-        fxn_name = key
-        code = skills[fxn_name]["code"]
-        namespace: dict = {}
-        exec(code, namespace)
-        function = namespace[fxn_name]
-        learned_tools.append(StructuredTool.from_function(func=function))
-    return learned_tools
 
 
 def make_all_tools(
     llm: BaseLanguageModel,
-    subagent_settings: Optional[SubAgentSettings] = None,
-    skip_subagents=False,
     human=False,
 ):
     load_dotenv()
@@ -94,60 +61,20 @@ def make_all_tools(
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
     ]
-    if subagent_settings is None:
-        subagent_settings = SubAgentSettings(path_registry=path_instance)
 
-    # tools using subagents
-    subagents_tools = []
-    if not skip_subagents:
-        subagents_tools = [
-            CreateNewTool(subagent_settings=subagent_settings),
-            RetryExecuteSkill(subagent_settings=subagent_settings),
-            SkillRetrieval(subagent_settings=subagent_settings),
-        ]
-        if subagent_settings.curriculum:
-            WorkflowPlan(subagent_settings=subagent_settings)
-
-    # add 'learned' tools here
-    # disclaimer: assume they don't need path_registry
-    learned_tools = []
-    if subagent_settings.resume:
-        learned_tools = get_learned_tools(subagent_settings.ckpt_dir)
-
-    all_tools += base_tools + subagents_tools + learned_tools
+    all_tools += base_tools
     return all_tools
 
 
 def get_tools(
     query,
     llm: BaseLanguageModel,
-    subagent_settings: Optional[SubAgentSettings] = None,
     top_k_tools=15,
-    skip_subagents=False,
     human=False,
 ):
-    if subagent_settings:
-        ckpt_dir = subagent_settings.ckpt_dir
-    else:
-        ckpt_dir = PathRegistry.get_instance().ckpt_dir
+    ckpt_dir = PathRegistry.get_instance().ckpt_dir
 
-    retrieved_tools = []
-    if not skip_subagents:
-        # add subagents-related tools by default
-        retrieved_tools = [
-            CreateNewTool(subagent_settings=subagent_settings),
-            RetryExecuteSkill(subagent_settings=subagent_settings),
-            SkillRetrieval(subagent_settings=subagent_settings),
-            WorkflowPlan(subagent_settings=subagent_settings),
-        ]
-        top_k_tools -= len(retrieved_tools)
-        all_tools = make_all_tools(
-            llm, subagent_settings, skip_subagents=True, human=human
-        )
-    else:
-        all_tools = make_all_tools(
-            llm, subagent_settings, skip_subagents=False, human=human
-        )
+    all_tools = make_all_tools(llm, human=human)
 
     # set vector DB for all tools
     vectordb = Chroma(
@@ -169,6 +96,7 @@ def get_tools(
     if k == 0:
         return None
     docs = vectordb.similarity_search(query, k=k)
+    retrieved_tools = []
     for d in docs:
         index = d.metadata.get("index")
         if index is not None and 0 <= index < len(all_tools):
@@ -182,108 +110,3 @@ def get_tools(
                 unsafe_allow_html=True,
             )
     return retrieved_tools
-
-
-class CreateNewToolInputSchema(BaseModel):
-    task: str = Field(description="Description of task the tool should perform.")
-    orig_prompt: str = Field(description="Full user prompt you got from the beginning.")
-    curr_tools: str = Field(
-        description="""List of all tools you have access to. Such as
-        this tool, 'ExecuteSkill',
-        'SkillRetrieval', and maybe `ProteinName2PDBTool`, etc."""
-    )
-    execute: Optional[bool] = Field(
-        True,
-        description="Whether to execute the new tool or not.",
-    )
-    args: Optional[dict] = Field(
-        None, description="Input variables as a dictionary to pass to the skill"
-    )
-
-
-class CreateNewTool(BaseTool):
-    name: str = "CreateNewTool"
-    description: str = """
-        Only use if you don't have right tools for sure and need a different tool.
-        If succeeded, it will return the name of the tool. Unless you set
-        'execute' to False, it will also execute the tool and return the result.
-        Make sure to provide any necessary input arguments for the tool.
-        If execution fails, move on to ReTryExecuteSkill.
-    """
-    args_schema: Type[BaseModel] = CreateNewToolInputSchema
-    subagent_settings: Optional[SubAgentSettings]
-
-    def __init__(self, subagent_settings: Optional[SubAgentSettings] = None):
-        super().__init__()
-        self.subagent_settings = subagent_settings
-
-    def get_all_tools_string(self):
-        llm = _make_llm(model="gpt-3.5-turbo", temp=0.1, verbose=True)
-        all_tools = make_all_tools(llm, self.subagent_settings, skip_subagents=True)
-        all_tools_string = ""
-        for tool in all_tools:
-            all_tools_string += f"{tool.name}: {tool.description}\n"
-        return all_tools_string
-
-    # def _run(self, task, orig_prompt, curr_tools, execute=True, args=None):
-    def _run(self, **input):
-        task = input.get("task")
-        orig_prompt = input.get("orig_prompt")
-        curr_tools = input.get("curr_tools")
-        execute = input.get("execute", True)
-        args = input.get("args", None)
-        if not task or not orig_prompt or not curr_tools:
-            return "Provide task, orig_prompt, and curr_tools."  # run iterator
-        try:
-            all_tools_string = self.get_all_tools_string()
-            newcode_iterator = Iterator(
-                self.subagent_settings,
-                all_tools_string=all_tools_string,
-                current_tools=curr_tools,
-                args=args,
-            )
-            print("running iterator to draft a new tool")
-            st.markdown("Running iterator to draft a new tool", unsafe_allow_html=True)
-            tool_name = newcode_iterator.run(task, orig_prompt)
-            if not tool_name:
-                return "Failed. The 'CreateNewTool' tool failed to build a new tool."
-        except Exception as e:
-            return f"Failed. Error while creating tool. {type(e).__name__}: {e}"
-
-        # execute the new tool code
-        if execute:
-            try:
-                print("\nexecuting tool")
-                st.markdown("Executing tool", unsafe_allow_html=True)
-                agent_initializer = SubAgentInitializer(self.subagent_settings)
-                skill = agent_initializer.create_skill_manager(resume=True)
-                if skill is None:
-                    return "Failed. SubAgent for this tool not initialized"
-                if args is not None:
-                    print("input args: ", args)
-                    return "Succeeded. " + skill.execute_skill_function(
-                        tool_name, **args
-                    )
-                else:
-                    return "Succeeded " + skill.execute_skill_function(tool_name)
-            except TypeError as e:
-                return (
-                    f"Failed. {type(e).__name__}: {e}. Executing new tool failed. "
-                    "Please check your inputs and make sure to use a dictionary.\n"
-                )
-            except ValueError as e:
-                return (
-                    f"Failed. {type(e).__name__}: {e}. "
-                    "Provide correct arguments for tool.\n"
-                )
-            except Exception as e:
-                return f"Failed. Error while executing. {type(e).__name__}:{e}\n"
-        else:
-            return (
-                f"Succeeded. A new tool is created: {tool_name}. "
-                "You can use it in next prompt."
-            )
-
-    async def _arun(self, query) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("This tool does not support async")

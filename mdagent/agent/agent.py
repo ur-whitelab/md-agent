@@ -1,16 +1,17 @@
 import os
 
+from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
 
-from mdagent.subagents import SubAgentSettings
-from mdagent.subagents.agents import MemoryManager
-from mdagent.utils import PathRegistry, SetCheckpoint, _make_llm
-
 from ..tools import get_tools, make_all_tools
+from ..utils import PathRegistry, SetCheckpoint, _make_llm
+from .memory import MemoryManager
 from .query_filter import make_prompt
+
+load_dotenv()
 
 
 class AgentType:
@@ -41,20 +42,15 @@ class MDAgent:
         temp=0.1,
         max_iterations=40,
         verbose=True,
-        subagents_model="gpt-4-1106-preview",
         ckpt_dir="ckpt",
-        resume=False,
-        learn=True,
-        top_k_tools=20,  # set "all" if you want to use all tools (& skills if resume)
+        top_k_tools=20,  # set "all" if you want to use all tools
         use_human_tool=False,
-        curriculum=True,
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=True,
     ):
         self.use_memory = use_memory
-        self.resume = resume
-        self.path_registry = PathRegistry.get_instance(resume=resume, ckpt_dir=ckpt_dir)
+        self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.memory = MemoryManager(self.path_registry, run_id=run_id)
         self.run_id = self.memory.run_id
@@ -78,23 +74,6 @@ class MDAgent:
             callbacks=[StreamingStdOutCallbackHandler()],
         )
 
-        if learn:
-            self.skip_subagents = False
-        else:
-            self.skip_subagents = True
-
-        self.subagents_settings = SubAgentSettings(
-            path_registry=self.path_registry,
-            subagents_model=subagents_model,
-            temp=temp,
-            max_iterations=max_iterations,
-            verbose=verbose,
-            resume=self.resume,
-            curriculum=curriculum,
-            memory=self.memory,
-            run_id=self.run_id,
-        )
-
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
         if self.user_tools is not None:
@@ -105,17 +84,13 @@ class MDAgent:
                 self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
-                    subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
-                    skip_subagents=self.skip_subagents,
                 )
             else:
                 # retrieve all tools, including new tools if any
                 self.tools = make_all_tools(
                     self.tools_llm,
-                    subagent_settings=self.subagents_settings,
                     human=self.use_human_tool,
-                    skip_subagents=self.skip_subagents,
                 )
         return AgentExecutor.from_agent_and_tools(
             tools=self.tools,

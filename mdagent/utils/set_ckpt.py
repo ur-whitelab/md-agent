@@ -31,14 +31,6 @@ class SetCheckpoint:
         os.makedirs(ckpt_subdir)
         return ckpt_subdir
 
-    def get_resume_ckpt(self, ckpt_parent_folder: str = "ckpt"):
-        ckpt_path = self.make_ckpt_parent_folder(ckpt_parent_folder)
-        ckpt_list = [ckpt for ckpt in os.listdir(ckpt_path) if "ckpt" in ckpt]
-        if not ckpt_list:
-            return None
-        ckpt_list.sort()
-        return os.path.join(ckpt_path, ckpt_list[-1])
-
     def clear_ckpt(
         self,
         ckpt_dir: str = "ckpt",
