@@ -1606,6 +1606,9 @@ class SetUpandRunFunction(BaseTool):
 
             return processed_params, error_msg
         if param_type == "integrator_params":
+            if not any(key in user_params for key in ["pressure", "Pressure"]):
+                processed_params["pressure"] = 1.0 * bar
+
             for key, value in user_params.items():
                 if key == "integrator_type" or key == "integratortype":
                     if value == "LangevinMiddle" or value == LangevinMiddleIntegrator:
