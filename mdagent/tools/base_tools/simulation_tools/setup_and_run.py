@@ -741,14 +741,14 @@ class OpenMMSimulation:
                 record_type="TRAJ",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="dcd",
+                file_format="dcd",
             )
             topology_name = self.path_registry.write_file_name(
                 type=FileType.RECORD,
                 record_type="TOP",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="pdb",
+                file_format="pdb",
             )
 
             log_name = self.path_registry.write_file_name(
@@ -756,7 +756,7 @@ class OpenMMSimulation:
                 record_type="LOG",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="txt",
+                file_format="txt",
             )
 
             traj_desc = (
@@ -765,6 +765,10 @@ class OpenMMSimulation:
             )
             log_desc = (
                 f"Simulation state log for protein {self.pdb_id} "
+                f"and simulation {self.sim_id}"
+            )
+            top_desc = (
+                f"Simulation pdb frames for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
             )
 
@@ -798,6 +802,11 @@ class OpenMMSimulation:
                     traj_desc,
                 ],
                 ["holder", f"{self.path_registry.ckpt_records}/{log_name}", log_desc],
+                [
+                    "holder",
+                    f"{self.path_registry.ckpt_records}/{topology_name}",
+                    top_desc,
+                ],
             ]
 
         else:
