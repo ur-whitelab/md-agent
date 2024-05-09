@@ -1754,8 +1754,14 @@ class SetUpandRunFunction(BaseTool):
             error_msg += """nonbondedCutoff must be specified if
                         nonbondedMethod is not NoCutoff\n"""
         if nonbondedMethod in {"PME", PME} and ewaldErrorTolerance is None:
-            error_msg += """ewaldErrorTolerance must be specified when
-            nonbondedMethod is PME\n"""
+            try:
+                ewaldErrorTolerance = 0.0005  # very common error, so im adding this by
+                # default
+                print("Setting default ewaldErrorTolerance: 0.0005 ")
+            except Exception:
+                error_msg += """ewaldErrorTolerance must be specified when
+                nonbondedMethod is PME\n"""
+
         if constraints in constraints_with_tolerance and constraintTolerance is None:
             error_msg += """constraintTolerance must be specified when
                          constraints is HBonds or AllBonds"""
