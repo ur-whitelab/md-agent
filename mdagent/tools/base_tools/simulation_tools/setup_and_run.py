@@ -1310,9 +1310,8 @@ class SetUpandRunFunction(BaseTool):
                     self.path_registry.map_path(*record)
             return (
                 "Succeeded. Simulation done! \n Summary: \n"
-                "Record files written to files/records/ with IDs and descriptions: "
                 f"{[(record[0],record[2]) for record in records]}\n"
-                "Standalone script written to files/simulations/ with ID: "
+                "Standalone script written ID: "
                 f"{sim_id}.\n"
                 f"The initial topology file ID is top_{sim_id} saved in files/pdb/"
             )
