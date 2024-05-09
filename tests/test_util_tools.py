@@ -101,7 +101,7 @@ def test_write_file_name_record(get_registry, todays_date):
         record_type="REC",
         protein_file_id="123",
         Sim_id="SIM456",
-        term="dcd",
+        file_format="dcd",
         time_stamp=todays_date,
     )
     assert "REC_SIM456_123" in file_name

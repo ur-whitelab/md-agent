@@ -88,7 +88,7 @@ class PlottingTools:
                     )
                     plt.close()
 
-                    created_plots.append(plot_id)
+                    created_plots.append(plot_name + "with ID: " + plot_id)
                 except ValueError:
                     failed_headers.append(header)
 
