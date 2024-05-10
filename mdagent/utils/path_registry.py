@@ -307,11 +307,6 @@ class PathRegistry:
             record_type_name = kwargs.get("record_type", "RECORD")
             if Sim_id and protein_file_id:
                 file_name = (
-                    f"{record_type_name}_{Sim_id}_{protein_file_id}"
-                    f"_{time_stamp}.{file_format}"
-                )
-            elif Sim_id and protein_file_id:
-                file_name = (
                     f"{record_type_name}_{Sim_id}_"
                     f"{protein_file_id}_{time_stamp}.{file_format}"
                 )
