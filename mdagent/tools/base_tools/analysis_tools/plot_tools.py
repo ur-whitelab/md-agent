@@ -88,7 +88,7 @@ class PlottingTools:
                     )
                     plt.close()
 
-                    created_plots.append(plot_name)
+                    created_plots.append(plot_name + "with ID: " + plot_id)
                 except ValueError:
                     failed_headers.append(header)
 
@@ -125,7 +125,7 @@ class SimulationOutputFigures(BaseTool):
             plotting_tools.process_csv()
             plot_result = plotting_tools.plot_data()
             if type(plot_result) == str:
-                return "Succeeded. Figures created: " + plot_result
+                return "Succeeded. IDs of figures created: " + plot_result
             else:
                 return "Failed. No figures created."
         except Exception as e:

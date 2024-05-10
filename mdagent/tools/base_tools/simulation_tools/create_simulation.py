@@ -136,7 +136,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
             file.write(script_content)
 
         self.path_registry.map_path(file_id, filename, description)
-        return "Succeeded. Script modified successfully"
+        return f"Succeeded. Script modified successfully. Modified Script ID: {file_id}"
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""

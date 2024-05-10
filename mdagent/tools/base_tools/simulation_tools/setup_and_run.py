@@ -741,14 +741,14 @@ class OpenMMSimulation:
                 record_type="TRAJ",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="dcd",
+                file_format="dcd",
             )
             topology_name = self.path_registry.write_file_name(
                 type=FileType.RECORD,
                 record_type="TOP",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="pdb",
+                file_format="pdb",
             )
 
             log_name = self.path_registry.write_file_name(
@@ -756,7 +756,7 @@ class OpenMMSimulation:
                 record_type="LOG",
                 protein_file_id=self.pdb_id,
                 Sim_id=self.sim_id,
-                term="txt",
+                file_format="txt",
             )
 
             traj_desc = (
@@ -765,6 +765,10 @@ class OpenMMSimulation:
             )
             log_desc = (
                 f"Simulation state log for protein {self.pdb_id} "
+                f"and simulation {self.sim_id}"
+            )
+            top_desc = (
+                f"Simulation pdb frames for protein {self.pdb_id} "
                 f"and simulation {self.sim_id}"
             )
 
@@ -798,6 +802,11 @@ class OpenMMSimulation:
                     traj_desc,
                 ],
                 ["holder", f"{self.path_registry.ckpt_records}/{log_name}", log_desc],
+                [
+                    "holder",
+                    f"{self.path_registry.ckpt_records}/{topology_name}",
+                    top_desc,
+                ],
             ]
 
         else:
@@ -881,6 +890,17 @@ class OpenMMSimulation:
                     except Exception as e:
                         print("Error adding solvent", type(e).__name__, "–", e)
                         raise (e)
+            except Exception as e:
+                if "Cannot neutralize the system because the" in str(e):
+                    try:
+                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
+                    except Exception as e:
+                        print("Error adding solvent", type(e).__name__, "–", e)
+                        raise (e)
+                else:
+                    print("Exception: ", str(e))
+                    raise (e)
+
             system = forcefield.createSystem(self.modeller.topology, **system_params)
         else:
             system = forcefield.createSystem(self.modeller.topology, **system_params)
@@ -1299,9 +1319,8 @@ class SetUpandRunFunction(BaseTool):
                     self.path_registry.map_path(*record)
             return (
                 "Succeeded. Simulation done! \n Summary: \n"
-                "Record files written to files/records/ with IDs and descriptions: "
                 f"{[(record[0],record[2]) for record in records]}\n"
-                "Standalone script written to files/simulations/ with ID: "
+                "Standalone script written ID: "
                 f"{sim_id}.\n"
                 f"The initial topology file ID is top_{sim_id} saved in files/pdb/"
             )
@@ -1595,6 +1614,9 @@ class SetUpandRunFunction(BaseTool):
 
             return processed_params, error_msg
         if param_type == "integrator_params":
+            if not any(key in user_params for key in ["pressure", "Pressure"]):
+                processed_params["pressure"] = 1.0 * bar
+
             for key, value in user_params.items():
                 if key == "integrator_type" or key == "integratortype":
                     if value == "LangevinMiddle" or value == LangevinMiddleIntegrator:
@@ -1732,8 +1754,14 @@ class SetUpandRunFunction(BaseTool):
             error_msg += """nonbondedCutoff must be specified if
                         nonbondedMethod is not NoCutoff\n"""
         if nonbondedMethod in {"PME", PME} and ewaldErrorTolerance is None:
-            error_msg += """ewaldErrorTolerance must be specified when
-            nonbondedMethod is PME\n"""
+            try:
+                ewaldErrorTolerance = 0.0005  # very common error, so im adding this by
+                # default
+                print("Setting default ewaldErrorTolerance: 0.0005 ")
+            except Exception:
+                error_msg += """ewaldErrorTolerance must be specified when
+                nonbondedMethod is PME\n"""
+
         if constraints in constraints_with_tolerance and constraintTolerance is None:
             error_msg += """constraintTolerance must be specified when
                          constraints is HBonds or AllBonds"""

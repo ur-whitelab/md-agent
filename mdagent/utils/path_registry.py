@@ -290,7 +290,6 @@ class PathRegistry:
         Sim_id = kwargs.get("Sim_id", None)
         Log_id = kwargs.get("Log_id", None)
         modified = kwargs.get("modified", False)
-        term = kwargs.get("term", "term")  # Default term if not provided
         fig_analysis = kwargs.get("fig_analysis", None)
         file_name = ""
         if type == FileType.PROTEIN:
@@ -306,11 +305,21 @@ class PathRegistry:
                 file_name += f"{type_of_sim}_{protein_file_id}_{time_stamp}.py"
         if type == FileType.RECORD:
             record_type_name = kwargs.get("record_type", "RECORD")
-            term = kwargs.get("term", "term")  # Default term if not provided
+            if Sim_id and protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{Sim_id}_"
+                    f"{protein_file_id}_{time_stamp}.{file_format}"
+                )
+            elif Sim_id:
+                file_name = f"{record_type_name}_{Sim_id}_{time_stamp}.{file_format}"
+            elif protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{protein_file_id}"
+                    f"_{time_stamp}.{file_format}"
+                )
+            else:
+                file_name = f"{record_type_name}_{time_stamp}.{file_format}"
 
-            file_name = (
-                f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
-            )
         if type == FileType.FIGURE:
             if fig_analysis:
                 if Sim_id:

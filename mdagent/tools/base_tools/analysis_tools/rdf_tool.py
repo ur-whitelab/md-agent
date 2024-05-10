@@ -100,10 +100,7 @@ class RDFTool(BaseTool):
             description=f"RDF plot for the trajectory file with id: {trajectory_id}",
         )
         plt.close()
-        return (
-            "Succeeded. RDF calculated."
-            "rdf.png has been saved in the current directory"
-        )
+        return f"Succeeded. RDF calculated. Analysis plot: {fig_id}"
 
     def _arun(self, input):
         pass
