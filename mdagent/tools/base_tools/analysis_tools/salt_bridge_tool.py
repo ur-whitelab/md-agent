@@ -2,6 +2,7 @@ from typing import Optional
 
 import mdtraj as md
 from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
 from mdagent.utils import PathRegistry
 
@@ -11,20 +12,21 @@ class SaltBridgeFunction:  # this class defines a method called find_salt_bridge
     # used to account for salt bridge analysis
     def __init__(self, path_registry):
         self.path_registry = path_registry
-        self.includes_top = [
-            ".h5",
-            ".lh5",
-            ".pdb",
-        ]  # those are the files we need for this analysis
         self.paired_salt_bridges = []  # stores paired salt bridges
         self.unpaired_residues = set()  # store unpaired residues
 
     def find_salt_bridges(
-        self, traj_file, top_file, threshold_distance=0.4, residue_pairs=None
+        self, traj_file, top_file=None, threshold_distance=0.4, residue_pairs=None
     ):
+        # add two files here in similar format as line 14 above
+        traj_file_path = self.path_registry.get_mapped_path(traj_file)
+        ending = traj_file_path.split(".")[-1]
+        if ending in ["dcd", "xtc", "xyz"]:
+            top_file_path = self.path_registry.get_mapped_path(top_file)
+            traj = md.load(traj_file_path, top=top_file_path)
+        else:
+            traj = md.load(traj_file_path)
         salt_bridges = []
-        # load trajectory using MDTraj
-        traj = md.load(traj_file, top=top_file)
         if residue_pairs is None:
             residue_pairs = [
                 ("ARG", "ASP"),
@@ -81,9 +83,29 @@ class SaltBridgeFunction:  # this class defines a method called find_salt_bridge
         return salt_bridges, list(self.unpaired_residues), list(residue_pairs)
 
 
+class SaltBridgeToolInput(BaseModel):
+    trajectory_fileid: str = Field(
+        None, description="Trajectory file. Either dcd, hdf5, xtc, or xyz"
+    )
+
+    topology_fileid: Optional[str] = Field(None, description="Topology file")
+
+    threshold_distance: Optional[float] = Field(
+        0.4,
+        description=(
+            "maximum distance between residues for salt bridge formation in angstrom"
+        ),
+    )
+
+    residue_pairs: Optional[dict] = Field(
+        None, description=("Identifies the amino acid residues for salt bridge")
+    )
+
+
 class SaltBridgeTool(BaseTool):
-    name = "salt_bridge_tool"
+    name = "SaltBridgeTool"
     description = "A tool to find salt bridge in a protein trajectory"
+    args_schema = SaltBridgeToolInput
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry):
@@ -93,9 +115,9 @@ class SaltBridgeTool(BaseTool):
         # This line is not correct
         # self.salt_bridge_function = SaltBridgeFunction(path_registry)
 
-    def _run(self, traj_file, top_file, threshold_distance=0.4, residue_pairs=None):
-        # Load trajectory using MDTraj
-        md.load(traj_file, top=top_file)
+    def _run(
+        self, traj_file, top_file=None, threshold_distance=0.4, residue_pairs=None
+    ):
         # calls the salt bridge function
         salt_bridges = [
             self.salt_bridge_function.find_salt_bridges(
@@ -103,10 +125,3 @@ class SaltBridgeTool(BaseTool):
             )
         ]
         return salt_bridges
-
-    def _agg_result(self, result):
-        return result
-
-    def _call__(self, traj_file, top_file, threshold_distance=0.4, residue_pairs=None):
-        result = self._run(traj_file, top_file, threshold_distance, residue_pairs)
-        return self._agg_result(result)
