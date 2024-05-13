@@ -1,4 +1,6 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from mdagent.tools.base_tools.analysis_tools.salt_bridge_tool import (
     SaltBridgeFunction,
@@ -6,28 +8,43 @@ from mdagent.tools.base_tools.analysis_tools.salt_bridge_tool import (
 )
 
 
-def test_salt_bridge_tool_run(get_registry):
+@pytest.fixture
+def fake_path_registry():
+    # Mock PathRegistry to return a specific file path when asked
+    mock_registry = MagicMock()
+    mock_registry.get_mapped_path.side_effect = lambda x: f"/fake/path/{x}"
+    return mock_registry
+
+
+@pytest.fixture
+def mock_md_load():
+    with patch("mdtraj.load", autospec=True) as mock:
+        yield mock
+
+
+def test_saltbridge_tool_init(get_registry):
     registry = get_registry("raw", False)
-    # Mocking the dependencies
-    mock_salt_bridge_function = Mock(spec=SaltBridgeFunction)
-    mock_salt_bridge_function.find_salt_bridges.return_value = (
-        [(1, 2), (3, 4)],
-        [5, 6],
-        [("ARG", "ASP"), ("LYS", "GLU")],
+    tool = SaltBridgeTool(path_registry=registry)
+    assert tool.name == "SaltBridgeTool"
+    assert tool.path_registry == registry
+
+
+def test_salt_bridge_function_init(get_registry):
+    path_registry = get_registry("raw", False)
+    sbf = SaltBridgeFunction(path_registry)
+    assert sbf.path_registry == path_registry
+
+
+def test_find_salt_bridges(fake_path_registry, mock_md_load):
+    sbf = SaltBridgeFunction(fake_path_registry)
+    sbf.find_salt_bridges("traj_file.dcd", "top_file.top")
+    mock_md_load.assert_called_once_with(
+        "/fake/path/traj_file.dcd", top="/fake/path/top_file.top"
     )
+    # mock_md_compute_distances.assert_called()
 
-    salt_bridge_tool = SaltBridgeTool(registry)
-    salt_bridge_tool.salt_bridge_function = mock_salt_bridge_function
 
-    # Running the tool
-    result = salt_bridge_tool._run(
-        "traj_file", "top_file", 0.4, [("ARG", "ASP"), ("LYS", "GLU")]
-    )
-
-    # Asserting the result
-    assert result == ([(1, 2), (3, 4)], [5, 6], [("ARG", "ASP"), ("LYS", "GLU")])
-
-    # Verifying that the function was called with the correct arguments
-    mock_salt_bridge_function.find_salt_bridges.assert_called_once_with(
-        "traj_file", "top_file", 0.4, [("ARG", "ASP"), ("LYS", "GLU")]
-    )
+def test_salt_bridge_function_without_top(fake_path_registry, mock_md_load):
+    sbf = SaltBridgeFunction(fake_path_registry)
+    sbf.find_salt_bridges("traj_file.hdf5")
+    mock_md_load.assert_called_once_with("/fake/path/traj_file.hdf5")
