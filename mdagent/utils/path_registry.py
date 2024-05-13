@@ -21,24 +21,20 @@ class PathRegistry:
     set_ckpt = SetCheckpoint()
 
     @classmethod
-    def get_instance(cls, resume: bool = True, ckpt_dir: str = "ckpt"):
-        if not cls.instance or not resume:
-            cls.instance = cls(resume, ckpt_dir)
+    # set ckpt_dir to None by default
+    def get_instance(cls, ckpt_dir=None):
+        # todo: use same ckpt if run_id is given
+        if not cls.instance or ckpt_dir is not None:
+            cls.instance = cls(ckpt_dir)
         return cls.instance
 
-    def __init__(self, resume: bool = True, ckpt_dir: str = "ckpt"):
-        self._set_ckpt(ckpt_dir, resume)
+    def __init__(self, ckpt_dir: str = "ckpt"):
+        self._set_ckpt(ckpt_dir)
         self._make_all_dirs()
         self._init_path_registry()
 
-    def _set_ckpt(self, ckpt: str, resume: bool):
-        if resume:
-            self.ckpt_dir = self.set_ckpt.get_resume_ckpt()
-            if self.ckpt_dir is None:
-                self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
-        else:
-            self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
-        return None
+    def _set_ckpt(self, ckpt: str):
+        self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
 
     def _make_all_dirs(self):
         self.json_file_path = os.path.join(self.ckpt_dir, "paths_registry.json")
@@ -47,12 +43,14 @@ class PathRegistry:
         self.ckpt_pdb = os.path.join(self.ckpt_dir, "pdb")
         self.ckpt_records = os.path.join(self.ckpt_dir, "records")
         self.ckpt_simulations = os.path.join(self.ckpt_dir, "simulations")
+        self.ckpt_memory = os.path.join(self.ckpt_dir, "memory")
         for path in [
             self.ckpt_files,
             self.ckpt_figures,
             self.ckpt_pdb,
             self.ckpt_records,
             self.ckpt_simulations,
+            self.ckpt_memory,
         ]:
             if not os.path.exists(path):
                 os.makedirs(path)
@@ -292,7 +290,6 @@ class PathRegistry:
         Sim_id = kwargs.get("Sim_id", None)
         Log_id = kwargs.get("Log_id", None)
         modified = kwargs.get("modified", False)
-        term = kwargs.get("term", "term")  # Default term if not provided
         fig_analysis = kwargs.get("fig_analysis", None)
         file_name = ""
         if type == FileType.PROTEIN:
@@ -308,11 +305,21 @@ class PathRegistry:
                 file_name += f"{type_of_sim}_{protein_file_id}_{time_stamp}.py"
         if type == FileType.RECORD:
             record_type_name = kwargs.get("record_type", "RECORD")
-            term = kwargs.get("term", "term")  # Default term if not provided
+            if Sim_id and protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{Sim_id}_"
+                    f"{protein_file_id}_{time_stamp}.{file_format}"
+                )
+            elif Sim_id:
+                file_name = f"{record_type_name}_{Sim_id}_{time_stamp}.{file_format}"
+            elif protein_file_id:
+                file_name = (
+                    f"{record_type_name}_{protein_file_id}"
+                    f"_{time_stamp}.{file_format}"
+                )
+            else:
+                file_name = f"{record_type_name}_{time_stamp}.{file_format}"
 
-            file_name = (
-                f"{record_type_name}_{Sim_id}_{protein_file_id}_" f"{time_stamp}.{term}"
-            )
         if type == FileType.FIGURE:
             if fig_analysis:
                 if Sim_id:

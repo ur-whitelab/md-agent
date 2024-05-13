@@ -62,22 +62,22 @@ class PPIDistance(BaseTool):
 
     def _run(self, pdb_file: str, binding_site: str = "protein"):
         if not self.path_registry:
-            return "Error: Path registry is not set"  # this should not happen
+            return "Failed. Error: Path registry is not set"
         file_path = self.path_registry.get_mapped_path(pdb_file)
         if not file_path:
-            return f"File not found: {pdb_file}"
+            return f"Failed. File not found: {pdb_file}"
         if not file_path.endswith(".pdb"):
-            return "Error with input: PDB file must have .pdb extension"
+            return "Failed. Error with input: PDB file must have .pdb extension"
         try:
             avg_dist = ppi_distance(file_path, binding_site=binding_site)
         except ValueError as e:
             return (
-                f"ValueError: {e}. \nMake sure to provide valid PBD "
+                f"Failed. ValueError: {e}. \nMake sure to provide valid PBD "
                 "file and binding site using MDAnalysis selection syntax."
             )
         except Exception as e:
-            return f"Something went wrong. {type(e).__name__}: {e}"
-        return f"{avg_dist}\n"
+            return f"Failed. Something went wrong. {type(e).__name__}: {e}"
+        return f"Succeeded: PPI average distance is {avg_dist}\n"
 
     def _arun(self, pdb_file: str, binding_site: str = "protein"):
         raise NotImplementedError("This tool does not support async")

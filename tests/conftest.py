@@ -213,7 +213,7 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
     created_paths = []  # Keep track of created directories for cleanup
 
     def get_new_ckpt():
-        registry = PathRegistry.get_instance(ckpt_dir="ckpt_test", resume=False)
+        registry = PathRegistry.get_instance(ckpt_dir="ckpt_test")
         base_path = registry.ckpt_files
         return base_path, registry.ckpt_dir
 
@@ -237,7 +237,7 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
                 shutil.copy(clean_alanine_pdb_file, pdb_path)
 
         # Assuming PathRegistry is defined elsewhere and properly implemented
-        return PathRegistry().get_instance(resume=True)
+        return PathRegistry().get_instance()
 
     # Cleanup: Remove created directories and the copied pdb file
     def cleanup():

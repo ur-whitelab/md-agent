@@ -45,7 +45,7 @@ def scholar2result_llm(llm, query, path_registry, k=5, max_sources=2):
     technical knowledge. Ask a specific question."""
     papers = paper_search(llm, query, path_registry)
     if len(papers) == 0:
-        return "Not enough papers found"
+        return "Failed. Not enough papers found"
     docs = paperqa.Docs(llm=llm.model_name)
     not_loaded = 0
     for path, data in papers.items():
@@ -59,7 +59,7 @@ def scholar2result_llm(llm, query, path_registry, k=5, max_sources=2):
         + (f" but couldn't load {not_loaded}" if not_loaded > 0 else "")
     )
     answer = docs.query(query, k=k, max_sources=max_sources).formatted_answer
-    return answer
+    return "Succeeded. " + answer
 
 
 class Scholar2ResultLLM(BaseTool):

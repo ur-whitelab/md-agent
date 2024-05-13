@@ -61,7 +61,7 @@ class CleaningToolFunction(BaseTool):
                 input_args = input_args
             pdbfile_id = input_args.get("pdb_id", None)
             if pdbfile_id is None:
-                return """No file was provided.
+                return """Failed. No file was provided.
                 The input has to be a dictionary with the key 'pdb_id'"""
             remove_heterogens = input_args.get("remove_heterogens", True)
             remove_water = input_args.get("remove_water", True)
@@ -74,7 +74,7 @@ class CleaningToolFunction(BaseTool):
             input_args.get("output_path", None)
 
             if self.path_registry is None:
-                return "Path registry not initialized"
+                return "Failed. Path registry not initialized"
             file_description = "Cleaned File: "
             try:
                 pdbfile_path = self.path_registry.get_mapped_path(pdbfile_id)
@@ -86,7 +86,7 @@ class CleaningToolFunction(BaseTool):
 
             except Exception as e:
                 print(f"error retrieving from path_registry, trying to read file {e}")
-                return "File not found in path registry. "
+                return "Failed. File not found in path registry. "
             print(f"file path: {pdbfile_path}")
             fixer = PDBFixer(filename=pdbfile_path)
             try:
@@ -157,12 +157,12 @@ class CleaningToolFunction(BaseTool):
             self.path_registry.map_path(
                 file_id, f"{directory}/{file_name}", file_description
             )
-            return f"File cleaned!\nFile ID:{file_id}\nPath:{directory}/{file_name}"
+            return f"Succeeded. File cleaned! \nFile ID: {file_id}"
         except FileNotFoundError as e:
-            return "Check your file path. File not found: " + str(e)
+            return "Failed. Check your file path. File not found: " + str(e)
         except Exception as e:
             print(e)
-            return f"Something went wrong. {e}"
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(
         self, query: str, remove_water: bool = False, add_hydrogens: bool = False

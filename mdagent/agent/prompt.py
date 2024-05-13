@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
 
 structured_prompt = PromptTemplate(
-    input_variables=["input"],
+    input_variables=["input, context"],
     template="""
         You are an expert molecular dynamics scientist and
         your task is to respond to the question or
@@ -28,6 +28,15 @@ structured_prompt = PromptTemplate(
         necessary to answer the question and subquestions.
         Your thought process should be clean and clear,
         and you must explicitly state the actions you are taking.
+
+        If you are asked to continue
+        or reference previous runs,
+        the context will be provided to you.
+        If context is provided, you should assume
+        you are continuing a chat.
+
+        Here is the input:
+        Previous Context: {context}
         Question: {input} """,
 )
 modular_analysis_prompt = PromptTemplate(
@@ -37,6 +46,7 @@ modular_analysis_prompt = PromptTemplate(
         "Proteins",
         "Parameters",
         "UserProposedPlan",
+        "context",
     ],
     template="""
         Approach the molecular dynamics inquiry by dissecting it into its modular
@@ -87,18 +97,34 @@ modular_analysis_prompt = PromptTemplate(
         necessary to answer the question and subquestions.
         Your thought process should be clean and clear,
         and you must explicitly state the actions you are taking.
+
+        If you are asked to continue
+        or reference previous runs,
+        the context will be provided to you.
+        If context is provided, you should assume
+        you are continuing a chat.
+
+        Here is the input:
+        Previous Context: {context}
     """,
 )
 
 openaifxn_prompt = PromptTemplate(
-    input_variables=["input"],
+    input_variables=["input", "context"],
     template="""
     You are an expert molecular dynamics scientist and your
     task is to respond to the question or
     solve the problem to the best of your ability using
     the provided tools. Once you map a path to a short name,
     you may only use that short name in future actions.
+    If you are asked to continue or
+    reference previous runs, the
+    context will be provided to you.
+    If context is provided, you should assume
+    you are continuing a chat.
+
     Here is the input:
-    input: {input}
+    Previous Context: {context}
+    Question: {input}
     """,
 )
