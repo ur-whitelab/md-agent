@@ -32,7 +32,7 @@ class PCA_analysis:
     def _align_trajectory(self):
         try:
             mda.analysis.align.AlignTraj(
-                self.u, self.u, select="backbone", in_memory=True
+                self.u, self.u, select=self.selection, in_memory=True
             ).run()
             return "Trajectory aligned to the first frame"
         except Exception as e:
