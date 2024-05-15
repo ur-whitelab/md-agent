@@ -154,33 +154,40 @@ class PCA_analysis:
 
 class PCASchema(BaseModel):
     trajectory_fileid: str = Field(
-        "Trajectory File ID of the simulation to be analyzed"
+        description="Trajectory File ID of the simulation to be analyzed"
     )
-    topology_fileid: str = Field("Topology File ID ot the simulation to be analyzed")
+    topology_fileid: str = Field(
+        description=("Topology File ID of " "the simulation to be analyzed")
+    )
     pc_percentage: Optional[float] = Field(
-        95.0, "Max cumulative percentage of components"
+        95.0, description="Max cumulative percentage of components for analysis"
     )
     analysis: str = Field(
         "all",
-        "Type of analysis to be done. Available are: "
-        "Scree_Plot (Saves a scree plot of the eigenvalues), "
-        "PCA analysis (gets principal components and saves"
-        " a grid plot for visualization) "
-        "Cosine (measures the cosine convergence of the top 3 PCs)"
-        "all (makes all of the previous analysis)",
+        description=(
+            "Type of analysis to be done. Availables are: "
+            "scree_plot (Saves a scree plot of the eigenvalues), "
+            "pca_analysis (gets principal components and saves"
+            " a grid plot for visualization) "
+            "Cosine (measures the cosine convergence of the top 3 PCs)"
+            "all (makes all of the previous analysis)"
+        ),
     )
     selection: Optional[str] = Field(
         "backbone and name CA",
-        "Which selection of atoms from the simulation " "to use for the pca analysis",
+        description=(
+            "Which selection of atoms from the simulation "
+            "to use for the pca analysis"
+        ),
     )
     remove_terminals: Optional[str] = Field(
-        False, "To remove or not the terminal residues of " "each chain."
+        False, description="To remove or not the terminal residues of each chain."
     )
 
 
 class PCATool(BaseTool):
     name = "PCATool"
-    description = "Calculate the Principal Analysis Components of a " "MD trajectory"
+    description = "Calculate the Principal Analysis Components of a MD trajectory"
     args_schema = PCASchema
     path_registry: Optional[PathRegistry]
 
@@ -245,7 +252,12 @@ class PCATool(BaseTool):
         if topology_id not in fileids:
             error += "Topology File ID not in path registry"
 
-        if analysis.lower() not in ["all", "scree_plot", "cosine_convergence"]:
+        if analysis.lower() not in [
+            "all",
+            "pca_analysis",
+            "scree_plot",
+            "cosine_convergence",
+        ]:
             analysis = "all"
             system_message += (
                 "analysis arg not recognized, " "using analysis = 'all' as default"
