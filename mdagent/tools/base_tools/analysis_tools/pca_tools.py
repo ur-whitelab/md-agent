@@ -2,6 +2,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import MDAnalysis as mda
+import MDAnalysis.analysis.pca as pca
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -27,7 +28,8 @@ class PCA_analysis:
         if pc_percentage > 1:
             pc_percentage /= 100
         self.pc_percentage = pc_percentage
-        self.selection = self.u.select_atoms(selection)
+        self.atom_selection = self.u.select_atoms(selection)
+        self.selection = selection
 
     def _align_trajectory(self):
         try:
@@ -39,11 +41,11 @@ class PCA_analysis:
             print(f"Error aligning trajectory: {str(e)}")
             return "Trajectory not aligned. Results may not be trustful"
 
-    def get_pc(self, universe, selection="backbone"):
+    def get_pc(self):
         align_message = self._align_trajectory()
-        self.pc = mda.analysis.pca.PCA(
-            universe,
-            select=selection,
+        self.pc = pca.PCA(
+            self.u,
+            select=self.selection,
             align=True,
             mean=None,
             n_components=None,
@@ -60,11 +62,13 @@ class PCA_analysis:
         return self.n_pcs
 
     def _make_transformation(self):
-        self.transformed = self.pc.transform(self.backbone, n_components=self.n_pcs)
+        self.transformed = self.pc.transform(
+            self.atom_selection, n_components=self.n_pcs
+        )
 
     def _make_df(self):
         self._get_number_pcs()
-        self._make_transformation
+        self._make_transformation()
         self.pc_df = pd.DataFrame(
             self.transformed, columns=["PC{}".format(i + 1) for i in range(self.n_pcs)]
         )
@@ -77,7 +81,8 @@ class PCA_analysis:
             if "not aligned" in pc_mess:
                 extra_mess += pc_mess
 
-        cumulative_variance = self.pc.cumulated_variance
+        cumulative_variance = self.pc.results.cumulated_variance
+        print(cumulative_variance)
         plt.plot(1 - cumulative_variance)
         # Calculate the index where cumulative variance exceeds or meets 95%
         threshold = self.pc_percentage
@@ -131,14 +136,15 @@ class PCA_analysis:
     def measure_cosine_convergence(self):
         if not self.pc:
             pc_mess = self.get_pc()
-
+        else:
+            pc_mess = ""
         if not self.n_pcs:
             self._get_number_pcs()
             self._make_transformation()
 
         pc_messages = []
         for i in range(self.n_pcs):
-            cc = self.pc.cosine_content(self.transformed, i)
+            cc = pca.cosine_content(self.transformed, i)
             pc_messages.append(f"Cosine Content for PC {i+1}-{cc:.3f}\n")
         cc_message = f"Cosine Content of each PC: {','.join(pc_messages)}"
         return pc_mess + cc_message
@@ -187,13 +193,20 @@ class PCASchema(BaseModel):
 
 class PCATool(BaseTool):
     name = "PCATool"
-    description = "Calculate the Principal Analysis Components of a MD trajectory"
+    description = (
+        "Calculate the Principal Analysis Components of a MD trajectory and "
+        "performs analysis with them"
+    )
     args_schema = PCASchema
     path_registry: Optional[PathRegistry]
 
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        super().__init__()
+        self.path_registry = path_registry
+
     def _run(self, input):
         try:
-            input = self.validate_input(input)
+            input = self.validate_input(**input)
         except ValueError as e:
             return f"Error using the PCA Tool: {str(e)}"
 
@@ -209,7 +222,7 @@ class PCATool(BaseTool):
         top_path = self.path_registry.get_mapped_path(top_id)
         pc_percentage = input.get("pc_percentage")
         analysis = input.get("analysis")
-        selection = input.get("selection")
+        selection = input.get("selection", "backbone and name CA")
 
         PCA_container = PCA_analysis(
             self.path_registry,
@@ -234,15 +247,17 @@ class PCATool(BaseTool):
 
     def validate_input(self, **input):
         input = input.get("action_input", input)
+        input = input.get("input", input)
         trajectory_id = input.get("trajectory_fileid", None)
         topology_id = input.get("topology_fileid", None)
         pc_percentage = input.get("pc_percentage", 95.0)
         analysis = input.get("analysis", "all")
-        selection = input.get("selection", "backbone")
+        selection = input.get("selection", "name CA")
         remove_terminals = input.get("remove_terminals", False)
         if not trajectory_id:
-            raise ValueError("Incorrect Inputs: Trajectory file ID is required")
-
+            raise ValueError("Incorrect Inputs: trajectory_fileid is required")
+        if not topology_id:
+            raise ValueError("Incorrect Inputs: topology_fileid is required")
         # check if trajectory id is valid
         fileids = self.path_registry.list_path_names()
         error = ""
@@ -260,10 +275,11 @@ class PCATool(BaseTool):
         ]:
             analysis = "all"
             system_message += (
-                "analysis arg not recognized, " "using analysis = 'all' as default"
+                "analysis arg not recognized, using analysis = 'all' as default"
             )
-        if selection.lower() not in ["backbone", "name CA", "backbone and name CA"]:
-            selection = "backbone and name CA"  # just alpha carbons of the backbone
+
+        if selection not in ["backbone", "name CA", "backbone and name CA", "protein"]:
+            selection = "name CA"  # just alpha carbons
         # get all the kwargs:
         keys = input.keys()
         for key in keys:
@@ -284,6 +300,7 @@ class PCATool(BaseTool):
             "pc_percentage": pc_percentage,
             "analysis": analysis,
             "remove_terminals": remove_terminals,
+            "selection": selection,
             "error": error,
             "system_message": system_message,
         }
