@@ -36,13 +36,8 @@ class TimeCorrelation:
         """
         Calculate the time correlation function and tau for the property.
 
-        Parameters:
-        time_series (np.ndarray): The time series data of the property.
-        time_step (float): The time step between frames in the trajectory.
-
         Returns:
-        np.ndarray: The time correlation function.
-        float: The correlation time (tau).
+        str: Completion message and file path where the time correlation is saved.
         """
         time_series = np.loadtxt(self.file_path)
         num_frames = time_series.shape[0]
@@ -85,11 +80,8 @@ class TimeCorrelation:
         """
         Plot the time correlation function.
 
-        Parameters:
-        autocorrelation (np.ndarray): The time correlation function.
-
         Returns:
-        None
+        str: Completion message with file ID information.
         """
         message = ""
         if not self.autocorrelation:
