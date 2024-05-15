@@ -33,6 +33,7 @@ setup(
         "python-dotenv",
         "rdkit",
         "requests",
+        "seaborn",
         "streamlit",
         "tiktoken",
     ],
