@@ -17,6 +17,13 @@ from .simulation_tools.setup_and_run import (
     SetUpAndRunTool,
     SimulationFunctions,
 )
+from .thermo_tools import (
+    ComputeDensity,
+    ComputeDipoleMoments,
+    ComputeIsothermalCompressabilityKappaT,
+    ComputeStaticDielectric,
+    ComputeThermalExpansionAlphaP,
+)
 from .util_tools.git_issues_tool import SerpGitTool
 from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
@@ -44,4 +51,9 @@ __all__ = [
     "SetUpandRunFunction",
     "ModifyBaseSimulationScriptTool",
     "RDFTool",
+    "ComputeDipoleMoments",
+    "ComputeStaticDielectric",
+    "ComputeIsothermalCompressabilityKappaT",
+    "ComputeThermalExpansionAlphaP",
+    "ComputeDensity",
 ]
