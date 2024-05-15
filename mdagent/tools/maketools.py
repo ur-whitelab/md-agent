@@ -11,6 +11,7 @@ from .base_tools import (
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
+    MomentOfInertia,
     PackMolTool,
     PPIDistance,
     ProteinName2PDBTool,
@@ -23,6 +24,7 @@ from .base_tools import (
     SetUpandRunFunction,
     SimulationOutputFigures,
     SmallMolPDB,
+    SolventAccessibleSurfaceArea,
     VisualizeProtein,
 )
 
@@ -48,6 +50,7 @@ def make_all_tools(
         Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
+        MomentOfInertia(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
@@ -57,6 +60,7 @@ def make_all_tools(
         RadiusofGyrationPlot(path_registry=path_instance),
         PPIDistance(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
+        SolventAccessibleSurfaceArea(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
