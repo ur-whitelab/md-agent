@@ -10,10 +10,10 @@ from pydantic import BaseModel, Field
 from mdagent.utils import FileType, PathRegistry
 
 
-class MomentOfInertiaAnalysis:
+class MomentOfInertiaFunctions:
     def __init__(self, path_registry, top_fileid, traj_fileid=None, molecule_name=None):
         """
-        Initialize the MomentOfInertia class with topology and/or trajectory files.
+        Initialize the class with topology and/or trajectory files.
 
         Parameters:
         path_registry (PathRegistry): mapping file IDs to file paths.
@@ -208,7 +208,7 @@ class MomentOfInertia(BaseTool):
         molecule_name: Optional[str] = None,
     ) -> str:
         try:
-            moi = MomentOfInertiaAnalysis(
+            moi = MomentOfInertiaFunctions(
                 self.path_registry, top_fileid, traj_fileid, molecule_name
             )
             return f"Succeeded. {moi.analyze_moi()}"
