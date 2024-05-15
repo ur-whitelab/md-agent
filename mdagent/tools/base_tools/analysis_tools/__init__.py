@@ -1,3 +1,4 @@
+from .pca_tools import PCATool
 from .plot_tools import SimulationOutputFigures
 from .ppi_tools import PPIDistance
 from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
@@ -13,4 +14,5 @@ __all__ = [
     "VisualizeProtein",
     "VisFunctions",
     "RadiusofGyrationAverage",
+    "PCATool",
 ]

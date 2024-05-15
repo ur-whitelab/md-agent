@@ -1,3 +1,4 @@
+from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -44,4 +45,5 @@ __all__ = [
     "SetUpandRunFunction",
     "ModifyBaseSimulationScriptTool",
     "RDFTool",
+    "PCATool",
 ]
