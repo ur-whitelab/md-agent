@@ -7,6 +7,7 @@ from .analysis_tools.rgy import (
     RadiusofGyrationPlot,
 )
 from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.time_correlation import TimeCorrelationAnalysis
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -38,6 +39,7 @@ __all__ = [
     "SetUpAndRunTool",
     "SimulationFunctions",
     "SimulationOutputFigures",
+    "TimeCorrelationAnalysis",
     "VisFunctions",
     "get_pdb",
     "CleaningToolFunction",

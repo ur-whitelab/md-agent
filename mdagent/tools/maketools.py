@@ -23,6 +23,7 @@ from .base_tools import (
     SetUpandRunFunction,
     SimulationOutputFigures,
     SmallMolPDB,
+    TimeCorrelationAnalysis,
     VisualizeProtein,
 )
 
@@ -60,6 +61,7 @@ def make_all_tools(
         SetUpandRunFunction(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
+        TimeCorrelationAnalysis(path_registry=path_instance),
     ]
 
     all_tools += base_tools
