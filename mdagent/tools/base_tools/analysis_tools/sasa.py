@@ -53,9 +53,6 @@ class SASAAnalysis:
         """
         sasa = md.shrake_rupley(self.traj, probe_radius=probe_radius)
         # sasa - 2D array of (n_frames, n_atoms)
-        # print('SASA: ',sasa)
-        # print('SASA shape: ',sasa.shape)
-        # print('n_residues: ',self.traj.n_residues)
         residue_sasa_list = []
         for i in range(self.traj.n_residues):
             # get SASA values from all non-hydrogen atoms in the current residue
@@ -90,10 +87,7 @@ class SASAAnalysis:
         """
         message = ""
         if self.sasa is None or self.residue_sasa is None:
-            print("Calculating SASA...")
             message += self.calculate_sasa()
-        else:
-            print("SASA already calculated:", self.sasa)
         fig_analysis = f"sasa_{self.molecule_name}"
         fig_name = self.path_registry.write_file_name(
             type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
@@ -101,8 +95,6 @@ class SASAAnalysis:
         fig_id = self.path_registry.get_fileid(file_name=fig_name, type=FileType.FIGURE)
         plt.figure(figsize=(10, 5))
         plt.subplot(121)
-        print("Plotting SASA...")
-        print("SASA: ", self.sasa)
         plt.plot(self.sasa)
         plt.xlabel("Frame")
         plt.ylabel("Total SASA (nm²)")
