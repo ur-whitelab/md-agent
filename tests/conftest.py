@@ -2,9 +2,19 @@ import os
 import shutil
 from pathlib import Path
 
+import mdtraj as md
+import numpy as np
 import pytest
 
 from mdagent.utils import PathRegistry
+
+
+def safe_remove(file_path):
+    """Remove a file if it exists."""
+    try:
+        os.remove(file_path)
+    except FileNotFoundError:
+        pass  # the file does not exist, no action needed
 
 
 @pytest.fixture
@@ -208,18 +218,110 @@ ALA "Modify backbone"   2023-11-03 PDBE
     request.addfinalizer(lambda: os.remove("ALA_clean_654321.cif"))
 
 
+def setup_butane_topology(include_hydrogens=False):
+    n_carbons = 4
+    topology = md.Topology()
+    chain = topology.add_chain()
+    residue = topology.add_residue("BUT", chain)
+
+    carbon_atoms = [
+        topology.add_atom("C", md.element.carbon, residue) for _ in range(n_carbons)
+    ]
+    for i in range(n_carbons - 1):
+        topology.add_bond(carbon_atoms[i], carbon_atoms[i + 1])
+
+    if not include_hydrogens:
+        return topology, carbon_atoms, None
+
+    hydrogens_per_carbon = [3, 2, 2, 3]
+    hydrogen_atoms = []
+    for i, carbon in enumerate(carbon_atoms):
+        for _ in range(hydrogens_per_carbon[i]):
+            h_atom = topology.add_atom("H", md.element.hydrogen, residue)
+            hydrogen_atoms.append(h_atom)
+            topology.add_bond(carbon, h_atom)
+    return topology, carbon_atoms, hydrogen_atoms
+
+
 @pytest.fixture(scope="module")
-def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
+def butane_trajectory_with_hydrogens(request):
+    topology, carbon_atoms, hydrogen_atoms = setup_butane_topology(
+        include_hydrogens=True
+    )
+    n_frames = 100
+    xyz = np.zeros((n_frames, len(carbon_atoms) + len(hydrogen_atoms), 3))
+
+    # set carbon positions along the x-axis, 1.54 Å apart
+    carbon_positions = np.array([[i * 1.54, 0, 0] for i in range(len(carbon_atoms))])
+    # define hydrogen positions around each carbon
+    hydrogen_offsets = [
+        [-0.77, 0.77, 0],
+        [0, -0.77, 0.77],
+        [0.77, 0.77, 0],  # H for C1
+        [-0.77, 0, 0.77],
+        [0.77, 0, 0.77],  # H for C2
+        [-0.77, 0, -0.77],
+        [0.77, 0, -0.77],  # H for C3
+        [-0.77, -0.77, 0],
+        [0, -0.77, -0.77],
+        [0.77, -0.77, 0],  # H for C4
+    ]
+    for i in range(n_frames):
+        xyz[i, : len(carbon_atoms), :] = carbon_positions
+        for j, h_offset in enumerate(hydrogen_offsets):
+            xyz[i, len(carbon_atoms) + j, :] = carbon_positions[j // 3] + h_offset
+
+    trajectory = md.Trajectory(xyz=xyz, topology=topology)
+    dcd_file = "TRAJ_butane_with_hydrogens_123456.dcd"
+    pdb_file = "TOP_butane_with_hydrogens_123456.pdb"
+    trajectory.save_dcd(dcd_file)
+    trajectory[0].save_pdb(pdb_file)  # save the first frame as a PDB for topology
+
+    yield dcd_file, pdb_file
+    request.addfinalizer(lambda: safe_remove(dcd_file))
+    request.addfinalizer(lambda: safe_remove(pdb_file))
+
+
+@pytest.fixture(scope="module")
+def butane_trajectory_without_hydrogens(request):
+    topology, carbon_atoms, _ = setup_butane_topology(include_hydrogens=False)
+    n_frames = 100
+    xyz = np.zeros((n_frames, len(carbon_atoms), 3))
+
+    # set carbon positions along the x-axis, 1.54 Å apart
+    carbon_positions = np.array([[i * 1.54, 0, 0] for i in range(len(carbon_atoms))])
+    for i in range(n_frames):
+        xyz[i, :, :] = carbon_positions
+
+    trajectory = md.Trajectory(xyz=xyz, topology=topology)
+    dcd_file = "TRAJ_butane_without_hydrogens_123456.dcd"
+    pdb_file = "TOP_butane_without_hydrogens_123456.pdb"
+    trajectory.save_dcd(dcd_file)
+    trajectory[0].save_pdb(pdb_file)  # save the first frame as a PDB for topology
+
+    yield dcd_file, pdb_file
+    request.addfinalizer(lambda: safe_remove(dcd_file))
+    request.addfinalizer(lambda: safe_remove(pdb_file))
+
+
+@pytest.fixture(scope="module")
+def get_registry(
+    raw_alanine_pdb_file,
+    clean_alanine_pdb_file,
+    butane_trajectory_with_hydrogens,
+    butane_trajectory_without_hydrogens,
+    request,
+):
     created_paths = []  # Keep track of created directories for cleanup
 
     def get_new_ckpt():
         registry = PathRegistry.get_instance(ckpt_dir="ckpt_test")
-        base_path = registry.ckpt_files
-        return base_path, registry.ckpt_dir
+        base_path = registry.ckpt_dir
+        return base_path, registry
 
-    def create(raw_or_clean, with_files):
-        base_path, ckpt_dir = get_new_ckpt()
-        created_paths.append(ckpt_dir)
+    def create(raw_or_clean, with_files, include_hydrogens=False, map_path=True):
+        base_path, registry = get_new_ckpt()
+        created_paths.append(base_path)
         if with_files:
             pdb_path = Path(base_path) / "pdb"
             record_path = Path(base_path) / "records"
@@ -230,14 +332,25 @@ def get_registry(raw_alanine_pdb_file, clean_alanine_pdb_file, request):
             for path in [pdb_path, record_path, simulation_path, figure_path]:
                 os.makedirs(path, exist_ok=True)
                 created_paths.append(path)
+            # create files
+            files = {}
             if raw_or_clean == "raw":
                 # Copy the alanine pdb file to the pdb/alanine directory
-                shutil.copy(raw_alanine_pdb_file, pdb_path)
+                files["ALA_123456"] = {"name": raw_alanine_pdb_file, "dir": pdb_path}
             elif raw_or_clean == "clean":
-                shutil.copy(clean_alanine_pdb_file, pdb_path)
-
-        # Assuming PathRegistry is defined elsewhere and properly implemented
-        return PathRegistry().get_instance()
+                files["ALA_654321"] = {"name": clean_alanine_pdb_file, "dir": pdb_path}
+            if include_hydrogens:
+                traj_file, top_file = butane_trajectory_with_hydrogens
+            else:
+                traj_file, top_file = butane_trajectory_without_hydrogens
+            files["rec0_butane_123456"] = {"name": traj_file, "dir": record_path}
+            files["top_sim0_butane_123456"] = {"name": top_file, "dir": pdb_path}
+            for f in files:
+                shutil.copy(files[f]["name"], files[f]["dir"])
+                if map_path:
+                    full_path = os.path.join(files[f]["dir"], files[f]["name"])
+                    registry.map_path(f, full_path)
+        return registry
 
     # Cleanup: Remove created directories and the copied pdb file
     def cleanup():
