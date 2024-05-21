@@ -244,6 +244,7 @@ def test_compute_rmsd_2sets(mock_mda_universe, rmsd_functions):
 
 def test_compute_rmsd(mock_mda_universe, mock_rmsd_run, mock_savetxt, rmsd_functions):
     rmsd_functions.filename = "test_rmsd"
+
     message = rmsd_functions.compute_rmsd(selection="backbone", plot=False)
 
     mock_mda_universe.assert_called_once()
