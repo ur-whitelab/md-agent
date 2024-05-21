@@ -282,6 +282,7 @@ def butane_static_trajectory_with_hydrogens(request):
     request.addfinalizer(lambda: safe_remove(pdb_file))
 
 
+@pytest.fixture(scope="module")
 def butane_dynamic_trajectory_with_hydrogens(request):
     topology, carbon_atoms, hydrogen_atoms = setup_butane_topology(
         include_hydrogens=True
