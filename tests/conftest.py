@@ -244,7 +244,7 @@ def setup_butane_topology(include_hydrogens=False):
 
 
 @pytest.fixture(scope="module")
-def butane_trajectory_with_hydrogens(request):
+def butane_static_trajectory_with_hydrogens(request):
     topology, carbon_atoms, hydrogen_atoms = setup_butane_topology(
         include_hydrogens=True
     )
@@ -270,6 +270,51 @@ def butane_trajectory_with_hydrogens(request):
         xyz[i, : len(carbon_atoms), :] = carbon_positions
         for j, h_offset in enumerate(hydrogen_offsets):
             xyz[i, len(carbon_atoms) + j, :] = carbon_positions[j // 3] + h_offset
+
+    trajectory = md.Trajectory(xyz=xyz, topology=topology)
+    dcd_file = "TRAJ_butane_with_hydrogens_123456.dcd"
+    pdb_file = "TOP_butane_with_hydrogens_123456.pdb"
+    trajectory.save_dcd(dcd_file)
+    trajectory[0].save_pdb(pdb_file)  # save the first frame as a PDB for topology
+
+    yield dcd_file, pdb_file
+    request.addfinalizer(lambda: safe_remove(dcd_file))
+    request.addfinalizer(lambda: safe_remove(pdb_file))
+
+
+def butane_dynamic_trajectory_with_hydrogens(request):
+    topology, carbon_atoms, hydrogen_atoms = setup_butane_topology(
+        include_hydrogens=True
+    )
+    n_frames = 100
+    xyz = np.zeros((n_frames, len(carbon_atoms) + len(hydrogen_atoms), 3))
+
+    # set carbon positions along the x-axis, 1.54 Å apart
+    carbon_positions = np.array([[i * 1.54, 0, 0] for i in range(len(carbon_atoms))])
+    # define hydrogen positions around each carbon
+    hydrogen_offsets = [
+        [-0.77, 0.77, 0],
+        [0, -0.77, 0.77],
+        [0.77, 0.77, 0],  # H for C1
+        [-0.77, 0, 0.77],
+        [0.77, 0, 0.77],  # H for C2
+        [-0.77, 0, -0.77],
+        [0.77, 0, -0.77],  # H for C3
+        [-0.77, -0.77, 0],
+        [0, -0.77, -0.77],
+        [0.77, -0.77, 0],  # H for C4
+    ]
+
+    for i in range(n_frames):
+        xyz[i, : len(carbon_atoms), :] = carbon_positions + np.random.normal(
+            scale=0.1, size=carbon_positions.shape
+        )
+        for j, h_offset in enumerate(hydrogen_offsets):
+            xyz[i, len(carbon_atoms) + j, :] = (
+                carbon_positions[j // 3]
+                + h_offset
+                + np.random.normal(scale=0.1, size=(3,))
+            )
 
     trajectory = md.Trajectory(xyz=xyz, topology=topology)
     dcd_file = "TRAJ_butane_with_hydrogens_123456.dcd"
@@ -308,7 +353,8 @@ def butane_trajectory_without_hydrogens(request):
 def get_registry(
     raw_alanine_pdb_file,
     clean_alanine_pdb_file,
-    butane_trajectory_with_hydrogens,
+    butane_static_trajectory_with_hydrogens,
+    butane_dynamic_trajectory_with_hydrogens,
     butane_trajectory_without_hydrogens,
     request,
 ):
@@ -319,7 +365,9 @@ def get_registry(
         base_path = registry.ckpt_dir
         return base_path, registry
 
-    def create(raw_or_clean, with_files, include_hydrogens=False, map_path=True):
+    def create(
+        raw_or_clean, with_files, dynamic=False, include_hydrogens=False, map_path=True
+    ):
         base_path, registry = get_new_ckpt()
         created_paths.append(base_path)
         if with_files:
@@ -340,7 +388,10 @@ def get_registry(
             elif raw_or_clean == "clean":
                 files["ALA_654321"] = {"name": clean_alanine_pdb_file, "dir": pdb_path}
             if include_hydrogens:
-                traj_file, top_file = butane_trajectory_with_hydrogens
+                if dynamic:
+                    traj_file, top_file = butane_dynamic_trajectory_with_hydrogens
+                else:
+                    traj_file, top_file = butane_static_trajectory_with_hydrogens
             else:
                 traj_file, top_file = butane_trajectory_without_hydrogens
             files["rec0_butane_123456"] = {"name": traj_file, "dir": record_path}
