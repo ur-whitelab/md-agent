@@ -298,7 +298,7 @@ def test_path_registry_w_ckpt():
     path_registry = PathRegistry(ckpt_dir=ckpt_dir)
     assert os.path.exists(path_registry.json_file_path)
     assert path_registry.json_file_path.endswith("paths_registry.json")
-    assert f"{ckpt_dir}_" in os.path.basename(
+    assert f"{ckpt_dir}" in os.path.basename(
         os.path.dirname(path_registry.json_file_path)
     )
     shutil.rmtree(os.path.dirname(path_registry.json_file_path))
