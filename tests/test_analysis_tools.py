@@ -265,7 +265,12 @@ def test_compute_rmsd_plotting(
 ):
     pdb_name = rmsd_functions.pdb_name
     rmsd_functions.filename = f"rmsd_{pdb_name}"
-    message = rmsd_functions.compute_rmsd(selection="backbone", plot=plot_enabled)
+    with patch("matplotlib.pyplot.figure"), patch("matplotlib.pyplot.plot"), patch(
+        "matplotlib.pyplot.xlabel"
+    ), patch("matplotlib.pyplot.ylabel"), patch("matplotlib.pyplot.title"), patch(
+        "matplotlib.pyplot.close"
+    ):
+        message = rmsd_functions.compute_rmsd(selection="backbone", plot=plot_enabled)
     if plot_enabled:
         mock_plt_savefig.assert_called_once()
         args, _ = mock_plt_savefig.call_args
@@ -320,9 +325,14 @@ def test_process_rmsf_results(rmsd_functions, mock_plt_savefig, mock_savetxt, pl
     mock_atoms.resids = np.arange(1, 11)
     mock_atoms.resnums = np.arange(1, 11)
     mock_rmsf_values = np.random.rand(10)
-    message = rmsd_functions.process_rmsf_results(
-        mock_atoms, mock_rmsf_values, plot=plot
-    )
+    with patch("matplotlib.pyplot.figure"), patch("matplotlib.pyplot.plot"), patch(
+        "matplotlib.pyplot.xlabel"
+    ), patch("matplotlib.pyplot.ylabel"), patch("matplotlib.pyplot.title"), patch(
+        "matplotlib.pyplot.close"
+    ):
+        message = rmsd_functions.process_rmsf_results(
+            mock_atoms, mock_rmsf_values, plot=plot
+        )
     mock_savetxt.assert_called_once()
     args, _ = mock_savetxt.call_args
     assert args[0].startswith(
