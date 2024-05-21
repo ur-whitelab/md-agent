@@ -74,6 +74,7 @@ def test_packmol_download_only_once(packmol):
     # Call the function again with the same molecule
     packmol._get_sm_pdbs(small_molecules)
     os.path.getmtime(f"{packmol.path_registry.ckpt_pdb}/water.pdb")
+    print(f"{packmol.path_registry.ckpt_pdb}/{small_molecules[0]}.pdb")
 
     assert os.path.exists(f"{packmol.path_registry.ckpt_pdb}/{small_molecules[0]}.pdb")
 
@@ -82,6 +83,7 @@ def test_packmol_download_only_once(packmol):
     )
     time.sleep(3)
     packmol._get_sm_pdbs(small_molecules)
+    print(f"{packmol.path_registry.ckpt_pdb}/{small_molecules[0]}.pdb")
     time_after = os.path.getmtime(
         f"{packmol.path_registry.ckpt_pdb}/{small_molecules[0]}.pdb"
     )

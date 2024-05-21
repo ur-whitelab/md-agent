@@ -260,19 +260,19 @@ def test_set_ckpt_subdir_single(set_ckpt, root_dir):
     default = "ckpt"
 
     ckpt_subdir_1 = set_ckpt.set_ckpt_subdir(ckpt_dir=dir_test)
-    expected_subdir_1 = os.path.join(root_dir, f"{default}/{dir_test}_")
+    expected_subdir_1 = os.path.join(root_dir, f"{default}/{dir_test}")
     assert os.path.exists(ckpt_subdir_1)
     assert expected_subdir_1 in ckpt_subdir_1
     shutil.rmtree(os.path.dirname(ckpt_subdir_1))
 
     ckpt_subdir_2 = set_ckpt.set_ckpt_subdir(ckpt_parent_folder=dir_test)
-    expected_subdir_2 = os.path.join(root_dir, f"{dir_test}/{default}_")
+    expected_subdir_2 = os.path.join(root_dir, f"{dir_test}/{default}")
     assert os.path.exists(ckpt_subdir_2)
     assert expected_subdir_2 in ckpt_subdir_2
     shutil.rmtree(os.path.dirname(ckpt_subdir_2))
 
     ckpt_subdir_3 = set_ckpt.set_ckpt_subdir()
-    expected_subdir_3 = os.path.join(root_dir, f"{default}/{default}_")
+    expected_subdir_3 = os.path.join(root_dir, f"{default}/{default}")
     assert os.path.exists(ckpt_subdir_3)
     assert expected_subdir_3 in ckpt_subdir_3
     shutil.rmtree(os.path.dirname(ckpt_subdir_3))
