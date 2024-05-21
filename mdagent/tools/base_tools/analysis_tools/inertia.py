@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from mdagent.utils import PathRegistry
 
+
 def load_traj(path_registry, top_fileid, traj_fileid=None):
     all_fileids = path_registry.list_path_names()
     if top_fileid not in all_fileids:
@@ -16,10 +17,10 @@ def load_traj(path_registry, top_fileid, traj_fileid=None):
 
     if traj_fileid is None:
         return md.load(top_path)
-    
+
     if traj_fileid not in all_fileids:
         raise ValueError("Trajectory File ID not found in path registry")
-    
+
     traj_path = path_registry.get_mapped_path(traj_fileid)
     return md.load(traj_path, top=top_path)
 
@@ -35,18 +36,21 @@ def save_to_csv(path_registry, data, file_id, description=None):
     return file_path
 
 
-def calculate_moment_of_inertia(path_registry, top_fileid, traj_fileid=None, mol_name=None):
+def calculate_moment_of_inertia(
+    path_registry, top_fileid, traj_fileid=None, mol_name=None
+):
     if mol_name is None:
         mol_name = top_fileid.replace("top_", "")
-    
+
     traj = load_traj(path_registry, top_fileid, traj_fileid)
     moments_of_inertia = md.compute_inertia_tensor(traj)
     avg_moi = np.mean(moments_of_inertia, axis=0)
 
     # save to file
     file_id = f"MOI_{mol_name}"
-    description=f"Moments of inertia tensor for {mol_name}",
-    csv_path = save_to_csv(path_registry, moments_of_inertia, file_id, description)
+    description = (f"Moments of inertia tensor for {mol_name}",)
+    flattened_tensors = moments_of_inertia.reshape(-1, 9)  # each 3x3 matrix to one row
+    csv_path = save_to_csv(path_registry, flattened_tensors, file_id, description)
     message = (
         f"Average Moment of Inertia Tensor: {avg_moi}, "
         f"Data saved to: {csv_path} with file ID {file_id}"
@@ -62,6 +66,7 @@ class MomentOfInertiaToolInput(BaseModel):
     molecule_name: Optional[str] = Field(
         None, description="Name of the molecule or protein."
     )
+
 
 class MomentOfInertia(BaseTool):
     name = "MomentOfInertia"
