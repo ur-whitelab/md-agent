@@ -22,13 +22,18 @@ class SetCheckpoint:
         return ckpt_path
 
     def set_ckpt_subdir(self, ckpt_dir: str = "ckpt", ckpt_parent_folder: str = "ckpt"):
+        if ckpt_dir != "ckpt":
+            ckpt_parent_path = self.make_ckpt_parent_folder(ckpt_parent_folder)
+            ckpt_subdir = os.path.join(ckpt_parent_path, f"{ckpt_dir}")
+            os.makedirs(ckpt_subdir, exist_ok=True)
+            return ckpt_subdir
         ckpt_parent_path = self.make_ckpt_parent_folder(ckpt_parent_folder)
         ckpt_iter = 0
         ckpt_subdir = os.path.join(ckpt_parent_path, f"{ckpt_dir}_{ckpt_iter}")
         while os.path.exists(ckpt_subdir):
             ckpt_subdir = os.path.join(ckpt_parent_path, f"{ckpt_dir}_{ckpt_iter}")
             ckpt_iter += 1
-        os.makedirs(ckpt_subdir)
+        os.makedirs(ckpt_subdir, exist_ok=True)
         return ckpt_subdir
 
     def clear_ckpt(
