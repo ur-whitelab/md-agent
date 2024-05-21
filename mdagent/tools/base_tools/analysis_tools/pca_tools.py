@@ -91,8 +91,8 @@ class PCA_analysis:
         )
 
         # Add a horizontal dashed line at 95% threshold
-        plt.axhline(
-            y=threshold,
+        plt.axvline(
+            x=threshold + 1,
             color="r",
             linestyle="--",
             label=f"{self.pc_percentage*100}% Contribution at PC {threshold_index+1}",
