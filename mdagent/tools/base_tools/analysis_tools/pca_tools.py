@@ -30,13 +30,15 @@ class PCA_analysis:
         self.pc_percentage = pc_percentage
         self.atom_selection = self.u.select_atoms(selection)
         self.selection = selection
+        self.pc = None
+        self.n_pcs = None
 
     def _align_trajectory(self):
         try:
             mda.analysis.align.AlignTraj(
                 self.u, self.u, select=self.selection, in_memory=True
             ).run()
-            return "Trajectory aligned to the first frame"
+            return "Trajectory aligned to the first frame. "
         except Exception as e:
             print(f"Error aligning trajectory: {str(e)}")
             return "Trajectory not aligned. Results may not be trustful"
@@ -83,11 +85,11 @@ class PCA_analysis:
 
         cumulative_variance = self.pc.results.cumulated_variance
         print(cumulative_variance)
-        plt.plot(1 - cumulative_variance)
+        plt.plot(cumulative_variance)
         # Calculate the index where cumulative variance exceeds or meets 95%
         threshold = self.pc_percentage
         threshold_index = next(
-            x[0] for x in enumerate(cumulative_variance) if x[1] >= threshold
+            x[0] for x in enumerate(cumulative_variance) if x[1] >= 1 - threshold
         )
 
         # Add a horizontal dashed line at 95% threshold
@@ -151,11 +153,19 @@ class PCA_analysis:
 
     def run_all(self):
         self.get_pc()
-        scree_plot = self.make_scree_plot()
-        pc_plots = self.make_pc_plots()
-        cos_conv = self.measure_cosine_convergence()
-
-        return f"Analsyses done: {scree_plot}, {pc_plots}, {cos_conv}"
+        try:
+            scree_plot = self.make_scree_plot()
+        except Exception as e:
+            raise Exception(f"Error during Scree Plot: str({e})")
+        try:
+            pc_plots = self.make_pc_plots()
+        except Exception as e:
+            raise Exception(f"Error during pc plots: str({e})")
+        try:
+            cos_conv = self.measure_cosine_convergence()
+        except Exception as e:
+            raise Exception(f"Error during cosine convergence: str({e})")
+        return f"Analyses done: {scree_plot}, {pc_plots}, {cos_conv}"
 
 
 class PCASchema(BaseModel):
@@ -238,10 +248,10 @@ class PCATool(BaseTool):
                 return f"{result}. \n\n {system_input_message}"
             if analysis.lower() == "cosine_convergence":
                 result = PCA_container.measure_cosine_convergence()
-                return f"{result}. \n\n {system_input_message}"
+                return f"Analyses done: {result}. \n\n {system_input_message}"
             if analysis.lower() == "scree_plot":
                 result = PCA_container.make_scree_plot()
-                return f"{result}. \n\n {system_input_message}"
+                return f"Analyses done: {result}. \n\n {system_input_message}"
         except Exception as e:
             raise (Exception(f"Error during PCA Tool usage: {str(e)}"))
 
@@ -262,10 +272,24 @@ class PCATool(BaseTool):
         fileids = self.path_registry.list_path_names()
         error = ""
         system_message = "Tool Messages:"
+        print("Files Ids:", fileids)
         if trajectory_id not in fileids:
-            error += "Trajectory File ID not in path registry"
+            error += " Trajectory File ID not in path registry"
         if topology_id not in fileids:
-            error += "Topology File ID not in path registry"
+            error += " Topology File ID not in path registry"
+        try:
+            pc_percentage = float(pc_percentage)
+        except ValueError as e:
+            if "%" in str(e):
+                pc_percentage.replace("%", "")
+                try:
+                    pc_percentage = float(pc_percentage)
+                except Exception as e:
+                    error += " pc_percentage value must be a float"
+            else:
+                error += " pc_percentage value must be a float"
+        except Exception:
+            error += " pc_percentage value must be a float"
 
         if analysis.lower() not in [
             "all",
@@ -275,10 +299,16 @@ class PCATool(BaseTool):
         ]:
             analysis = "all"
             system_message += (
-                "analysis arg not recognized, using analysis = 'all' as default"
+                " analysis arg not recognized, using analysis = 'all' as default"
             )
 
-        if selection not in ["backbone", "name CA", "backbone and name CA", "protein"]:
+        if selection not in [
+            "backbone",
+            "name CA",
+            "backbone and name CA",
+            "protein",
+            "all",
+        ]:
             selection = "name CA"  # just alpha carbons
         # get all the kwargs:
         keys = input.keys()
