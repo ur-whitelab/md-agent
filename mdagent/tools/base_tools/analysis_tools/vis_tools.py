@@ -73,11 +73,7 @@ class VisFunctions:
         install_code = "!pip install -q nglview"
 
         # Code to import NGLview and display a file
-        import_code = f"""
-import nglview as nv
-view = nv.show_file("{cif_file}")
-view
-"""
+        import_code = f"import nglview as nv\nview=nv.show_file('{cif_file}')\nview"
 
         # Create new code cells
         install_cell = nbf.v4.new_code_cell(source=install_code)
