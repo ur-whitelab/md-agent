@@ -61,13 +61,12 @@ def rmsd(
     else:
         ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
-    traj.center_coordinates()
-    rmsd = md.rmsd(traj, ref_traj, precentered=True)
-    rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx, precentered=True)
+    rmsd = md.rmsd(traj, ref_traj)
+    rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx)
 
     if rmsd.shape[0] == 1:  # if it's single value
         return f"RMSD calculated. {rmsd[0]} nm"
-    data_id = top_id.replace("top_", "")
+    data_id = top_id.replace("top_sim0_", "")
     analysis = f"rmsd_{data_id}"
     csv_path = save_to_csv(
         path_registry, rmsd, analysis, description=f"RMSD for {data_id}"
@@ -87,7 +86,7 @@ def rmsd(
     fig_id, fig_path = save_plot(path_registry, analysis, f"RMSD plot for {data_id}")
     plt.close()
     msg = (
-        f"RMSD calculated and saved as {csv_path} with file ID rmsd_{data_id}"
+        f"RMSD calculated and saved as {csv_path} with file ID rmsd_{data_id}. "
         f"Plot saved to {fig_path} with plot ID {fig_id}. "
     )
     return msg
@@ -103,37 +102,33 @@ def rmsf(
     else:
         ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
-    traj.center_coordinates()
-    rmsf = md.rmsf(traj, ref_traj, precentered=True)
+    rmsf = md.rmsf(traj, ref_traj)
     rmsf_select = rmsf[idx]
-    data_id = top_id.replace("top_", "")
+    data_id = top_id.replace("top_sim0_", "")
     analysis = f"rmsf_{data_id}"
     csv_path = save_to_csv(
         path_registry, rmsf_select, analysis, description=f"RMSF for {data_id}"
     )
 
     # plot rmsf
-    if select == "all" or select == "backbone":
-        select = "sidechain"
-    select_idx = traj.topology.select(select)
-    backbone_idx = traj.topology.select("backbone")
-
     fig, ax = plt.subplots()
+    if select != "all":
+        select_idx = traj.topology.select(select)
+        ax.bar(
+            select_idx,
+            rmsf[select_idx],
+            width=1,
+            edgecolor="k",
+            linewidth=0.2,
+            label="sidechain",
+        )
     ax.bar(
-        select_idx,
-        rmsf[select_idx],
+        np.arange(len(rmsf)),
+        rmsf,
         width=1,
         edgecolor="k",
         linewidth=0.2,
-        label="sidechain",
-    )
-    ax.bar(
-        backbone_idx,
-        rmsf[backbone_idx],
-        width=1,
-        edgecolor="k",
-        linewidth=0.2,
-        label="backbone",
+        label="all",
     )
     ax.legend()
     ax.set(
@@ -145,7 +140,7 @@ def rmsf(
     fig_id, fig_path = save_plot(path_registry, analysis, f"RMSF plot for {data_id}")
     plt.close()
     msg = (
-        f"RMSF calculated and saved as {csv_path} with file ID rmsf_{data_id}"
+        f"RMSF calculated and saved as {csv_path} with file ID rmsf_{data_id}. "
         f"Plot saved to {fig_path} with plot ID {fig_id}. "
     )
     return msg
@@ -161,8 +156,8 @@ def lprmsd(
     else:
         ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
-    lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx, precentered=True)
-    data_id = top_id.replace("top_", "")
+    lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx)
+    data_id = top_id.replace("top_sim0_", "")
     csv_path = save_to_csv(
         path_registry, lprmsd, f"lprmsd_{data_id}", description=f"LP-RMSD for {data_id}"
     )
