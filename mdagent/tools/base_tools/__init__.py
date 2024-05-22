@@ -6,7 +6,7 @@ from .analysis_tools.rgy import (
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
 )
-from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -22,6 +22,9 @@ from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
+    "ComputeLPRMSD",
+    "ComputeRMSD",
+    "ComputeRMSF",
     "ListRegistryPaths",
     "MapPath2Name",
     "ProteinName2PDBTool",
@@ -29,7 +32,6 @@ __all__ = [
     "PPIDistance",
     "SmallMolPDB",
     "VisualizeProtein",
-    "RMSDCalculator",
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",

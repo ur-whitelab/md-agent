@@ -2,314 +2,197 @@ import os
 from typing import Optional, Type
 
 import matplotlib.pyplot as plt
-import MDAnalysis as mda
+import mdtraj as md
 import numpy as np
-import streamlit as st
 from langchain.tools import BaseTool
-from MDAnalysis.analysis import align, diffusionmap, rms
 from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
 
-# all things related to RMSD as 'standard deviation'
-# 1  RMSD between two protein conformations or trajectories (1D scalar value)
-# 2. time-dependent RMSD of the whole trajectory with all or selected atoms
-# 3. pairwise RMSD
-# 4. RMSF - root mean square fluctuation
+
+def load_traj(path_registry, top_fileid, traj_fileid=None):
+    all_fileids = path_registry.list_path_names()
+    if top_fileid not in all_fileids:
+        raise ValueError("Topology File ID not found in path registry")
+    top_path = path_registry.get_mapped_path(top_fileid)
+
+    if traj_fileid is None:
+        print("Warning: no trajectory file provided.")
+        return md.load(top_path)
+
+    if traj_fileid not in all_fileids:
+        raise ValueError("Trajectory File ID not found in path registry")
+
+    traj_path = path_registry.get_mapped_path(traj_fileid)
+    return md.load(traj_path, top=top_path)
 
 
-class RMSDFunctions:
-    def __init__(self, path_registry, pdb, traj, ref=None, ref_traj=None):
-        self.path_registry = path_registry
-        self.pdb_file = self.path_registry.get_mapped_path(pdb)
-        self.trajectory = self.path_registry.get_mapped_path(traj)
-        self.ref_file = self.path_registry.get_mapped_path(ref)
-        self.ref_trajectory = self.path_registry.get_mapped_path(ref_traj)
+def save_to_csv(path_registry, data, file_id, description=None):
+    file_path = f"{path_registry.ckpt_figures}/{file_id}.csv"
+    i = 0
+    while os.path.exists(file_path):
+        i += 1
+        file_path = f"{path_registry.ckpt_figures}/{file_id}_{i}.csv"
+    np.savetxt(file_path, data, delimiter=",")
+    path_registry.map_path(file_id, file_path, description=description)
+    return file_path
 
-        # manually check for missing paths
-        if self.pdb_file == "Name not found in path registry.":
-            # set that file to None
-            self.pdb_file = None
-            self.pdb_name = None
-        else:
-            self.pdb_name = os.path.splitext(os.path.basename(self.pdb_file))[0]
-        if self.trajectory == "Name not found in path registry.":
-            self.trajectory = None
-        if self.ref_file == "Name not found in path registry." or self.ref_file is None:
-            self.ref_file = None
-            self.ref_name = None
-        else:
-            self.ref_name = os.path.splitext(os.path.basename(self.ref_file))[0]
-        if self.ref_trajectory == "Name not found in path registry.":
-            self.ref_trajectory = None
-        self.base_dir = "files"  # TODO: should update this to use checkpoint dir
 
-    def calculate_rmsd(
-        self,
-        rmsd_type="rmsd",
-        selection="backbone",
-        plot=True,
-    ):
-        if self.pdb_file is None:
-            raise FileNotFoundError("PDB file is required.")
-        self.filename = f"{rmsd_type}_{self.pdb_name}"
+def save_plot(path_registry, fig_analysis, description=None):
+    fig_name = path_registry.write_file_name(
+        type=FileType.FIGURE,
+        fig_analysis=fig_analysis,
+        file_format="png",
+    )
+    fig_id = path_registry.get_fileid(file_name=fig_name, type=FileType.FIGURE)
+    fig_path = f"{path_registry.ckpt_figures}/{fig_name}"
+    plt.savefig(fig_path)
+    path_registry.map_path(fig_id, fig_path, description=description)
+    return fig_id, fig_path
 
-        if rmsd_type == "rmsd":
-            if self.ref_file:
-                print("Calculating 1-D RMSD between two sets of coordinates...")
-                st.markdown(
-                    "Calculating 1-D RMSD between two sets of coordinates...",
-                    unsafe_allow_html=True,
-                )
-                return self.compute_rmsd_2sets(selection=selection)
-            else:
-                print("Calculating time-dependent RMSD...")
-                st.markdown(
-                    "Calculating time-dependent RMSD...", unsafe_allow_html=True
-                )
-                return self.compute_rmsd(selection=selection, plot=plot)
-        elif rmsd_type == "pairwise_rmsd":
-            print("Calculating pairwise RMSD...")
-            st.markdown("Calculating pairwise RMSD...", unsafe_allow_html=True)
-            return self.compute_2d_rmsd(selection=selection, plot_heatmap=plot)
-        elif rmsd_type == "rmsf":
-            print("Calculating root mean square fluctuation (RMSF)...")
-            st.markdown(
-                "Calculating root mean square fluctuation (RMSF)...",
-                unsafe_allow_html=True,
-            )
-            return self.compute_rmsf(selection=selection, plot=plot)
-        else:
-            raise ValueError(
-                "Invalid rmsd_type. Please choose from 'rmsd', 'pairwise_rmsd', 'rmsf'"
-            )
 
-    def compute_rmsd_2sets(self, selection="backbone"):
-        # simple RMSD calculation between two different sets of protein coordinates
-        # returns scalar value
-        if self.trajectory and self.ref_trajectory:
-            u = mda.Universe(self.pdb_file, self.trajectory)
-            ref = mda.Universe(self.ref_file, self.ref_trajectory)
-        else:
-            u = mda.Universe(self.pdb_file)
-            ref = mda.Universe(self.ref_file)
-        rmsd_value = rms.rmsd(
-            u.select_atoms(selection).positions,  # coordinates to align
-            ref.select_atoms(selection).positions,  # reference coordinates
-            center=True,  # subtract the center of geometry
-            superposition=True,
-        )  # superimpose coordinates
-        return f"{rmsd_value}\n"
+def rmsd(
+    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
+):
+    print("Calculating RMSD...")
+    traj = load_traj(path_registry, top_id, traj_id)
+    if ref_top_id is None:
+        ref_traj = traj
+    else:
+        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
+    idx = traj.topology.select(select)
+    traj.center_coordinates()
+    rmsd = md.rmsd(traj, ref_traj, precentered=True)
+    rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx, precentered=True)
 
-    def compute_rmsd(self, selection="backbone", plot=True):
-        # 1D time-dependent RMSD, gives one scalar value for each timestep
-        if self.trajectory is None:
-            raise FileNotFoundError(
-                "trajectory file is required for time-dependent 1D RMSD"
-            )
-        u = mda.Universe(self.pdb_file, self.trajectory)
-        R = rms.RMSD(u, select=selection)
-        R.run()
+    if rmsd.shape[0] == 1:  # if it's single value
+        return f"RMSD calculated. {rmsd[0]} nm"
+    data_id = top_id.replace("top_", "")
+    analysis = f"rmsd_{data_id}"
+    csv_path = save_to_csv(
+        path_registry, rmsd, analysis, description=f"RMSD for {data_id}"
+    )
 
-        # save to file
-        time_stamp = self.path_registry.get_timestamp()
-        csv_filename = f"{self.filename}_{time_stamp}.csv"
-        np.savetxt(
-            f"{self.path_registry.ckpt_records}/{csv_filename}",
-            R.results.rmsd,
-            fmt=["%d", "%f", "%f"],
-            delimiter=",",
-            header="Frame,Time,RMSD",
-            comments="",
-        )
-        avg_rmsd = np.mean(R.results.rmsd[:, 2])  # rmsd values are in 3rd column
-        final_rmsd = R.results.rmsd[-1, 2]
-        message = (
-            "Calculated RMSD for each timestep with respect "
-            f"to the initial frame. Saved to {csv_filename}. "
-        )
-        self.path_registry.map_path(
-            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
-        )
-        message += f"Average RMSD is {avg_rmsd} \u212B. "
-        message += f"Final RMSD is {final_rmsd} \u212B.\n"
+    # plot rmsd
+    fig, ax = plt.subplots()
+    ax.plot(rmsd, label="protein")
+    ax.plot(rmsd_select, label=select)
+    ax.legend()
+    ax.set(
+        **{
+            "xlabel": "time",
+            "ylabel": "RMSD / nm",
+        }
+    )
+    fig_id, fig_path = save_plot(path_registry, analysis, f"RMSD plot for {data_id}")
+    plt.close()
+    msg = (
+        f"RMSD calculated and saved as {csv_path} with file ID rmsd_{data_id}"
+        f"Plot saved to {fig_path} with plot ID {fig_id}. "
+    )
+    return msg
 
-        if plot:
-            plt.plot(R.results.rmsd[:, 0], R.results.rmsd[:, 2], label=str(selection))
-            plt.xlabel("Frame")
-            plt.ylabel("RMSD ($\AA$)")
-            plt.title("Time-Dependent RMSD")
-            plt.legend()
 
-            fig_name = self.path_registry.write_file_name(
-                type=FileType.FIGURE,
-                fig_analysis=self.filename,
-                file_format="png",
-            )
-            plt.savefig(f"{self.path_registry.ckpt_figures}/{self.filename}.png")
-            plot_message = (
-                f"Plotted RMSD over time for {self.pdb_name}."
-                f" Saved to {self.filename}.png.\n"
-            )
-            self.path_registry.map_path(
-                fig_name,
-                f"{self.path_registry.ckpt_figures}/{self.filename}.png",
-                plot_message,
-            )
-            message += plot_message
-        return message
+def rmsf(
+    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
+):
+    print("Calculating RMSF...")
+    traj = load_traj(path_registry, top_id, traj_id)
+    if ref_top_id is None:
+        ref_traj = traj
+    else:
+        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
+    idx = traj.topology.select(select)
+    traj.center_coordinates()
+    rmsf = md.rmsf(traj, ref_traj, precentered=True)
+    rmsf_select = rmsf[idx]
+    data_id = top_id.replace("top_", "")
+    analysis = f"rmsf_{data_id}"
+    csv_path = save_to_csv(
+        path_registry, rmsf_select, analysis, description=f"RMSF for {data_id}"
+    )
 
-    def compute_2d_rmsd(self, selection="backbone", plot_heatmap=True):
-        # pairwise RMSD, also known as 2D RMSD, gives a matrix of RMSD values
-        if self.trajectory is None:
-            raise FileNotFoundError("trajectory file is required for pairwise RMSD")
-        u = mda.Universe(self.pdb_file, self.trajectory)
-        if self.ref_file and self.ref_trajectory:
-            ref = mda.Universe(self.ref_file, self.ref_trajectory)
-        else:
-            ref = None
+    # plot rmsf
+    if select == "all" or select == "backbone":
+        select = "sidechain"
+    select_idx = traj.topology.select(select)
+    backbone_idx = traj.topology.select("backbone")
 
-        if ref is None:
-            # pairwise RMSD of a trajectory to itself
-            align.AlignTraj(u, u, select=selection, in_memory=True).run()
-            matrix = diffusionmap.DistanceMatrix(u, select=selection).run()
-            pairwise_matrix = matrix.results.dist_matrix
-            x_label = y_label = "Frame"
-        else:
-            pairwise_matrix = np.zeros((len(u.trajectory), len(ref.trajectory)))
-            for i, frame in enumerate(u.trajectory):
-                r = rms.RMSD(ref, u, select=selection, ref_frame=i).run()
-                pairwise_matrix[i] = r.results.rmsd[:, 2]
-            x_label = f"Frame ({self.ref_name})"
-            y_label = f"Frame ({self.pdb_name})"
+    fig, ax = plt.subplots()
+    ax.bar(
+        select_idx,
+        rmsf[select_idx],
+        width=1,
+        edgecolor="k",
+        linewidth=0.2,
+        label="sidechain",
+    )
+    ax.bar(
+        backbone_idx,
+        rmsf[backbone_idx],
+        width=1,
+        edgecolor="k",
+        linewidth=0.2,
+        label="backbone",
+    )
+    ax.legend()
+    ax.set(
+        **{
+            "xlabel": "atom index",
+            "ylabel": "RMSF / nm",
+        }
+    )
+    fig_id, fig_path = save_plot(path_registry, analysis, f"RMSF plot for {data_id}")
+    plt.close()
+    msg = (
+        f"RMSF calculated and saved as {csv_path} with file ID rmsf_{data_id}"
+        f"Plot saved to {fig_path} with plot ID {fig_id}. "
+    )
+    return msg
 
-        time_stamp = self.path_registry.get_timestamp()
-        csv_filename = f"{self.filename}_{time_stamp}.csv"
-        np.savetxt(
-            f"{self.path_registry.ckpt_records}/{csv_filename}",
-            pairwise_matrix,
-            delimiter=",",
-        )
-        message = f"Saved pairwise RMSD matrix to {csv_filename}.\n"
-        self.path_registry.map_path(
-            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
-        )
-        if plot_heatmap:
-            plt.imshow(pairwise_matrix, cmap="viridis")
-            plt.xlabel(x_label)
-            plt.ylabel(y_label)
-            plt.colorbar(label=r"RMSD ($\AA$)")
-            fig_name = self.path_registry.write_file_name(
-                type=FileType.FIGURE,
-                fig_analysis=self.filename,
-                file_format="png",
-            )
-            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
-            plot_message = f"Plotted pairwise RMSD matrix. Saved to {fig_name}.\n"
-            message += plot_message
-            self.path_registry.map_path(
-                fig_name, f"{self.path_registry.ckpt_figures}/{fig_name}", plot_message
-            )
-        return message
 
-    def compute_rmsf(self, selection="backbone", plot=True):
-        # calculate RMSF (root mean square fluctuation)
-        if self.trajectory is None:
-            raise FileNotFoundError("trajectory file is required for RMSF")
-        u = mda.Universe(self.pdb_file, self.trajectory)
-
-        # use averages as a reference for aligning
-        average = align.AverageStructure(u, u, select=selection, ref_frame=0).run()
-        align_ref = average.results.universe
-        align.AlignTraj(u, align_ref, select=selection, in_memory=True).run()
-
-        # Compute RMSF
-        atoms = u.select_atoms(selection)
-        R = rms.RMSF(atoms).run()
-        rmsf = R.results.rmsf
-        self.process_rmsf_results(atoms, rmsf, selection=selection, plot=plot)
-
-    def process_rmsf_results(self, atoms, rmsf, selection="backbone", plot=True):
-        # Save to a text file
-        rmsf_data = np.column_stack((atoms.resids, rmsf))
-        time_stamp = self.path_registry.get_timestamp()
-        csv_filename = f"{self.filename}_{time_stamp}.csv"
-        np.savetxt(
-            f"{self.path_registry.ckpt_records}/{csv_filename}",
-            rmsf_data,
-            delimiter=",",
-            header="Residue_ID,RMSF",
-            comments="",
-        )
-        message = f"Saved RMSF data to {csv_filename}.\n"
-        self.path_registry.map_path(
-            csv_filename, f"{self.path_registry.ckpt_records}/{csv_filename}", message
-        )
-
-        # Plot RMSF
-        if plot:
-            plt.figure(figsize=(5, 3))
-            plt.plot(atoms.resnums, rmsf, label=str(selection))
-            plt.xlabel("Residue Number")
-            plt.ylabel("RMSF ($\AA$)")
-            plt.title("Root Mean Square Fluctuation")
-            plt.legend()
-            fig_name = self.path_registry.write_file_name(
-                type=FileType.FIGURE,
-                fig_analysis=self.filename,
-                file_format="png",
-            )
-            plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
-            plot_message = f"Plotted RMSF. Saved to {fig_name}.\n"
-            message += plot_message
-            self.path_registry.map_path(
-                f"{self.filename}.png", f"{self.filename}.png", plot_message
-            )
-        return message
+def lprmsd(
+    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
+):
+    print("Calculating LP-RMSD...")
+    traj = load_traj(path_registry, top_id, traj_id)
+    if ref_top_id is None:
+        ref_traj = traj
+    else:
+        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
+    idx = traj.topology.select(select)
+    lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx, precentered=True)
+    data_id = top_id.replace("top_", "")
+    csv_path = save_to_csv(
+        path_registry, lprmsd, f"lprmsd_{data_id}", description=f"LP-RMSD for {data_id}"
+    )
+    return f"LP-RMSD calculated and saved as {csv_path} with file ID lprmsd_{data_id}"
 
 
 class RMSDInputSchema(BaseModel):
-    rmsd_type: str = Field(
-        description="""type of RMSD calculation
-        to perform. Choose from 'rmsd', 'pairwise_rmsd', 'rmsf'.
-        'rmsd': any 1-D root mean square deviation calculations.
-        'pairwise_rmsd': 2D root mean square deviation calculation.
-            pairwise RMSD matrix is computed. Either
-            trajectory against itself or a given reference.
-        'rmsf': root mean square fluctuation. it computes the average
-            fluctuation for each residue for the entire trajectory.
-        """
+    top_id: str = Field(None, description="File ID for the topology file.")
+    traj_id: Optional[str] = Field(None, description="File ID for the trajectory file.")
+    ref_top_id: Optional[str] = Field(
+        None, description="File ID for the topology file as reference"
     )
-    pdb_file: str = Field(
-        description="file with .pdb extension contain protein of interest"
+    ref_traj_id: Optional[str] = Field(
+        None, description="File ID for the trajectory file as reference."
     )
-    trajectory: Optional[str] = Field(
-        None, description="trajectory file for protein of interest"
-    )
-    ref_file: Optional[str] = Field(
-        None, description="file with .pdb extension used as reference"
-    )
-    ref_trajectory: Optional[str] = Field(
-        None, description="trajectory file used as reference"
-    )
-    selection: Optional[str] = Field(
-        None, description="""selected atoms using MDAnalysis selection syntax."""
-    )
-    plot: Optional[bool] = Field(
-        None,
-        description="""Only use it to set False
-        to disable making plots if prompted.""",
+    select: Optional[str] = Field(
+        "all",
+        description=(
+            "atom selection following MDTraj syntax for topology.select. "
+            "Examples are 'all', 'backbone', 'sidechain'"
+        ),
     )
 
 
-class RMSDCalculator(BaseTool):
-    name: str = "RMSDCalculator"
-    description: str = """Useful for calculating RMSD from output files
-    such as PDB, PSF, DCD, etc. Types of RMSD this tool can do:
-    1. 1-D root mean square deviation (RMSD)
-    2. 2-D or pairwise root mean square deviation (RMSD) matrix
-    3. root mean square fluctuation (RMSF)
-    Make sure to provide any necessary files for a chosen RMSD type."""
+class ComputeRMSD(BaseTool):
+    name: str = "ComputeRMSD"
+    description: str = (
+        "Compute root mean square deviation (RMSD) of all "
+        "conformations in target to a reference conformation"
+    )
     args_schema: Type[BaseModel] = RMSDInputSchema
     path_registry: Optional[PathRegistry]
 
@@ -318,34 +201,67 @@ class RMSDCalculator(BaseTool):
         self.path_registry = path_registry
 
     def _run(
-        self,
-        rmsd_type: str,
-        pdb_file: str,
-        trajectory: Optional[str] = None,
-        ref_file: Optional[str] = None,
-        ref_trajectory: Optional[str] = None,
-        selection: str = "backbone",
-        plot: bool = True,
+        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
     ):
         try:
-            rmsd = RMSDFunctions(
-                self.path_registry, pdb_file, trajectory, ref_file, ref_trajectory
+            msg = rmsd(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
             )
-            message = rmsd.calculate_rmsd(rmsd_type, selection, plot)
-        except ValueError as e:
-            return (
-                f"Failed. ValueError: {e}. Make sure to provide valid PBD "
-                "file and binding site using MDAnalysis selection syntax."
-            )
-        except FileNotFoundError as e:
-            return (
-                f"Failed. FileNotFoundError: {e}. "
-                "Make sure to provide all necessary files."
-            )
+            return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
-        return "Succeeded. " + message
 
-    def _arun(self, **query):
-        """Use the tool asynchronously."""
-        raise NotImplementedError("This tool does not support async")
+
+class ComputeRMSF(BaseTool):
+    name: str = "ComputeRMSF"
+    description: str = (
+        "Compute root mean square fluctuation (RMSF) of all "
+        "conformations in target to a reference conformation"
+    )
+    args_schema: Type[BaseModel] = RMSDInputSchema
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(
+        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
+    ):
+        try:
+            msg = rmsf(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
+            )
+            return f"Succeeded. {msg}"
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
+
+
+class ComputeLPRMSD(BaseTool):
+    name: str = "ComputeLP-RMSD"
+    description: str = (
+        "Compute Linear-Programming Root-Mean-Squared Deviation "
+        "(LP-RMSD) of all conformations in target to a reference "
+        "conformation. The LP-RMSD is the minimum RMSD between "
+        "two sets of points, minimizing over both the rotational/"
+        "translational degrees of freedom AND the label "
+        "correspondences between points in the target and "
+        "reference conformations."
+    )
+    args_schema: Type[BaseModel] = RMSDInputSchema
+    path_registry: Optional[PathRegistry]
+
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(
+        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
+    ):
+        try:
+            msg = lprmsd(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
+            )
+            return f"Succeeded. {msg}"
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"

@@ -1,15 +1,13 @@
 import os
-from io import StringIO
 from unittest.mock import MagicMock, mock_open, patch
 
-import MDAnalysis as mda
-import numpy as np
 import pytest
 
 from mdagent.tools.base_tools import VisFunctions
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.analysis_tools.ppi_tools import ppi_distance
-from mdagent.tools.base_tools.analysis_tools.rmsd_tools import RMSDFunctions
+
+# from mdagent.tools.base_tools.analysis_tools.rmsd_tools import RMSDFunctions
 
 
 @pytest.fixture
@@ -20,6 +18,9 @@ def plotting_tools(get_registry):
 @pytest.fixture
 def vis_fxns(get_registry):
     return VisFunctions(get_registry("raw", False))
+
+
+################ Plotting #################
 
 
 def test_process_csv(plotting_tools):
@@ -86,6 +87,9 @@ def test_plot_data(plotting_tools):
         assert "All plots failed due to non-numeric data." in str(excinfo.value)
 
 
+################ Visualization #################
+
+
 @pytest.mark.skip(reason="molrender is not pip installable")
 def test_run_molrender(path_to_cif, vis_fxns):
     result = vis_fxns.run_molrender(path_to_cif)
@@ -108,16 +112,9 @@ def test_create_notebook(path_to_cif, vis_fxns):
     assert result == "Visualization Complete"
 
 
-@pytest.fixture
-def rmsd_functions(get_registry):
-    reg = get_registry("raw", True)
-    pdb_file = reg.get_mapped_path("ALA_123456")
-    rmsd_functions = RMSDFunctions(reg, pdb_file, "trajectory.dcd")
-    rmsd_functions.trajectory = "trajectory.dcd"
-    rmsd_functions.pdb_file = pdb_file
-    return rmsd_functions
+################ RMSD & PPI #################
 
-
+# pdb with two chains
 pdb_string = """
 ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
 ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C
@@ -132,221 +129,33 @@ ATOM     10  N   GLY B   3      -4.374   1.527   0.000  1.00 20.00           N
 TER
 END
 """
-pdb_file_like = StringIO(pdb_string)
-u = mda.Universe(pdb_file_like, format="PDB")
 
 
 @pytest.fixture
-def mock_mda_universe(get_registry):
-    # reg = get_registry("raw", True)
-    # pdb_freg.get_mapped_path("ALA_123456")
-    with patch(
-        "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.Universe", return_value=u
-    ) as mock_universe:
-        yield mock_universe
+def pdb_path(get_registry):
+    reg = get_registry("raw", True)
+    file_path = f"{reg.ckpt_dir}/twochains.pdb"
+    with open(file_path, "w") as file:
+        file.write(pdb_string)
+    return file_path
 
 
-@pytest.fixture
-def mock_rmsd_run():
-    mock_rmsd_results = MagicMock()
-    mock_rmsd_results.rmsd = np.array([[0, 0.0, 0.1], [1, 10.0, 0.2]])
-    with patch(
-        "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.analysis.rms.RMSD",
-        return_value=MagicMock(results=mock_rmsd_results),
-    ) as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_savetxt():
-    with patch(
-        "mdagent.tools.base_tools.analysis_tools.rmsd_tools.np.savetxt"
-    ) as mock_savetxt:
-        yield mock_savetxt
-
-
-@pytest.fixture
-def mock_plt_savefig():
-    with patch("mdagent.tools.base_tools.analysis_tools.rmsd_tools.plt.savefig") as plt:
-        yield plt
-
-
-def test_ppi_distance(mock_mda_universe):
-    file_path = "dummy_path.pdb"
-    avg_dist = ppi_distance(file_path)
+def test_ppi_distance(pdb_path):
+    avg_dist = ppi_distance(pdb_path, "protein")
     assert avg_dist > 0, "Expected a positive average distance"
 
 
-def test_calculate_rmsd(rmsd_functions):
-    # Mock all related compute_* methods in rmsd_functions
-    with patch.object(
-        rmsd_functions, "compute_rmsd_2sets"
-    ) as mock_compute_2sets, patch.object(
-        rmsd_functions, "compute_rmsd"
-    ) as mock_compute_rmsd, patch.object(
-        rmsd_functions, "compute_2d_rmsd"
-    ) as mock_compute_2d_rmsd, patch.object(
-        rmsd_functions, "compute_rmsf"
-    ) as mock_compute_rmsf:
-        # Test rmsd_type="rmsd" with a reference file (call compute_rmsd_2sets)
-        rmsd_functions.ref_file = "ref.pdb"
-        rmsd_functions.calculate_rmsd(rmsd_type="rmsd")
-        mock_compute_2sets.assert_called_once_with(selection="backbone")
-        mock_compute_rmsd.assert_not_called()
-        mock_compute_2d_rmsd.assert_not_called()
-        mock_compute_rmsf.assert_not_called()
-
-        mock_compute_2sets.reset_mock()
-
-        # Test rmsd_type="rmsd" without a reference file (compute_rmsd should be called)
-        rmsd_functions.ref_file = None
-        rmsd_functions.calculate_rmsd(rmsd_type="rmsd")
-        mock_compute_rmsd.assert_called_once_with(selection="backbone", plot=True)
-        mock_compute_2sets.assert_not_called()
-        mock_compute_2d_rmsd.assert_not_called()
-        mock_compute_rmsf.assert_not_called()
-
-        mock_compute_rmsd.reset_mock()
-
-        # Test rmsd_type="pairwise_rmsd" (compute_2d_rmsd should be called)
-        rmsd_functions.calculate_rmsd(rmsd_type="pairwise_rmsd")
-        mock_compute_2d_rmsd.assert_called_once_with(
-            selection="backbone", plot_heatmap=True
-        )
-        mock_compute_2sets.assert_not_called()
-        mock_compute_rmsd.assert_not_called()
-        mock_compute_rmsf.assert_not_called()
-
-        mock_compute_2d_rmsd.reset_mock()
-
-        # Test rmsd_type="rmsf" (compute_rmsf should be called)
-        rmsd_functions.calculate_rmsd(rmsd_type="rmsf")
-        mock_compute_rmsf.assert_called_once_with(selection="backbone", plot=True)
-        mock_compute_2sets.assert_not_called()
-        mock_compute_rmsd.assert_not_called()
-        mock_compute_2d_rmsd.assert_not_called()
-
-        # Test for invalid rmsd_type (should raise ValueError)
-        with pytest.raises(ValueError):
-            rmsd_functions.calculate_rmsd(rmsd_type="invalid_rmsd_type")
-
-
-def test_compute_rmsd_2sets(mock_mda_universe, rmsd_functions):
-    with patch(
-        "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.analysis.rms.rmsd",
-        return_value=0.5,
-    ) as mock_rmsd:
-        result = rmsd_functions.compute_rmsd_2sets(selection="backbone")
-        assert "0.5" in result, "RMSD value should be present in the result string"
-        mock_mda_universe.assert_called()
-        mock_rmsd.assert_called()
-
-
-def test_compute_rmsd(mock_mda_universe, mock_rmsd_run, mock_savetxt, rmsd_functions):
-    rmsd_functions.filename = "test_rmsd"
-
-    message = rmsd_functions.compute_rmsd(selection="backbone", plot=False)
-
-    mock_mda_universe.assert_called_once()
-    mock_rmsd_run.assert_called_once()
-    mock_savetxt.assert_called_once()
-    args, kwargs = mock_savetxt.call_args
-    assert args[0].startswith(
-        f"{rmsd_functions.path_registry.ckpt_records}/{rmsd_functions.filename}_"
-    ), "np.savetxt called with unexpected file name"
-    # assert "test_rmsd.csv" in args, "Expected np.savetxt to save to correct file"
-    assert "Average RMSD is 0.15" in message, "Expected correct average RMSD in message"
-    assert "Final RMSD is 0.2" in message, "Expected correct final RMSD in message"
-    assert "Saved to test_rmsd_" in message, "Expected correct save file message"
-
-
-@pytest.mark.parametrize("plot_enabled", [True, False])
-def test_compute_rmsd_plotting(
-    plot_enabled, mock_mda_universe, mock_plt_savefig, rmsd_functions
-):
-    pdb_name = rmsd_functions.pdb_name
-    rmsd_functions.filename = f"rmsd_{pdb_name}"
-    with patch("matplotlib.pyplot.figure"), patch("matplotlib.pyplot.plot"), patch(
-        "matplotlib.pyplot.xlabel"
-    ), patch("matplotlib.pyplot.ylabel"), patch("matplotlib.pyplot.title"), patch(
-        "matplotlib.pyplot.close"
+def test_ppi_distance_no_binding_residues(pdb_path):
+    with pytest.raises(
+        ValueError, match="No matching residues found for the binding site."
     ):
-        message = rmsd_functions.compute_rmsd(selection="backbone", plot=plot_enabled)
-    if plot_enabled:
-        mock_plt_savefig.assert_called_once()
-        args, _ = mock_plt_savefig.call_args
-        assert args[0].startswith(
-            f"{rmsd_functions.path_registry.ckpt_figures}/{rmsd_functions.filename}"
-        ), "plt.savefig called with unexpected file path"
-        assert (
-            f"Plotted RMSD over time for {pdb_name}."
-            f" Saved to {rmsd_functions.filename}" in message
-        ), "Expected correct plotting message"
-        assert f"Saved to {rmsd_functions.filename}" in message  # csv file
-    else:
-        mock_plt_savefig.assert_not_called()
+        ppi_distance(pdb_path, "residue 10000")
 
 
-def test_compute_2d_rmsd(mock_mda_universe, mock_savetxt, rmsd_functions):
-    rmsd_functions.filename = "test_pairwise_rmsd"
-    patch_path = (
-        "mdagent.tools.base_tools.analysis_tools.ppi_tools.mda.analysis."
-        "diffusionmap.DistanceMatrix.run"
-    )
-    with patch(patch_path) as mock_distance_matrix_run:
-        result = rmsd_functions.compute_2d_rmsd(
-            selection="backbone", plot_heatmap=False
-        )
-        mock_mda_universe.assert_called()
-        mock_distance_matrix_run.assert_called()
-        mock_savetxt.assert_called()
-        assert "Saved pairwise RMSD matrix" in result
-
-
-@pytest.mark.parametrize("plot", [True, False])
-def test_compute_rmsf(rmsd_functions, mock_mda_universe, plot):
-    with patch.object(
-        rmsd_functions, "process_rmsf_results"
-    ) as mocked_process_rmsf_results:
-        mocked_process_rmsf_results.return_value = None
-        rmsd_functions.compute_rmsf(selection="backbone", plot=plot)
-        mock_mda_universe.assert_called()
-        mocked_process_rmsf_results.assert_called_once()
-        args, kwargs = mocked_process_rmsf_results.call_args
-        selection = kwargs["selection"]
-        plot_arg = kwargs["plot"]
-        assert selection == "backbone"
-        assert plot_arg is plot
-
-
-@pytest.mark.parametrize("plot", [True, False])
-def test_process_rmsf_results(rmsd_functions, mock_plt_savefig, mock_savetxt, plot):
-    rmsd_functions.filename = "test_rmsf"
-    mock_atoms = MagicMock()
-    mock_atoms.resids = np.arange(1, 11)
-    mock_atoms.resnums = np.arange(1, 11)
-    mock_rmsf_values = np.random.rand(10)
-    with patch("matplotlib.pyplot.figure"), patch("matplotlib.pyplot.plot"), patch(
-        "matplotlib.pyplot.xlabel"
-    ), patch("matplotlib.pyplot.ylabel"), patch("matplotlib.pyplot.title"), patch(
-        "matplotlib.pyplot.close"
+def test_ppi_distance_one_chain(get_registry):
+    reg = get_registry("raw", True)
+    file_path = reg.get_mapped_path("ALA_123456")
+    with pytest.raises(
+        ValueError, match="Only one chain found. Cannot compute PPI distance."
     ):
-        message = rmsd_functions.process_rmsf_results(
-            mock_atoms, mock_rmsf_values, plot=plot
-        )
-    mock_savetxt.assert_called_once()
-    args, _ = mock_savetxt.call_args
-    assert args[0].startswith(
-        f"{rmsd_functions.path_registry.ckpt_records}/{rmsd_functions.filename}_"
-    ), "CSV file path passed to np.savetxt doesn't match expected pattern."
-    assert "Saved RMSF data to" in message, "Expected save message not found in return."
-    if plot:
-        mock_plt_savefig.assert_called_once()
-        savefig_args, _ = mock_plt_savefig.call_args
-        assert savefig_args[0].startswith(
-            f"{rmsd_functions.path_registry.ckpt_figures}/FIG_{rmsd_functions.filename}_"
-        ), "Plot file path passed to plt.savefig doesn't match expected pattern."
-        assert "Plotted RMSF. Saved to" in message, "Expected plot message not found."
-
-    else:
-        mock_plt_savefig.assert_not_called()
+        ppi_distance(file_path, "protein")
