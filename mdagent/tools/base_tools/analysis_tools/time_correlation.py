@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
-from scipy.integrate import simps
+from scipy.integrate import simpson
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -39,7 +39,7 @@ class TimeCorrelation:
         Returns:
         str: Completion message and file path where the time correlation is saved.
         """
-        time_series = np.loadtxt(self.file_path)
+        time_series = np.loadtxt(self.file_path, delimiter=",")
         num_frames = time_series.shape[0]
         autocorrelation = np.zeros(num_frames)
 
@@ -54,7 +54,7 @@ class TimeCorrelation:
         autocorrelation /= autocorrelation[0]  # Normalize
 
         # integrate the autocorrelation function to obtain tau
-        self.tau = simps(autocorrelation, dx=self.time_step)
+        self.tau = simpson(autocorrelation, dx=self.time_step)
         self.autocorrelation = autocorrelation
 
         # save to file
@@ -84,7 +84,7 @@ class TimeCorrelation:
         str: Completion message with file ID information.
         """
         message = ""
-        if not self.autocorrelation:
+        if self.autocorrelation is None:
             message += self.calculate_time_correlation()
         fig_analysis = f"{self.property}_time_correlation"
         fig_name = self.path_registry.write_file_name(

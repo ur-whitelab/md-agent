@@ -33,6 +33,7 @@ setup(
         "python-dotenv",
         "rdkit",
         "requests",
+        "scipy",
         "streamlit",
         "tiktoken",
     ],
