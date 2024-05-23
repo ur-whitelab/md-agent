@@ -1,9 +1,6 @@
 import os
-from io import StringIO
 from unittest.mock import MagicMock, mock_open, patch
 
-import MDAnalysis as mda
-import numpy as np
 import pytest
 
 from mdagent.tools.base_tools import VisFunctions
@@ -11,15 +8,12 @@ from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.analysis_tools.ppi_tools import ppi_distance
 from mdagent.tools.base_tools.analysis_tools.rmsd_tools import lprmsd, rmsd, rmsf
 
+#################### PLOTTING ####################
+
 
 @pytest.fixture
 def plotting_tools(get_registry):
     return PlottingTools(get_registry("raw", False))
-
-
-@pytest.fixture
-def vis_fxns(get_registry):
-    return VisFunctions(get_registry("raw", False))
 
 
 def test_process_csv(plotting_tools):
@@ -86,6 +80,14 @@ def test_plot_data(plotting_tools):
         assert "All plots failed due to non-numeric data." in str(excinfo.value)
 
 
+################ VISUALIZATION #################
+
+
+@pytest.fixture
+def vis_fxns(get_registry):
+    return VisFunctions(get_registry("raw", False))
+
+
 @pytest.mark.skip(reason="molrender is not pip installable")
 def test_run_molrender(path_to_cif, vis_fxns):
     result = vis_fxns.run_molrender(path_to_cif)
@@ -106,6 +108,7 @@ def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
     (f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb")
     assert result == "Visualization Complete"
+
 
 ################ RMSD & PPI #################
 
@@ -155,20 +158,24 @@ def test_ppi_distance_one_chain(get_registry):
     ):
         ppi_distance(file_path, "protein")
 
+
 def test_rmsd(get_registry):
     reg = get_registry("raw", True)
     result = rmsd(reg, "top_sim0_butane_123456", "rec0_butane_123456", select="all")
     assert "RMSD calculated and saved" in result
+
 
 def test_rmsd_single_value(get_registry):
     reg = get_registry("raw", True)
     result = rmsd(reg, "top_sim0_butane_123456", select="all")
     assert "RMSD calculated." in result
 
+
 def test_rmsf(get_registry):
     reg = get_registry("raw", True, dynamic=True, include_hydrogens=True)
     result = rmsf(reg, "top_sim0_butane_123456", "rec0_butane_123456", select="all")
     assert "RMSF calculated and saved" in result
+
 
 def test_lprmsd(get_registry):
     reg = get_registry("raw", True)
