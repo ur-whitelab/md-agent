@@ -36,6 +36,8 @@ setup(
         "seaborn",
         "streamlit",
         "tiktoken",
+        "scikit-learn",
+        "scipy",
     ],
     test_suite="tests",
     long_description=long_description,
