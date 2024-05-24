@@ -1,13 +1,14 @@
 from typing import Optional
 
 import matplotlib.pyplot as plt
-import MDAnalysis as mda
-import MDAnalysis.analysis.pca as pca
+import mdtraj as md
 import numpy as np
 import pandas as pd
+import scipy
 import seaborn as sns
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
+from sklearn.decomposition import PCA
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -23,50 +24,65 @@ class PCA_analysis:
         selection="backbone",
     ):
         self.path_registry = path_registry
-        self.u = mda.Universe(top_path, traj_path)
+        self.traj = md.load(traj_path, top=top_path)
         self.sim_id = sim_id
         if pc_percentage > 1:
             pc_percentage /= 100
         self.pc_percentage = pc_percentage
-        self.atom_selection = self.u.select_atoms(selection)
+        self.atom_indices = self.traj.top.select(selection)
         self.selection = selection
-        self.pc = None
+        self.pc = PCA(n_components=30)
+        self.reduce_dim = None
+        self._sub_pcs = None
         self.n_pcs = None
 
     def _align_trajectory(self):
+        ###########MD TRAJ ALIGNMENT################
         try:
-            mda.analysis.align.AlignTraj(
-                self.u, self.u, select=self.selection, in_memory=True
-            ).run()
+            self.traj.superpose(self.traj, frame=0, atom_indices=self.atom_indices)
             return "Trajectory aligned to the first frame. "
         except Exception as e:
             print(f"Error aligning trajectory: {str(e)}")
-            return "Trajectory not aligned. Results may not be trustful"
 
     def get_pc(self):
         align_message = self._align_trajectory()
-        self.pc = pca.PCA(
-            self.u,
-            select=self.selection,
-            align=True,
-            mean=None,
-            n_components=None,
-            verbose=True,
-        ).run()
+        # self.pc = pca.PCA(
+        #    self.u,
+        #    select=self.selection,
+        #    align=True,
+        #    mean=None,
+        #    n_components=None,
+        #    verbose=True,
+        # ).run()
+        self.reduce_dim = self.pc.fit_transform(
+            self.traj.xyz[:, self.atom_indices].reshape(
+                self.traj.n_frames, len(self.atom_indices) * 3
+            )
+        )
+
         return "PCA done" + align_message
 
+    def _sub_array_sum_to_m(self, arr, M):
+        result = []
+        sum = 0
+        for value in arr:
+            if sum >= M:
+                break
+            result.append(value)
+            sum += value
+        return result
+
     def _get_number_pcs(self):
-        self.n_pcs = np.where(self.pc.results.cumulated_variance > self.pc_percentage)[
-            0
-        ][0]
+        self._sub_pcs = self._sub_array_sum_to_m(
+            self.pc.explained_variance_ratio_, self.pc_percentage
+        )
+        self.n_pcs = len(self._sub_pcs)
         if self.n_pcs > 3:
             self.n_pcs = 3
         return self.n_pcs
 
     def _make_transformation(self):
-        self.transformed = self.pc.transform(
-            self.atom_selection, n_components=self.n_pcs
-        )
+        self.transformed = self.reduce_dim[:, : self.n_pcs]
 
     def _make_df(self):
         self._get_number_pcs()
@@ -74,7 +90,28 @@ class PCA_analysis:
         self.pc_df = pd.DataFrame(
             self.transformed, columns=["PC{}".format(i + 1) for i in range(self.n_pcs)]
         )
-        self.pc_df["Time (ps)"] = self.pc_df.index * self.u.trajectory.dt
+        self.pc_df["Time (ps)"] = self.pc_df.index * self.traj.timestep
+
+    def _cosine_content(self, pca_space, i):
+        """Measure the cosine content of the PCA projection.
+
+        The cosine content of pca projections can be used as an indicator if a
+        simulation is converged. Values close to 1 are an indicator that the
+        simulation isn't converged. For values below 0.7 no statement can be made.
+        If you use this function please cite [BerkHess1]_.
+        References
+        ----------
+        .. [BerkHess1] Berk Hess. Convergence of sampling in protein simulations.
+                    Phys. Rev. E 65, 031910 (2002).
+        """
+        t = np.arange(len(pca_space))
+        T = len(pca_space)
+        cos = np.cos(np.pi * t * (i + 1) / T)
+        return (
+            (2.0 / T)
+            * (scipy.integrate.simps(cos * pca_space[:, i])) ** 2
+            / scipy.integrate.simps(pca_space[:, i] ** 2)
+        )
 
     def make_scree_plot(self):
         extra_mess = ""
@@ -82,19 +119,16 @@ class PCA_analysis:
             pc_mess = self.get_pc()
             if "not aligned" in pc_mess:
                 extra_mess += pc_mess
-
-        cumulative_variance = self.pc.results.cumulated_variance
-        print(cumulative_variance)
+        if not self.n_pcs:
+            self._get_number_pcs()
+        cumulative_variance = self.pc.explained_variance_ratio_.cumsum()
         plt.plot(cumulative_variance)
         # Calculate the index where cumulative variance exceeds or meets 95%
-        threshold = self.pc_percentage
-        threshold_index = next(
-            x[0] for x in enumerate(cumulative_variance) if x[1] >= 1 - threshold
-        )
+        threshold_index = len(self._sub_pcs) - 1
 
         # Add a horizontal dashed line at 95% threshold
         plt.axvline(
-            x=threshold + 1,
+            x=threshold_index,
             color="r",
             linestyle="--",
             label=f"{self.pc_percentage*100}% Contribution at PC {threshold_index+1}",
@@ -146,7 +180,7 @@ class PCA_analysis:
 
         pc_messages = []
         for i in range(self.n_pcs):
-            cc = pca.cosine_content(self.transformed, i)
+            cc = self._cosine_content(self.transformed, i)
             pc_messages.append(f"Cosine Content for PC {i+1}-{cc:.3f}\n")
         cc_message = f"Cosine Content of each PC: {','.join(pc_messages)}"
         return pc_mess + cc_message
