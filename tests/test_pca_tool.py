@@ -63,7 +63,8 @@ def test_cosine_content(get_registry):
         top_path=reg.get_mapped_path("top_sim0_butane_123456"),
         traj_path=reg.get_mapped_path("rec0_butane_123456"),
         sim_id="sim0_butane_123456",
-        selection="name CA",
+        selection="all",  # this is because it is a made up simulation of butane.
+        # usually it would be "name CA" to get every residue
     )
     pca_space = np.random.rand(100, 2)
     T = len(pca_space)
