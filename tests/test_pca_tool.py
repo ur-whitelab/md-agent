@@ -31,7 +31,7 @@ def test_pca_tool_good_inputs(get_registry):
         "topology_fileid": "top_sim0_butane_123456",
         "pc_percentage": "95",
         "analysis": "all",
-        "selection": "name CA",
+        "selection": "all",
     }
 
     with patch("matplotlib.pyplot.figure"), patch("matplotlib.pyplot.plot"), patch(
