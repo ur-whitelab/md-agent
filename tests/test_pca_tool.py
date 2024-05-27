@@ -60,8 +60,8 @@ def test_cosine_content(get_registry):
     pca_analysis = PCA_analysis(
         path_registry=reg,
         pc_percentage=95,
-        top_path=reg.get_path("top_sim0_butane_123456"),
-        traj_path=reg.get_path("rec0_butane_123456"),
+        top_path=reg.get_mapped_path("top_sim0_butane_123456"),
+        traj_path=reg.get_mapped_path("rec0_butane_123456"),
         sim_id="sim0_butane_123456",
         selection="name CA",
     )
