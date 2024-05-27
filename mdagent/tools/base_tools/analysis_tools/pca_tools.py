@@ -46,14 +46,6 @@ class PCA_analysis:
 
     def get_pc(self):
         align_message = self._align_trajectory()
-        # self.pc = pca.PCA(
-        #    self.u,
-        #    select=self.selection,
-        #    align=True,
-        #    mean=None,
-        #    n_components=None,
-        #    verbose=True,
-        # ).run()
         self.reduce_dim = self.pc.fit_transform(
             self.traj.xyz[:, self.atom_indices].reshape(
                 self.traj.n_frames, len(self.atom_indices) * 3
@@ -147,7 +139,7 @@ class PCA_analysis:
         )
         plot_id = self.path_registry.get_fileid(file_name, FileType.FIGURE)
         path = self.path_registry.ckpt_dir + "/figures/"
-        plt.savefig(path + file_name)  # Save the figure before plt.show()
+        plt.savefig(path + file_name)
         self.path_registry.map_path(plot_id, path + file_name, description=desc)
         return f"Scree Plot saved as {plot_id} ID\n" + extra_mess
 
@@ -165,7 +157,7 @@ class PCA_analysis:
         )
         plot_id = self.path_registry.get_fileid(file_name, FileType.FIGURE)
         path = self.path_registry.ckpt_dir + "/figures/"
-        plt.savefig(path + file_name)  # Save the figure before plt.show()
+        plt.savefig(path + file_name)
         self.path_registry.map_path(plot_id, path + file_name, description=desc)
         return f"PCA plots saved as {plot_id} "
 
