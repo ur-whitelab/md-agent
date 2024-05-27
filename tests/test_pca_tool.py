@@ -89,5 +89,5 @@ def test_sub_array_sum(get_registry):
     array_3 = [0.96, 0.02, 0.01, 0.01]
 
     assert pca_analysis._sub_array_sum_to_m(array_1, 0.95) == [0.60, 0.25, 0.11]
-    assert pca_analysis._sub_array_sum_to_m(array_2, 0.95) == [0.30, 0.25, 0.25]
+    assert pca_analysis._sub_array_sum_to_m(array_2, 0.95) == [0.30, 0.25, 0.25, 0.20]
     assert pca_analysis._sub_array_sum_to_m(array_3, 0.95) == [0.96]
