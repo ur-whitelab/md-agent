@@ -71,3 +71,23 @@ def test_cosine_content(get_registry):
     np.arange(T)
     assert pca_analysis._cosine_content(pca_space=pca_space, i=0) < 0.1
     assert pca_analysis._cosine_content(pca_space=pca_space, i=1) < 0.1
+
+
+def test_sub_array_sum(get_registry):
+    reg = get_registry("raw", True, dynamic=True, include_hydrogens=True)
+    pca_analysis = PCA_analysis(
+        path_registry=reg,
+        pc_percentage=95,
+        top_path=reg.get_mapped_path("top_sim0_butane_123456"),
+        traj_path=reg.get_mapped_path("rec0_butane_123456"),
+        sim_id="sim0_butane_123456",
+        selection="all",
+    )
+
+    array_1 = [0.60, 0.25, 0.11, 0.04]
+    array_2 = [0.30, 0.25, 0.25, 0.20]
+    array_3 = [0.96, 0.02, 0.01, 0.01]
+
+    assert pca_analysis._sub_array_sum(array_1, 0.95) == [0.60, 0.25, 0.11]
+    assert pca_analysis._sub_array_sum(array_2, 0.95) == [0.30, 0.25, 0.25]
+    assert pca_analysis._sub_array_sum(array_3, 0.95) == [0.96]
