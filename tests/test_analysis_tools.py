@@ -8,8 +8,8 @@ import pytest
 
 from mdagent.tools.base_tools import VisFunctions
 from mdagent.tools.base_tools.analysis_tools.inertia import (
+    MOIFunctions,
     MomentOfInertia,
-    calculate_moment_of_inertia,
     load_traj,
     save_to_csv,
 )
@@ -482,6 +482,14 @@ def test_save_to_csv(get_registry):
 # testing core inertia functions
 
 
+@pytest.fixture
+def moi_functions(get_registry):
+    registry = get_registry("raw", True)
+    top_fileid = "top_sim0_butane_123456"
+    traj_fileid = "rec0_butane_123456"
+    return MOIFunctions(registry, top_fileid, traj_fileid)
+
+
 def test_moi_tool_init(get_registry):
     registry = get_registry("raw", False)
     tool = MomentOfInertia(path_registry=registry)
@@ -489,15 +497,33 @@ def test_moi_tool_init(get_registry):
     assert tool.path_registry == registry
 
 
-def test_calculate_moment_of_inertia(get_registry):
-    registry = get_registry("raw", True)
-    top_fileid = "top_sim0_butane_123456"
-    traj_fileid = "rec0_butane_123456"
-    msg = calculate_moment_of_inertia(registry, top_fileid, traj_fileid)
+def test_calculate_moment_of_inertia(moi_functions):
+    msg = moi_functions.calculate_moment_of_inertia()
     assert "Average Moment of Inertia Tensor:" in msg
     assert "saved to:" in msg
     assert "MOI_sim0_butane" in msg
 
-    mol_name = "butane"
-    msg = calculate_moment_of_inertia(registry, top_fileid, traj_fileid, mol_name)
+    moi_functions.mol_name = "butane"
+    msg = moi_functions.calculate_moment_of_inertia()
     assert "MOI_butane" in msg
+
+
+def test_plot_moi_one_frame(moi_functions):
+    # Simulate a single frame of inertia tensor data
+    moi_functions.moments_of_inertia = np.array([[1.0, 2.0, 3.0]])
+    result = moi_functions.plot_moi()
+    assert "Only one frame in trajectory, no plot generated." in result
+
+
+@patch("mdagent.tools.base_tools.analysis_tools.sasa.plt.savefig")
+@patch("mdagent.tools.base_tools.analysis_tools.sasa.plt.close")
+def test_plot_moi_multiple_frames(mock_close, mock_savefig, moi_functions):
+    # Simulate multiple frames of inertia tensor data
+    moi_functions.moments_of_inertia = np.array([[1.0, 2.0, 3.0], [1.1, 2.1, 3.1]])
+    moi_functions.avg_moi = np.mean(moi_functions.moments_of_inertia, axis=0)
+    moi_functions.min_moi = np.min(moi_functions.moments_of_inertia, axis=0)
+
+    result = moi_functions.plot_moi()
+    assert "Plot of moments of inertia over time saved as:" in result
+    mock_savefig.assert_called_once()
+    mock_close.assert_called_once()

@@ -54,12 +54,12 @@ class SASAFunctions:
         )
 
         # save to file
-        sasa_file = f"{self.path_registry.ckpt_figures}/sasa_{self.molecule_name}.csv"
+        sasa_file = f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}.csv"
         i = 0
         while os.path.exists(sasa_file):
             i += 1
             sasa_file = (
-                f"{self.path_registry.ckpt_figures}/sasa_{self.molecule_name}_{i}.csv"
+                f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}_{i}.csv"
             )
         np.savetxt(sasa_file, self.sasa, delimiter=",", header="SASA (nm²)")
         self.path_registry.map_path(
