@@ -10,10 +10,10 @@ from pydantic import BaseModel, Field
 from mdagent.utils import FileType, PathRegistry
 
 
-class SASAAnalysis:
+class SASAFunctions:
     def __init__(self, path_registry, top_fileid, traj_fileid=None, mol_name=None):
         """
-        Initialize the MomentOfInertia class with topology and/or trajectory files.
+        Initialize the SASAFunctions class with topology and/or trajectory files.
 
         Parameters:
         path_registry (PathRegistry): mapping file IDs to file paths.
@@ -47,20 +47,11 @@ class SASAAnalysis:
         Parameters:
         probe_radius (float, optional): The radius of the probe used to calculate SASA.
             Default is 0.14 nm (1.4 Å).
-
-        Returns:
-        None
         """
-        sasa = md.shrake_rupley(self.traj, probe_radius=probe_radius)
-        # sasa - 2D array of (n_frames, n_atoms)
-        residue_sasa_list = []
-        for i in range(self.traj.n_residues):
-            # get SASA values from all non-hydrogen atoms in the current residue
-            atom_indices = self.traj.topology.select(f"resid {i} and not element H")
-            residue_sasa_values = np.sum(sasa[:, atom_indices], axis=1)
-            residue_sasa_list.append(residue_sasa_values)
-        self.residue_sasa = np.array(residue_sasa_list).T
-        self.sasa = sasa
+        self.sasa = md.shrake_rupley(self.traj, probe_radius=probe_radius, mode="atom")
+        self.residue_sasa = md.shrake_rupley(
+            self.traj, probe_radius=probe_radius, mode="residue"
+        )
 
         # save to file
         sasa_file = f"{self.path_registry.ckpt_figures}/sasa_{self.molecule_name}.csv"
@@ -70,7 +61,7 @@ class SASAAnalysis:
             sasa_file = (
                 f"{self.path_registry.ckpt_figures}/sasa_{self.molecule_name}_{i}.csv"
             )
-        np.savetxt(sasa_file, sasa, delimiter=",", header="SASA (nm²)")
+        np.savetxt(sasa_file, self.sasa, delimiter=",", header="SASA (nm²)")
         self.path_registry.map_path(
             f"sasa_{self.molecule_name}_{i}",
             sasa_file,
@@ -88,6 +79,13 @@ class SASAAnalysis:
         message = ""
         if self.sasa is None or self.residue_sasa is None:
             message += self.calculate_sasa()
+
+        # Returns areasnp.array, shape=(n_frames, n_features)
+        # if there's only one frame, don't plot
+        if self.sasa.ndim == 1:
+            message += " Only one frame in trajectory. No SASA plot generated."
+            return message
+
         fig_analysis = f"sasa_{self.molecule_name}"
         fig_name = self.path_registry.write_file_name(
             type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
@@ -148,7 +146,7 @@ class SolventAccessibleSurfaceArea(BaseTool):
         mol_name: Optional[str] = None,
     ) -> str:
         try:
-            sasa_analysis = SASAAnalysis(
+            sasa_analysis = SASAFunctions(
                 self.path_registry, top_fileid, traj_fileid, mol_name
             )
             return f"Succeeded. {sasa_analysis.plot_sasa()}"

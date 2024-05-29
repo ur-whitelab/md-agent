@@ -17,7 +17,7 @@ from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
 from mdagent.tools.base_tools.analysis_tools.ppi_tools import ppi_distance
 from mdagent.tools.base_tools.analysis_tools.rmsd_tools import RMSDFunctions
 from mdagent.tools.base_tools.analysis_tools.sasa import (
-    SASAAnalysis,
+    SASAFunctions,
     SolventAccessibleSurfaceArea,
 )
 
@@ -370,7 +370,7 @@ def get_sasa_functions_with_files(get_registry):
     registry = get_registry("raw", True)
     traj_fileid = "rec0_butane_123456"
     top_fileid = "top_sim0_butane_123456"
-    return SASAAnalysis(registry, top_fileid, traj_fileid)
+    return SASAFunctions(registry, top_fileid, traj_fileid)
 
 
 def test_sasa_analysis_init_success(get_registry):
@@ -378,7 +378,7 @@ def test_sasa_analysis_init_success(get_registry):
     with patch.object(
         registry, "get_mapped_path", wraps=registry.get_mapped_path
     ) as mocked_get_mapped_path:
-        analysis = SASAAnalysis(
+        analysis = SASAFunctions(
             registry, "top_sim0_butane_123456", "rec0_butane_123456"
         )
         assert mocked_get_mapped_path.call_count == 2
@@ -392,7 +392,7 @@ def test_sasa_analysis_init_success_no_traj(get_registry):
     with patch.object(
         registry, "get_mapped_path", wraps=registry.get_mapped_path
     ) as mocked_get_mapped_path:
-        analysis = SASAAnalysis(registry, "top_sim0_butane_123456", mol_name="butane")
+        analysis = SASAFunctions(registry, "top_sim0_butane_123456", mol_name="butane")
         mocked_get_mapped_path.assert_called_once()
         assert analysis.path_registry == registry
         assert analysis.molecule_name == "butane"
@@ -422,9 +422,9 @@ def test_calculate_sasa(mock_savetxt, mock_exists, get_sasa_functions_with_files
 @patch("mdagent.tools.base_tools.analysis_tools.sasa.plt.close")
 def test_plot_sasa(mock_close, mock_savefig, get_sasa_functions_with_files):
     analysis = get_sasa_functions_with_files
-    analysis.sasa = np.array([1, 2, 3])  # example data
+    analysis.sasa = np.array([[1, 2, 3], [4, 5, 6]])  # example data
     analysis.residue_sasa = np.array([[1, 2], [3, 4]])
-    with patch.object(SASAAnalysis, "calculate_sasa") as mock_calc:
+    with patch.object(SASAFunctions, "calculate_sasa") as mock_calc:
         result = analysis.plot_sasa()
         mock_calc.assert_not_called()
         mock_savefig.assert_called_once()
