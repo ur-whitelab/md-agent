@@ -5,7 +5,8 @@ TOPOLOGY_FILEID_DESC = "Topology File ID of the simulation to be analyzed"
 SELECTION_DESC = "Selection of atoms from the simulation to use for the analysis"
 
 RES_SELECTION_DESC = (
-    "Selection of residues ids (resids) from the simulation to use for the analysis"
+    "Selection of residues ids from the simulation to use for the analysis."
+    "Example selection: 'resid 0 to 10' or 'resid 0 1 2 3 4 5 6 7 8 9 10'"
 )
 CONTACT_SELECTION_DESC = (
     "Selection of residues from the simulation" " to use for the contact analysis"

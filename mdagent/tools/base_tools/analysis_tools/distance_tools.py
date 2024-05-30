@@ -1,12 +1,16 @@
 import itertools
-from typing import Optional
+import os
+from typing import Literal, Optional
 
+import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
+import pandas as pd
 from langchain.tools import BaseTool
+from matplotlib.animation import FuncAnimation
 from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import FileType, PathRegistry
 
 from .descriptions import (
     CONTACT_SELECTION_DESC,
@@ -15,43 +19,83 @@ from .descriptions import (
     DISPLACEMENT_TOOL_DESC,
     DISTANCE_TOOL_DESC,
     NEIGHBORS_TOOL_DESC,
+    RES_SELECTION_DESC,
     SELECTION_DESC,
     TOPOLOGY_FILEID_DESC,
     TRAJECTORY_FILEID_DESC,
 )
 
 
-class distanceUtils:
+class distanceToolsUtils:
+    def __init__(self, path_registry: Optional[PathRegistry] = None):
+        self.path_registry = path_registry
+
     def all_possible_pairs(self, array1, array2):
         return list(itertools.product(array1, array2))
 
     def calc_residue_dist(self, residues=(0, 0)):
         """
         Return the C-alpha distance between two residues.
+        returns: float  distance
         """
         diff_vector = residues[0] - residues[1]
         return np.sqrt(np.vdot(diff_vector, diff_vector))
 
-    def calc_side_center_mass(self, traj, topology, frame):
+    def calc_side_center_mass(self, traj):
         """
-        Return approximate center of mass of each side chain.
+        Return approximate center of mass of each side chain per frame.
         COM od Glycine is approximated by the coordinate of its CA atom.
-        """
-        scmass = []
 
-        for i in range(0, topology.n_residues):
-            selection = topology.select("(resid %d) and sidechain" % i)
+        Note: Because compute_center_of_mass gets the center of mass of only one
+        selection at a time, we need to loop over all residues to get the each COM.
+
+        returns: com_matrix: np.array, shape=(n_frames, n_residues, 3)
+        """
+        traj = traj.atom_slice(traj.top.select("protein"), inplace=False)
+        com_matrix = np.zeros((traj.n_frames, traj.n_residues, 3))
+        for i in range(0, traj.topology.n_residues):
+            selection = f"(resid {i}) and sidechain"
             if len(selection) < 1:
-                selection = topology.select("(resid %d) and (name CA)" % i)
-            mass = np.array([0.0, 0.0, 0.0])
-            for atom in selection:
-                mass += traj.xyz[frame, atom, :]
-            scmass.append(mass / len(selection))
-        return scmass
+                selection = f"(resid {i}) and (name CA)"
+            try:
+                com_matrix[:, i, :] = md.compute_center_of_mass(traj, select=selection)
+            except Exception as e:
+                raise (f"Error calculating center of mass for residue, {i}: {str(e)}")
+        return com_matrix
+
+    def calc_dis_matrix_from_com_all_resids(self, traj, com_matrix):
+        """
+        Return the distance matrix between the center of mass of residues
+
+        returns: dis_matrix: np.array, shape=(n_frames, n_residues, n_residues)
+        """
+        new_xyz = com_matrix
+        new_topology = pd.DataFrame(
+            {
+                "serial": range(traj.n_residues),
+                "name": ["COM" for _ in traj.topology.residues],
+                "resSeq": range(traj.n_residues),
+                "resName": [i.name for i in traj.topology.residues],
+                "element": ["VS" for _ in traj.topology.residues],
+                "chainID": [
+                    i.chain.chain_id if i.chain.chain_id else 0
+                    for i in traj.topology.residues
+                ],
+                "segmentID": [i.segment_id for i in traj.topology.residues],
+            }
+        )
+        print(new_topology.head())
+        top = md.Topology.from_dataframe(new_topology)
+        new_traj = md.Trajectory(new_xyz, top)
+        pairs = self.all_possible_pairs(range(traj.n_residues), range(traj.n_residues))
+        _dis_matrix = md.compute_distances(new_traj, pairs)
+        dis_matrix = md.geometry.squareform(_dis_matrix, residue_pairs=pairs)
+        return dis_matrix
 
     def calc_residue_side_dist(self, traj, frame, residue_one, residue_two):
         """
-        Return the C-alpha distance between two residues.
+        Return minimum distance between two residues side-chains.
+        returns: float  distance
         """
         # Select first residue
         selection1 = traj.topology.select("(resid %d) and sidechain" % residue_one)
@@ -66,86 +110,111 @@ class distanceUtils:
         )
         return min(map(self.calc_residue_dist, atom_pairs))
 
-    def calc_matrix_cm(self, traj, frame, threshold=0.8, distance=1.2):
+    def calc_matrix_cm_all_resids(traj, threshold=0.8, distance=1.2):
         """
         Used internally to compute the matrix data when the object is
         initialized.
+
+        returns: matrix: np.array, shape=(n_frames, n_residues, n_residues)
         """
-        selection = traj.topology.select("name CA")
-        scmass = self.calc_side_center_mass(traj.topology, frame)
-        dim = len(selection)
+        # By default, this ignores any non-protein atoms
 
-        matrix = np.zeros(dim, dim)
-        for row, atom1 in enumerate(selection):
-            for col, atom2 in enumerate(selection):
-                # Only calculate once
-                if col > row - 1:
-                    continue
-
-                # the atom pointprint(traj.xyz[0, atom, :])
-                val = self.calc_residue_dist(
-                    residues=(traj.xyz[frame, atom1, :], traj.xyz[frame, atom2, :])
-                )
-                # Center of mass
-
-                dis = self.calc_residue_dist((scmass[col], scmass[row]))
-
-                matrix[row, col] = val < threshold
-
-                if dis < distance:
-                    matrix[col, row] = 1 - dis / distance
-                else:
-                    matrix[col, row] = 0
-
+        distances, residue_pairs = md.compute_contacts(traj, scheme="closest-heavy")
+        matrix = md.geometry.squareform(distances, residue_pairs=residue_pairs)
+        for frame in range(matrix.shape[0]):
+            for i in range(matrix.shape[1]):
+                for j in range(matrix.shape[2]):
+                    if matrix.shape[0] == matrix.shape[1]:
+                        if i > j:
+                            if matrix[frame, i, j] < threshold:
+                                matrix[frame, i, j] = 1
+                            else:
+                                matrix[frame, i, j] = 0
+                        else:
+                            if matrix[frame, i, j] < threshold:
+                                matrix[frame, i, j] = 1
+                            elif matrix[frame, i, j] > distance:
+                                matrix[frame, i, j] = 0
+                            else:
+                                matrix[frame, i, j] = 1 - (
+                                    matrix[frame, i, j] - threshold
+                                ) / (distance - threshold)
+                    else:
+                        return matrix < threshold
         return matrix
 
-    def calc_matrix_dis(self, traj, frame, threshold=0.8, distance=(0.5, 1.2)):
+    def calc_matrix_dis_ca_all_resids(self, traj):
         """
-        Used internally to compute the matrix data when the object is
-        initialized.
+        Gets the Matrix distance between all alpha carbons of residues
+        returns: dis_matrix: np.array, shape=(n_frames, n_residues, n_residues)
         """
-        selection = traj.topology.select("name CA")
-        self.calc_side_center_mass(traj.topology, frame)
-        len(selection)
+        self.calc_side_center_mass(traj)
+        traj = traj.atom_slice(traj.top.select("protein"))
+        residues = traj.topology.select("name CA")
+        residues_ids = np.arange(0, traj.topology.n_residues)
+        residue_pairs = self.all_possible_pairs(residues, residues)
+        # needed to use squareform!
+        residue_id_pairs = self.all_possible_pairs(residues_ids, residues_ids)
+        distances = md.compute_distances(traj, residue_pairs)
+        dis_matrix = md.geometry.squareform(distances, residue_pairs=residue_id_pairs)
 
-        matrix = np.zeros((len(selection), len(selection)))  # , np.bool)
-        for row, atom1 in enumerate(selection):
-            for col, atom2 in enumerate(selection):
-                # Only calculate once
-                if col > row - 1:
-                    continue
+        return dis_matrix
 
-                # the atom pointprint(traj.xyz[0, atom, :])
-                val = self.calc_residue_dist(
-                    residues=(traj.xyz[frame, atom1, :], traj.xyz[frame, atom2, :])
-                )
-                # closest distance of sidechains
-                dis = self.calc_residue_side_dist(frame, row, col)
+    def save_matrix_frame(self, matrix, path):
+        pass
 
-                matrix[row, col] = val < threshold
+    def make_movie(
+        self, matrix, option="distance", source_id="unkown", path="distance.gif"
+    ):
+        """
+        Create an animation of the distance matrix over time
+        saves: a gif of the animation
+        returns: None
+        """
+        if option == "distance":
+            Title = "Distance Matrix"
+        elif option == "contact":
+            Title = "Contact Matrix"
+        fig, ax = plt.subplots()
+        im = ax.imshow(matrix[0], origin="lower")
 
-                if dis < distance[0]:
-                    matrix[col, row] = 1
-                elif distance[0] < dis < distance[1]:
-                    matrix[col, row] = (distance[1] - dis) / (distance[1] - distance[0])
-        return matrix
+        # Create a title text object
+        title_text = ax.set_title(f"{Title} frame {0}")
+
+        def update(frame):
+            im.set_array(matrix[frame])
+            # Update the title
+            title_text.set_text(f"{Title} frame {frame}")
+            return im, title_text  # Return both the image and the title text object
+
+        ani = FuncAnimation(fig, update, frames=matrix.shape[0], interval=200)
+        ani.save(path)
+        description = f"{option} matrix over time with {matrix.shape[0]} \
+                frames, and {matrix.shape[1]} residues. \
+                trajectory file: {source_id}"
+        return description
 
 
 class distanceSchema(BaseModel):
     trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
     topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
-    analysis: str = Field(
-        "all", description="Which residues to calculate distance from"
+    analysis: Literal["all", "not all"] = Field(
+        "all",
+        description=(
+            "Which residues ids to calculate distance from, if all, "
+            "all residues will be used if not all, only the selected"
+            " residues (selection1 and selection2) will be used"
+        ),
     )
-    mode: str = Field(
+    mode: Literal["CA", "COM"] = Field(
         "CA",
         description=(
             "What to use for distance calculation, either "
             "alpha carbons (CA) or center of mass (COM)"
         ),
     )
-    selection1: str = Field(description="First" + SELECTION_DESC)
-    selection2: str = Field(description="Second" + SELECTION_DESC)
+    selection1: Optional[str] = Field(description="First" + RES_SELECTION_DESC)
+    selection2: Optional[str] = Field(description="Second" + RES_SELECTION_DESC)
 
 
 class displacementSchema(BaseModel):
@@ -169,8 +238,8 @@ class contactSchema(BaseModel):
     cutoff: float = Field(6.0, description=CUTOFF_DESC)
 
 
-class distanceTool(BaseTool):
-    name = "distanceTool"
+class distanceMatrixTool(BaseTool):
+    name = "distanceMatrixTool"
     description = DISTANCE_TOOL_DESC
     input_schema = distanceSchema
     path_registry: Optional[PathRegistry]
@@ -194,15 +263,32 @@ class distanceTool(BaseTool):
         topology_id = input["topology_fileid"]
         selection1 = input["selection1"]
         selection2 = input["selection2"]
-
+        mode = input["mode"]
+        analysis = input["analysis"]
         path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
         path_to_top = self.path_registry.get_mapped_path(topology_id)
         traj = md.load(path_to_traj, top=path_to_top)
-        atom_indices1 = traj.top.select(selection1)
-        atom_indices2 = traj.top.select(selection2)
-        utils = distanceUtils()
-        pairs = utils.all_possible_pairs(atom_indices1, atom_indices2)
-        md.compute_distances(traj, pairs)
+        if analysis != "all":
+            atom_indices1 = traj.top.select(selection1)
+            atom_indices2 = traj.top.select(selection2)
+            traj = traj.atom_slice(atom_indices1 + atom_indices2, inplace=False)
+        utils = distanceToolsUtils(path_registry=self.path_registry)
+        if mode == "CA":
+            dist_matrix = utils.calc_matrix_dis_ca_all_resids(traj)
+        elif mode == "COM":
+            com_matrix = utils.calc_side_center_mass(traj)
+            dist_matrix = utils.calc_dis_matrix_from_com_all_resids(traj, com_matrix)
+
+        # plotting the distance matrix
+        path = f"{self.path_registry.ckpt_figures}/dist_matrix_{trajectory_id}.gif"
+        if not os.path.exists(
+            f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}"
+        ):
+            os.makedirs(f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}")
+        fig_id = self.path_registry.get_fileid(file_name=path, type=FileType.FIGURE)
+        movie_desc = utils.make_movie(dist_matrix, path=path, source_id=trajectory_id)
+        self.path_registry.map_path(fig_id, path, movie_desc)
+        return "Distance Matrix created with ID: " + fig_id
 
     def _arun(self):
         pass
