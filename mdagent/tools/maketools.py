@@ -24,6 +24,8 @@ from .base_tools import (
     SimulationOutputFigures,
     SmallMolPDB,
     VisualizeProtein,
+    contactsTool,
+    distanceMatrixTool,
 )
 
 
@@ -60,6 +62,8 @@ def make_all_tools(
         SetUpandRunFunction(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
+        contactsTool(path_registry=path_instance),
+        distanceMatrixTool(path_registry=path_instance),
     ]
 
     all_tools += base_tools

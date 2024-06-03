@@ -1,3 +1,4 @@
+from .analysis_tools.distance_tools import contactsTool, distanceMatrixTool
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -44,4 +45,6 @@ __all__ = [
     "SetUpandRunFunction",
     "ModifyBaseSimulationScriptTool",
     "RDFTool",
+    "contactsTool",
+    "distanceMatrixTool",
 ]
