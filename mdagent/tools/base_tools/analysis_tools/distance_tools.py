@@ -112,13 +112,12 @@ class distanceToolsUtils:
 
     def calc_matrix_cm_all_resids(traj, threshold=0.8, distance=1.2):
         """
-        Used internally to compute the matrix data when the object is
-        initialized.
+        Used internally to compute the matrix of contacts between residues
 
         returns: matrix: np.array, shape=(n_frames, n_residues, n_residues)
         """
-        # By default, this ignores any non-protein atoms
 
+        # By default, this ↓ ignores any non-protein atoms
         distances, residue_pairs = md.compute_contacts(traj, scheme="closest-heavy")
         matrix = md.geometry.squareform(distances, residue_pairs=residue_pairs)
         for frame in range(matrix.shape[0]):
@@ -161,7 +160,19 @@ class distanceToolsUtils:
         return dis_matrix
 
     def save_matrix_frame(self, matrix, path):
-        pass
+        """
+        Saves the distance matrix as images in the path specified. It samples 10 frames
+        from the matrix and saves them as images.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        for i in range(0, matrix.shape[0], matrix.shape[0] // 10):
+            fig, ax = plt.subplots()
+            ax.imshow(matrix[i], origin="lower")
+            ax.set_title(f"Distance Matrix frame {i}")
+
+            plt.savefig(f"{path}/dist_matrix_frame_{i}.png")
 
     def make_movie(
         self, matrix, option="distance", source_id="unkown", path="distance.gif"
@@ -228,14 +239,14 @@ class neighborsSchema(BaseModel):
     trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
     topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
     selection: str = Field(description=SELECTION_DESC)
-    cutoff: float = Field(10.0, description=CUTOFF_DESC)
+    cutoff: float = Field(1.0, description=CUTOFF_DESC)
 
 
 class contactSchema(BaseModel):
     trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
     topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
     selection: str = Field(description=CONTACT_SELECTION_DESC)
-    cutoff: float = Field(6.0, description=CUTOFF_DESC)
+    cutoff: float = Field(0.8, description=CUTOFF_DESC)
 
 
 class distanceMatrixTool(BaseTool):
@@ -269,6 +280,7 @@ class distanceMatrixTool(BaseTool):
         path_to_top = self.path_registry.get_mapped_path(topology_id)
         traj = md.load(path_to_traj, top=path_to_top)
         if analysis != "all":
+            # slice the trajectory to include only the selections
             atom_indices1 = traj.top.select(selection1)
             atom_indices2 = traj.top.select(selection2)
             traj = traj.atom_slice(atom_indices1 + atom_indices2, inplace=False)
@@ -276,11 +288,13 @@ class distanceMatrixTool(BaseTool):
         if mode == "CA":
             dist_matrix = utils.calc_matrix_dis_ca_all_resids(traj)
         elif mode == "COM":
+            # calculates distances matrix using center of mass of side chains
             com_matrix = utils.calc_side_center_mass(traj)
             dist_matrix = utils.calc_dis_matrix_from_com_all_resids(traj, com_matrix)
 
         # plotting the distance matrix
-        path = f"{self.path_registry.ckpt_figures}/dist_matrix_{trajectory_id}.gif"
+        path = f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}/\
+            dist_matrix_{trajectory_id}.gif"
         if not os.path.exists(
             f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}"
         ):
@@ -288,6 +302,11 @@ class distanceMatrixTool(BaseTool):
         fig_id = self.path_registry.get_fileid(file_name=path, type=FileType.FIGURE)
         movie_desc = utils.make_movie(dist_matrix, path=path, source_id=trajectory_id)
         self.path_registry.map_path(fig_id, path, movie_desc)
+        # save some of the frames as images
+        utils.save_matrix_frame(
+            dist_matrix, f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}"
+        )
+
         return "Distance Matrix created with ID: " + fig_id
 
     def _arun(self):
@@ -300,6 +319,7 @@ class distanceMatrixTool(BaseTool):
         topology_id = input.get("topology_fileid", None)
         selection1 = input.get("selection1", "name CA")
         selection2 = input.get("selection2", "name CA")
+        mode = input.get("mode", "CA")
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: trajectory_fileid is required")
         if not topology_id:
@@ -311,7 +331,10 @@ class distanceMatrixTool(BaseTool):
             error += " Trajectory File ID not in path registry"
         if topology_id not in fileids:
             error += " Topology File ID not in path registry"
-
+        if mode not in ["CA", "COM"]:
+            system_message += " Incorrect mode, must be either CA or COM.\
+                  Defaulting to CA \n"
+            mode = "CA"
         keys = input.keys()
         for key in keys:
             if key not in [
@@ -321,9 +344,8 @@ class distanceMatrixTool(BaseTool):
                 "mode",
                 "selection1",
                 "selection2",
-                "remove_terminals",
             ]:
-                system_message += f"{key} is not part of admitted tool inputs"
+                system_message += f"{key} is not part of admitted tool inputs\n"
 
         if error == "":
             error = None
@@ -416,7 +438,7 @@ class neighborsTool(BaseTool):
         trajectory_id = input.get("trajectory_fileid", None)
         topology_id = input.get("topology_fileid", None)
         selection = input.get("selection", "name CA")
-        cutoff = input.get("cutoff", 10.0)
+        cutoff = input.get("cutoff", 1.0)
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: trajectory_fileid is required")
         if not topology_id:
@@ -461,8 +483,46 @@ class contactsTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self):
-        pass
+    def _run(self, **input):
+        input = self.validate_input(**input)
+        error = input.get("error", None)
+        if error:
+            return f"Error with the tool inputs: {error} "
+        input.get("system_message")
+        trajectory_id = input["trajectory_fileid"]
+        topology_id = input["topology_fileid"]
+        selection = input["selection"]
+        cutoff = input["cutoff"]
+        system_message = input["system_message"]
+        path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
+        path_to_top = self.path_registry.get_mapped_path(topology_id)
+        traj = md.load(path_to_traj, top=path_to_top)
+        if selection != "all":
+            try:
+                atom_indices = traj.top.select(selection)
+                traj = traj.atom_slice(atom_indices, inplace=False)
+            except Exception as e:
+                system_message += f"Error with the selection: {str(e)}.\
+                      Defaulting to 'all'"
+
+        utils = distanceToolsUtils(path_registry=self.path_registry)
+        matrix = utils.calc_matrix_cm_all_resids(traj, threshold=cutoff)
+
+        # save the matrix as a gif and some of the frames as images
+        path = f"{self.path_registry.ckpt_figures}/contact_{trajectory_id}/\
+            contact_matrix_{trajectory_id}.gif"
+        if not os.path.exists(
+            f"{self.path_registry.ckpt_figures}/contact_{trajectory_id}"
+        ):
+            os.makedirs(f"{self.path_registry.ckpt_figures}/contact_{trajectory_id}")
+
+        fig_id = self.path_registry.get_fileid(file_name=path, type=FileType.FIGURE)
+        movie_desc = utils.make_movie(matrix, path=path, source_id=trajectory_id)
+        self.path_registry.map_path(fig_id, path, movie_desc)
+        utils.save_matrix_frame(
+            matrix, f"{self.path_registry.ckpt_figures}/contact_{trajectory_id}"
+        )
+        return "Contact Matrix Figure created with ID: " + fig_id
 
     def _arun(self):
         pass
@@ -473,7 +533,7 @@ class contactsTool(BaseTool):
         trajectory_id = input.get("trajectory_fileid", None)
         topology_id = input.get("topology_fileid", None)
         selection = input.get("selection", "all")
-        cutoff = input.get("cutoff", 6.0)
+        cutoff = input.get("cutoff", 0.8)
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: trajectory_fileid is required")
         if not topology_id:
@@ -490,10 +550,8 @@ class contactsTool(BaseTool):
             if key not in [
                 "trajectory_fileid",
                 "topology_fileid",
-                "pc_percentage",
-                "analysis",
+                "cutoff",
                 "selection",
-                "remove_terminals",
             ]:
                 system_message += f"{key} is not part of admitted tool inputs"
         if error == "":
