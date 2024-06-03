@@ -84,7 +84,6 @@ class distanceToolsUtils:
                 "segmentID": [i.segment_id for i in traj.topology.residues],
             }
         )
-        print(new_topology.head())
         top = md.Topology.from_dataframe(new_topology)
         new_traj = md.Trajectory(new_xyz, top)
         pairs = self.all_possible_pairs(range(traj.n_residues), range(traj.n_residues))
@@ -110,7 +109,7 @@ class distanceToolsUtils:
         )
         return min(map(self.calc_residue_dist, atom_pairs))
 
-    def calc_matrix_cm_all_resids(traj, threshold=0.8, distance=1.2):
+    def calc_matrix_cm_all_resids(self, traj, threshold=0.8, distance=1.2):
         """
         Used internally to compute the matrix of contacts between residues
 
