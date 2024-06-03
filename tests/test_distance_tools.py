@@ -92,4 +92,13 @@ def test_distanceToolsUtils_get_contact_matrix(distanceUtils, dummy_traj):
         dummy_traj, threshold=4, distance=5
     )
     assert contact_matrix.shape == (1, 27, 27)
-    assert np.sum(contact_matrix) == 27 * 27
+    assert np.sum(contact_matrix) == 27 * 27  # every residue is in contact
+
+    no_contact_matrix = distanceUtils.calc_matrix_cm_all_resids(
+        dummy_traj, threshold=0.5, distance=0
+    )
+    print(no_contact_matrix)
+    assert no_contact_matrix.shape == (1, 27, 27)
+    assert np.sum(no_contact_matrix) == 129  # no residue is in contact, but the dist
+    # between a residue and its i+2
+    # neighbor and itself is 0.
