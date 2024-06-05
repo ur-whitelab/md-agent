@@ -95,10 +95,10 @@ def save_to_csv(
 
 
 def save_plot(path_registry, fig_analysis, description=None):
-    if plt.gcf().get_axes() == []:  # if there's no plot
-        raise ValueError("No plot detected. Failed to save.")
     if not isinstance(path_registry, PathRegistry):
         raise ValueError("path_registry must be an instance of PathRegistry.")
+    if plt.gcf().get_axes() == []:  # if there's no plot
+        raise ValueError("No plot detected. Failed to save.")
 
     fig_name = path_registry.write_file_name(
         type=FileType.FIGURE,
@@ -110,4 +110,4 @@ def save_plot(path_registry, fig_analysis, description=None):
     plt.savefig(fig_path)
     path_registry.map_path(fig_id, fig_path, description=description)
     print(f"Plot saved to {fig_path}")
-    return fig_id, fig_path
+    return fig_id
