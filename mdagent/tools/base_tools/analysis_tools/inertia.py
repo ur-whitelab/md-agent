@@ -1,40 +1,11 @@
-import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
-
-
-def load_traj(path_registry, top_fileid, traj_fileid=None):
-    all_fileids = path_registry.list_path_names()
-    if top_fileid not in all_fileids:
-        raise ValueError("Topology File ID not found in path registry")
-    top_path = path_registry.get_mapped_path(top_fileid)
-
-    if traj_fileid is None:
-        return md.load(top_path)
-
-    if traj_fileid not in all_fileids:
-        raise ValueError("Trajectory File ID not found in path registry")
-
-    traj_path = path_registry.get_mapped_path(traj_fileid)
-    return md.load(traj_path, top=top_path)
-
-
-def save_to_csv(path_registry, data, file_id, description=None):
-    file_path = f"{path_registry.ckpt_records}/{file_id}.csv"
-    i = 0
-    while os.path.exists(file_path):
-        i += 1
-        file_path = f"{path_registry.ckpt_records}/{file_id}_{i}.csv"
-    np.savetxt(file_path, data, delimiter=",")
-    path_registry.map_path(file_id, file_path, description=description)
-    return file_path
+from mdagent.utils import FileType, PathRegistry, load_single_traj, save_to_csv
 
 
 class MOIFunctions:
@@ -46,7 +17,7 @@ class MOIFunctions:
         self.mol_name = None
         if mol_name is None:
             self.mol_name = top_fileid.replace("top_", "")
-        self.traj = load_traj(self.path_registry, top_fileid, traj_fileid)
+        self.traj = load_single_traj(self.path_registry, top_fileid, traj_fileid)
 
     def calculate_moment_of_inertia(self):
         """
@@ -61,9 +32,7 @@ class MOIFunctions:
 
         self.moments_of_inertia = principal_moments
         self.min_moi = np.min(self.moments_of_inertia)  # min of all frames & moments
-        self.avg_moi = np.mean(
-            self.moments_of_inertia
-        )  # average of all frames & moments
+        self.avg_moi = np.mean(self.moments_of_inertia)  # avg of all frames & moments
 
         # save to file
         file_id = f"MOI_{self.mol_name}"
@@ -73,7 +42,7 @@ class MOIFunctions:
         )
         message = (
             f"Average Moment of Inertia Tensor: {self.avg_moi}, "
-            f"Data saved to: {csv_path} with file ID {file_id}"
+            f"Data saved to: {csv_path} with file ID {file_id}. "
         )
         return message
 
@@ -85,8 +54,11 @@ class MOIFunctions:
         if self.moments_of_inertia is None:
             message += self.calculate_moment_of_inertia()
 
-        if len(self.moments_of_inertia) == 1:  # only one frame
-            message += "Only one frame in trajectory, no plot generated."
+        if self.traj.n_frames == 1:  # only one frame
+            message += (
+                "Only one frame in trajectory, no plot generated. "
+                f"Principal Moments of Inertia: {self.moments_of_inertia}. "
+            )
             return message
 
         fig_analysis = f"MOI_{self.mol_name}"
@@ -108,35 +80,25 @@ class MOIFunctions:
         plt.legend()
         plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
         plt.close()
+        print(f"Plot of moments of inertia saved to {fig_name}")
         self.path_registry.map_path(
             fig_id,
             f"{self.path_registry.ckpt_figures}/{fig_name}",
             description=f"Plot of moments of inertia over time for {self.mol_name}",
         )
-        message += (
-            f"Plot of moments of inertia over time saved as: "
-            f"{fig_name}.png with plot ID {fig_id}. "
-        )
+        message += f"Plot of moments of inertia over time saved with plot ID {fig_id}. "
         return message
-
-
-class MomentOfInertiaToolInput(BaseModel):
-    top_fileid: str = Field(None, description="File ID for the topology file.")
-    traj_fileid: Optional[str] = Field(
-        None, description="File ID for the trajectory file."
-    )
-    molecule_name: Optional[str] = Field(
-        None, description="Name of the molecule or protein."
-    )
 
 
 class MomentOfInertia(BaseTool):
     name = "MomentOfInertia"
     description = (
         "Compute the moment of inertia tensors for a molecule or protein."
-        "Give this tool file IDs for topology and trajectory files as needed."
+        "Inputs: "
+        "   (str) File ID for the topology file. "
+        "   (str, optional) File ID for the trajectory file. "
+        "   (str, optional) Molecule or protein name. "
     )
-    args_schema = MomentOfInertiaToolInput
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry):

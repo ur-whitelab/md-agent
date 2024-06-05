@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -37,6 +36,7 @@ class SASAFunctions:
         self.molecule_name = mol_name if mol_name else top_fileid.replace("top_", "")
         self.sasa = None
         self.residue_sasa = None
+        self.total_sasa = None
 
     def calculate_sasa(self, probe_radius=0.14):
         """
@@ -52,8 +52,9 @@ class SASAFunctions:
         self.residue_sasa = md.shrake_rupley(
             self.traj, probe_radius=probe_radius, mode="residue"
         )
+        self.total_sasa = self.sasa.sum(axis=1)
 
-        # save to file
+        # save total SASA to file --> can use for autocorrelation analysis
         sasa_file = f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}.csv"
         i = 0
         while os.path.exists(sasa_file):
@@ -61,29 +62,30 @@ class SASAFunctions:
             sasa_file = (
                 f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}_{i}.csv"
             )
-        np.savetxt(sasa_file, self.sasa, delimiter=",", header="SASA (nm²)")
+        np.savetxt(sasa_file, self.total_sasa, delimiter=",", header="Total SASA (nm²)")
+        # TODO: also save per-residue or per-atom SASA?
+        # ^ may confuse mdagent which file to use for autocorrelation analysis
         self.path_registry.map_path(
             f"sasa_{self.molecule_name}_{i}",
             sasa_file,
-            description=f"SASA values for the molecule {self.molecule_name}",
+            description=f"Total SASA values for {self.molecule_name}",
         )
-        return f"SASA values computed and saved to {sasa_file}"
+        return f"SASA values computed and saved to {sasa_file}. "
 
     def plot_sasa(self):
         """
         Plot the total SASA and per-residue SASA over time.
-
-        Returns:
-        None
         """
         message = ""
         if self.sasa is None or self.residue_sasa is None:
             message += self.calculate_sasa()
 
-        # Returns areasnp.array, shape=(n_frames, n_features)
         # if there's only one frame, don't plot
-        if self.sasa.ndim == 1:
-            message += " Only one frame in trajectory. No SASA plot generated."
+        if self.traj.n_frames == 1:
+            message += (
+                " Only one frame in trajectory. No SASA plot generated. "
+                f" Total Available Surface Area is {self.total_sasa}. "
+            )
             return message
 
         fig_analysis = f"sasa_{self.molecule_name}"
@@ -93,46 +95,40 @@ class SASAFunctions:
         fig_id = self.path_registry.get_fileid(file_name=fig_name, type=FileType.FIGURE)
         plt.figure(figsize=(10, 5))
         plt.subplot(121)
-        plt.plot(self.sasa)
+        plt.plot(self.total_sasa)
         plt.xlabel("Frame")
         plt.ylabel("Total SASA (nm²)")
         plt.title("Total SASA over Time")
 
+        # average SASA per residue
         plt.subplot(122)
-        plt.imshow(self.residue_sasa.T, aspect="auto", interpolation="nearest")
-        plt.colorbar(label="SASA (nm²)")
-        plt.xlabel("Frame")
-        plt.ylabel("Residue")
-        plt.title("Per-residue SASA over Time")
+        avg_residue_sasa = np.mean(self.residue_sasa, axis=0)
+        plt.plot(avg_residue_sasa, label="Average SASA", linestyle="--", color="black")
+        plt.xlabel("Residue")
+        plt.ylabel("Average Area (nm²)")
+        plt.title("Average SASA per Residue")
         plt.tight_layout()
         plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
         plt.close()
+        print(f"SASA plot saved to {fig_name}")
         self.path_registry.map_path(
             fig_id,
             f"{self.path_registry.ckpt_figures}/{fig_name}",
             description=f"Plot of SASA over time for {self.molecule_name}",
         )
-        message += (
-            f"SASA analysis completed. Saved {fig_name}.png with plot ID {fig_id}"
-        )
+        message += f"SASA analysis completed. Saved the plot with plot ID {fig_id}. "
         return message
-
-
-class SASAToolInput(BaseModel):
-    top_fileid: str = Field(None, description="File ID for the topology file.")
-    traj_fileid: Optional[str] = Field(
-        None, description="File ID for the trajectory file."
-    )
-    mol_name: Optional[str] = Field(None, description="Name of molecule or protein.")
 
 
 class SolventAccessibleSurfaceArea(BaseTool):
     name = "SolventAccessibleSurfaceArea"
     description = (
-        "Compute the Solvent Accessible Surface Area (SASA) "
-        "for a molecule or protein."
+        "Compute the Solvent Accessible Surface Area (SASA) for a molecule or protein. "
+        "Inputs: "
+        "   (str) File ID for the topology file. "
+        "   (str, optional) File ID for the trajectory file. "
+        "   (str, optional) Molecule or protein name. "
     )
-    args_schema = SASAToolInput
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry):
