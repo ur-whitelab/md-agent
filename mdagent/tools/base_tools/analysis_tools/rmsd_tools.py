@@ -1,4 +1,3 @@
-import os
 from typing import Optional, Type
 
 import matplotlib.pyplot as plt
@@ -7,69 +6,21 @@ import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import PathRegistry, load_traj_with_ref, save_plot, save_to_csv
 
 
-def load_traj(path_registry, top_fileid, traj_fileid=None):
-    all_fileids = path_registry.list_path_names()
-    if top_fileid not in all_fileids:
-        raise ValueError("Topology File ID not found in path registry")
-    top_path = path_registry.get_mapped_path(top_fileid)
-
-    if traj_fileid is None:
-        print("Warning: no trajectory file provided.")
-        return md.load(top_path)
-
-    if traj_fileid not in all_fileids:
-        raise ValueError("Trajectory File ID not found in path registry")
-
-    traj_path = path_registry.get_mapped_path(traj_fileid)
-    return md.load(traj_path, top=top_path)
-
-
-def save_to_csv(path_registry, data, file_id, description=None):
-    file_path = f"{path_registry.ckpt_figures}/{file_id}.csv"
-    i = 0
-    while os.path.exists(file_path):
-        i += 1
-        file_path = f"{path_registry.ckpt_figures}/{file_id}_{i}.csv"
-    np.savetxt(file_path, data, delimiter=",")
-    path_registry.map_path(file_id, file_path, description=description)
-    return file_path
-
-
-def save_plot(path_registry, fig_analysis, description=None):
-    fig_name = path_registry.write_file_name(
-        type=FileType.FIGURE,
-        fig_analysis=fig_analysis,
-        file_format="png",
-    )
-    fig_id = path_registry.get_fileid(file_name=fig_name, type=FileType.FIGURE)
-    fig_path = f"{path_registry.ckpt_figures}/{fig_name}"
-    plt.savefig(fig_path)
-    path_registry.map_path(fig_id, fig_path, description=description)
-    return fig_id, fig_path
-
-
-def rmsd(
-    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
-):
+def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     print("Calculating RMSD...")
-    traj = load_traj(path_registry, top_id, traj_id)
-    if ref_top_id is None:
-        ref_traj = traj
-    else:
-        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
-    rmsd = md.rmsd(traj, ref_traj)
+    rmsd = md.rmsd(traj, ref_traj)  # all atoms, even solvent if any
     rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx)
 
     if rmsd.shape[0] == 1:  # if it's single value
         return f"RMSD calculated. {rmsd[0]} nm"
-    data_id = top_id.replace("top_sim0_", "")
-    analysis = f"rmsd_{data_id}"
-    csv_path = save_to_csv(
-        path_registry, rmsd, analysis, description=f"RMSD for {data_id}"
+
+    analysis = (f"rmsd_{mol_name}",)
+    csv_file_id = save_to_csv(
+        path_registry, rmsd, analysis, description=f"RMSD for {mol_name}"
     )
 
     # plot rmsd
@@ -83,31 +34,23 @@ def rmsd(
             "ylabel": "RMSD / nm",
         }
     )
-    fig_id, fig_path = save_plot(path_registry, analysis, f"RMSD plot for {data_id}")
+    fig_id = save_plot(path_registry, analysis, f"RMSD plot for {mol_name}")
     plt.close()
     msg = (
-        f"RMSD calculated and saved as {csv_path} with file ID rmsd_{data_id}. "
-        f"Plot saved to {fig_path} with plot ID {fig_id}. "
+        f"RMSD calculated and saved to csv with file ID {csv_file_id}. "
+        f"Plot saved with plot ID {fig_id}. "
     )
     return msg
 
 
-def rmsf(
-    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
-):
+def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
     print("Calculating RMSF...")
-    traj = load_traj(path_registry, top_id, traj_id)
-    if ref_top_id is None:
-        ref_traj = traj
-    else:
-        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
     rmsf = md.rmsf(traj, ref_traj)
     rmsf_select = rmsf[idx]
-    data_id = top_id.replace("top_sim0_", "")
-    analysis = f"rmsf_{data_id}"
-    csv_path = save_to_csv(
-        path_registry, rmsf_select, analysis, description=f"RMSF for {data_id}"
+    analysis = f"rmsf_{mol_name}"
+    csv_file_id = save_to_csv(
+        path_registry, rmsf_select, analysis, description=f"RMSF for {mol_name}"
     )
 
     # plot rmsf
@@ -137,48 +80,54 @@ def rmsf(
             "ylabel": "RMSF / nm",
         }
     )
-    fig_id, fig_path = save_plot(path_registry, analysis, f"RMSF plot for {data_id}")
+    fig_id = save_plot(path_registry, analysis, f"RMSF plot for {mol_name}")
     plt.close()
     msg = (
-        f"RMSF calculated and saved as {csv_path} with file ID rmsf_{data_id}. "
-        f"Plot saved to {fig_path} with plot ID {fig_id}. "
+        f"RMSF calculated and saved to csv with file ID {csv_file_id}. "
+        f"Plot saved with plot ID {fig_id}. "
     )
     return msg
 
 
-def lprmsd(
-    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select="all"
-):
+def lprmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     print("Calculating LP-RMSD...")
-    traj = load_traj(path_registry, top_id, traj_id)
-    if ref_top_id is None:
-        ref_traj = traj
-    else:
-        ref_traj = load_traj(path_registry, ref_top_id, ref_traj_id)
     idx = traj.topology.select(select)
     lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx)
-    data_id = top_id.replace("top_sim0_", "")
-    csv_path = save_to_csv(
-        path_registry, lprmsd, f"lprmsd_{data_id}", description=f"LP-RMSD for {data_id}"
+    csv_file_id = save_to_csv(
+        path_registry,
+        lprmsd,
+        f"lprmsd_{mol_name}",
+        description=f"LP-RMSD for {mol_name}",
     )
-    return f"LP-RMSD calculated and saved as {csv_path} with file ID lprmsd_{data_id}"
+    return f"LP-RMSD calculated and saved to csv with file ID {csv_file_id}"
 
 
 class RMSDInputSchema(BaseModel):
     top_id: str = Field(None, description="File ID for the topology file.")
     traj_id: Optional[str] = Field(None, description="File ID for the trajectory file.")
     ref_top_id: Optional[str] = Field(
-        None, description="File ID for the topology file as reference"
+        None,
+        description=(
+            "File ID for the topology file as reference. "
+            "Only provide if it's different from target"
+        ),
     )
     ref_traj_id: Optional[str] = Field(
-        None, description="File ID for the trajectory file as reference."
+        None,
+        description=(
+            "File ID for the trajectory file as reference. "
+            "Only provide if it's different from target"
+        ),
     )
     select: Optional[str] = Field(
-        "all",
+        "protein",
         description=(
             "atom selection following MDTraj syntax for topology.select. "
-            "Examples are 'all', 'backbone', 'sidechain'"
+            "Examples are 'protein', 'backbone', 'sidechain'"
         ),
+    )
+    mol_name: Optional[str] = Field(
+        None, description="Name of the molecule or protein."
     )
 
 
@@ -186,22 +135,31 @@ class ComputeRMSD(BaseTool):
     name: str = "ComputeRMSD"
     description: str = (
         "Compute root mean square deviation (RMSD) of all "
-        "conformations in target to a reference conformation"
+        "conformations in target to a reference conformation."
     )
     args_schema: Type[BaseModel] = RMSDInputSchema
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 
     def _run(
-        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
+        self,
+        top_id,
+        traj_id=None,
+        ref_top_id=None,
+        ref_traj_id=None,
+        select=None,
+        mol_name=None,
     ):
         try:
-            msg = rmsd(
-                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
+            if mol_name is None:
+                mol_name = top_id.replace("top_sim0_", "")
+            traj, ref_traj = load_traj_with_ref(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
             )
+            msg = rmsd(self.path_registry, traj, ref_traj, select, mol_name)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -214,19 +172,28 @@ class ComputeRMSF(BaseTool):
         "conformations in target to a reference conformation"
     )
     args_schema: Type[BaseModel] = RMSDInputSchema
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 
     def _run(
-        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
+        self,
+        top_id,
+        traj_id=None,
+        ref_top_id=None,
+        ref_traj_id=None,
+        select=None,
+        mol_name=None,
     ):
         try:
-            msg = rmsf(
-                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
+            if mol_name is None:
+                mol_name = top_id.replace("top_sim0_", "")
+            traj, ref_traj = load_traj_with_ref(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
             )
+            msg = rmsf(self.path_registry, traj, ref_traj, select, mol_name)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -244,19 +211,28 @@ class ComputeLPRMSD(BaseTool):
         "reference conformations."
     )
     args_schema: Type[BaseModel] = RMSDInputSchema
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 
     def _run(
-        self, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None, select=None
+        self,
+        top_id,
+        traj_id=None,
+        ref_top_id=None,
+        ref_traj_id=None,
+        select=None,
+        mol_name=None,
     ):
         try:
-            msg = lprmsd(
-                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id, select
+            if mol_name is None:
+                mol_name = top_id.replace("top_sim0_", "")
+            traj, ref_traj = load_traj_with_ref(
+                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
             )
+            msg = lprmsd(self.path_registry, traj, ref_traj, select, mol_name)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
