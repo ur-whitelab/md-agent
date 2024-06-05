@@ -49,9 +49,7 @@ def test_sasa_tool_init(get_registry):
     assert tool.path_registry == registry
 
 
-@patch(
-    "mdagent.tools.base_tools.analysis_tools.sasa.os.path.exists", return_value=False
-)
+@patch("os.path.exists", return_value=False)
 @patch("mdagent.tools.base_tools.analysis_tools.sasa.np.savetxt")
 def test_calculate_sasa(mock_savetxt, mock_exists, get_sasa_functions_with_files):
     analysis = get_sasa_functions_with_files
