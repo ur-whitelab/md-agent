@@ -31,4 +31,4 @@ def save_to_csv(path_registry, data_to_save, file_id, description=None):
         file_path = f"{path_registry.ckpt_records}/{file_id}_{i}.csv"
     np.savetxt(file_path, data_to_save, delimiter=",")
     path_registry.map_path(file_id, file_path, description=description)
-    return file_path, i
+    return file_path
