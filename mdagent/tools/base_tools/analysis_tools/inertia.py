@@ -14,9 +14,8 @@ class MOIFunctions:
         self.moments_of_inertia = None
         self.min_moi = None
         self.avg_moi = None
-        self.mol_name = None
-        if mol_name is None:
-            self.mol_name = top_fileid.replace("top_", "")
+
+        self.mol_name = mol_name if mol_name else top_fileid.replace("top_", "")
         self.traj = load_single_traj(self.path_registry, top_fileid, traj_fileid)
 
     def calculate_moment_of_inertia(self):
@@ -35,14 +34,16 @@ class MOIFunctions:
         self.avg_moi = np.mean(self.moments_of_inertia)  # avg of all frames & moments
 
         # save to file
-        file_id = f"MOI_{self.mol_name}"
-        description = (f"Moments of inertia tensor for {self.mol_name}",)
-        csv_path = save_to_csv(
-            self.path_registry, self.moments_of_inertia, file_id, description
+        description = f"Moments of inertia tensor for {self.mol_name}"
+        csv_file_id = save_to_csv(
+            self.path_registry,
+            self.moments_of_inertia,
+            f"MOI_{self.mol_name}",
+            description,
         )
         message = (
             f"Average Moment of Inertia Tensor: {self.avg_moi}, "
-            f"Data saved to: {csv_path} with file ID {file_id}. "
+            f"Data saved with file ID {csv_file_id}. "
         )
         return message
 

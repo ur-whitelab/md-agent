@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -6,7 +5,7 @@ import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, load_single_traj, save_to_csv
 
 
 class SASAFunctions:
@@ -21,22 +20,12 @@ class SASAFunctions:
         mol_name (str, optional): Name of the molecule or protein.
         """
         self.path_registry = path_registry
-        all_fileids = self.path_registry.list_path_names()
-        if top_fileid not in all_fileids:
-            raise ValueError("Topology File ID not found in path registry")
-        top_path = self.path_registry.get_mapped_path(top_fileid)
-
-        if traj_fileid:
-            if traj_fileid not in all_fileids:
-                raise ValueError("Trajectory File ID not found in path registry")
-            traj_path = self.path_registry.get_mapped_path(traj_fileid)
-            self.traj = md.load(traj_path, top=top_path)
-        else:
-            self.traj = md.load(top_path)
-        self.molecule_name = mol_name if mol_name else top_fileid.replace("top_", "")
         self.sasa = None
         self.residue_sasa = None
         self.total_sasa = None
+
+        self.molecule_name = mol_name if mol_name else top_fileid.replace("top_", "")
+        self.traj = load_single_traj(self.path_registry, top_fileid, traj_fileid)
 
     def calculate_sasa(self, probe_radius=0.14):
         """
@@ -55,22 +44,19 @@ class SASAFunctions:
         self.total_sasa = self.sasa.sum(axis=1)
 
         # save total SASA to file --> can use for autocorrelation analysis
-        sasa_file = f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}.csv"
-        i = 0
-        while os.path.exists(sasa_file):
-            i += 1
-            sasa_file = (
-                f"{self.path_registry.ckpt_records}/sasa_{self.molecule_name}_{i}.csv"
-            )
-        np.savetxt(sasa_file, self.total_sasa, delimiter=",", header="Total SASA (nm²)")
-        # TODO: also save per-residue or per-atom SASA?
-        # ^ may confuse mdagent which file to use for autocorrelation analysis
-        self.path_registry.map_path(
-            f"sasa_{self.molecule_name}_{i}",
-            sasa_file,
-            description=f"Total SASA values for {self.molecule_name}",
+        description = f"Total SASA values for {self.molecule_name}"
+        csv_header = "Total SASA (nm²)"
+        csv_file_id = save_to_csv(
+            self.path_registry,
+            self.total_sasa,
+            f"sasa_{self.molecule_name}",
+            description,
+            csv_header,
         )
-        return f"SASA values computed and saved to {sasa_file}. "
+        # TODO: also save per-residue or per-atom SASA?
+        # ^ though it may confuse mdagent which file to use for autocorrelation analysis
+
+        return f"SASA values computed and saved with File ID {csv_file_id}. "
 
     def plot_sasa(self):
         """

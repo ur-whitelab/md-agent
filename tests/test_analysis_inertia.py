@@ -27,7 +27,7 @@ def test_moi_tool_init(get_registry):
 def test_calculate_moment_of_inertia(moi_functions):
     msg = moi_functions.calculate_moment_of_inertia()
     assert "Average Moment of Inertia Tensor:" in msg
-    assert "saved to:" in msg
+    assert "saved with file ID" in msg
     assert "MOI_sim0_butane" in msg
 
     moi_functions.mol_name = "butane"

@@ -342,14 +342,14 @@ def test_load_traj_fail_top_fileid(get_registry):
     registry = get_registry("raw", False)
     with pytest.raises(ValueError) as exc:
         load_single_traj(registry, "top_invalid")
-    assert "Topology File ID not found in path registry" in str(exc.value)
+    assert "Topology File ID 'top_invalid' not found" in str(exc.value)
 
 
 def test_load_traj_fail_traj_fileid(get_registry):
     registry = get_registry("raw", True)
     with pytest.raises(ValueError) as exc:
         load_single_traj(registry, "top_sim0_butane_123456", "traj_invalid")
-    assert "Trajectory File ID not found in path registry" in str(exc.value)
+    assert "Trajectory File ID 'traj_invalid' not found" in str(exc.value)
 
 
 def test_save_to_csv(get_registry):
@@ -358,4 +358,4 @@ def test_save_to_csv(get_registry):
     with patch("os.path.exists", return_value=False):
         with patch("numpy.savetxt", return_value=None):
             csv_path = save_to_csv(registry, data, "test_id", "Description of data")
-            assert "test_id.csv" in csv_path
+            assert "test_id" in csv_path
