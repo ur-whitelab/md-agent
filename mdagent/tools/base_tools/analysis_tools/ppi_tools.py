@@ -49,7 +49,7 @@ class PPIDistanceInputSchema(BaseModel):
     )
     binding_site: Optional[str] = Field(
         description="""a list of selected residues as the binding site
-        of the protein using MDAnalysis selection syntax."""
+        of the protein using MDTraj selection syntax."""
     )
 
 
@@ -60,9 +60,9 @@ class PPIDistance(BaseTool):
     any protein-protein interaction. Give this tool the name of the file. The
     tool will find the path."""
     args_schema: Type[BaseModel] = PPIDistanceInputSchema
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 

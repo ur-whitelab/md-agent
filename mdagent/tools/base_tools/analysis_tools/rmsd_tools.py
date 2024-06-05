@@ -2,7 +2,6 @@ from typing import Optional, Type
 
 import matplotlib.pyplot as plt
 import mdtraj as md
-import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
@@ -15,18 +14,21 @@ def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     rmsd = md.rmsd(traj, ref_traj)  # all atoms, even solvent if any
     rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx)
 
-    if rmsd.shape[0] == 1:  # if it's single value
-        return f"RMSD calculated. {rmsd[0]} nm"
+    if rmsd_select.shape[0] == 1:  # RMSD is a single value
+        return f"RMSD calculated. {rmsd_select} nm"
 
     analysis = (f"rmsd_{mol_name}",)
     csv_file_id = save_to_csv(
-        path_registry, rmsd, analysis, description=f"RMSD for {mol_name}"
+        path_registry, rmsd_select, analysis, description=f"RMSD for {mol_name}"
     )
 
     # plot rmsd
     fig, ax = plt.subplots()
-    ax.plot(rmsd, label="protein")
-    ax.plot(rmsd_select, label=select)
+    if select == "protein":
+        ax.plot(rmsd_select, label="protein")
+    else:
+        ax.plot(rmsd, label="protein")
+        ax.plot(rmsd_select, label=select)
     ax.legend()
     ax.set(
         **{
@@ -55,29 +57,34 @@ def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
 
     # plot rmsf
     fig, ax = plt.subplots()
-    if select != "all":
-        select_idx = traj.topology.select(select)
+    if select not in ["all", "protein"]:
+        select_idx = traj.topology.select(f"{select} and name CA")
         ax.bar(
             select_idx,
             rmsf[select_idx],
             width=1,
             edgecolor="k",
             linewidth=0.2,
-            label="sidechain",
+            label=select,
         )
+
+    # plot all 'residue' RMSF
+    ca_idx = traj.topology.select("protein and name CA")
     ax.bar(
-        np.arange(len(rmsf)),
-        rmsf,
+        ca_idx,
+        rmsf[ca_idx],
         width=1,
         edgecolor="k",
         linewidth=0.2,
-        label="all",
+        label="protein",
     )
+
     ax.legend()
     ax.set(
         **{
-            "xlabel": "atom index",
+            "xlabel": "Residue Number",
             "ylabel": "RMSF / nm",
+            "title": "RMS Fluctuation (carbon alpha)",
         }
     )
     fig_id = save_plot(path_registry, analysis, f"RMSF plot for {mol_name}")
@@ -90,7 +97,17 @@ def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
 
 
 def lprmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
-    print("Calculating LP-RMSD...")
+    """
+    LP-RMSD is Linear-Programming Root-Mean-Squared Deviation.
+    It gives the global minimum of the means squared deviation using
+    3-step optimization process. More info in MDTraj docs.
+
+    Note:
+    - LPRMSD is really useful for when you have indistinguishable atoms that
+    you want to permute and calculate the minimum distance under permutations.
+    - Example: atoms with exchange symmetry like multiple water molecules.
+    """
+    print(f"Calculating LP-RMSD for with select '{select}'...")
     idx = traj.topology.select(select)
     lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx)
     csv_file_id = save_to_csv(
@@ -202,6 +219,7 @@ class ComputeRMSF(BaseTool):
 class ComputeLPRMSD(BaseTool):
     name: str = "ComputeLP-RMSD"
     description: str = (
+        # description from mdtraj docs
         "Compute Linear-Programming Root-Mean-Squared Deviation "
         "(LP-RMSD) of all conformations in target to a reference "
         "conformation. The LP-RMSD is the minimum RMSD between "
