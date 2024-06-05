@@ -49,7 +49,9 @@ def load_single_traj(path_registry, top_fileid, traj_fileid=None, traj_required=
     return md.load(traj_path, top=top_path)
 
 
-def load_traj_with_ref(path_registry, top_id, traj_id, ref_top_id, ref_traj_id):
+def load_traj_with_ref(
+    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None
+):
     traj = load_single_traj(path_registry, top_id, traj_id)
     if ref_top_id is None:
         ref_traj = traj

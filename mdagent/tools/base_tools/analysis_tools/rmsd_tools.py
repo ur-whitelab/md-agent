@@ -9,26 +9,35 @@ from mdagent.utils import PathRegistry, load_traj_with_ref, save_plot, save_to_c
 
 
 def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
+    """
+    Calculate the root mean square deviation (RMSD) of each selected atom.
+    Can be used for either protions or small molecules.
+    """
     print("Calculating RMSD...")
     idx = traj.topology.select(select)
-    rmsd = md.rmsd(traj, ref_traj)  # all atoms, even solvent if any
+    if len(idx) == 0:
+        if select == "protein":
+            # sometimes it's small molecules, so no residues
+            print("No atoms found with default selection 'protein'. Using 'all' atoms.")
+            select = "all"
+            idx = traj.topology.select("all")
+        else:
+            raise ValueError(f"No atoms found for selection '{select}'.")
+
     rmsd_select = md.rmsd(traj, ref_traj, atom_indices=idx)
 
-    if rmsd_select.shape[0] == 1:  # RMSD is a single value
+    if rmsd_select.shape[0] == 1:
+        # RMSD is a single value
         return f"RMSD calculated. {rmsd_select} nm"
 
-    analysis = (f"rmsd_{mol_name}",)
+    analysis = f"rmsd_{mol_name}"
     csv_file_id = save_to_csv(
         path_registry, rmsd_select, analysis, description=f"RMSD for {mol_name}"
     )
 
     # plot rmsd
     fig, ax = plt.subplots()
-    if select == "protein":
-        ax.plot(rmsd_select, label="protein")
-    else:
-        ax.plot(rmsd, label="protein")
-        ax.plot(rmsd_select, label=select)
+    ax.plot(rmsd_select, label=select)
     ax.legend()
     ax.set(
         **{
@@ -46,8 +55,20 @@ def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
 
 
 def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
+    """
+    Calculate the root mean square fluctuation (RMSF) of each selected atom.
+    Usually used for proteins, but can select 'all' for small molecules.
+    """
     print("Calculating RMSF...")
     idx = traj.topology.select(select)
+    if len(idx) == 0:
+        raise ValueError(
+            (
+                f"No atoms found for selection '{select}'. "
+                "Try 'all' for small molecules. "
+            )
+        )
+
     rmsf = md.rmsf(traj, ref_traj)
     rmsf_select = rmsf[idx]
     analysis = f"rmsf_{mol_name}"
@@ -57,34 +78,28 @@ def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
 
     # plot rmsf
     fig, ax = plt.subplots()
-    if select not in ["all", "protein"]:
-        select_idx = traj.topology.select(f"{select} and name CA")
-        ax.bar(
-            select_idx,
-            rmsf[select_idx],
-            width=1,
-            edgecolor="k",
-            linewidth=0.2,
-            label=select,
-        )
 
-    # plot all 'residue' RMSF
-    ca_idx = traj.topology.select("protein and name CA")
-    ax.bar(
-        ca_idx,
-        rmsf[ca_idx],
-        width=1,
-        edgecolor="k",
-        linewidth=0.2,
-        label="protein",
+    # check if whether to plot protein or all atoms
+    protein_mode = True
+    select_idx = traj.topology.select(f"{select} and name CA")
+    if len(select_idx) == 0:
+        protein_mode = False
+        select_idx = idx
+
+    xlabel = "Residue Number" if protein_mode else "Atom Number"
+    title = (
+        "RMS Fluctuation (carbon alpha)"
+        if protein_mode
+        else "RMS Fluctuation (all atoms)"
     )
 
+    ax.plot(select_idx, rmsf[select_idx], label=select)
     ax.legend()
     ax.set(
         **{
-            "xlabel": "Residue Number",
+            "xlabel": xlabel,
             "ylabel": "RMSF / nm",
-            "title": "RMS Fluctuation (carbon alpha)",
+            "title": title,
         }
     )
     fig_id = save_plot(path_registry, analysis, f"RMSF plot for {mol_name}")
@@ -109,6 +124,14 @@ def lprmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     """
     print(f"Calculating LP-RMSD for with select '{select}'...")
     idx = traj.topology.select(select)
+    if len(idx) == 0:
+        raise ValueError(
+            (
+                f"No atoms found for selection '{select}'. "
+                "Try 'all' for small molecules. "
+            )
+        )
+
     lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx)
     csv_file_id = save_to_csv(
         path_registry,

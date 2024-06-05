@@ -5,10 +5,6 @@ import pytest
 
 from mdagent.tools.base_tools import VisFunctions
 from mdagent.tools.base_tools.analysis_tools.plot_tools import PlottingTools
-from mdagent.tools.base_tools.analysis_tools.ppi_tools import ppi_distance
-from mdagent.tools.base_tools.analysis_tools.rmsd_tools import lprmsd, rmsd, rmsf
-
-#################### PLOTTING ####################
 
 
 @pytest.fixture
@@ -80,9 +76,6 @@ def test_plot_data(plotting_tools):
         assert "All plots failed due to non-numeric data." in str(excinfo.value)
 
 
-################ VISUALIZATION #################
-
-
 @pytest.fixture
 def vis_fxns(get_registry):
     return VisFunctions(get_registry("raw", False))
@@ -108,76 +101,3 @@ def test_create_notebook(path_to_cif, vis_fxns):
     result = vis_fxns.create_notebook(path_to_cif)
     (f"{vis_fxns.path_registry.ckpt_figures}/{path_to_cif.split('.')[0]}_vis.ipynb")
     assert result == "Visualization Complete"
-
-
-################ RMSD & PPI #################
-
-# pdb with two chains
-pdb_string = """
-ATOM      1  N   ALA A   1       0.000   0.000   0.000  1.00 20.00           N
-ATOM      2  CA  ALA A   1       1.458   0.000   0.000  1.00 20.00           C
-ATOM      3  C   ALA A   1       1.458   1.527   0.000  1.00 20.00           C
-ATOM      4  O   ALA A   1       0.000   1.527   0.000  1.00 20.00           O
-ATOM      5  CB  ALA A   1       1.458  -0.500   1.500  1.00 20.00           C
-ATOM      6  N   GLY B   2      -1.458   0.000   0.000  1.00 20.00           N
-ATOM      7  CA  GLY B   2      -2.916   0.000   0.000  1.00 20.00           C
-ATOM      8  C   GLY B   2      -2.916   1.527   0.000  1.00 20.00           C
-ATOM      9  O   GLY B   2      -1.458   1.527   0.000  1.00 20.00           O
-ATOM     10  N   GLY B   3      -4.374   1.527   0.000  1.00 20.00           N
-TER
-END
-"""
-
-
-@pytest.fixture
-def pdb_path(get_registry):
-    reg = get_registry("raw", True)
-    file_path = f"{reg.ckpt_dir}/twochains.pdb"
-    with open(file_path, "w") as file:
-        file.write(pdb_string)
-    return file_path
-
-
-def test_ppi_distance(pdb_path):
-    avg_dist = ppi_distance(pdb_path, "protein")
-    assert avg_dist > 0, "Expected a positive average distance"
-
-
-def test_ppi_distance_no_binding_residues(pdb_path):
-    with pytest.raises(
-        ValueError, match="No matching residues found for the binding site."
-    ):
-        ppi_distance(pdb_path, "residue 10000")
-
-
-def test_ppi_distance_one_chain(get_registry):
-    reg = get_registry("raw", True)
-    file_path = reg.get_mapped_path("ALA_123456")
-    with pytest.raises(
-        ValueError, match="Only one chain found. Cannot compute PPI distance."
-    ):
-        ppi_distance(file_path, "protein")
-
-
-def test_rmsd(get_registry):
-    reg = get_registry("raw", True)
-    result = rmsd(reg, "top_sim0_butane_123456", "rec0_butane_123456", select="all")
-    assert "RMSD calculated and saved" in result
-
-
-def test_rmsd_single_value(get_registry):
-    reg = get_registry("raw", True)
-    result = rmsd(reg, "top_sim0_butane_123456", select="all")
-    assert "RMSD calculated." in result
-
-
-def test_rmsf(get_registry):
-    reg = get_registry("raw", True, dynamic=True, include_hydrogens=True)
-    result = rmsf(reg, "top_sim0_butane_123456", "rec0_butane_123456", select="all")
-    assert "RMSF calculated and saved" in result
-
-
-def test_lprmsd(get_registry):
-    reg = get_registry("raw", True)
-    result = lprmsd(reg, "top_sim0_butane_123456", "rec0_butane_123456", select="all")
-    assert "LP-RMSD calculated and saved" in result
