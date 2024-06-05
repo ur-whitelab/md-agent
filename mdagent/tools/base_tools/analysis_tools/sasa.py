@@ -129,9 +129,9 @@ class SolventAccessibleSurfaceArea(BaseTool):
         "   (str, optional) File ID for the trajectory file. "
         "   (str, optional) Molecule or protein name. "
     )
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 
