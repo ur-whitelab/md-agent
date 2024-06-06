@@ -5,7 +5,7 @@ from openmm.app import PDBFile, PDBxFile
 from pdbfixer import PDBFixer
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, validate_tool_args
 
 
 class CleaningToolFunctionInput(BaseModel):
@@ -50,6 +50,7 @@ class CleaningToolFunction(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, **input_args) -> str:
         """Use the tool with specified operations."""
         if self.path_registry is None:

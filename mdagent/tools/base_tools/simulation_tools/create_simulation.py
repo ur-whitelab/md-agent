@@ -7,7 +7,7 @@ from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, validate_tool_args
 
 
 class ModifyScriptUtils:
@@ -88,6 +88,7 @@ class ModifyBaseSimulationScriptTool(BaseTool):
         self.path_registry = path_registry
         self.llm = llm
 
+    @validate_tool_args(args_schema=args_schema)
     def _run(self, *args, **input):
         if len(args) > 0:
             return (
