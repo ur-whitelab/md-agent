@@ -26,7 +26,7 @@ def test_moi_tool_init(get_registry):
 
 def test_calculate_moment_of_inertia(moi_functions):
     msg = moi_functions.calculate_moment_of_inertia()
-    assert "Average Moment of Inertia Tensor:" in msg
+    assert "Average Moment of Inertia:" in msg
     assert "saved with file ID" in msg
     assert "MOI_sim0_butane" in msg
 
@@ -51,8 +51,8 @@ def test_plot_moi_one_frame(moi_functions):
 def test_plot_moi_multiple_frames(mock_close, mock_savefig, moi_functions):
     # Simulate multiple frames of inertia tensor data
     moi_functions.moments_of_inertia = np.array([[1.0, 2.0, 3.0], [1.1, 2.1, 3.1]])
-    moi_functions.avg_moi = np.mean(moi_functions.moments_of_inertia, axis=0)
-    moi_functions.min_moi = np.min(moi_functions.moments_of_inertia, axis=0)
+    moi_functions.avg_moi = np.mean(moi_functions.moments_of_inertia)
+    moi_functions.min_moi = np.min(moi_functions.moments_of_inertia)
 
     result = moi_functions.plot_moi()
     assert "Plot of moments of inertia over time saved" in result
