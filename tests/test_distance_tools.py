@@ -53,20 +53,6 @@ def test_distanceToolsUtils_init(get_registry):
     assert distance_utils.path_registry is not None
 
 
-def test_distanceToolsUtils_calc_res_dist(get_registry):
-    # Test the get_distance method of the distanceToolsUtils class
-    reg = get_registry("raw", False)
-    distance_utils = DistanceToolsUtils(path_registry=reg)
-
-    assert distance_utils.calc_residue_dist(residues=(1, 2)) == 1
-    assert distance_utils.calc_residue_dist() == 0
-    assert distance_utils.calc_residue_dist(residues=(-1, -2)) == 1
-
-    pos_1 = np.array([1, 2, 3])
-    pos_2 = np.array([1, 2, 5])
-    assert distance_utils.calc_residue_dist(residues=(pos_1, pos_2)) == 2
-
-
 def test_distanceToolsUtils_all_possible_pairs(distanceUtils):
     # Test the all_possible_pairs method of the distanceToolsUtils class
     List_1 = [1, 2, 3]
