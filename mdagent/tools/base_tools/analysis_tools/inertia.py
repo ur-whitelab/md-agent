@@ -34,7 +34,7 @@ class MOIFunctions:
         self.avg_moi = np.mean(self.moments_of_inertia)  # avg of all frames & moments
 
         # save to file
-        description = f"Moments of inertia tensor for {self.mol_name}"
+        description = f"Moments of inertia for {self.mol_name}"
         csv_file_id = save_to_csv(
             self.path_registry,
             self.moments_of_inertia,
@@ -42,7 +42,7 @@ class MOIFunctions:
             description,
         )
         message = (
-            f"Average Moment of Inertia Tensor: {self.avg_moi}, "
+            f"Average Moment of Inertia: {self.avg_moi:.2f}, "
             f"Data saved with file ID {csv_file_id}. "
         )
         return message
@@ -70,8 +70,8 @@ class MOIFunctions:
         )
         fig_id = self.path_registry.get_fileid(file_name=fig_name, type=FileType.FIGURE)
 
-        plt.plot(self.avg_moi, label="$I_avg$", linestyle="--", color="black")
-        plt.plot(self.min_moi, label="$I_min$", linestyle="--", color="red")
+        plt.axhline(self.avg_moi, label="$I_avg$", linestyle="--", color="black")
+        plt.axhline(self.min_moi, label="$I_min$", linestyle="--", color="red")
         plt.plot(self.moments_of_inertia[:, 0], label="$I_1$")  # smallest MOI
         plt.plot(self.moments_of_inertia[:, 1], label="$I_2$")
         plt.plot(self.moments_of_inertia[:, 2], label="$I_3$")  # largest MOI
@@ -95,10 +95,10 @@ class MomentOfInertia(BaseTool):
     name = "MomentOfInertia"
     description = (
         "Compute the moment of inertia tensors for a molecule or protein."
-        "Inputs: "
-        "   (str) File ID for the topology file. "
-        "   (str, optional) File ID for the trajectory file. "
-        "   (str, optional) Molecule or protein name. "
+        "\nInputs: \n"
+        "\t(str) File ID for the topology file. \n"
+        "\t(str, optional) File ID for the trajectory file. \n"
+        "\t(str, optional) Molecule or protein name. \n"
     )
     path_registry: PathRegistry | None
 

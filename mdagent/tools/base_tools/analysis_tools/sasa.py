@@ -30,8 +30,7 @@ class SASAFunctions:
     def calculate_sasa(self, probe_radius=0.14):
         """
         Calculate the Solvent Accessible Surface Area (SASA) for each
-        frame in the trajectory using Shrake-Rupley algorithm. Hydrogens
-        are excluded for SASA residues calculation.
+        frame in the trajectory using Shrake-Rupley algorithm.
 
         Parameters:
         probe_radius (float, optional): The radius of the probe used to calculate SASA.
@@ -54,7 +53,6 @@ class SASAFunctions:
             csv_header,
         )
         # TODO: also save per-residue or per-atom SASA?
-        # ^ though it may confuse mdagent which file to use for autocorrelation analysis
 
         return f"SASA values computed and saved with File ID {csv_file_id}. "
 
@@ -70,7 +68,7 @@ class SASAFunctions:
         if self.traj.n_frames == 1:
             message += (
                 " Only one frame in trajectory. No SASA plot generated. "
-                f" Total Available Surface Area is {self.total_sasa}. "
+                f" Total Available Surface Area is {self.total_sasa:.2f}. "
             )
             return message
 
@@ -109,11 +107,11 @@ class SASAFunctions:
 class SolventAccessibleSurfaceArea(BaseTool):
     name = "SolventAccessibleSurfaceArea"
     description = (
-        "Compute the Solvent Accessible Surface Area (SASA) for a molecule or protein. "
-        "Inputs: "
-        "   (str) File ID for the topology file. "
-        "   (str, optional) File ID for the trajectory file. "
-        "   (str, optional) Molecule or protein name. "
+        "Compute the Solvent Accessible Surface Area (SASA) for a molecule or protein."
+        "\nInputs: \n"
+        "\t(str) File ID for the topology file. \n"
+        "\t(str, optional) File ID for the trajectory file. \n"
+        "\t(str, optional) Molecule or protein name. \n"
     )
     path_registry: PathRegistry | None
 
