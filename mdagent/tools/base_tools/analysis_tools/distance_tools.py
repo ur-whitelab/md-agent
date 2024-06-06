@@ -168,10 +168,7 @@ class DistanceToolsUtils:
         saves: a gif of the animation
         returns: Description of the animation
         """
-        if option == "distance":
-            Title = "Distance Matrix"
-        elif option == "contact":
-            Title = "Contact Matrix"
+        Title = option.capitalize() + "Matrix"
         fig, ax = plt.subplots()
         im = ax.imshow(matrix[0], origin="lower")
 
