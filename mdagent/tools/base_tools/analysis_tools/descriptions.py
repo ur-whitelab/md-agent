@@ -28,16 +28,6 @@ DISTANCE_TOOL_DESC = (
     "two selections of residues/atoms to calculate the distance between them."
 )
 
-DISPLACEMENT_TOOL_DESC = (
-    "Tool for calculating displacement vectors"
-    " between atom selections pairs in a trajectory."
-)
-NEIGHBORS_TOOL_DESC = (
-    "Find (spatially) neighboring atoms in a trajectory.\n\n"
-    "Given a selection of atoms and a distance cutoff, computes the indices of all"
-    " atoms whose distance to 1 or more of the query points is less than cutoff."
-)
-
 CONTACTS_TOOL_DESC = (
     "Tool for computing the distance between pairs of residues in a trajectory. "
     "If distance is under the cutoff is considered a contact. The output is a matrix "

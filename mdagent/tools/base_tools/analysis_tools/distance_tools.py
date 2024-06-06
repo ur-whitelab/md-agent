@@ -12,13 +12,6 @@ from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
 
-from .descriptions import (
-    CUTOFF_DESC,
-    DISPLACEMENT_TOOL_DESC,
-    NEIGHBORS_TOOL_DESC,
-    SELECTION_DESC,
-)
-
 
 class DistanceToolsUtils:
     def __init__(self, path_registry: Optional[PathRegistry] = None):
@@ -235,28 +228,6 @@ class DistanceSchema(BaseModel):
             "Example selection: 'resid 0 to 10' or 'resid 0 1 2 3 4 5 6 7 8 9 10'"
         )
     )
-
-
-class displacementSchema(BaseModel):
-    trajectory_fileid: str = Field(
-        description="Trajectory File ID of the simulation to be analyzed"
-    )
-    topology_fileid: str = Field(
-        description="Topology File ID of the simulation to be analyzed"
-    )
-    selection1: str = Field(description="First" + SELECTION_DESC)
-    selection2: str = Field(description="Second" + SELECTION_DESC)
-
-
-class neighborsSchema(BaseModel):
-    trajectory_fileid: str = Field(
-        description="Trajectory File ID of the simulation to be analyzed"
-    )
-    topology_fileid: str = Field(
-        description="Topology File ID of the simulation to be analyzed"
-    )
-    selection: str = Field(description=SELECTION_DESC)
-    cutoff: float = Field(1.0, description=CUTOFF_DESC)
 
 
 class ContactSchema(BaseModel):
@@ -492,120 +463,6 @@ class ContactsTool(BaseTool):
             "topology_fileid": topology_id,
             "selection": selection,
             "cutoff": cutoff,
-            "error": error,
-            "system_message": system_message,
-        }
-
-
-class NeighborsTool(BaseTool):
-    name = "NeighborsTool"
-    description = NEIGHBORS_TOOL_DESC
-    input_schema = neighborsSchema
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self):
-        pass
-
-    def _arun(self):
-        pass
-
-    def validate_inputs(self, input):
-        input = input.get("action_input", input)
-        input = input.get("input", input)
-        trajectory_id = input.get("trajectory_fileid", None)
-        topology_id = input.get("topology_fileid", None)
-        selection = input.get("selection", "name CA")
-        cutoff = input.get("cutoff", 1.0)
-        if not trajectory_id:
-            raise ValueError("Incorrect Inputs: trajectory_fileid is required")
-        if not topology_id:
-            raise ValueError("Incorrect Inputs: topology_fileid is required")
-        fileids = self.path_registry.list_path_names()
-        error = ""
-        system_message = ""
-        if trajectory_id not in fileids:
-            error += " Trajectory File ID not in path registry"
-        if topology_id not in fileids:
-            error += " Topology File ID not in path registry"
-        keys = input.keys()
-        for key in keys:
-            if key not in [
-                "trajectory_fileid",
-                "topology_fileid",
-                "pc_percentage",
-                "analysis",
-                "selection",
-                "remove_terminals",
-            ]:
-                system_message += f"{key} is not part of admitted tool inputs"
-        if error == "":
-            error = None
-        return {
-            "trajectory_fileid": trajectory_id,
-            "topology_fileid": topology_id,
-            "selection": selection,
-            "cutoff": cutoff,
-            "error": error,
-            "system_message": system_message,
-        }
-
-
-class DisplacementTool(BaseTool):
-    name = "DisplacementTool"
-    description = DISPLACEMENT_TOOL_DESC
-    input_schema = displacementSchema
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self):
-        pass
-
-    def _arun(self):
-        pass
-
-    def validate_inputs(self, input):
-        input = input.get("action_input", input)
-        input = input.get("input", input)
-        trajectory_id = input.get("trajectory_fileid", None)
-        topology_id = input.get("topology_fileid", None)
-        selection1 = input.get("selection1", "name CA")
-        selection2 = input.get("selection2", "name CA")
-        if not trajectory_id:
-            raise ValueError("Incorrect Inputs: trajectory_fileid is required")
-        if not topology_id:
-            raise ValueError("Incorrect Inputs: topology_fileid is required")
-        fileids = self.path_registry.list_path_names()
-        error = ""
-        system_message = ""
-        if trajectory_id not in fileids:
-            error += " Trajectory File ID not in path registry"
-        if topology_id not in fileids:
-            error += " Topology File ID not in path registry"
-        keys = input.keys()
-        for key in keys:
-            if key not in [
-                "trajectory_fileid",
-                "topology_fileid",
-                "pc_percentage",
-                "analysis",
-                "selection",
-                "remove_terminals",
-            ]:
-                system_message += f"{key} is not part of admitted tool inputs"
-        if error == "":
-            error = None
-        return {
-            "trajectory_fileid": trajectory_id,
-            "topology_fileid": topology_id,
-            "selection1": selection1,
-            "selection2": selection2,
             "error": error,
             "system_message": system_message,
         }
