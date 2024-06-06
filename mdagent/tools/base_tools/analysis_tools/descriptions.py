@@ -23,7 +23,7 @@ DISTANCE_TOOL_DESC = (
     " between said pair in each frame and output a distance vs time plot and a "
     " histogram. iF multiple pairs are provided, the tool will calculate the distance "
     "between each pair in each frame and output a distance matrix plot for the selected"
-    " pairs.\n You can use mode analysis = 'all' to calculate the distance between all "
+    " pairs.\n You can use 'analysis' = 'all' to calculate the distance between all "
     "residue pairs in each frame. Or if interested in a specific pair, you can provide "
     "two selections of residues/atoms to calculate the distance between them."
 )
@@ -39,5 +39,7 @@ NEIGHBORS_TOOL_DESC = (
 )
 
 CONTACTS_TOOL_DESC = (
-    "Tool for computing the distance between pairs of residues in a trajectory."
+    "Tool for computing the distance between pairs of residues in a trajectory. "
+    "If distance is under the cutoff is considered a contact. The output is a matrix "
+    "plot where each contact between residues is represented by a dot."
 )

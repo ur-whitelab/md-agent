@@ -13,20 +13,14 @@ from pydantic import BaseModel, Field
 from mdagent.utils import FileType, PathRegistry
 
 from .descriptions import (
-    CONTACT_SELECTION_DESC,
-    CONTACTS_TOOL_DESC,
     CUTOFF_DESC,
     DISPLACEMENT_TOOL_DESC,
-    DISTANCE_TOOL_DESC,
     NEIGHBORS_TOOL_DESC,
-    RES_SELECTION_DESC,
     SELECTION_DESC,
-    TOPOLOGY_FILEID_DESC,
-    TRAJECTORY_FILEID_DESC,
 )
 
 
-class distanceToolsUtils:
+class DistanceToolsUtils:
     def __init__(self, path_registry: Optional[PathRegistry] = None):
         self.path_registry = path_registry
 
@@ -43,7 +37,7 @@ class distanceToolsUtils:
 
     def calc_side_center_mass(self, traj):
         """
-        Return approximate center of mass of each side chain per frame.
+        Compute approximate center of mass of each side chain per frame.
         COM od Glycine is approximated by the coordinate of its CA atom.
 
         Note: Because compute_center_of_mass gets the center of mass of only one
@@ -65,7 +59,7 @@ class distanceToolsUtils:
 
     def calc_dis_matrix_from_com_all_resids(self, traj, com_matrix):
         """
-        Return the distance matrix between the center of mass of residues
+        Compute the distance matrix between the center of mass of residues
 
         returns: dis_matrix: np.array, shape=(n_frames, n_residues, n_residues)
         """
@@ -93,7 +87,7 @@ class distanceToolsUtils:
 
     def calc_residue_side_dist(self, traj, frame, residue_one, residue_two):
         """
-        Return minimum distance between two residues side-chains.
+        Calculate the minimum distance between two residues side-chains.
         returns: float  distance
         """
         # Select first residue
@@ -179,7 +173,7 @@ class distanceToolsUtils:
         """
         Create an animation of the distance matrix over time
         saves: a gif of the animation
-        returns: None
+        returns: Description of the animation
         """
         if option == "distance":
             Title = "Distance Matrix"
@@ -199,15 +193,19 @@ class distanceToolsUtils:
 
         ani = FuncAnimation(fig, update, frames=matrix.shape[0], interval=200)
         ani.save(path)
-        description = f"{option} matrix over time with {matrix.shape[0]} \
+        description = f"{option.capitalize()} matrix over time with {matrix.shape[0]} \
                 frames, and {matrix.shape[1]} residues. \
                 trajectory file: {source_id}"
         return description
 
 
-class distanceSchema(BaseModel):
-    trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
-    topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
+class DistanceSchema(BaseModel):
+    trajectory_fileid: str = Field(
+        description="Trajectory File ID of the simulation to be analyzed"
+    )
+    topology_fileid: str = Field(
+        description="Topology File ID of the simulation to be analyzed"
+    )
     analysis: Literal["all", "not all"] = Field(
         "all",
         description=(
@@ -223,35 +221,79 @@ class distanceSchema(BaseModel):
             "alpha carbons (CA) or center of mass (COM)"
         ),
     )
-    selection1: Optional[str] = Field(description="First" + RES_SELECTION_DESC)
-    selection2: Optional[str] = Field(description="Second" + RES_SELECTION_DESC)
+    selection1: Optional[str] = Field(
+        description="First"
+        + (
+            "Selection of residues ids from the simulation to use for the analysis."
+            "Example selection: 'resid 0 to 10' or 'resid 0 1 2 3 4 5 6 7 8 9 10'"
+        )
+    )
+    selection2: Optional[str] = Field(
+        description="Second"
+        + (
+            "Selection of residues ids from the simulation to use for the analysis."
+            "Example selection: 'resid 0 to 10' or 'resid 0 1 2 3 4 5 6 7 8 9 10'"
+        )
+    )
 
 
 class displacementSchema(BaseModel):
-    trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
-    topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
+    trajectory_fileid: str = Field(
+        description="Trajectory File ID of the simulation to be analyzed"
+    )
+    topology_fileid: str = Field(
+        description="Topology File ID of the simulation to be analyzed"
+    )
     selection1: str = Field(description="First" + SELECTION_DESC)
     selection2: str = Field(description="Second" + SELECTION_DESC)
 
 
 class neighborsSchema(BaseModel):
-    trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
-    topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
+    trajectory_fileid: str = Field(
+        description="Trajectory File ID of the simulation to be analyzed"
+    )
+    topology_fileid: str = Field(
+        description="Topology File ID of the simulation to be analyzed"
+    )
     selection: str = Field(description=SELECTION_DESC)
     cutoff: float = Field(1.0, description=CUTOFF_DESC)
 
 
-class contactSchema(BaseModel):
-    trajectory_fileid: str = Field(description=TRAJECTORY_FILEID_DESC)
-    topology_fileid: str = Field(description=TOPOLOGY_FILEID_DESC)
-    selection: str = Field(description=CONTACT_SELECTION_DESC)
-    cutoff: float = Field(0.8, description=CUTOFF_DESC)
+class ContactSchema(BaseModel):
+    trajectory_fileid: str = Field(
+        description="Trajectory File ID of the simulation to be analyzed"
+    )
+    topology_fileid: str = Field(
+        description="Topology File ID of the simulation to be analyzed"
+    )
+    selection: str = Field(
+        description="Selection of residues from the \
+                        simulation to use for the contact analysis. Default is 'all'\
+                        which will calculate the distance between all residue pairs.\
+                        \nExample selection: 'resid 0 to 10' or \
+                        'resid 0 1 2 3 4 5 6 7 8 9 10' or 'all'"
+    )
+    cutoff: float = Field(
+        0.8,
+        description="Hard cutoff distance for the contact  \
+                          analysis in nanometers. Defaults to 0.8",
+    )
 
 
-class distanceMatrixTool(BaseTool):
-    name = "distanceMatrixTool"
-    description = DISTANCE_TOOL_DESC
-    input_schema = distanceSchema
+class DistanceMatrixTool(BaseTool):
+    name = "DistanceMatrixTool"
+    description = (
+        "Tool for calculating distances between residue pairs in each frame of a "
+        "trajectory. If only one pair is provided, the tool will calculate the distance"
+        " between said pair in each frame and output a distance vs time plot and a "
+        "histogram. If multiple pairs are provided, the tool will calculate the "
+        "distance between each pair in each frame and output a distance matrix plot "
+        "for the selected pairs.\n You can use 'analysis' = 'all' to calculate the "
+        "distance between all residue pairs in each frame. Or if interested in a "
+        "specific pair, you can provide two selections of residues/atoms to calculate "
+        "the distance between them."
+    )
+    input_schema = DistanceSchema
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry] = None):
@@ -283,7 +325,7 @@ class distanceMatrixTool(BaseTool):
             atom_indices1 = traj.top.select(selection1)
             atom_indices2 = traj.top.select(selection2)
             traj = traj.atom_slice(atom_indices1 + atom_indices2, inplace=False)
-        utils = distanceToolsUtils(path_registry=self.path_registry)
+        utils = DistanceToolsUtils(path_registry=self.path_registry)
         if mode == "CA":
             dist_matrix = utils.calc_matrix_dis_ca_all_resids(traj)
         elif mode == "COM":
@@ -358,10 +400,14 @@ class distanceMatrixTool(BaseTool):
         }
 
 
-class contactsTool(BaseTool):
-    name = "NeighborsTool"
-    description = CONTACTS_TOOL_DESC
-    input_schema = neighborsSchema
+class ContactsTool(BaseTool):
+    name = "ContactsTool"
+    description = (
+        "Tool for computing the distance between pairs of residues in a trajectory. "
+        "If distance is under the cutoff is considered a contact. The output is a "
+        "matrix plot where each contact between residues is represented by a dot."
+    )
+    input_schema = ContactSchema
     path_registry: Optional[PathRegistry]
 
     def __init__(self, path_registry: Optional[PathRegistry] = None):
@@ -390,7 +436,7 @@ class contactsTool(BaseTool):
                 system_message += f"Error with the selection: {str(e)}.\
                       Defaulting to 'all'"
 
-        utils = distanceToolsUtils(path_registry=self.path_registry)
+        utils = DistanceToolsUtils(path_registry=self.path_registry)
         matrix = utils.calc_matrix_cm_all_resids(traj, threshold=cutoff)
 
         # save the matrix as a gif and some of the frames as images
@@ -451,8 +497,8 @@ class contactsTool(BaseTool):
         }
 
 
-class neighborsTool(BaseTool):
-    name = "neighborsTool"
+class NeighborsTool(BaseTool):
+    name = "NeighborsTool"
     description = NEIGHBORS_TOOL_DESC
     input_schema = neighborsSchema
     path_registry: Optional[PathRegistry]
@@ -508,8 +554,8 @@ class neighborsTool(BaseTool):
         }
 
 
-class displacementTool(BaseTool):
-    name = "displacementTool"
+class DisplacementTool(BaseTool):
+    name = "DisplacementTool"
     description = DISPLACEMENT_TOOL_DESC
     input_schema = displacementSchema
     path_registry: Optional[PathRegistry]

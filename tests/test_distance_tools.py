@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from mdagent.tools.base_tools.analysis_tools.distance_tools import distanceToolsUtils
+from mdagent.tools.base_tools.analysis_tools.distance_tools import DistanceToolsUtils
 
 
 @pytest.fixture(scope="module")
 def distanceUtils(get_registry):
     # Test for the distanceToolsUtils class
     reg = get_registry("raw", False)
-    return distanceToolsUtils(path_registry=reg)
+    return DistanceToolsUtils(path_registry=reg)
 
 
 @pytest.fixture(scope="module")
@@ -49,14 +49,14 @@ def dummy_traj(xyz_coords):
 def test_distanceToolsUtils_init(get_registry):
     # Test the init method of the distanceToolsUtils class
     reg = get_registry("raw", False)
-    distance_utils = distanceToolsUtils(path_registry=reg)
+    distance_utils = DistanceToolsUtils(path_registry=reg)
     assert distance_utils.path_registry is not None
 
 
 def test_distanceToolsUtils_calc_res_dist(get_registry):
     # Test the get_distance method of the distanceToolsUtils class
     reg = get_registry("raw", False)
-    distance_utils = distanceToolsUtils(path_registry=reg)
+    distance_utils = DistanceToolsUtils(path_registry=reg)
 
     assert distance_utils.calc_residue_dist(residues=(1, 2)) == 1
     assert distance_utils.calc_residue_dist() == 0
