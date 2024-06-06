@@ -20,14 +20,6 @@ class DistanceToolsUtils:
     def all_possible_pairs(self, array1, array2):
         return list(itertools.product(array1, array2))
 
-    def calc_residue_dist(self, residues=(0, 0)):
-        """
-        Return the C-alpha distance between two residues.
-        returns: float  distance
-        """
-        diff_vector = residues[0] - residues[1]
-        return np.sqrt(np.vdot(diff_vector, diff_vector))
-
     def calc_side_center_mass(self, traj):
         """
         Compute approximate center of mass of each side chain per frame.
@@ -77,24 +69,6 @@ class DistanceToolsUtils:
         _dis_matrix = md.compute_distances(new_traj, pairs)
         dis_matrix = md.geometry.squareform(_dis_matrix, residue_pairs=pairs)
         return dis_matrix
-
-    def calc_residue_side_dist(self, traj, frame, residue_one, residue_two):
-        """
-        Calculate the minimum distance between two residues side-chains.
-        returns: float  distance
-        """
-        # Select first residue
-        selection1 = traj.topology.select("(resid %d) and sidechain" % residue_one)
-        if len(selection1) < 1:
-            selection1 = traj.topology.select("(resid %d) and (name CA)" % residue_one)
-        # Select second residue
-        selection2 = traj.topology.select("(resid %d) and sidechain" % residue_two)
-        if len(selection2) < 1:
-            selection2 = traj.topology.select("(resid %d) and (name CA)" % residue_two)
-        atom_pairs = self.all_possible_pairs(
-            traj.xyz[frame, selection1, :], traj.xyz[frame, selection2, :]
-        )
-        return min(map(self.calc_residue_dist, atom_pairs))
 
     def calc_matrix_cm_all_resids(self, traj, threshold=0.8, distance=1.2):
         """
