@@ -244,24 +244,55 @@ class DistanceMatrixTool(BaseTool):
 
     def _run(self, **input):
         try:
-            input = self.validate_input(**input)
+            input = self.validate_inputs(**input)
         except ValueError as e:
             return f"Error using the PCA Tool: {str(e)}"
 
-        error = input.get("error", None)
-        if error:
-            return f"Error with the tool inputs: {error} "
-        input.get("system_message")
+        (
+            trajectory_id,
+            topology_id,
+            selection1,
+            selection2,
+            analysis,
+            mode,
+            error,
+            system_message,
+        ) = self.get_values(input)
 
-        trajectory_id = input["trajectory_fileid"]
-        topology_id = input["topology_fileid"]
-        selection1 = input["selection1"]
-        selection2 = input["selection2"]
-        mode = input["mode"]
-        analysis = input["analysis"]
+        if error:
+            return f"Failed. Error with the tool inputs: {error} "
+
         path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
         path_to_top = self.path_registry.get_mapped_path(topology_id)
-        traj = md.load(path_to_traj, top=path_to_top)
+        try:
+            traj = md.load(path_to_traj, top=path_to_top)
+        except ValueError as e:
+            if (
+                "The topology and the trajectory files might not\
+                  contain the same atoms"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure the topology file"
+                    " is from the initial positions of the trajectory. Error: {str(e)}"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except OSError as e:
+            if (
+                "The topology is loaded by filename extension, \
+                and the detected"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure you include the"
+                    "correct file for the topology. Supported extensions are:"
+                    "'.pdb', '.pdb.gz', '.h5', '.lh5', '.prmtop', '.parm7', '.prm7',"
+                    "  '.psf', '.mol2', '.hoomdxml', '.gro', '.arc', '.hdf5' and '.gsd'"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except Exception as e:
+            return f"Failed. Error loading trajectory: {str(e)}"
+
         if analysis != "all":
             # slice the trajectory to include only the selections
             atom_indices1 = traj.top.select(selection1)
@@ -290,7 +321,7 @@ class DistanceMatrixTool(BaseTool):
             dist_matrix, f"{self.path_registry.ckpt_figures}/dist_{trajectory_id}"
         )
 
-        return "Distance Matrix created with ID: " + fig_id
+        return "Succeeded. Distance Matrix created with ID: " + fig_id + system_message
 
     def _arun(self):
         pass
@@ -303,6 +334,7 @@ class DistanceMatrixTool(BaseTool):
         selection1 = input.get("selection1", "name CA")
         selection2 = input.get("selection2", "name CA")
         mode = input.get("mode", "CA")
+        analysis = input.get("analysis", "all")
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: trajectory_fileid is required")
         if not topology_id:
@@ -315,9 +347,18 @@ class DistanceMatrixTool(BaseTool):
         if topology_id not in fileids:
             error += " Topology File ID not in path registry"
         if mode not in ["CA", "COM"]:
-            system_message += " Incorrect mode, must be either CA or COM.\
-                  Defaulting to CA \n"
+            print("Incorrect mode, must be either CA or COM. Defaulting to CA")
+            system_message += " 'mode' must be either CA or COM. \
+                Tool defaulted to measure distances w.r.t. alpha carbons (CA) \n"
             mode = "CA"
+        if analysis not in ["all", "not all"]:
+            print(
+                "Incorrect analysis, must be either 'all' or 'not all'."
+                " Defaulting to all"
+            )
+            system_message += "'analysis', must be either 'all' or 'not all'.\
+                  Tool defaulted to 'all' \n"
+            analysis = "all"
         keys = input.keys()
         for key in keys:
             if key not in [
@@ -328,7 +369,10 @@ class DistanceMatrixTool(BaseTool):
                 "selection1",
                 "selection2",
             ]:
-                system_message += f"{key} is not part of admitted tool inputs\n"
+                system_message += (
+                    f"{key} is not part of admitted tool inputs\n."
+                    "Ignoring it during the analysis"
+                )
 
         if error == "":
             error = None
@@ -337,9 +381,23 @@ class DistanceMatrixTool(BaseTool):
             "topology_fileid": topology_id,
             "selection1": selection1,
             "selection2": selection2,
+            "analysis": analysis,
+            "mode": mode,
             "error": error,
             "system_message": system_message,
         }
+
+    def get_values(self, input):
+        traj_id = input.get("trajectory_fileid")
+        top_id = input.get("topology_fileid")
+        sel1 = input.get("selection1")
+        sel2 = input.get("selection2")
+        analysis = input.get("analysis")
+        mode = input.get("mode")
+        error = input.get("error")
+        syst_mes = input.get("system_message")
+
+        return traj_id, top_id, sel1, sel2, analysis, mode, error, syst_mes
 
 
 class ContactsTool(BaseTool):
