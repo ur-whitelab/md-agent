@@ -110,6 +110,10 @@ class PCA_analysis:
         if not self.pc:
             pc_mess = self.get_pc()
             if "not aligned" in pc_mess:
+                print(
+                    "Warning: The trajectory is not aligned, but the PCA analysis"
+                    "will continue. Be wary of the final results"
+                )
                 extra_mess += pc_mess
         if not self.n_pcs:
             self._get_number_pcs()
