@@ -246,7 +246,7 @@ class PCATool(BaseTool):
             input = self.validate_input(**input)
 
         except ValueError as e:
-            return f"Error using the PCA Tool: {str(e)}"
+            return f"Failed. Error using the PCA Tool: {str(e)}"
 
         (
             traj_id,
@@ -259,7 +259,7 @@ class PCATool(BaseTool):
         ) = self.get_values(input)
 
         if error:
-            return f"Error with the tool inputs: {error} "
+            return f"Failed. Error with the tool inputs: {error} "
         if system_input_message == "Tool Messages:":
             system_input_message = ""
         traj_path = self.path_registry.get_mapped_path(traj_id)
@@ -383,12 +383,16 @@ class PCATool(BaseTool):
         try:
             if analysis == "all":
                 result = PCA_container.run_all()
-                return f"{result}. \n\n {system_input_message}"
+                return f"Succeeded. {result}. \n\n {system_input_message}"
             if analysis.lower() == "cosine_convergence":
                 result = PCA_container.measure_cosine_convergence()
-                return f"Analyses done: {result}. \n\n {system_input_message}"
+                return (
+                    f"Succeeded. Analyses done: {result}. \n\n {system_input_message}"
+                )
             if analysis.lower() == "scree_plot":
                 result = PCA_container.make_scree_plot()
-                return f"Analyses done: {result}. \n\n {system_input_message}"
+                return (
+                    f"Succeeded. Analyses done: {result}. \n\n {system_input_message}"
+                )
         except Exception as e:
-            raise (Exception(f"Error during PCA Tool usage: {str(e)}"))
+            raise (Exception(f"Failed. Error during PCA Tool usage: {str(e)}"))
