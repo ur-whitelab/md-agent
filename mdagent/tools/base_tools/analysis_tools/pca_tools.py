@@ -222,9 +222,6 @@ class PCASchema(BaseModel):
             "to use for the pca analysis"
         ),
     )
-    remove_terminals: Optional[str] = Field(
-        False, description="To remove or not the terminal residues of each chain."
-    )
 
 
 class PCATool(BaseTool):
@@ -243,22 +240,26 @@ class PCATool(BaseTool):
     def _run(self, input):
         try:
             input = self.validate_input(**input)
+
         except ValueError as e:
             return f"Error using the PCA Tool: {str(e)}"
 
-        error = input.get("error", None)
+        (
+            traj_id,
+            top_id,
+            pc_percentage,
+            analysis,
+            selection,
+            error,
+            system_input_message,
+        ) = self.get_values(input)
+
         if error:
             return f"Error with the tool inputs: {error} "
-        system_input_message = input.get("system_message")
         if system_input_message == "Tool Messages:":
             system_input_message = ""
-        traj_id = input.get("trajectory_fileid")
-        top_id = input.get("topology_fileid")
         traj_path = self.path_registry.get_mapped_path(traj_id)
         top_path = self.path_registry.get_mapped_path(top_id)
-        pc_percentage = input.get("pc_percentage")
-        analysis = input.get("analysis")
-        selection = input.get("selection", "backbone and name CA")
 
         PCA_container = PCA_analysis(
             self.path_registry,
@@ -289,7 +290,6 @@ class PCATool(BaseTool):
         pc_percentage = input.get("pc_percentage", 95.0)
         analysis = input.get("analysis", "all")
         selection = input.get("selection", "name CA")
-        remove_terminals = input.get("remove_terminals", False)
         if not trajectory_id:
             raise ValueError("Incorrect Inputs: trajectory_fileid is required")
         if not topology_id:
@@ -298,7 +298,6 @@ class PCATool(BaseTool):
         fileids = self.path_registry.list_path_names()
         error = ""
         system_message = "Tool Messages:"
-        print("Files Ids:", fileids)
         if trajectory_id not in fileids:
             error += " Trajectory File ID not in path registry"
         if topology_id not in fileids:
@@ -345,7 +344,6 @@ class PCATool(BaseTool):
                 "pc_percentage",
                 "analysis",
                 "selection",
-                "remove_terminals",
             ]:
                 system_message += f"{key} is not part of admitted tool inputs"
         if error == "":
@@ -355,8 +353,18 @@ class PCATool(BaseTool):
             "topology_fileid": topology_id,
             "pc_percentage": pc_percentage,
             "analysis": analysis,
-            "remove_terminals": remove_terminals,
             "selection": selection,
             "error": error,
             "system_message": system_message,
         }
+
+    def get_values(self, input):
+        traj_id = input.get("trajectory_fileid")
+        top_id = input.get("topology_fileid")
+        pc_perc = input.get("pc_percentage")
+        analysis = input.get("analysis")
+        sel = input.get("selection")
+        error = input.get("error")
+        syst_mes = input.get("system_message")
+
+        return traj_id, top_id, pc_perc, analysis, sel, error, syst_mes
