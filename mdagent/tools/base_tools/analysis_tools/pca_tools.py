@@ -261,26 +261,15 @@ class PCATool(BaseTool):
         traj_path = self.path_registry.get_mapped_path(traj_id)
         top_path = self.path_registry.get_mapped_path(top_id)
 
-        PCA_container = PCA_analysis(
-            self.path_registry,
-            pc_percentage=pc_percentage,
-            top_path=top_path,
-            traj_path=traj_path,
-            sim_id=traj_id,
-            selection=selection,
+        return self.run_pca_analysis(
+            traj_path,
+            top_path,
+            pc_percentage,
+            analysis,
+            traj_id,
+            selection,
+            system_input_message,
         )
-        try:
-            if analysis == "all":
-                result = PCA_container.run_all()
-                return f"{result}. \n\n {system_input_message}"
-            if analysis.lower() == "cosine_convergence":
-                result = PCA_container.measure_cosine_convergence()
-                return f"Analyses done: {result}. \n\n {system_input_message}"
-            if analysis.lower() == "scree_plot":
-                result = PCA_container.make_scree_plot()
-                return f"Analyses done: {result}. \n\n {system_input_message}"
-        except Exception as e:
-            raise (Exception(f"Error during PCA Tool usage: {str(e)}"))
 
     def validate_input(self, **input):
         input = input.get("action_input", input)
@@ -368,3 +357,34 @@ class PCATool(BaseTool):
         syst_mes = input.get("system_message")
 
         return traj_id, top_id, pc_perc, analysis, sel, error, syst_mes
+
+    def run_pca_analysis(
+        self,
+        traj_path,
+        top_path,
+        pc_percentage,
+        analysis,
+        traj_id,
+        selection,
+        system_input_message,
+    ):
+        PCA_container = PCA_analysis(
+            self.path_registry,
+            pc_percentage=pc_percentage,
+            top_path=top_path,
+            traj_path=traj_path,
+            sim_id=traj_id,
+            selection=selection,
+        )
+        try:
+            if analysis == "all":
+                result = PCA_container.run_all()
+                return f"{result}. \n\n {system_input_message}"
+            if analysis.lower() == "cosine_convergence":
+                result = PCA_container.measure_cosine_convergence()
+                return f"Analyses done: {result}. \n\n {system_input_message}"
+            if analysis.lower() == "scree_plot":
+                result = PCA_container.make_scree_plot()
+                return f"Analyses done: {result}. \n\n {system_input_message}"
+        except Exception as e:
+            raise (Exception(f"Error during PCA Tool usage: {str(e)}"))
