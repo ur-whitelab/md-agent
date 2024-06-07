@@ -1,3 +1,4 @@
+import warnings
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -42,7 +43,8 @@ class PCA_analysis:
             self.traj.superpose(self.traj, frame=0, atom_indices=self.atom_indices)
             return "Trajectory aligned to the first frame. "
         except Exception as e:
-            print(f"Error aligning trajectory: {str(e)}")
+            warnings.warn(f"Error aligning trajectory: {str(e)}", RuntimeWarning)
+            return "Trajectory not aligned. "
 
     def get_pc(self):
         align_message = self._align_trajectory()
@@ -51,7 +53,12 @@ class PCA_analysis:
                 self.traj.n_frames, len(self.atom_indices) * 3
             )
         )
-
+        if "not aligned" in align_message:
+            warnings.warn(
+                "The trajectory is not aligned, but the PCA analysis"
+                "will continue. Be wary of the final results",
+                RuntimeWarning,
+            )
         return "PCA done" + align_message
 
     def _sub_array_sum_to_m(self, arr, M):
@@ -108,13 +115,7 @@ class PCA_analysis:
     def make_scree_plot(self):
         extra_mess = ""
         if not self.pc:
-            pc_mess = self.get_pc()
-            if "not aligned" in pc_mess:
-                print(
-                    "Warning: The trajectory is not aligned, but the PCA analysis"
-                    "will continue. Be wary of the final results"
-                )
-                extra_mess += pc_mess
+            extra_mess += self.get_pc()
         if not self.n_pcs:
             self._get_number_pcs()
         cumulative_variance = self.pc.explained_variance_ratio_.cumsum()
