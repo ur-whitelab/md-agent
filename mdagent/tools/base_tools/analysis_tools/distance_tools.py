@@ -415,19 +415,54 @@ class ContactsTool(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, **input):
-        input = self.validate_input(**input)
-        error = input.get("error", None)
+        try:
+            input = self.validate_input(**input)
+        except ValueError as e:
+            return f"Failed. Error using the Contacts Tool: {str(e)}"
+        (
+            trajectory_id,
+            topology_id,
+            selection,
+            cutoff,
+            error,
+            system_message,
+        ) = self.get_values(input)
+
         if error:
-            return f"Error with the tool inputs: {error} "
-        input.get("system_message")
-        trajectory_id = input["trajectory_fileid"]
-        topology_id = input["topology_fileid"]
-        selection = input["selection"]
-        cutoff = input["cutoff"]
-        system_message = input["system_message"]
+            return f"Failed. Error with the tool inputs: {error} "
+
         path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
         path_to_top = self.path_registry.get_mapped_path(topology_id)
-        traj = md.load(path_to_traj, top=path_to_top)
+
+        try:
+            traj = md.load(path_to_traj, top=path_to_top)
+        except ValueError as e:
+            if (
+                "The topology and the trajectory files might not\
+                  contain the same atoms"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure the topology file"
+                    " is from the initial positions of the trajectory. Error: {str(e)}"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except OSError as e:
+            if (
+                "The topology is loaded by filename extension, \
+                and the detected"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure you include the"
+                    "correct file for the topology. Supported extensions are:"
+                    "'.pdb', '.pdb.gz', '.h5', '.lh5', '.prmtop', '.parm7', '.prm7',"
+                    "  '.psf', '.mol2', '.hoomdxml', '.gro', '.arc', '.hdf5' and '.gsd'"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except Exception as e:
+            return f"Failed. Error loading trajectory: {str(e)}"
+
         if selection != "all":
             try:
                 atom_indices = traj.top.select(selection)
@@ -495,3 +530,14 @@ class ContactsTool(BaseTool):
             "error": error,
             "system_message": system_message,
         }
+
+
+def get_values(self, input):
+    traj_id = input.get("trajectory_fileid")
+    top_id = input.get("topology_fileid")
+    sel = input.get("selection")
+    cutoff = input.get("cutoff")
+    error = input.get("error")
+    syst_mes = input.get("system_message")
+
+    return traj_id, top_id, sel, cutoff, error, syst_mes
