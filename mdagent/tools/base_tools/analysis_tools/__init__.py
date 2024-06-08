@@ -6,11 +6,11 @@ from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
     "PPIDistance",
-    "RMSDCalculator",
+    "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
+    "RMSDCalculator",
     "SimulationOutputFigures",
-    "VisualizeProtein",
     "VisFunctions",
-    "RadiusofGyrationAverage",
+    "VisualizeProtein",
 ]
