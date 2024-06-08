@@ -14,7 +14,8 @@ from mdagent.utils import PathRegistry, load_single_traj
 class ComputeAngles(BaseTool):
     name = "compute_angles"
     description = """Calculate the bond angles for the given sets of three atoms in
-    each snapshot of a molecular simulation."""
+    each snapshot, and provide a list of indices specifying which atoms are involved
+    in each bond angle calculation.."""
 
     path_registry: PathRegistry | None = None
 
@@ -46,7 +47,8 @@ class ComputeAngles(BaseTool):
 class ComputeDihedrals(BaseTool):
     name = "compute_dihedrals"
     description = """Calculate the dihedral angles for the given groups of four atoms
-    in each snapshot of a molecular simulation."""
+      in each snapshot, and provide a list of dihedral angles along with a list of
+      indices specifying which atoms are involved in each dihedral angle calculation."""
 
     path_registry: PathRegistry | None = None
 
@@ -83,9 +85,9 @@ class ComputeDihedrals(BaseTool):
 
 class ComputePsi(BaseTool):
     name = "compute_psi"
-    description = """Calculate the psi angles for each snapshot in a molecular dynamics
-      simulation. These angles involve the alpha and carbonyl carbons, allowing rotation
-        that shapes the protein's secondary structure and overall 3D conformation.."""
+    description = """Calculate the psi angles for each snapshot, providing a list of
+    psi angles for each frame in the trajectory and a list of indices specifying the
+    atoms involved in calculating each psi angle"""
 
     path_registry: PathRegistry | None = None
 
@@ -105,12 +107,8 @@ class ComputePsi(BaseTool):
 
 class ComputePhi(BaseTool):
     name = "compute_phi"
-    description = """This class is designed to calculate the phi torsion angles in a
-    molecular dynamics simulation.
-    Involve the nitrogen and alpha carbon, allowing for rotation that contributes to
-    the overall folding pattern
-     More flexible, allowing for a wide range of conformations that define the protein’s
-     three-dimensional structure ."""
+    description = """This class calculates phi torsion angles and provides a list of phi
+      angles and indices specifying which atoms are involved in the calculations"""
 
     path_registry: PathRegistry | None = None
 
@@ -131,8 +129,9 @@ class ComputePhi(BaseTool):
 class ComputeChi1(BaseTool):
     name = "compute_chi1"
     description = """Calculate the chi1 angles (the first side chain torsion angle
-    formed between four atoms around the CA-CB axis) for each snapshot in a molecular
-      dynamics simulation."""
+    formed between four atoms around the CA-CB axis) for each snapshot, providing a
+    list of chi1 angles and indices specifying the atoms involved in each chi1 angle
+    calculation."""
 
     path_registry: PathRegistry | None = None
 
@@ -153,8 +152,9 @@ class ComputeChi1(BaseTool):
 class ComputeChi2(BaseTool):
     name = "compute_chi2"
     description = """Calculate the chi2 angles (the second side chain torsion angle
-      formed between four atoms around the CB-CG axis) for each snapshot in a
-      molecular dynamics simulation."""
+    formed between four atoms around the CB-CG axis) for each snapshot, providing a
+    list of chi2 angles and a list of indices specifying the atoms involved in
+    calculating each chi2 angle."""
 
     path_registry: PathRegistry | None = None
 
@@ -175,9 +175,10 @@ class ComputeChi2(BaseTool):
 class ComputeChi3(BaseTool):
     name = "compute_chi3"
     description = """Calculate the chi3 angles (the third side chain torsion angle
-    formed between four atoms around the CG-CD axis) for each snapshot in a molecular
-    dynamics simulation. Note: Only the residues ARG, GLN, GLU, LYS, and MET have
-    these atoms."""
+    formed between four atoms around the CG-CD axis) for each snapshot in the
+    trajectory, providing a list of chi3 angles and indices specifying the atoms
+    involved in the calculation of each chi3 angle. Note: Only the residues ARG, GLN,
+      GLU, LYS, and MET have these atoms."""
 
     path_registry: PathRegistry | None = None
 
@@ -198,9 +199,9 @@ class ComputeChi3(BaseTool):
 class ComputeChi4(BaseTool):
     name = "compute_chi4"
     description = """Calculate the chi4 angles (the fourth side chain torsion angle
-      formed between four atoms around the CD-CE or CD-NE axis) for each snapshot in
-      a molecular dynamics simulation. Note: Only the residues ARG and LYS have these
-        atoms."""
+    formed between four atoms around the CD-CE or CD-NE axis) for each snapshot in the
+    trajectory, providing a list of indices specifying which atoms are involved in the
+    chi4 angle calculations. """
 
     path_registry: PathRegistry | None = None
 
@@ -220,15 +221,9 @@ class ComputeChi4(BaseTool):
 
 class ComputeOmega(BaseTool):
     name = "compute_omega"
-    description = """Calculate the omega angles (a specific type of bond angle) for
-    each snapshot in a molecular dynamics simulation.
-    Role: omega angles are primarily involved in the peptide bond, crucial for
-    determining the planarity
-      and rigidity of the peptide bond. They usually have less variability due to
-      the preference for trans configuration.
-     omega angles are more rigid due to the partial double-bond character of the
-     peptide bond, leading to limited rotational freedom
-     (mostly fixed at 180° or 0°)."""
+    description = """Calculate the omega angles for each snapshot in the trajectory,
+    providing a list of indices specifying which atoms are involved in the omega angle
+    calculations.."""
 
     path_registry: PathRegistry | None = None
 
