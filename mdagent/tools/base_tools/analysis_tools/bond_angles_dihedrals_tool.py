@@ -150,7 +150,7 @@ class ComputeChi1(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-class Compute_Chi2(BaseTool):
+class ComputeChi2(BaseTool):
     name = "compute_chi2"
     description = """Calculate the chi2 angles (the second side chain torsion angle
       formed between four atoms around the CB-CG axis) for each snapshot in a

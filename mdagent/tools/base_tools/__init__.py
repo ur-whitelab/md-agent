@@ -1,3 +1,14 @@
+from .analysis_tools.bond_angles_dihedrals_tool import (
+    ComputeAngles,
+    ComputeChi1,
+    ComputeChi2,
+    ComputeChi3,
+    ComputeChi4,
+    ComputeDihedrals,
+    ComputeOmega,
+    ComputePhi,
+    ComputePsi,
+)
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -22,6 +33,15 @@ from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
+    "ComputeAngles",
+    "ComputeChi1",
+    "ComputeChi2",
+    "ComputeChi3",
+    "ComputeChi4",
+    "ComputeDihedrals",
+    "ComputeOmega",
+    "ComputePhi",
+    "ComputePsi",
     "ListRegistryPaths",
     "MapPath2Name",
     "ProteinName2PDBTool",
