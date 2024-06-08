@@ -8,7 +8,9 @@ from langchain.vectorstores import Chroma
 from mdagent.utils import PathRegistry
 
 from .base_tools import (
+    BakerHubbard,
     CleaningToolFunction,
+    KabschSander,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
     PackMolTool,
@@ -24,6 +26,7 @@ from .base_tools import (
     SimulationOutputFigures,
     SmallMolPDB,
     VisualizeProtein,
+    WernetNilsson,
 )
 
 
@@ -46,7 +49,9 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        BakerHubbard(path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
+        KabschSander(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
@@ -60,6 +65,7 @@ def make_all_tools(
         SimulationOutputFigures(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
+        WernetNilsson(path_registry=path_instance),
     ]
 
     all_tools += base_tools

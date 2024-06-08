@@ -1,3 +1,8 @@
+from .analysis_tools.hydrogen_bonding_tools import (
+    BakerHubbard,
+    KabschSander,
+    WernetNilsson,
+)
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -22,7 +27,9 @@ from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
+    "BakerHubbard",
     "CleaningToolFunction",
+    "KabschSander",
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",
@@ -43,5 +50,6 @@ __all__ = [
     "SmallMolPDB",
     "VisFunctions",
     "VisualizeProtein",
+    "WernetNilsson",
     "get_pdb",
 ]

@@ -1,10 +1,14 @@
+from hydrogen_bonding_tools import BakerHubbard, KabschSander, WernetNilsson
+
 from .plot_tools import SimulationOutputFigures
 from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
 from .rmsd_tools import RMSDCalculator
 from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
-    "Hydrogen_Bonding" "PPIDistance",
+    "BakerHubbard",
+    "KabschSander",
+    "PPIDistance",
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
@@ -12,4 +16,5 @@ __all__ = [
     "SimulationOutputFigures",
     "VisFunctions",
     "VisualizeProtein",
+    "WernetNilsson",
 ]
