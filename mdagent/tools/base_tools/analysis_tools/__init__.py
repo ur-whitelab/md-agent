@@ -1,5 +1,4 @@
-from hydrogen_bonding_tools import BakerHubbard, KabschSander, WernetNilsson
-
+from .hydrogen_bonding_tools import BakerHubbard, KabschSander, WernetNilsson
 from .plot_tools import SimulationOutputFigures
 from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
 from .rmsd_tools import RMSDCalculator

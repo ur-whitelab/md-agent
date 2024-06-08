@@ -1,15 +1,14 @@
 import mdtraj as md
 from langchain.tools import BaseTool
 
-from mdagent.utils import PathRegistry
+from mdagent.utils import PathRegistry, load_single_traj
 
-
-def load_single_traj(path_registry, traj_file, top_file=None):
-    if top_file is not None:
-        traj = md.load(traj_file, top=top_file)
-    else:
-        traj = md.load(traj_file)
-    return traj if traj else None
+# def load_single_traj(path_registry, traj_file, top_file=None):
+#     if top_file is not None:
+#         traj = md.load(traj_file, top=top_file)
+#     else:
+#         traj = md.load(traj_file)
+#     return traj if traj else None
 
 
 class BakerHubbard(BaseTool):
@@ -26,7 +25,7 @@ class BakerHubbard(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None, freq=0.1):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
+        traj = load_single_traj(self.path_registry, top_file, traj_file)
         if not traj:
             return "Trajectory could not be loaded."
 
@@ -52,7 +51,7 @@ class KabschSander(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
+        traj = load_single_traj(self.path_registry, top_file, traj_file)
         if not traj:
             return "Trajectory could not be loaded."
         return md.kabsch_sander(traj)
@@ -73,7 +72,7 @@ class WernetNilsson(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
+        traj = load_single_traj(self.path_registry, top_file, traj_file)
         if not traj:
             return "Trajectory could not be loaded."
         return md.wernet_nilsson(
