@@ -12,7 +12,7 @@ def load_traj(path_registry, traj_file, top_file=None):
     return traj if traj else None
 
 
-class Baker_hubbard(BaseTool):
+class BakerHubbard(BaseTool):
     name = "Baker_hubbard"
     description = """Identify hydrogen bonds based on cutoffs for the Donor-H…Acceptor
     distance and angle."""
@@ -36,7 +36,7 @@ class Baker_hubbard(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-class ComputeKabsch_sander(BaseTool):
+class ComputeKabschSander(BaseTool):
     name = "kabsch_sander"
     description = """Compute the Kabsch-Sander hydrogen bond energy between each pair
     of residues in every frame."""
@@ -57,7 +57,7 @@ class ComputeKabsch_sander(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-class ComputeWernet_Nilsson(BaseTool):
+class ComputeWernetNilsson(BaseTool):
     name = "wernet_nilsson"
     description = """Identify hydrogen bonds based on cutoffs for the Donor-H…Acceptor
     distance and angle according to the criterion outlined in literature. Angle
