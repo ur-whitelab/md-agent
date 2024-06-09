@@ -2,8 +2,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Assuming the BakerHubbard class and load_single_traj function are in the `my_module`
-# module
 from mdagent.tools.base_tools.analysis_tools.hydrogen_bonding_tools import (
     BakerHubbard,
     KabschSander,
