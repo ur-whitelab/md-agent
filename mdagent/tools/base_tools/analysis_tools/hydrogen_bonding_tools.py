@@ -18,13 +18,18 @@ class BakerHubbard(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None, freq=0.1):
-        traj = load_single_traj(self.path_registry, top_file, traj_file)
-        if not traj:
-            return "Trajectory could not be loaded."
+        try:
+            traj = load_single_traj(self.path_registry, top_file, traj_file)
+            if not traj:
+                return "Trajectory could not be loaded."
 
-        return md.baker_hubbard(
-            traj, freq, exclude_water=True, periodic=True, sidechain_only=False
-        )
+            result = md.baker_hubbard(
+                traj, freq, exclude_water=True, periodic=True, sidechain_only=False
+            )
+            return result
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None, freq=0.1):
         raise NotImplementedError("Async version not implemented")
@@ -44,10 +49,16 @@ class KabschSander(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, top_file, traj_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.kabsch_sander(traj)
+        try:
+            traj = load_single_traj(self.path_registry, top_file, traj_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+
+            result = md.kabsch_sander(traj)
+            return result
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -65,12 +76,16 @@ class WernetNilsson(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, top_file, traj_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.wernet_nilsson(
-            traj, exclude_water=True, periodic=True, sidechain_only=False
-        )
+        try:
+            traj = load_single_traj(self.path_registry, top_file, traj_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            result = md.wernet_nilsson(
+                traj, exclude_water=True, periodic=True, sidechain_only=False
+            )
+            return result
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
