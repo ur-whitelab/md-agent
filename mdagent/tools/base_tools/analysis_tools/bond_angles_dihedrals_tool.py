@@ -67,9 +67,6 @@ class ComputeDihedrals(BaseTool):
                 "atom indices as integers."
             )
 
-        # Assuming a generic computation method for demonstration
-        # Replace `md.compute_properties` with the actual computation method you need
-
         return md.compute_dihedrals(traj, indices, periodic=True, opt=True)
 
     async def _arun(self, traj_file, indices, top_file=None):
