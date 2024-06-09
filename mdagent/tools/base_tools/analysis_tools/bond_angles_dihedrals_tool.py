@@ -17,21 +17,25 @@ class ComputeAngles(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, angle_indices, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
 
-        if (
-            not angle_indices
-            or not isinstance(angle_indices, list)
-            or not all(len(indices) == 3 for indices in angle_indices)
-        ):
-            return (
-                "Invalid angle_indices. It should be a list of tuples, each "
-                "containing three atom indices."
-            )
+            if (
+                not angle_indices
+                or not isinstance(angle_indices, list)
+                or not all(len(indices) == 3 for indices in angle_indices)
+            ):
+                return (
+                    "Invalid angle_indices. It should be a list of tuples, each "
+                    "containing three atom indices."
+                )
 
-        return md.compute_angles(traj, angle_indices, periodic=True, opt=True)
+            return md.compute_angles(traj, angle_indices, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, angle_indices, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -50,24 +54,28 @@ class ComputeDihedrals(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, indices, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
 
-        if (
-            not indices
-            or not isinstance(indices, list)
-            or not all(
-                isinstance(tup, tuple) and all(isinstance(i, int) for i in tup)
-                for tup in indices
-            )
-        ):
-            return (
-                "Invalid indices. It should be a list of tuples, each containing"
-                "atom indices as integers."
-            )
+            if (
+                not indices
+                or not isinstance(indices, list)
+                or not all(
+                    isinstance(tup, tuple) and all(isinstance(i, int) for i in tup)
+                    for tup in indices
+                )
+            ):
+                return (
+                    "Invalid indices. It should be a list of tuples, each containing"
+                    "atom indices as integers."
+                )
 
-        return md.compute_dihedrals(traj, indices, periodic=True, opt=True)
+            return md.compute_dihedrals(traj, indices, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, indices, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -86,10 +94,14 @@ class ComputePsi(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_psi(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_psi(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -107,10 +119,14 @@ class ComputePhi(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_phi(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_phi(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -130,10 +146,14 @@ class ComputeChi1(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_chi1(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_chi1(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -153,10 +173,14 @@ class ComputeChi2(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_chi2(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_chi2(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -177,10 +201,14 @@ class ComputeChi3(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_chi3(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_chi3(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -200,10 +228,14 @@ class ComputeChi4(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_chi4(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_chi4(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -222,10 +254,14 @@ class ComputeOmega(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file, top_file=None):
-        traj = load_single_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
-        return md.compute_omega(traj, periodic=True, opt=True)
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Trajectory could not be loaded."
+            return md.compute_omega(traj, periodic=True, opt=True)
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
