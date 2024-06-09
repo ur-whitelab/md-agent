@@ -7,12 +7,12 @@ from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
     "PPIDistance",
-    "RMSDCalculator",
+    "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
-    "SimulationOutputFigures",
-    "VisualizeProtein",
-    "VisFunctions",
-    "RadiusofGyrationAverage",
+    "RMSDCalculator",
     "SaltBridgeTool",
+    "SimulationOutputFigures",
+    "VisFunctions",
+    "VisualizeProtein",
 ]
