@@ -3,13 +3,6 @@ from langchain.tools import BaseTool
 
 from mdagent.utils import PathRegistry, load_single_traj
 
-# def load_single_traj(path_registry, traj_file, top_file=None):
-#     if top_file is not None:
-#         traj = md.load(traj_file, top=top_file)
-#     else:
-#         traj = md.load(traj_file)
-#     return traj if traj else None
-
 
 class ComputeAngles(BaseTool):
     name = "compute_angles"
