@@ -2,8 +2,8 @@ from .plot_tools import SimulationOutputFigures
 from .ppi_tools import PPIDistance
 from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
 from .rmsd_tools import RMSDCalculator
-from .vis_tools import VisFunctions, VisualizeProtein
 from .salt_bridge_tool import SaltBridgeTool
+from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
     "PPIDistance",
@@ -14,5 +14,5 @@ __all__ = [
     "VisualizeProtein",
     "VisFunctions",
     "RadiusofGyrationAverage",
-    "SaltBridgeTool"
+    "SaltBridgeTool",
 ]
