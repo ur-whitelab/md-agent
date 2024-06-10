@@ -20,7 +20,6 @@ class SASAFunctions:
         mol_name (str, optional): Name of the molecule or protein.
         """
         self.path_registry = path_registry
-        self.sasa = None
         self.residue_sasa = None
         self.total_sasa = None
 
@@ -36,11 +35,11 @@ class SASAFunctions:
         probe_radius (float, optional): The radius of the probe used to calculate SASA.
             Default is 0.14 nm (1.4 Å).
         """
-        self.sasa = md.shrake_rupley(self.traj, probe_radius=probe_radius, mode="atom")
+        print("Calcuating SASA ...")
         self.residue_sasa = md.shrake_rupley(
             self.traj, probe_radius=probe_radius, mode="residue"
         )
-        self.total_sasa = self.sasa.sum(axis=1)
+        self.total_sasa = self.residue_sasa.sum(axis=1)
 
         # save total SASA to file --> can use for autocorrelation analysis
         description = f"Total SASA values for {self.molecule_name}"
@@ -52,7 +51,7 @@ class SASAFunctions:
             description,
             csv_header,
         )
-        # TODO: also save per-residue or per-atom SASA?
+        # TODO: also save per-residue or per-atom SASA (longer computation time)?
 
         return f"SASA values computed and saved with File ID {csv_file_id}. "
 
@@ -61,14 +60,14 @@ class SASAFunctions:
         Plot the total SASA and per-residue SASA over time.
         """
         message = ""
-        if self.sasa is None or self.residue_sasa is None:
+        if self.total_sasa is None or self.residue_sasa is None:
             message += self.calculate_sasa()
 
         # if there's only one frame, don't plot
         if self.traj.n_frames == 1:
             message += (
                 " Only one frame in trajectory. No SASA plot generated. "
-                f" Total Available Surface Area is {self.total_sasa:.2f}. "
+                f"Total Available Surface Area is {self.total_sasa[0]:,.2f} nm²."
             )
             return message
 
@@ -85,14 +84,17 @@ class SASAFunctions:
         plt.title("Total SASA over Time")
 
         # average SASA per residue
-        plt.subplot(122)
-        avg_residue_sasa = np.mean(self.residue_sasa, axis=0)
-        plt.plot(avg_residue_sasa, label="Average SASA", linestyle="--", color="black")
-        plt.xlabel("Residue")
-        plt.ylabel("Average Area (nm²)")
-        plt.title("Average SASA per Residue")
+        if self.traj.n_residues > 1:
+            plt.subplot(122)
+            avg_residue_sasa = np.mean(self.residue_sasa, axis=0)
+            plt.plot(avg_residue_sasa)
+            plt.xlabel("Residue")
+            plt.ylabel("Average Area (nm²)")
+            plt.title("Average SASA per Residue")
         plt.tight_layout()
-        plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
+        plt.savefig(
+            f"{self.path_registry.ckpt_figures}/{fig_name}", bbox_inches="tight"
+        )
         plt.close()
         print(f"SASA plot saved to {fig_name}")
         self.path_registry.map_path(
@@ -123,11 +125,11 @@ class SolventAccessibleSurfaceArea(BaseTool):
         self,
         top_fileid: str,
         traj_fileid: Optional[str] = None,
-        mol_name: Optional[str] = None,
+        molecule_name: Optional[str] = None,
     ) -> str:
         try:
             sasa_analysis = SASAFunctions(
-                self.path_registry, top_fileid, traj_fileid, mol_name
+                self.path_registry, top_fileid, traj_fileid, molecule_name
             )
             return f"Succeeded. {sasa_analysis.plot_sasa()}"
         except Exception as e:
