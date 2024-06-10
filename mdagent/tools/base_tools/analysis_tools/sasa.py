@@ -23,6 +23,7 @@ class SASAFunctions:
         self.residue_sasa = None
         self.total_sasa = None
 
+        print("Loading trajectory ...")
         self.molecule_name = mol_name if mol_name else top_fileid.replace("top_", "")
         self.traj = load_single_traj(self.path_registry, top_fileid, traj_fileid)
 

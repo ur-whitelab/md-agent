@@ -59,10 +59,10 @@ def make_all_tools(
         RadiusofGyrationPlot(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         RMSDCalculator(path_registry=path_instance),
-        SolventAccessibleSurfaceArea(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
+        SolventAccessibleSurfaceArea(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
     ]
 
