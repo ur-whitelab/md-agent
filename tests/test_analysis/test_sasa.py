@@ -56,15 +56,14 @@ def test_calculate_sasa(mock_savetxt, mock_exists, get_sasa_functions_with_files
     result = analysis.calculate_sasa()
     assert "SASA values computed and saved" in result
     mock_savetxt.assert_called_once()
-    assert analysis.sasa is not None
     assert analysis.residue_sasa is not None
+    assert analysis.total_sasa is not None
 
 
 @patch("mdagent.tools.base_tools.analysis_tools.sasa.plt.savefig")
 @patch("mdagent.tools.base_tools.analysis_tools.sasa.plt.close")
 def test_plot_sasa(mock_close, mock_savefig, get_sasa_functions_with_files):
     analysis = get_sasa_functions_with_files
-    analysis.sasa = np.array([[1, 2, 3], [4, 5, 6]])  # example data
     analysis.residue_sasa = np.array([[1, 2], [3, 4]])
     analysis.total_sasa = np.array([1, 2])
     with patch.object(SASAFunctions, "calculate_sasa") as mock_calc:

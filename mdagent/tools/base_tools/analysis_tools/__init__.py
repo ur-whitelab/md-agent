@@ -9,12 +9,12 @@ from .vis_tools import VisFunctions, VisualizeProtein
 __all__ = [
     "MomentOfInertia",
     "PPIDistance",
-    "RMSDCalculator",
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
-    "SolventAccessibleSurfaceArea",
+    "RMSDCalculator",
     "SimulationOutputFigures",
-    "VisualizeProtein",
+    "SolventAccessibleSurfaceArea",
     "VisFunctions",
+    "VisualizeProtein",
 ]
