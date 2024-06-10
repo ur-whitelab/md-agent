@@ -11,6 +11,7 @@ from .base_tools import (
     CleaningToolFunction,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
+    MomentOfInertia,
     PackMolTool,
     PPIDistance,
     ProteinName2PDBTool,
@@ -23,6 +24,7 @@ from .base_tools import (
     SetUpandRunFunction,
     SimulationOutputFigures,
     SmallMolPDB,
+    SolventAccessibleSurfaceArea,
     VisualizeProtein,
 )
 
@@ -48,6 +50,7 @@ def make_all_tools(
     base_tools = [
         CleaningToolFunction(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
+        MomentOfInertia(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
         PPIDistance(path_registry=path_instance),
@@ -59,6 +62,7 @@ def make_all_tools(
         SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),
+        SolventAccessibleSurfaceArea(path_registry=path_instance),
         VisualizeProtein(path_registry=path_instance),
     ]
 

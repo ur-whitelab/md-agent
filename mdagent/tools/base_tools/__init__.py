@@ -1,3 +1,4 @@
+from .analysis_tools.inertia import MomentOfInertia
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -7,6 +8,7 @@ from .analysis_tools.rgy import (
     RadiusofGyrationPlot,
 )
 from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -26,9 +28,10 @@ __all__ = [
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",
-    "ProteinName2PDBTool",
+    "MomentOfInertia",
     "PackMolTool",
     "PPIDistance",
+    "ProteinName2PDBTool",
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
@@ -41,6 +44,7 @@ __all__ = [
     "SimulationFunctions",
     "SimulationOutputFigures",
     "SmallMolPDB",
+    "SolventAccessibleSurfaceArea",
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
