@@ -23,6 +23,7 @@ class MOIFunctions:
         Calculate principal moments of inertia for a molecule or protein.
         Expected shape of moments_of_inertia: (n_frames, 3)
         """
+        print("Calculating moments of inertia...")
         inertia_tensors = md.compute_inertia_tensor(self.traj)
         principal_moments = np.empty((len(inertia_tensors), 3))
         for i, tensor in enumerate(inertia_tensors):
@@ -40,10 +41,11 @@ class MOIFunctions:
             self.moments_of_inertia,
             f"MOI_{self.mol_name}",
             description,
+            header="I1,I2,I3",
         )
         message = (
-            f"Average Moment of Inertia: {self.avg_moi:.2f}, "
-            f"Data saved with file ID {csv_file_id}. "
+            f"Data saved with file ID {csv_file_id}. \n"
+            f"Average Moment of Inertia of all frames: {self.avg_moi:.2f}. \n"
         )
         return message
 
@@ -56,9 +58,10 @@ class MOIFunctions:
             message += self.calculate_moment_of_inertia()
 
         if self.traj.n_frames == 1:  # only one frame
+            moi_string = ", ".join(f"{moi:.2f}" for moi in self.moments_of_inertia[0])
             message += (
-                "Only one frame in trajectory, no plot generated. "
-                f"Principal Moments of Inertia: {self.moments_of_inertia}. "
+                "Only one frame in trajectory, no plot generated. \n"
+                f"Principal Moments of Inertia: {moi_string}. \n"
             )
             return message
 
@@ -75,10 +78,12 @@ class MOIFunctions:
         plt.plot(self.moments_of_inertia[:, 0], label="$I_1$")  # smallest MOI
         plt.plot(self.moments_of_inertia[:, 1], label="$I_2$")
         plt.plot(self.moments_of_inertia[:, 2], label="$I_3$")  # largest MOI
+        plt.xlim(0, self.traj.n_frames - 1)
         plt.xlabel("Frame")
         plt.ylabel("Moments of Inertia")
         plt.title("Moments of Inertia over Time")
         plt.legend()
+
         plt.savefig(f"{self.path_registry.ckpt_figures}/{fig_name}")
         plt.close()
         print(f"Plot of moments of inertia saved to {fig_name}")
@@ -87,7 +92,9 @@ class MOIFunctions:
             f"{self.path_registry.ckpt_figures}/{fig_name}",
             description=f"Plot of moments of inertia over time for {self.mol_name}",
         )
-        message += f"Plot of moments of inertia over time saved with plot ID {fig_id}. "
+        message += (
+            f"Plot of moments of inertia over time saved with plot ID {fig_id}. \n"
+        )
         return message
 
 
