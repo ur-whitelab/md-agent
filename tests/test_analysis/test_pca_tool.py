@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import mdtraj as md
 import numpy as np
 
 from mdagent.tools.base_tools import PCATool
@@ -57,11 +58,14 @@ def test_pca_tool_good_inputs(get_registry):
 
 def test_cosine_content(get_registry):
     reg = get_registry("raw", True, dynamic=True, include_hydrogens=True)
+    traj = md.load(
+        reg.get_mapped_path("rec0_butane_123456"),
+        top=reg.get_mapped_path("top_sim0_butane_123456"),
+    )
     pca_analysis = PCA_analysis(
         path_registry=reg,
         pc_percentage=95,
-        top_path=reg.get_mapped_path("top_sim0_butane_123456"),
-        traj_path=reg.get_mapped_path("rec0_butane_123456"),
+        traj=traj,
         sim_id="sim0_butane_123456",
         selection="all",  # this is because it is a made up simulation of butane.
         # usually it would be "name CA" to get every residue
@@ -75,11 +79,15 @@ def test_cosine_content(get_registry):
 
 def test_sub_array_sum(get_registry):
     reg = get_registry("raw", True, dynamic=True, include_hydrogens=True)
+    traj = md.load(
+        reg.get_mapped_path("rec0_butane_123456"),
+        top=reg.get_mapped_path("top_sim0_butane_123456"),
+    )
+
     pca_analysis = PCA_analysis(
         path_registry=reg,
         pc_percentage=95,
-        top_path=reg.get_mapped_path("top_sim0_butane_123456"),
-        traj_path=reg.get_mapped_path("rec0_butane_123456"),
+        traj=traj,
         sim_id="sim0_butane_123456",
         selection="all",
     )
