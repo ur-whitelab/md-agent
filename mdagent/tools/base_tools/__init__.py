@@ -1,3 +1,4 @@
+from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
 from .analysis_tools.inertia import MomentOfInertia
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
@@ -28,6 +29,8 @@ __all__ = [
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
+    "ContactsTool",
+    "DistanceMatrixTool",
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",

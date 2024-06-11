@@ -1,3 +1,4 @@
+from .distance_tools import ContactsTool, DistanceMatrixTool
 from .inertia import MomentOfInertia
 from .plot_tools import SimulationOutputFigures
 from .ppi_tools import PPIDistance
@@ -10,6 +11,8 @@ __all__ = [
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
+    "ContactsTool",
+    "DistanceMatrixTool",
     "MomentOfInertia",
     "PPIDistance",
     "RadiusofGyrationAverage",
