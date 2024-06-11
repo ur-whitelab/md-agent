@@ -10,7 +10,7 @@ from langchain.tools import BaseTool
 from matplotlib.animation import FuncAnimation
 from pydantic import BaseModel, Field
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, load_single_traj
 
 
 class DistanceToolsUtils:
@@ -262,10 +262,13 @@ class DistanceMatrixTool(BaseTool):
         if error:
             return f"Failed. Error with the tool inputs: {error} "
 
-        path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
-        path_to_top = self.path_registry.get_mapped_path(topology_id)
         try:
-            traj = md.load(path_to_traj, top=path_to_top)
+            traj = load_single_traj(
+                self.path_registry,
+                topology_id,
+                traj_fileid=trajectory_id,
+                traj_required=True,
+            )
         except ValueError as e:
             if (
                 "The topology and the trajectory files might not\
@@ -431,11 +434,13 @@ class ContactsTool(BaseTool):
         if error:
             return f"Failed. Error with the tool inputs: {error} "
 
-        path_to_traj = self.path_registry.get_mapped_path(trajectory_id)
-        path_to_top = self.path_registry.get_mapped_path(topology_id)
-
         try:
-            traj = md.load(path_to_traj, top=path_to_top)
+            traj = load_single_traj(
+                self.path_registry,
+                topology_id,
+                traj_fileid=trajectory_id,
+                traj_required=True,
+            )
         except ValueError as e:
             if (
                 "The topology and the trajectory files might not\
