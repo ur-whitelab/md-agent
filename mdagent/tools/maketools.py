@@ -9,11 +9,11 @@ from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
-    ContactsTool,
-    DistanceMatrixTool,
     ComputeLPRMSD,
     ComputeRMSD,
     ComputeRMSF,
+    ContactsTool,
+    DistanceMatrixTool,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
     MomentOfInertia,
