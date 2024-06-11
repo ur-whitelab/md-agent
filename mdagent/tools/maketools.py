@@ -11,8 +11,12 @@ from .base_tools import (
     CleaningToolFunction,
     ContactsTool,
     DistanceMatrixTool,
+    ComputeLPRMSD,
+    ComputeRMSD,
+    ComputeRMSF,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
+    MomentOfInertia,
     PackMolTool,
     PPIDistance,
     ProteinName2PDBTool,
@@ -20,11 +24,11 @@ from .base_tools import (
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
     RDFTool,
-    RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
     SimulationOutputFigures,
     SmallMolPDB,
+    SolventAccessibleSurfaceArea,
     VisualizeProtein,
 )
 
@@ -40,30 +44,34 @@ def make_all_tools(
         all_tools += agents.load_tools(["llm-math"], llm)
         # all_tools += [PythonREPLTool()]
         all_tools += [
-            ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm)
+            ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
+            Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         ]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
     # add base tools
     base_tools = [
-        Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
+        ComputeLPRMSD(path_registry=path_instance),
+        ComputeRMSD(path_registry=path_instance),
+        ComputeRMSF(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
-        ProteinName2PDBTool(path_registry=path_instance),
+        MomentOfInertia(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
-        SmallMolPDB(path_registry=path_instance),
-        VisualizeProtein(path_registry=path_instance),
+        PPIDistance(path_registry=path_instance),
+        ProteinName2PDBTool(path_registry=path_instance),
         RadiusofGyrationAverage(path_registry=path_instance),
         RadiusofGyrationPerFrame(path_registry=path_instance),
         RadiusofGyrationPlot(path_registry=path_instance),
-        PPIDistance(path_registry=path_instance),
-        RMSDCalculator(path_registry=path_instance),
-        SetUpandRunFunction(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
+        SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
         ContactsTool(path_registry=path_instance),
         DistanceMatrixTool(path_registry=path_instance),
+        SmallMolPDB(path_registry=path_instance),
+        SolventAccessibleSurfaceArea(path_registry=path_instance),
+        VisualizeProtein(path_registry=path_instance),
     ]
 
     all_tools += base_tools

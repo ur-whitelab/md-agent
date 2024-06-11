@@ -22,7 +22,6 @@ setup(
         "langchain==0.0.336",
         "langchain_experimental",
         "matplotlib",
-        "MDAnalysis",
         "nbformat",
         "openai",
         "outlines",
