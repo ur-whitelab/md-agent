@@ -1,5 +1,6 @@
 from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
 from .analysis_tools.inertia import MomentOfInertia
+from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -36,6 +37,7 @@ __all__ = [
     "ModifyBaseSimulationScriptTool",
     "MomentOfInertia",
     "PackMolTool",
+    "PCATool",
     "PPIDistance",
     "ProteinName2PDBTool",
     "RadiusofGyrationAverage",
