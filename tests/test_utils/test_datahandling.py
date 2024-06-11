@@ -19,7 +19,9 @@ def test_load_traj_only_topology(get_registry):
     with patch.object(
         registry, "get_mapped_path", wraps=registry.get_mapped_path
     ) as mocked_get_mapped_path:
-        traj = load_single_traj(registry, "top_sim0_butane_123456")
+        traj = load_single_traj(
+            registry, "top_sim0_butane_123456", ignore_warnings=True
+        )
         mocked_get_mapped_path.assert_called_once()
         assert traj is not None
 
@@ -39,7 +41,7 @@ def test_load_traj_topology_and_traj(get_registry):
 def test_load_traj_fail_top_fileid(get_registry):
     registry = get_registry("raw", False)
     with pytest.raises(ValueError) as exc:
-        load_single_traj(registry, "top_invalid")
+        load_single_traj(registry, "top_invalid", ignore_warnings=True)
     assert "Topology File ID 'top_invalid' not found" in str(exc.value)
 
 
@@ -61,7 +63,7 @@ def test_load_traj_with_ref_both(get_registry, load_single_traj_mock):
 
 def test_load_traj_with_ref_only_toplogy(get_registry, load_single_traj_mock):
     path_registry = get_registry("raw", False)
-    traj, ref_traj = load_traj_with_ref(path_registry, "top_id")
+    traj, ref_traj = load_traj_with_ref(path_registry, "top_id", ignore_warnings=True)
     assert traj == "MockTraj"
     assert ref_traj == "MockTraj"
 
@@ -76,7 +78,7 @@ def test_save_plot_success(get_registry):
 
 
 def test_save_plot_no_plot_detected(get_registry):
-    plt.close()  # clear any past plots
+    plt.close("all")  # clear any past plots
     path_registry = get_registry("raw", False)
     with pytest.raises(ValueError) as excinfo:
         save_plot(path_registry, "test_analysis")

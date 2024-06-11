@@ -1,3 +1,4 @@
+import warnings
 from unittest.mock import patch
 
 import numpy as np
@@ -36,7 +37,11 @@ def test_sasa_analysis_init_success_no_traj(get_registry):
     with patch.object(
         registry, "get_mapped_path", wraps=registry.get_mapped_path
     ) as mocked_get_mapped_path:
-        analysis = SASAFunctions(registry, "top_sim0_butane_123456", mol_name="butane")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            analysis = SASAFunctions(
+                registry, "top_sim0_butane_123456", mol_name="butane"
+            )
         mocked_get_mapped_path.assert_called_once()
         assert analysis.path_registry == registry
         assert analysis.molecule_name == "butane"

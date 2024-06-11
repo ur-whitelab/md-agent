@@ -67,7 +67,9 @@ def test_rmsd(get_registry, get_trajs):
 
 def test_rmsd_single_value(get_registry):
     reg = get_registry("raw", True)
-    traj, ref_traj = load_traj_with_ref(reg, "top_sim0_butane_123456")
+    traj, ref_traj = load_traj_with_ref(
+        reg, "top_sim0_butane_123456", ignore_warnings=True
+    )
     result = rmsd(reg, traj, ref_traj, mol_name="butane")
     assert "RMSD calculated." in result
 
