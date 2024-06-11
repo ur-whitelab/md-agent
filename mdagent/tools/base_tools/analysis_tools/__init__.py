@@ -23,6 +23,4 @@ __all__ = [
     "SolventAccessibleSurfaceArea",
     "VisFunctions",
     "VisualizeProtein",
-    "VisFunctions",
-    "RadiusofGyrationAverage",
 ]
