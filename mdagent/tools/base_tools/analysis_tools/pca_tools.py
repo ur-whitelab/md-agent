@@ -2,7 +2,6 @@ import warnings
 from typing import Optional
 
 import matplotlib.pyplot as plt
-import mdtraj as md
 import numpy as np
 import pandas as pd
 import scipy
@@ -11,7 +10,7 @@ from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
 from sklearn.decomposition import PCA
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, load_single_traj
 
 
 class PCA_analysis:
@@ -19,13 +18,12 @@ class PCA_analysis:
         self,
         path_registry,
         pc_percentage,
-        top_path,
-        traj_path,
+        traj,
         sim_id,
         selection="backbone",
     ):
         self.path_registry = path_registry
-        self.traj = md.load(traj_path, top=top_path)
+        self.traj = traj
         self.sim_id = sim_id
         if pc_percentage > 1:
             pc_percentage /= 100
@@ -263,12 +261,42 @@ class PCATool(BaseTool):
             return f"Failed. Error with the tool inputs: {error} "
         if system_input_message == "Tool Messages:":
             system_input_message = ""
-        traj_path = self.path_registry.get_mapped_path(traj_id)
-        top_path = self.path_registry.get_mapped_path(top_id)
 
+        try:
+            traj = load_single_traj(
+                self.path_registry,
+                top_id,
+                traj_fileid=traj_id,
+                traj_required=True,
+            )
+        except ValueError as e:
+            if (
+                "The topology and the trajectory files might not\
+                  contain the same atoms"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure the topology file"
+                    " is from the initial positions of the trajectory. Error: {str(e)}"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except OSError as e:
+            if (
+                "The topology is loaded by filename extension, \
+                and the detected"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure you include the"
+                    "correct file for the topology. Supported extensions are:"
+                    "'.pdb', '.pdb.gz', '.h5', '.lh5', '.prmtop', '.parm7', '.prm7',"
+                    "  '.psf', '.mol2', '.hoomdxml', '.gro', '.arc', '.hdf5' and '.gsd'"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except Exception as e:
+            return f"Failed. Error loading trajectory: {str(e)}"
         return self.run_pca_analysis(
-            traj_path,
-            top_path,
+            traj,
             pc_percentage,
             analysis,
             traj_id,
@@ -365,8 +393,7 @@ class PCATool(BaseTool):
 
     def run_pca_analysis(
         self,
-        traj_path,
-        top_path,
+        traj,
         pc_percentage,
         analysis,
         traj_id,
@@ -376,8 +403,7 @@ class PCATool(BaseTool):
         PCA_container = PCA_analysis(
             self.path_registry,
             pc_percentage=pc_percentage,
-            top_path=top_path,
-            traj_path=traj_path,
+            traj=traj,
             sim_id=traj_id,
             selection=selection,
         )
