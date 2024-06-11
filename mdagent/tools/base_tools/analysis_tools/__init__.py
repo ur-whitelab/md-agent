@@ -11,6 +11,8 @@ __all__ = [
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
+    "ContactsTool",
+    "DistanceMatrixTool",
     "MomentOfInertia",
     "PPIDistance",
     "RadiusofGyrationAverage",
@@ -23,6 +25,4 @@ __all__ = [
     "VisualizeProtein",
     "VisFunctions",
     "RadiusofGyrationAverage",
-    "ContactsTool",
-    "DistanceMatrixTool",
 ]
