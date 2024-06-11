@@ -29,6 +29,8 @@ __all__ = [
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
+    "ContactsTool",
+    "DistanceMatrixTool",
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",
@@ -52,6 +54,4 @@ __all__ = [
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
-    "ContactsTool",
-    "DistanceMatrixTool",
 ]
