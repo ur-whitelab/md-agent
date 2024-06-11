@@ -9,6 +9,9 @@ from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
+    ComputeLPRMSD,
+    ComputeRMSD,
+    ComputeRMSF,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
     MomentOfInertia,
@@ -19,7 +22,6 @@ from .base_tools import (
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
     RDFTool,
-    RMSDCalculator,
     Scholar2ResultLLM,
     SetUpandRunFunction,
     SimulationOutputFigures,
@@ -49,16 +51,18 @@ def make_all_tools(
     # add base tools
     base_tools = [
         CleaningToolFunction(path_registry=path_instance),
+        ComputeLPRMSD(path_registry=path_instance),
+        ComputeRMSD(path_registry=path_instance),
+        ComputeRMSF(path_registry=path_instance),
         ListRegistryPaths(path_registry=path_instance),
         MomentOfInertia(path_registry=path_instance),
-        ProteinName2PDBTool(path_registry=path_instance),
         PackMolTool(path_registry=path_instance),
         PPIDistance(path_registry=path_instance),
+        ProteinName2PDBTool(path_registry=path_instance),
         RadiusofGyrationAverage(path_registry=path_instance),
         RadiusofGyrationPerFrame(path_registry=path_instance),
         RadiusofGyrationPlot(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
-        RMSDCalculator(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
         SmallMolPDB(path_registry=path_instance),

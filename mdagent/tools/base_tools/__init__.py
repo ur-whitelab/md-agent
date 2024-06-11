@@ -7,7 +7,7 @@ from .analysis_tools.rgy import (
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
 )
-from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
@@ -25,6 +25,9 @@ from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
     "CleaningToolFunction",
+    "ComputeLPRMSD",
+    "ComputeRMSD",
+    "ComputeRMSF",
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",
