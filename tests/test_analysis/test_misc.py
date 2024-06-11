@@ -12,6 +12,11 @@ def plotting_tools(get_registry):
     return PlottingTools(get_registry("raw", False))
 
 
+@pytest.fixture
+def vis_fxns(get_registry):
+    return VisFunctions(get_registry("raw", False))
+
+
 def test_process_csv(plotting_tools):
     mock_csv_content = "Time,Value1,Value2\n1,10,20\n2,15,25"
     mock_reader = MagicMock()
@@ -74,11 +79,6 @@ def test_plot_data(plotting_tools):
     with pytest.raises(Exception) as excinfo:
         plotting_tools.plot_data()
         assert "All plots failed due to non-numeric data." in str(excinfo.value)
-
-
-@pytest.fixture
-def vis_fxns(get_registry):
-    return VisFunctions(get_registry("raw", False))
 
 
 @pytest.mark.skip(reason="molrender is not pip installable")

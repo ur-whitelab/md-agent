@@ -13,6 +13,7 @@ def load_single_traj_mock():
         yield
 
 
+# simple helper functions for tools
 def test_load_traj_only_topology(get_registry):
     registry = get_registry("raw", True)
     with patch.object(
