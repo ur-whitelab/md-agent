@@ -14,11 +14,15 @@ def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     Can be used for either protions or small molecules.
     """
     print("Calculating RMSD...")
+    msg = ""
     idx = traj.topology.select(select)
     if len(idx) == 0:
         if select == "protein":
             # sometimes it's small molecules, so no residues
-            print("No atoms found with default selection 'protein'. Using 'all' atoms.")
+            residues = set([residue.name for residue in traj.topology.residues])
+            print(f"No atoms found for selection '{select}'. ")
+            print(f"Only residues found in the file(s) are {residues}.")
+            print("Currently trying 'all' atoms.")
             select = "all"
             idx = traj.topology.select("all")
         else:
@@ -28,11 +32,15 @@ def rmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
 
     if rmsd_select.shape[0] == 1:
         # RMSD is a single value
-        return f"RMSD calculated. {rmsd_select} nm"
+        return f"RMSD calculated. {rmsd_select[0]:.5f} nm"
 
     analysis = f"rmsd_{mol_name}"
     csv_file_id = save_to_csv(
-        path_registry, rmsd_select, analysis, description=f"RMSD for {mol_name}"
+        path_registry,
+        rmsd_select,
+        analysis,
+        description=f"RMSD for {mol_name}",
+        header="RMSD (nm)",
     )
 
     # plot rmsd
@@ -62,10 +70,12 @@ def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
     print("Calculating RMSF...")
     idx = traj.topology.select(select)
     if len(idx) == 0:
+        residues = set([residue.name for residue in traj.topology.residues])
         raise ValueError(
             (
                 f"No atoms found for selection '{select}'. "
-                "Try 'all' for small molecules. "
+                f"Only residues found in the file(s) are {residues}. \n"
+                "Try 'all' for small molecules. \n"
             )
         )
 
@@ -73,7 +83,11 @@ def rmsf(path_registry, traj, ref_traj, mol_name, select="protein"):
     rmsf_select = rmsf[idx]
     analysis = f"rmsf_{mol_name}"
     csv_file_id = save_to_csv(
-        path_registry, rmsf_select, analysis, description=f"RMSF for {mol_name}"
+        path_registry,
+        rmsf_select,
+        analysis,
+        description=f"RMSF for {mol_name}",
+        header="RMSF (nm)",
     )
 
     # plot rmsf
@@ -125,26 +139,40 @@ def lprmsd(path_registry, traj, ref_traj, mol_name, select="protein"):
     print(f"Calculating LP-RMSD for with select '{select}'...")
     idx = traj.topology.select(select)
     if len(idx) == 0:
+        residues = set([residue.name for residue in traj.topology.residues])
         raise ValueError(
             (
                 f"No atoms found for selection '{select}'. "
-                "Try 'all' for small molecules. "
+                f"Only residues found in the file(s) are {residues}. \n"
+                "Try 'all' for small molecules. \n"
             )
         )
 
     lprmsd = md.rmsd(traj, ref_traj, atom_indices=idx)
+
+    if lprmsd.shape[0] == 1:
+        # RMSD is a single value
+        return f"Linear Programming RMSD calculated. {lprmsd[0]:.5f} nm"
+
     csv_file_id = save_to_csv(
         path_registry,
         lprmsd,
         f"lprmsd_{mol_name}",
         description=f"LP-RMSD for {mol_name}",
+        header="LP-RMSD (nm)",
     )
     return f"LP-RMSD calculated and saved to csv with file ID {csv_file_id}"
 
 
 class RMSDInputSchema(BaseModel):
     top_id: str = Field(None, description="File ID for the topology file.")
-    traj_id: Optional[str] = Field(None, description="File ID for the trajectory file.")
+    traj_id: Optional[str] = Field(
+        None,
+        description=(
+            "File ID for the trajectory file. "
+            "Required for RMSF. Otherwise, optional."
+        ),
+    )
     ref_top_id: Optional[str] = Field(
         None,
         description=(
@@ -190,8 +218,8 @@ class ComputeRMSD(BaseTool):
         traj_id=None,
         ref_top_id=None,
         ref_traj_id=None,
-        select=None,
         mol_name=None,
+        select="protein",
     ):
         try:
             if mol_name is None:
@@ -199,7 +227,7 @@ class ComputeRMSD(BaseTool):
             traj, ref_traj = load_traj_with_ref(
                 self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
             )
-            msg = rmsd(self.path_registry, traj, ref_traj, select, mol_name)
+            msg = rmsd(self.path_registry, traj, ref_traj, mol_name, select)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -224,16 +252,26 @@ class ComputeRMSF(BaseTool):
         traj_id=None,
         ref_top_id=None,
         ref_traj_id=None,
-        select=None,
         mol_name=None,
+        select="protein",
     ):
         try:
             if mol_name is None:
                 mol_name = top_id.replace("top_sim0_", "")
+            if ref_top_id is None or ref_top_id == top_id:  # if there's no ref
+                traj_required = True
+            else:
+                traj_required = False
+
             traj, ref_traj = load_traj_with_ref(
-                self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
+                self.path_registry,
+                top_id,
+                traj_id,
+                ref_top_id,
+                ref_traj_id,
+                traj_required=traj_required,
             )
-            msg = rmsf(self.path_registry, traj, ref_traj, select, mol_name)
+            msg = rmsf(self.path_registry, traj, ref_traj, mol_name, select)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -264,8 +302,8 @@ class ComputeLPRMSD(BaseTool):
         traj_id=None,
         ref_top_id=None,
         ref_traj_id=None,
-        select=None,
         mol_name=None,
+        select="protein",
     ):
         try:
             if mol_name is None:
@@ -273,7 +311,7 @@ class ComputeLPRMSD(BaseTool):
             traj, ref_traj = load_traj_with_ref(
                 self.path_registry, top_id, traj_id, ref_top_id, ref_traj_id
             )
-            msg = lprmsd(self.path_registry, traj, ref_traj, select, mol_name)
+            msg = lprmsd(self.path_registry, traj, ref_traj, mol_name, select)
             return f"Succeeded. {msg}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"

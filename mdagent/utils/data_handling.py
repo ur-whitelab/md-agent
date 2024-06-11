@@ -50,13 +50,20 @@ def load_single_traj(path_registry, top_fileid, traj_fileid=None, traj_required=
 
 
 def load_traj_with_ref(
-    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None
+    path_registry,
+    top_id,
+    traj_id=None,
+    ref_top_id=None,
+    ref_traj_id=None,
+    traj_required=False,
 ):
-    traj = load_single_traj(path_registry, top_id, traj_id)
+    traj = load_single_traj(path_registry, top_id, traj_id, traj_required)
     if ref_top_id is None:
         ref_traj = traj
     else:
-        ref_traj = load_single_traj(path_registry, ref_top_id, ref_traj_id)
+        ref_traj = load_single_traj(
+            path_registry, ref_top_id, ref_traj_id, traj_required
+        )
     return traj, ref_traj
 
 
