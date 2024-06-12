@@ -26,7 +26,7 @@ class BakerHubbard(BaseTool):
             result = md.baker_hubbard(
                 traj, freq, exclude_water=True, periodic=True, sidechain_only=False
             )
-            return result
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -55,7 +55,7 @@ class KabschSander(BaseTool):
                 return "Failed. Trajectory could not be loaded."
 
             result = md.kabsch_sander(traj)
-            return result
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -83,7 +83,7 @@ class WernetNilsson(BaseTool):
             result = md.wernet_nilsson(
                 traj, exclude_water=True, periodic=True, sidechain_only=False
             )
-            return result
+            return f"Succeeded. {result}"
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 

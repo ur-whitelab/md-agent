@@ -54,7 +54,7 @@ def test_run_success_baker_hubbard(
     mock_baker_hubbard.assert_called_once_with(
         mock_traj, 0.1, exclude_water=True, periodic=True, sidechain_only=False
     )
-    assert result == expected_hbonds
+    assert result == f"Succeeded. {expected_hbonds}"
 
 
 @patch(
@@ -73,7 +73,7 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, baker_hubbard_tool):
     mock_load_single_traj.assert_called_once_with(
         baker_hubbard_tool.path_registry, top_file, traj_file
     )
-    assert result == "Trajectory could not be loaded."
+    assert result == "Failed. Trajectory could not be loaded."
 
 
 @patch(
@@ -101,7 +101,7 @@ def test_run_success_kabsch_sander(
         kabsch_sander_tool.path_registry, top_file, traj_file
     )
     mock_kabsch_sander.assert_called_once_with(mock_traj)
-    assert result == expected_hbonds
+    assert result == f"Succeeded. {expected_hbonds}"
 
 
 @patch(
@@ -120,7 +120,7 @@ def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander_tool):
     mock_load_single_traj.assert_called_once_with(
         kabsch_sander_tool.path_registry, top_file, traj_file
     )
-    assert result == "Trajectory could not be loaded."
+    assert result == "Failed. Trajectory could not be loaded."
 
 
 @patch(
@@ -150,7 +150,7 @@ def test_run_success_wernet_nilsson(
     mock_wernet_nilsson.assert_called_once_with(
         mock_traj, exclude_water=True, periodic=True, sidechain_only=False
     )
-    assert result == expected_hbonds
+    assert result == f"Succeeded. {expected_hbonds}"
 
 
 @patch(
@@ -169,4 +169,4 @@ def test_run_fail_wernet_nilsson(mock_load_single_traj, wernet_nilsson_tool):
     mock_load_single_traj.assert_called_once_with(
         wernet_nilsson_tool.path_registry, top_file, traj_file
     )
-    assert result == "Trajectory could not be loaded."
+    assert result == "Failed. Trajectory could not be loaded."
