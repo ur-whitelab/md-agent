@@ -8,14 +8,22 @@ import numpy as np
 from .path_registry import FileType, PathRegistry
 
 
-def load_single_traj(path_registry, top_fileid, traj_fileid=None, traj_required=False):
+def load_single_traj(
+    path_registry,
+    top_fileid,
+    traj_fileid=None,
+    traj_required=False,
+    ignore_warnings=False,
+):
     """
     Load a single trajectory file using mdtraj. Check for file IDs in the path registry.
+
     Parameters:
     path_registry (PathRegistry): mapping file IDs to file paths.
     top_fileid (str): File ID for the topology file.
     traj_fileid (str, optional): File ID for the trajectory file.
     traj_required (bool, optional): Whether the traj file is required. Default is False.
+
     Returns:
     mdtraj.Trajectory: Trajectory object.
     """
@@ -28,13 +36,16 @@ def load_single_traj(path_registry, top_fileid, traj_fileid=None, traj_required=
 
     if traj_fileid is None:
         if not traj_required:
-            warnings.warn(
-                (
-                    "Trajectory File ID is not provided but is not required; "
-                    f"loading MDTrajectory from topology {top_fileid} only."
-                ),
-                UserWarning,
-            )
+
+            if not ignore_warnings:
+                warnings.warn(
+                    (
+                        "Trajectory File ID is not provided but is not required; "
+                        f"loading MDTrajectory from topology {top_fileid} only."
+                    ),
+                    UserWarning,
+                )
+
             return md.load(top_path)
         else:
             raise ValueError("Trajectory File ID is required, and it's not provided.")
@@ -48,13 +59,25 @@ def load_single_traj(path_registry, top_fileid, traj_fileid=None, traj_required=
 
 
 def load_traj_with_ref(
-    path_registry, top_id, traj_id=None, ref_top_id=None, ref_traj_id=None
+
+    path_registry,
+    top_id,
+    traj_id=None,
+    ref_top_id=None,
+    ref_traj_id=None,
+    traj_required=False,
+    ignore_warnings=False,
 ):
-    traj = load_single_traj(path_registry, top_id, traj_id)
+    traj = load_single_traj(
+        path_registry, top_id, traj_id, traj_required, ignore_warnings
+    )
     if ref_top_id is None:
         ref_traj = traj
     else:
-        ref_traj = load_single_traj(path_registry, ref_top_id, ref_traj_id)
+        ref_traj = load_single_traj(
+            path_registry, ref_top_id, ref_traj_id, traj_required, ignore_warnings
+        )
+
     return traj, ref_traj
 
 
@@ -63,12 +86,14 @@ def save_to_csv(
 ):
     """
     Saves data to a csv file and maps the file ID to the file path in the path registry.
+
     Parameters:
     path_registry (PathRegistry): mapping file IDs to file paths.
     data_to_save (np.ndarray): Data to save to a csv file.
     analysis_name (str): Name of the analysis or data. This will be used as the file ID.
     description (str, optional): Description of the data.
     header (str, optional): Header for the csv file.
+
     Returns:
     str: File ID for the saved data.
     """
