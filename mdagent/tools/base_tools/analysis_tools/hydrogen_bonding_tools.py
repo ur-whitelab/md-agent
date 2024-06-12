@@ -21,7 +21,7 @@ class BakerHubbard(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
-                return "Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
 
             result = md.baker_hubbard(
                 traj, freq, exclude_water=True, periodic=True, sidechain_only=False
@@ -52,7 +52,7 @@ class KabschSander(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
-                return "Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
 
             result = md.kabsch_sander(traj)
             return result
@@ -79,7 +79,7 @@ class WernetNilsson(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
-                return "Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
             result = md.wernet_nilsson(
                 traj, exclude_water=True, periodic=True, sidechain_only=False
             )
