@@ -1,7 +1,7 @@
+import itertools
 from typing import Optional, Type
 
-import MDAnalysis as mda
-import MDAnalysis.analysis.distances as mda_dist
+import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field
@@ -12,38 +12,44 @@ from mdagent.utils import PathRegistry
 def ppi_distance(file_path, binding_site="protein"):
     """
     Calculates minimum heavy-atom distance between peptide (assumed to be
-    smallest chain) and protein. Returns average distance between these two.
+    the smallest chain) and protein, considering a specified binding site.
+    Returns the average distance between these two.
 
-    Can specify binding site if given (optional)
-    Can work with any protein-protein interaction (PPI)
+    Can work with any protein-protein interaction (PPI).
     """
-    # load and find smallest chain
-    u = mda.Universe(file_path)
-    peptide = None
-    for chain in u.segments:
-        if peptide is None or len(chain.residues) < len(peptide):
-            peptide = chain.residues
-    protein = u.select_atoms(
-        f"({binding_site}) and not segid {peptide.segids[0]} and not name H*"
+    traj = md.load(file_path)
+    if traj.topology.n_chains == 1:
+        raise ValueError("Only one chain found. Cannot compute PPI distance.")
+
+    # get the smallest chain
+    peptide_idx = np.argmin([chain.n_residues for chain in traj.topology.chains])
+    peptide_residues = {r.index for r in traj.topology.chain(peptide_idx).residues}
+
+    # get protein residues
+    protein_atoms = traj.topology.select(
+        f"({binding_site}) and not chainid {peptide_idx}"
     )
-    peptide = peptide.atoms.select_atoms("not name H*")
-    all_d = []
-    for r in peptide.residues:
-        distances = mda_dist.distance_array(r.atoms.positions, protein.positions)
-        # get row, column of minimum distance
-        i, j = np.unravel_index(distances.argmin(), distances.shape)
-        all_d.append(distances[i, j])
-    avg_dist = np.mean(all_d)
-    return avg_dist
+    protein_residues = {traj.topology.atom(a).residue.index for a in protein_atoms}
+    if len(protein_residues) == 0:
+        raise ValueError("No matching residues found for the binding site.")
+
+    res_pairs = list(itertools.product(peptide_residues, protein_residues))
+    res_pairs_array = np.array(res_pairs)
+    all_d, _ = md.compute_contacts(traj, res_pairs_array, scheme="closest-heavy")
+    if all_d.size > 0:
+        avg_dist = np.mean(all_d)
+        return avg_dist
+    else:
+        raise ValueError("For unknown reason, no distances between contacts found.")
 
 
 class PPIDistanceInputSchema(BaseModel):
     pdb_file: str = Field(
-        description="file with .pdb extension containing protein-protein interaction"
+        description="file ID of PDB containing protein-protein interaction"
     )
     binding_site: Optional[str] = Field(
         description="""a list of selected residues as the binding site
-        of the protein using MDAnalysis selection syntax."""
+        of the protein using MDTraj selection syntax."""
     )
 
 
@@ -54,9 +60,9 @@ class PPIDistance(BaseTool):
     any protein-protein interaction. Give this tool the name of the file. The
     tool will find the path."""
     args_schema: Type[BaseModel] = PPIDistanceInputSchema
-    path_registry: Optional[PathRegistry]
+    path_registry: PathRegistry | None
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry=None):
         super().__init__()
         self.path_registry = path_registry
 
@@ -70,14 +76,9 @@ class PPIDistance(BaseTool):
             return "Failed. Error with input: PDB file must have .pdb extension"
         try:
             avg_dist = ppi_distance(file_path, binding_site=binding_site)
-        except ValueError as e:
-            return (
-                f"Failed. ValueError: {e}. \nMake sure to provide valid PBD "
-                "file and binding site using MDAnalysis selection syntax."
-            )
         except Exception as e:
             return f"Failed. Something went wrong. {type(e).__name__}: {e}"
-        return f"Succeeded: PPI average distance is {avg_dist}\n"
+        return f"Succeeded. PPI average distance is {avg_dist}\n"
 
     def _arun(self, pdb_file: str, binding_site: str = "protein"):
         raise NotImplementedError("This tool does not support async")
