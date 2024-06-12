@@ -10,12 +10,12 @@ from mdagent.utils import PathRegistry
 from .base_tools import (
     BakerHubbard,
     CleaningToolFunction,
-    KabschSander,
     ComputeLPRMSD,
     ComputeRMSD,
     ComputeRMSF,
     ContactsTool,
     DistanceMatrixTool,
+    KabschSander,
     ListRegistryPaths,
     ModifyBaseSimulationScriptTool,
     MomentOfInertia,

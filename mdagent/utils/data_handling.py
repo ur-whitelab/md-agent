@@ -36,7 +36,6 @@ def load_single_traj(
 
     if traj_fileid is None:
         if not traj_required:
-
             if not ignore_warnings:
                 warnings.warn(
                     (
@@ -59,7 +58,6 @@ def load_single_traj(
 
 
 def load_traj_with_ref(
-
     path_registry,
     top_id,
     traj_id=None,
