@@ -11,6 +11,13 @@ from .analysis_tools.rgy import (
 )
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
+from .analysis_tools.thermo_tools import (
+    ComputeDipoleMoments,
+    ComputeIsothermalCompressabilityKappaT,
+    ComputeMassDensity,
+    ComputeStaticDielectric,
+    ComputeThermalExpansionAlphaP,
+)
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -20,13 +27,6 @@ from .simulation_tools.setup_and_run import (
     SetUpandRunFunction,
     SetUpAndRunTool,
     SimulationFunctions,
-)
-from .analysis_tools.thermo_tools import (
-    ComputeDensity,
-    ComputeDipoleMoments,
-    ComputeIsothermalCompressabilityKappaT,
-    ComputeStaticDielectric,
-    ComputeThermalExpansionAlphaP,
 )
 from .util_tools.git_issues_tool import SerpGitTool
 from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
@@ -67,5 +67,5 @@ __all__ = [
     "ComputeStaticDielectric",
     "ComputeIsothermalCompressabilityKappaT",
     "ComputeThermalExpansionAlphaP",
-    "ComputeDensity",
+    "ComputeMassDensity",
 ]

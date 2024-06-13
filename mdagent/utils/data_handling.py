@@ -30,9 +30,14 @@ def load_single_traj(
     if not isinstance(path_registry, PathRegistry):
         raise ValueError("path_registry must be an instance of PathRegistry.")
     all_fileids = path_registry.list_path_names()
-    if top_fileid not in all_fileids:
-        raise ValueError(f"Topology File ID '{top_fileid}' not found in PathRegistry")
-    top_path = path_registry.get_mapped_path(top_fileid)
+    if top_fileid:
+        if top_fileid not in all_fileids:
+            raise ValueError(
+                f"Topology File ID '{top_fileid}' not found in PathRegistry"
+            )
+        top_path = path_registry.get_mapped_path(top_fileid)
+    else:
+        top_path = None
 
     if traj_fileid is None:
         if not traj_required:
@@ -53,7 +58,7 @@ def load_single_traj(
             f"Trajectory File ID '{traj_fileid}' not found in PathRegistry."
         )
     traj_path = path_registry.get_mapped_path(traj_fileid)
-    return md.load(traj_path, top=top_path)
+    return md.load(traj_path, top=top_path) if top_path else md.load(traj_path)
 
 
 def load_traj_with_ref(
