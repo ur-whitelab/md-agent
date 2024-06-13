@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 from langchain.tools import BaseTool
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -181,7 +182,7 @@ class MolPDB:
                 m = Chem.AddHs(m)
             except Exception:
                 pass
-            Chem.AllChem.EmbedMolecule(m)
+            AllChem.EmbedMolecule(m)
             file_name = f"{self.path_registry.ckpt_pdb}/{mol_name}.pdb"
             Chem.MolToPDBFile(m, file_name)
             print("finished writing pdb file")
