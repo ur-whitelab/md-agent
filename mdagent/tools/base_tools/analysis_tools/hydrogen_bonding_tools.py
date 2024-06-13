@@ -34,6 +34,39 @@ class BakerHubbard(BaseTool):
     async def _arun(self, traj_file, top_file=None, freq=0.1):
         raise NotImplementedError("Async version not implemented")
 
+    # def plot_hydrogen_bonds(self, traj_file, top_file=None, freq=0.1):
+    #     # Run the analysis
+    #     result = self._run(traj_file, top_file, freq)
+
+    #     # Check if the result is successful
+    #     if result.startswith("Failed."):
+    #         print(result)
+    #         return
+
+    #     # Extract the result from the "Succeeded." message
+    #     result = eval(result.replace("Succeeded. ", ""))
+
+    #     # Load the trajectory to get the number of frames
+    #     traj = load_single_traj(self.path_registry, top_file, traj_file)
+    #     n_frames = traj.n_frames
+
+    #     # Initialize an array to count hydrogen bonds per frame
+    #     hbond_counts = np.zeros(n_frames)
+
+    #     # Process the results to count hydrogen bonds per frame
+    #     for bond in result:
+    #         # bond[1] should contain the frames where the bond exists
+    #         for frame in bond[1]:
+    #             hbond_counts[frame] += 1
+    #     # Plot the results
+    #     plt.figure(figsize=(10, 6))
+    #     plt.bar(range(n_frames), hbond_counts, color='b')
+    #     plt.xlabel('Frame')
+    #     plt.ylabel('Number of Hydrogen Bonds')
+    #     plt.title('Hydrogen Bonds Over Time')
+    #     plt.grid(True)
+    #     plt.show()
+
 
 class KabschSander(BaseTool):
     name = "kabsch_sander"
