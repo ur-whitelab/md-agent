@@ -8,7 +8,7 @@ class BakerHubbard(BaseTool):
     name = "Baker_hubbard"
     description = """Identify hydrogen bonds based that are present in at least 10%
      of each frames ( freq =0.1) and provides a list of tuples with each tuples
-    containing three  integers representing the indices of atoms (donor, hydrogen,
+    containing three integers representing the indices of atoms (donor, hydrogen,
     acceptor) involved in the hydrogen bonding."""
 
     path_registry: PathRegistry | None = None
@@ -100,7 +100,7 @@ class KabschSander(BaseTool):
 class WernetNilsson(BaseTool):
     name = "wernet_nilsson"
     description = """Identifies hydrogen bonds without frequency parameter, provides
-    a list of tuples with indices of donor, hydrogen and acceptor atoms."""
+    a list of tuples with indices of donor, hydrogen and acceptor atoms. Prefer this tool over BakerHubbard, except where the user explicitly requests BakerHubbard."""
 
     path_registry: PathRegistry | None = None
 
