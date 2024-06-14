@@ -1,3 +1,6 @@
+from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
+from .analysis_tools.inertia import MomentOfInertia
+from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
@@ -6,7 +9,8 @@ from .analysis_tools.rgy import (
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
 )
-from .analysis_tools.rmsd_tools import RMSDCalculator
+from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
+from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -59,11 +63,18 @@ __all__ = [
     "GetSubunitStructure",
     "GetTurnsBetaSheetsHelices",
     "GetUniprotID",
+    "ComputeLPRMSD",
+    "ComputeRMSD",
+    "ComputeRMSF",
+    "ContactsTool",
+    "DistanceMatrixTool",
     "ListRegistryPaths",
     "MapPath2Name",
     "MapProteinRepresentation",
     "ModifyBaseSimulationScriptTool",
+    "MomentOfInertia",
     "PackMolTool",
+    "PCATool",
     "PPIDistance",
     "ProteinName2PDBTool",
     "RadiusofGyrationAverage",
@@ -79,6 +90,7 @@ __all__ = [
     "SimulationOutputFigures",
     "SmallMolPDB",
     "UniprotID2Name",
+    "SolventAccessibleSurfaceArea",
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
