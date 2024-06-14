@@ -11,6 +11,7 @@ from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
 from .preprocess_tools.pdb_get import ProteinName2PDBTool, SmallMolPDB, get_pdb
+from .preprocess_tools.uniprot import MapProteinRepresentation, UniprotID2Name, GetBindingSites, GetActiveSites, GetRelevantSites, GetAllKnownSites, GetProteinFunction, GetProteinAssociatedKeywords, GetAllSequences, GetInteractions, GetSubunitStructure, GetSequenceInfo, GetPDBProcessingInfo, GetPDB3DInfo, GetTurnsBetaSheetsHelices, GetUniprotID, GetGeneNames, GetKineticProperties
 from .simulation_tools.create_simulation import ModifyBaseSimulationScriptTool
 from .simulation_tools.setup_and_run import (
     SetUpandRunFunction,
@@ -23,12 +24,29 @@ from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
     "CleaningToolFunction",
+    "GetActiveSites",
+    "GetAllKnownSites",
+    "GetAllSequences",
+    "GetBindingSites",
+    "GetGeneNames",
+    "GetInteractions",
+    "GetKineticProperties",
+    "GetPDB3DInfo",
+    "GetPDBProcessingInfo",
+    "GetProteinAssociatedKeywords",
+    "GetProteinFunction",
+    "GetRelevantSites",
+    "GetSequenceInfo",
+    "GetSubunitStructure",
+    "GetTurnsBetaSheetsHelices",
+    "GetUniprotID",
     "ListRegistryPaths",
     "MapPath2Name",
+    "MapProteinRepresentation",
     "ModifyBaseSimulationScriptTool",
-    "ProteinName2PDBTool",
     "PackMolTool",
     "PPIDistance",
+    "ProteinName2PDBTool",
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
@@ -36,11 +54,12 @@ __all__ = [
     "RMSDCalculator",
     "Scholar2ResultLLM",
     "SerpGitTool",
-    "SetUpandRunFunction",
     "SetUpAndRunTool",
+    "SetUpandRunFunction",
     "SimulationFunctions",
     "SimulationOutputFigures",
     "SmallMolPDB",
+    "UniprotID2Name",
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
