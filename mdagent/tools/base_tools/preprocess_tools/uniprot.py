@@ -1,14 +1,17 @@
 import time
 from enum import Enum
+
 import requests
+from langchain.tools import BaseTool
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from langchain.tools import BaseTool
+
 
 class SiteType(Enum):
     ACTIVE = ("ft_act_site", "active site")
     BINDING = ("ft_binding", "binding site")
     SITES = ("ft_site", "site")
+
 
 class PTMType(Enum):
     CHAIN = ("ft_chain", "Chain")
@@ -23,10 +26,12 @@ class PTMType(Enum):
     SIGNAL_PEPTIDE = ("ft_signal", "Signal peptide")
     TRANSIT_PEPTIDE = ("ft_transit", "Transit peptide")
 
+
 class StructureMap(Enum):
     BETA = ("ft_strand", "Beta strand")
     HELIX = ("ft_helix", "Helix")
     TURN = ("ft_turn", "Turn")
+
 
 class QueryUniprot:
     API_URL = "https://rest.uniprot.org"
@@ -39,16 +44,20 @@ class QueryUniprot:
         polling_interval: int = 3,
     ) -> list:
         """
-        Fetch specific ID mapping from UniProt and extract the 'to' field from results.
+        Fetch specific ID mapping from UniProt and extract the 'to' field f
+        rom results.
 
         Args:
             query: The UniProt ID to map (e.g. 'P05067')
-            from_db: The source database to map from. Defaults to 'UniProtKB_AC-ID'.
+            from_db: The source database to map from.
+                Defaults to 'UniProtKB_AC-ID'.
             to_db: The target database to map to. Defaults to 'PDB'.
-            polling_interval: The interval to poll the API for results. Defaults to 3 seconds.
+            polling_interval: The interval to poll the API for results.
+                Defaults to 3 seconds.
 
         Returns:
-            A list of mapped database entries from the 'to' field if successful, otherwise an empty list.
+            A list of mapped database entries from the 'to' field if
+                successful, otherwise an empty list.
         """
         with requests.Session() as session:
             session.mount(
@@ -99,7 +108,7 @@ class QueryUniprot:
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            desired_field: The desired field to retrieve from the API (e.g. 'accession')
+            desired_field: The desired field to retrieve from the API
             format_type: The format of the data to retrieve. Defaults to 'json'.
 
         Returns:
@@ -123,16 +132,18 @@ class QueryUniprot:
                 data = response.json()
             except requests.HTTPError:
                 print(
-                    "Requested query not found, please try again with a valid protein identifier."
+                    "Requested query not found, "
+                    "please try again with a valid protein identifier."
                 )
                 return None
             if "results" not in data or not data["results"]:
                 raise ValueError(
-                    "Requested query not found, please try again with a valid protein identifier."
+                    "Requested query not found, "
+                    "please try again with a valid protein identifier."
                 )
             return data["results"]
 
-    def _match_primary_accession(self, data: list, primary_accession: str) -> list:
+    def _match_primary_accession(self, data: list, primary_accession: str = "") -> list:
         """
         Helper function to match the primary accession number with the data.
 
@@ -141,17 +152,25 @@ class QueryUniprot:
             primary_accession: The primary accession number to match
 
         Returns:
-            The relevant data entry for the primary accession number or the first entry if no match is found.
+            The relevant data entry for the primary accession number or
+                the first entry if no match is found.
         """
-        matched_data = next(
-            (entry for entry in data if entry["primaryAccession"] == primary_accession),
-            None,
-        )
-        if matched_data:
-            return [matched_data]
-        print(
-            "The primary accession number provided does not match any entry in the data, using the first entry instead."
-        )
+        if primary_accession:
+            matched_data = next(
+                (
+                    entry
+                    for entry in data
+                    if entry["primaryAccession"] == primary_accession
+                ),
+                None,
+            )
+            if matched_data:
+                return [matched_data]
+            print(
+                "The primary accession number provided does not "
+                "match any entry in the data, using the first entry instead."
+            )
+            return [data][0]
         return [data][0]
 
     def get_protein_name(
@@ -162,17 +181,24 @@ class QueryUniprot:
         alternative_names: bool = True,
     ) -> list:
         """
-        Get the protein name for a specific protein, with the option to filter by primary accession number and to include alternative and shortened names.
+        Get the protein name for a specific protein, with the option to
+        filter by primary accession number and to include alternative
+        and shortened names.
 
         Args:
-            query: The query string to search 
-            primary_accession: The primary accession number of the protein. Defaults to None.
-            short_names: Whether to include short names in the results. Defaults to True.
-            alternative_names: Whether to include alternative names in the results. Defaults to True.
+            query: The query string to search
+            primary_accession: The primary accession number of the protein.
+                Defaults to None.
+            short_names: Whether to include short names in the results. Defaults
+                to True.
+            alternative_names: Whether to include alternative names in the
+                results. Defaults to True.
 
         Returns:
             The protein name for the protein if found, otherwise an empty list.
-                If primary_accession is provided, returns the protein name associated with that primary accession number, otherwise returns all the protein names associated with the protein.
+                If primary_accession is provided, returns the protein name
+                associated with that primary accession number, otherwise returns
+                all the protein names associated with the protein.
         """
         data = self.get_data(query, desired_field="protein_name")
         if not data:
@@ -208,10 +234,11 @@ class QueryUniprot:
 
     def _site_key(self, site_type: str) -> tuple[str, str]:
         """
-        Helper function to get the desired field and associated key for sites (active, binding, or sites).
+        Helper function to get the desired field and associated key for
+        sites (active, binding, or sites).
 
         Args:
-            site_type: The type of site to retrieve ('active', 'binding', or 'sites')
+            site_type: The type of site to retrieve
 
         Returns:
             The desired field and associated key for the type
@@ -236,16 +263,17 @@ class QueryUniprot:
         site_type: str,
     ) -> list[dict]:
         """
-        Get the relevant sites, active sites, or binding sites for a specific protein, given the primary accession number.
+        Get the relevant sites, active sites, or binding sites for a
+        specific protein, given the primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
-            site_type: The type of site to retrieve ('active', 'binding', or 'sites')
+            site_type: The type of site to retrieve
 
         Returns:
             The relevant sites for the protein with the given primary accession number
-                The list contains a dictionary for each site with the following keys:
+                The list contains a dict for each site with the following keys:
                 - 'start': The start position of the site
                 - 'start_modifier': The start position modifier of the site
                 - 'end': The end position of the site
@@ -281,29 +309,35 @@ class QueryUniprot:
             end_modifier = site["location"]["end"].get("modifier", "")
             description = site["description"]
             evidences = site.get("evidences", [])
-            sites.append({
-                "start": start,
-                "start_modifier": start_modifier,
-                "end": end,
-                "end_modifier": end_modifier,
-                "description": description,
-                "evidences": evidences,
-            })
+            sites.append(
+                {
+                    "start": start,
+                    "start_modifier": start_modifier,
+                    "end": end,
+                    "end_modifier": end_modifier,
+                    "description": description,
+                    "evidences": evidences,
+                }
+            )
         return sites
 
     def get_protein_function(
         self, query: str, primary_accession: str | None = None
     ) -> list:
         """
-        Get the protein function for a specific protein, with the option to filter by primary accession number.
+        Get the protein function for a specific protein, with the option to
+        filter by primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            primary_accession: The primary accession number of the protein. Defaults to None.
+            primary_accession: The primary accession number of the protein.
+                Defaults to None.
 
         Returns:
             The protein function for the protein.
-                If primary_accession is provided, returns the protein function associated with that primary accession number, otherwise returns all the protein functions associated with the protein.
+                If primary_accession is provided, returns the protein function
+                associated with that primary accession number, otherwise returns
+                all the protein functions associated with the protein.
         """
         data = self.get_data(query, desired_field="cc_function")
         if not data:
@@ -318,15 +352,19 @@ class QueryUniprot:
 
     def get_keywords(self, query: str, primary_accession: str | None = None) -> list:
         """
-        Get the keywords for a specific protein, with the option to filter by primary accession number.
+        Get the keywords for a specific protein, with the option to filter by
+        primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            primary_accession: The primary accession number of the protein. Defaults to None.
+            primary_accession: The primary accession number of the protein.
+                Defaults to None.
 
         Returns:
             The keywords for the protein.
-                If primary_accession is provided, returns the keywords associated with that primary accession number. Otherwise, returns all the keywords associated with the protein
+                If primary_accession is provided, returns the keywords
+                associated with that primary accession number. Otherwise,
+                returns all the keywords associated with the protein
         """
         keywords = self.get_data(query, desired_field="keyword")
         if not keywords:
@@ -358,14 +396,17 @@ class QueryUniprot:
 
     def get_interactions(self, query: str, primary_accession: str) -> list:
         """
-        Get the interactions for a specific protein, given the primary accession number.
+        Get the interactions for a specific protein, given the primary accession
+        number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            primary_accession: The primary accession number of the protein (required)
+            primary_accession: The primary accession number of the protein
+                (required)
 
         Returns:
-            The interactions for the protein with the given primary accession number
+            The interactions for the protein with the given primary accession
+                number
         """
         data = self.get_data(query, desired_field="cc_interaction")
         if not data:
@@ -379,14 +420,16 @@ class QueryUniprot:
 
     def get_subunit_structure(self, query: str, primary_accession: str) -> list:
         """
-        Get the subunit structure information for a specific protein, given the primary accession number.
+        Get the subunit structure information for a specific protein, given the
+        primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
 
         Returns:
-            The subunit structure information for the protein with the given primary accession number, along with the evidence
+            The subunit structure information for the protein with the given
+                primary accession number, along with the evidence
         """
         data = self.get_data(query, desired_field="cc_subunit")
         if not data:
@@ -407,14 +450,15 @@ class QueryUniprot:
 
     def get_sequence_info(self, query: str, primary_accession: str) -> dict:
         """
-        Get the sequence information for a specific protein, given the primary accession number.
+        Get the sequence information for a specific protein, given the primary
+        accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
 
         Returns:
-            The sequence information for the protein with the given primary accession number
+            The sequence information for the protein with the given accession
                 The dictionary contains the following keys:
                 - 'sequence': The sequence of the protein
                 - 'length': The length of the protein sequence
@@ -433,7 +477,8 @@ class QueryUniprot:
 
     def _ptm_key(self, ptm_key: str) -> tuple[str, str]:
         """
-        Helper function to get the desired field and associated key for PTM/Processing (e.g., chain, crosslink, disulfide-bond, etc.).
+        Helper function to get the desired field and associated key for PTM/
+        Processing (e.g., chain, crosslink, disulfide-bond, etc.).
 
         Args:
             ptm_key: The PTM/Processing key to retrieve.
@@ -452,7 +497,8 @@ class QueryUniprot:
                 f"'{key.name.replace('_', ' ').lower()}'" for key in PTMType
             )
             raise ValueError(
-                f"Invalid PTM/Processing key, please use one of the following: {valid_keys}."
+                "Invalid PTM/Processing key, "
+                f"please use one of the following: {valid_keys}."
             ) from e
         return ptm_type.value
 
@@ -463,7 +509,8 @@ class QueryUniprot:
         ptm_key: str,
     ) -> list[dict]:
         """
-        Get the ptm/processing information for a specific protein, given the primary accession number.
+        Get the ptm/processing information for a specific protein, given the
+        primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
@@ -471,8 +518,10 @@ class QueryUniprot:
             ptm_key: The PTM/Processing key to retrieve
 
         Returns:
-            The relevant information for the protein with the given primary accession number
-                The list contains a dictionary for each object with the following keys:
+            The relevant information for the protein with the given primary
+                accession number
+                The list contains a dictionary for each object with the
+                following keys:
                 - 'start': The start position
                 - 'start_modifier': The start position modifier
                 - 'end': The end position
@@ -501,19 +550,22 @@ class QueryUniprot:
             end_modifier = field["location"]["end"].get("modifier", "")
             description = field.get("description", "")
             featureid = field.get("featureId", "")
-            structure_info.append({
-                "start": start_,
-                "start_modifier": start_modifier,
-                "end": end_,
-                "end_modifier": end_modifier,
-                "description": description,
-                "featureId": featureid,
-            })
+            structure_info.append(
+                {
+                    "start": start_,
+                    "start_modifier": start_modifier,
+                    "end": end_,
+                    "end_modifier": end_modifier,
+                    "description": description,
+                    "featureId": featureid,
+                }
+            )
         return structure_info
 
     def _structure_key(self, structure_key: str) -> tuple[str, str]:
         """
-        Helper function to get the desired field and associated key for structure beta, helix, turn).
+        Helper function to get the desired field and associated key for
+        structure beta, helix, turn).
 
         Args:
             structure_key: The structure key to retrieve
@@ -529,20 +581,23 @@ class QueryUniprot:
         except KeyError as e:
             valid_keys = ", ".join(f"'{key.name}'" for key in StructureMap)
             raise ValueError(
-                f"Invalid structure key '{structure_key}'. Valid keys are: {valid_keys}."
+                f"Invalid structure key '{structure_key}'. "
+                f"Valid keys are: {valid_keys}."
             ) from e
         return structure_key_map.value
 
     def get_3d_info(self, query: str, primary_accession: str) -> list:
         """
-        Get the 3D structure information for a specific protein, given the primary accession number.
+        Get the 3D structure information for a specific protein, given the
+        primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
 
         Returns:
-            The 3D structure information for the protein with the given primary accession number
+            The 3D structure information for the protein with the given primary
+                accession number
         """
         data = self.get_data(query, desired_field="structure_3d")
         if not data:
@@ -557,16 +612,19 @@ class QueryUniprot:
         structure_key: str,
     ) -> list[dict]:
         """
-        Get the structure information for a specific protein, given the primary accession number, including either beta sheets, helices, or turns.
+        Get the structure information for a specific protein, given the primary
+        accession number, including either beta sheets, helices, or turns.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
-            structure_key: The structure key to retrieve ('beta', 'helix', 'turn')
+            structure_key: The structure key to retrieve
 
         Returns:
-            The structure information for the protein with the given primary accession number
-                The list contains a dictionary for each structure with the following keys:
+            The structure information for the protein with the given primary
+                accession number
+                The list contains a dictionary for each structure with the
+                following keys:
                 - 'start': The start position
                 - 'start_modifier': The start position modifier
                 - 'end': The end position
@@ -594,13 +652,15 @@ class QueryUniprot:
             end_ = field["location"]["end"]["value"]
             end_modifier = field["location"]["end"].get("modifier", "")
             evidences = field.get("evidences", [])
-            structure_info.append({
-                "start": start_,
-                "start_modifier": start_modifier,
-                "end": end_,
-                "end_modifier": end_modifier,
-                "evidences": evidences,
-            })
+            structure_info.append(
+                {
+                    "start": start_,
+                    "start_modifier": start_modifier,
+                    "end": end_,
+                    "end_modifier": end_modifier,
+                    "evidences": evidences,
+                }
+            )
         return structure_info
 
     def get_ids(
@@ -611,8 +671,10 @@ class QueryUniprot:
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            single_id: Whether to return a single ID or all IDs. Defaults to False.
-            include_uniprotkbids: Whether to include UniProtKB IDs in the results. Defaults to False.
+            single_id: Whether to return a single ID or all IDs. Defaults to
+                False.
+            include_uniprotkbids: Whether to include UniProtKB IDs in the
+                results. Defaults to False.
 
         Returns:
             The IDs for the protein
@@ -631,15 +693,20 @@ class QueryUniprot:
 
     def get_gene_names(self, query: str, primary_accession: str | None = None) -> list:
         """
-        Get the gene names for a specific protein, with the option to filter by primary accession number.
+        Get the gene names for a specific protein, with the option to filter by
+        primary accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
-            primary_accession: The primary accession number of the protein. Defaults to None.
+            primary_accession: The primary accession number of the protein.
+                Defaults to None.
 
         Returns:
-            The gene names for the protein if gene names are found, otherwise an empty list.
-                If primary_accession is provided, returns the gene names associated with that primary accession number, otherwise returns all the gene names associated with the protein.
+            The gene names for the protein if gene names are found, otherwise an
+                empty list.
+                If primary_accession is provided, returns the gene names
+                associated with that primary accession number, otherwise returns
+                all the gene names associated with the protein.
         """
         data = self.get_data(query, desired_field="gene_names")
         if not data:
@@ -677,49 +744,59 @@ class QueryUniprot:
             all_genes.extend(gene_name + synonyms + orfNames + orderedlocus)
         return all_genes
 
-    def get_kinetics(self, query:str, primary_accession:str|None=None) -> list:
+    def get_kinetics(self, query: str, primary_accession: str | None = None) -> list:
         """
-        Get the kinetics information for a specific protein, given the primary accession number.
+        Get the kinetics information for a specific protein, given the primary
+        accession number.
 
         Args:
             query: The query string to search (e.g. 'hemoglobin')
             primary_accession: The primary accession number of the protein
 
         Returns:
-            The kinetics information for the protein with the given primary accession number
+            The kinetics information for the protein with the given primary
+                accession number
         """
-        data = self.get_data(query, desired_field='kinetics')
+        data = self.get_data(query, desired_field="kinetics")
         if not data:
             return []
-        
+
         if primary_accession:
             data = self._match_primary_accession(data, primary_accession)
 
-        return [entry["comments"] for entry in data if entry['comments']]
-    
+        return [entry["comments"] for entry in data if entry["comments"]]
+
 
 class MapProteinRepresentation(BaseTool):
     name = "MapProteinRepresentation"
     description = (
-        "Fetch specific ID mapping from UniProt. You must specify the database to map from and to, as well as the representation of the protein. The defaults are 'UniProtKB_AC-ID' and 'PDB', respectively."
+        "Fetch specific ID mapping from UniProt. "
+        "You must specify the database to map from and to, "
+        "as well as the representation of the protein. "
+        "The defaults are 'UniProtKB_AC-ID' and 'PDB', respectively."
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, src_db:str|None, dst_db:str|None) -> str:
+    def _run(
+        self, query: str, src_db: str = "UniProtKB_AC-ID", dst_db: str = "PDB"
+    ) -> str:
         """use the tool."""
         try:
-            mapped_ids = self.uniprot.get_sequence_mapping(query, from_db=src_db, to_db=dst_db)
+            mapped_ids = self.uniprot.get_sequence_mapping(
+                query, from_db=src_db, to_db=dst_db
+            )
             return str(mapped_ids)
         except Exception as e:
             return str(e)
-        
-    async def _arun(self, query: str, src_db:str|None, dst_db:str|None) -> str:
+
+    async def _arun(self, query: str, src_db: str | None, dst_db: str | None) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class UniprotID2Name(BaseTool):
-    name="UniprotID2Name"
-    description=(
+    name = "UniprotID2Name"
+    description = (
         "Get the protein name for a specific protein, "
         "with the option to filter by primary accession"
         "number. If you have the primary accession "
@@ -730,25 +807,31 @@ class UniprotID2Name(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def __init__(self, all_names:bool=True):
+    def __init__(self, all_names: bool = True):
         super().__init__()
         self.all_names = all_names
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            names = self.uniprot.get_protein_name(query, primary_accession=primary_accession, short_names=self.all_names, alternative_names=self.all_names)
+            names = self.uniprot.get_protein_name(
+                query,
+                primary_accession=primary_accession,
+                short_names=self.all_names,
+                alternative_names=self.all_names,
+            )
             return ", ".join(names)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetBindingSites(BaseTool):
-    name="GetBindingSites"
-    description=(
+    name = "GetBindingSites"
+    description = (
         "Get the binding sites known for a specific "
         "protein, given the primary accession number. "
         "Both the query string and primary accession "
@@ -756,21 +839,22 @@ class GetBindingSites(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             sites = self.uniprot.get_relevant_sites(query, primary_accession, "binding")
             return str(sites)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetActiveSites(BaseTool):
-    name="GetActiveSites"
-    description=(
+    name = "GetActiveSites"
+    description = (
         "Get the active sites known for a specific "
         "protein, given the primary accession number. "
         "Both the query string and primary accession "
@@ -778,21 +862,22 @@ class GetActiveSites(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             sites = self.uniprot.get_relevant_sites(query, primary_accession, "active")
             return str(sites)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetRelevantSites(BaseTool):
-    name="GetRelevantSites"
-    description=(
+    name = "GetRelevantSites"
+    description = (
         "Get the relevant sites for a specific protein, "
         "given the primary accession number. You must "
         "provide the query string and primary accession "
@@ -802,21 +887,22 @@ class GetRelevantSites(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             sites = self.uniprot.get_relevant_sites(query, primary_accession, "sites")
             return str(sites)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetAllKnownSites(BaseTool):
-    name="GetAllKnownSites"
-    description=(
+    name = "GetAllKnownSites"
+    description = (
         "Get all known sites for a specific protein, "
         "given the primary accession number. You must "
         "provide the query string and primary accession "
@@ -826,23 +912,32 @@ class GetAllKnownSites(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            active_sites = self.uniprot.get_relevant_sites(query, primary_accession, "active")
-            binding_sites = self.uniprot.get_relevant_sites(query, primary_accession, "binding")
+            active_sites = self.uniprot.get_relevant_sites(
+                query, primary_accession, "active"
+            )
+            binding_sites = self.uniprot.get_relevant_sites(
+                query, primary_accession, "binding"
+            )
             sites = self.uniprot.get_relevant_sites(query, primary_accession, "sites")
-            return f"Active sites: {active_sites}\nBinding sites: {binding_sites}\nOther relevant sites: {sites}"
+            return (
+                f"Active sites: {active_sites}\n"
+                f"Binding sites: {binding_sites}\n"
+                f"Other relevant sites: {sites}"
+            )
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetProteinFunction(BaseTool):
-    name="GetProteinFunction"
-    description=(
+    name = "GetProteinFunction"
+    description = (
         "Get the protein function for a specific protein, "
         "with the option to filter by primary accession number. "
         "If you have the primary accession number, you can use "
@@ -852,21 +947,24 @@ class GetProteinFunction(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            functions = self.uniprot.get_protein_function(query, primary_accession=primary_accession)
+            functions = self.uniprot.get_protein_function(
+                query, primary_accession=primary_accession
+            )
             return ", ".join(functions)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetProteinAssociatedKeywords(BaseTool):
-    name="GetProteinAssociatedKeywords"
-    description=(
+    name = "GetProteinAssociatedKeywords"
+    description = (
         "Get the keywords associated with a specific protein, with "
         "the option to filter by primary accession number. If you "
         "have the primary accession number, you can use it to "
@@ -876,22 +974,24 @@ class GetProteinAssociatedKeywords(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            keywords = self.uniprot.get_keywords(query, primary_accession=primary_accession)
+            keywords = self.uniprot.get_keywords(
+                query, primary_accession=primary_accession
+            )
             return ", ".join(keywords)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-        
+
 
 class GetAllSequences(BaseTool):
-    name="GetAllSequences"
-    description=(
+    name = "GetAllSequences"
+    description = (
         "Get all the sequences for a specific protein. "
         "Input the uniprot ID of the protein."
         "This tool will return all sequences associated with the protein."
@@ -905,14 +1005,15 @@ class GetAllSequences(BaseTool):
             return ", ".join(sequences)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetInteractions(BaseTool):
-    name="GetInteractions"
-    description=(
+    name = "GetInteractions"
+    description = (
         "Get the interactions for a specific protein, given the "
         "primary accession number. Both the query string and primary "
         "accession number are required. This tool will return the "
@@ -920,21 +1021,22 @@ class GetInteractions(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             interactions = self.uniprot.get_interactions(query, primary_accession)
             return str(interactions)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetSubunitStructure(BaseTool):
-    name="GetSubunitStructure"
-    description=(
+    name = "GetSubunitStructure"
+    description = (
         "Get the subunit structure information for a specific protein, "
         "given the primary accession number. Both the query string and "
         "primary accession number are required. This tool will return "
@@ -942,21 +1044,24 @@ class GetSubunitStructure(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            structure_info = self.uniprot.get_subunit_structure(query, primary_accession)
+            structure_info = self.uniprot.get_subunit_structure(
+                query, primary_accession
+            )
             return str(structure_info)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetSequenceInfo(BaseTool):
-    name="GetSequenceInfo"
-    description=(
+    name = "GetSequenceInfo"
+    description = (
         "Get the sequence information for a specific protein, "
         "given the primary accession number. Both the query string "
         "and primary accession number are required. This tool will "
@@ -964,45 +1069,56 @@ class GetSequenceInfo(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             sequence_info = self.uniprot.get_sequence_info(query, primary_accession)
-            #remove crc64 and md5 keys, as they are not useful to the agent
+            # remove crc64 and md5 keys, as they are not useful to the agent
             sequence_info.pop("crc64", None)
             sequence_info.pop("md5", None)
             return str(sequence_info)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetPDBProcessingInfo(BaseTool):
-    name="GetPDBProcessingInfo"
-    description=(
+    name = "GetPDBProcessingInfo"
+    description = (
         "Get the processing information for a specific protein, "
         "given the primary accession number. Both the query string "
-        "and primary accession number are required. Input the query, accession number, and the type of processing information to retrieve (e.g., chain, crosslink, disulfide-bond, etc.). Here is a list of the processing types you can retrieve: chain, crosslink, disulfide-bond, glycosylation, initiator-methionine, lipidation, modified-residue, peptide, propeptide, signal-peptide, transit-peptide"
+        "and primary accession number are required. Input the query, accession "
+        "number, and the type of processing information to retrieve (e.g., "
+        "chain, crosslink, disulfide-bond, etc.). Here is a list of the "
+        "processing types you can retrieve: chain, crosslink, disulfide-bond, "
+        "glycosylation, initiator-methionine, lipidation, modified-residue, "
+        "peptide, propeptide, signal-peptide, transit-peptide"
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, processing_type:str, primary_accession: str="") -> str:
+    def _run(
+        self, query: str, processing_type: str, primary_accession: str = ""
+    ) -> str:
         """use the tool."""
         try:
-            processing_info = self.uniprot.get_ptm_processing_info(query, primary_accession, processing_type)
+            processing_info = self.uniprot.get_ptm_processing_info(
+                query, primary_accession, processing_type
+            )
             return str(processing_info)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetPDB3DInfo(BaseTool):
-    name="GetPDB3DInfo"
-    description=(
+    name = "GetPDB3DInfo"
+    description = (
         "Get the 3D structure information for a specific protein, "
         "given the primary accession number. Both the query string "
         "and primary accession number are required. This tool will "
@@ -1011,21 +1127,22 @@ class GetPDB3DInfo(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             structure_info = self.uniprot.get_3d_info(query, primary_accession)
             return str(structure_info)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetTurnsBetaSheetsHelices(BaseTool):
-    name="GetTurnsBetaSheetsHelices"
-    description=(
+    name = "GetTurnsBetaSheetsHelices"
+    description = (
         "Get the number and location of turns, beta sheets, and helices "
         "for a specific protein, given the primary accession number. Both "
         "the query string and primary accession number are required. This "
@@ -1034,23 +1151,26 @@ class GetTurnsBetaSheetsHelices(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             turns = self.uniprot.get_structure_info(query, primary_accession, "turn")
-            beta_sheets = self.uniprot.get_structure_info(query, primary_accession, "beta")
+            beta_sheets = self.uniprot.get_structure_info(
+                query, primary_accession, "beta"
+            )
             helices = self.uniprot.get_structure_info(query, primary_accession, "helix")
             return f"Turns: {turns}\nBeta sheets: {beta_sheets}\nHelices: {helices}"
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetUniprotID(BaseTool):
-    name="GetUniprotID"
-    description=(
+    name = "GetUniprotID"
+    description = (
         "Get the UniProt ID for a specific protein. "
         "Input the query string of the protein. "
         "This tool will return the UniProt ID of the protein. "
@@ -1060,25 +1180,30 @@ class GetUniprotID(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def __init__(self, include_uniprotkbids:bool=False):
+    def __init__(self, include_uniprotkbids: bool = False):
         super().__init__()
         self.include_uniprotkbids = include_uniprotkbids
 
-    def _run(self, query: str, all_ids: bool=False) -> str:
+    def _run(self, query: str, all_ids: bool = False) -> str:
         """use the tool."""
         try:
-            ids = self.uniprot.get_ids(query, single_id=not all_ids, include_uniprotkbids=self.include_uniprotkbids)
+            ids = self.uniprot.get_ids(
+                query,
+                single_id=not all_ids,
+                include_uniprotkbids=self.include_uniprotkbids,
+            )
             return ", ".join(ids)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, all_ids: bool) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
-    
+
+
 class GetGeneNames(BaseTool):
-    name="GetGeneNames"
-    description=(
+    name = "GetGeneNames"
+    description = (
         "Get the gene names associated with a specific protein, "
         "with the option to filter by primary accession number. "
         "If you have the primary accession number, you can use it "
@@ -1088,35 +1213,38 @@ class GetGeneNames(BaseTool):
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
-            gene_names = self.uniprot.get_gene_names(query, primary_accession=primary_accession)
+            gene_names = self.uniprot.get_gene_names(
+                query, primary_accession=primary_accession
+            )
             return ", ".join(gene_names)
         except Exception as e:
             return str(e)
-        
+
     async def _arun(self, query: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")
 
 
 class GetKineticProperties(BaseTool):
-    name="GetKineticProperties"
-    description=(
-        "Get the kinetics information for a specific protein, given the primary accession number. "
+    name = "GetKineticProperties"
+    description = (
+        "Get the kinetics information for a specific protein, "
+        "given the primary accession number. "
         "Both the query string and primary accession number are required. "
     )
     uniprot = QueryUniprot()
 
-    def _run(self, query: str, primary_accession: str="") -> str:
+    def _run(self, query: str, primary_accession: str = "") -> str:
         """use the tool."""
         try:
             kinetics = self.uniprot.get_kinetics(query, primary_accession)
             return str(kinetics)
         except Exception as e:
             return str(e)
-        
-    async def _arun(self, query: str, dependency:str, primary_accession: str) -> str:
+
+    async def _arun(self, query: str, dependency: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
         raise NotImplementedError("This tool does not support asynchronous execution.")

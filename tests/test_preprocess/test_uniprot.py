@@ -1,4 +1,5 @@
 import pytest
+
 from mdagent.tools.base_tools.preprocess_tools.uniprot import QueryUniprot
 
 
@@ -82,7 +83,7 @@ def test_get_protein_function(query_uniprot):
     fxn_data_specific = query_uniprot.get_protein_function("hemoglobin", "P69905")
     texts = [
         "Involved in oxygen transport from the lung to the various peripheral tissues",
-        "Hemopressin acts as an antagonist peptide of the cannabinoid receptor CNR1 (PubMed:18077343). Hemopressin-binding efficiently blocks cannabinoid receptor CNR1 and subsequent signaling (PubMed:18077343)",
+        "Hemopressin acts as an antagonist peptide of the cannabinoid receptor CNR1 (PubMed:18077343). Hemopressin-binding efficiently blocks cannabinoid receptor CNR1 and subsequent signaling (PubMed:18077343)",  # noqa: E501
     ]
     data_texts = [comment["texts"][0]["value"] for comment in fxn_data_specific[0]]
     assert all(text in data_texts for text in texts)
@@ -107,7 +108,7 @@ def test_get_keywords(query_uniprot):
 
 
 def test_get_all_sequences(query_uniprot):
-    one_gfp_seq = "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"
+    one_gfp_seq = "MSKGEELFTGVVPILVELDGDVNGHKFSVSGEGEGDATYGKLTLKFICTTGKLPVPWPTLVTTFSYGVQCFSRYPDHMKQHDFFKSAMPEGYVQERTIFFKDDGNYKTRAEVKFEGDTLVNRIELKGIDFKEDGNILGHKLEYNYNSHNVYIMADKQKNGIKVNFKIRHNIEDGSVQLADHYQQNTPIGDGPVLLPDNHYLSTQSALSKDPNEKRDHMVLLEFVTAAGITHGMDELYK"  # noqa: E501
     all_seq = query_uniprot.get_all_sequences("gfp")
     length_all_seq = 25
     assert one_gfp_seq in all_seq
@@ -153,7 +154,7 @@ def test_get_subunit_structure(query_uniprot):
     assert all(
         texts in sus_sus
         for texts in [
-            "Heterotetramer of two alpha chains and two beta chains in adult hemoglobin A (HbA); two alpha chains and two delta chains in adult hemoglobin A2 (HbA2); two alpha chains and two epsilon chains in early embryonic hemoglobin Gower-2; two alpha chains and two gamma chains in fetal hemoglobin F (HbF)",
+            "Heterotetramer of two alpha chains and two beta chains in adult hemoglobin A (HbA); two alpha chains and two delta chains in adult hemoglobin A2 (HbA2); two alpha chains and two epsilon chains in early embryonic hemoglobin Gower-2; two alpha chains and two gamma chains in fetal hemoglobin F (HbF)",  # noqa: E501
             "(Microbial infection) Interacts with Staphylococcus aureus protein isdB",
         ]
     )
@@ -165,7 +166,7 @@ def test_get_sequence_info(query_uniprot):
         "0714FF531F90BEBA",  # pragma: allowlist secret
         "B3EF8C2F41BE8D44040346F274687F49",  # pragma: allowlist secret
     )
-    sequence = "VNVGCVPKKVMWNTAVHSEFIHDHVDYGFQNCKSKFNWHVIKEKRDAYVSRLNNIYQNNLTKSHIEVIHGYATFRDGPQPTAEVNGKKFTAPHILIATGGVPTVPHENQIPGASLGITSDGFFQLEDLPSRSVIVGAGYIAVEIAGILSALGSKTSLMIRHDKVLRSFDSLISSNCTEELENAGGVEVLTVKKFSQVKEVKKTSSGLELHVVTALPGRKPTVTTIPDVDCLLWAIGRDPNSKGLNLNKLGIQTDDKGHILVDEFQNTNVKGVYAVGDVCGKALLTPVAIAAGRKLAHRLFEGKEDSRLDYDNIPTVVFSHPPIGTVGLTEDEAVHKYGKDNVKIYSTAFTPMYHAVTTRKTKCVMKMVCANKEEKVVGIHMQGIGCDEMLQGFAVAVKMGATKADFDNRVAIHPTSSEELVTLR"  # pragma: allowlist secret
+    sequence = "VNVGCVPKKVMWNTAVHSEFIHDHVDYGFQNCKSKFNWHVIKEKRDAYVSRLNNIYQNNLTKSHIEVIHGYATFRDGPQPTAEVNGKKFTAPHILIATGGVPTVPHENQIPGASLGITSDGFFQLEDLPSRSVIVGAGYIAVEIAGILSALGSKTSLMIRHDKVLRSFDSLISSNCTEELENAGGVEVLTVKKFSQVKEVKKTSSGLELHVVTALPGRKPTVTTIPDVDCLLWAIGRDPNSKGLNLNKLGIQTDDKGHILVDEFQNTNVKGVYAVGDVCGKALLTPVAIAAGRKLAHRLFEGKEDSRLDYDNIPTVVFSHPPIGTVGLTEDEAVHKYGKDNVKIYSTAFTPMYHAVTTRKTKCVMKMVCANKEEKVVGIHMQGIGCDEMLQGFAVAVKMGATKADFDNRVAIHPTSSEELVTLR"  # pragma: allowlist secret # noqa: E501
     length, molWeight = 424, 46301
     assert seq_info["length"] == length
     assert seq_info["molWeight"] == molWeight
@@ -515,6 +516,7 @@ def test_get_sequence_mapping(query_uniprot):
     mapping = query_uniprot.get_sequence_mapping("P69905")
     assert all(i in mapping for i in identifiers)
 
+
 def test_get_kinetics(query_uniprot):
     with_a_t = query_uniprot.get_kinetics("rubisco", primary_accession="O85040")
     no_a_t = query_uniprot.get_kinetics("rubisco")
@@ -522,4 +524,6 @@ def test_get_kinetics(query_uniprot):
     assert len(with_a_t) == 1
     assert len(no_a_t) > len(with_a_t)
 
-    assert with_a_t[0][0]['kineticParameters']['maximumVelocities'][0]['velocity'] == 2.9
+    assert (
+        with_a_t[0][0]["kineticParameters"]["maximumVelocities"][0]["velocity"] == 2.9
+    )
