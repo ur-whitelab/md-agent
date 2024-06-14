@@ -8,7 +8,7 @@ class BakerHubbard(BaseTool):
     name = "Baker_hubbard"
     description = """Identify hydrogen bonds based that are present in at least 10%
      of each frames ( freq =0.1) and provides a list of tuples with each tuples
-    containing three  integers representing the indices of atoms (donor, hydrogen,
+    containing three integers representing the indices of atoms (donor, hydrogen,
     acceptor) involved in the hydrogen bonding."""
 
     path_registry: PathRegistry | None = None
