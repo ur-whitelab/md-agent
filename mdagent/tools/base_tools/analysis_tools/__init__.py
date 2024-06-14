@@ -8,6 +8,7 @@ from .bond_angles_dihedrals_tool import (
     ComputeOmega,
     ComputePhi,
     ComputePsi,
+    RamachandranPlot,
 )
 from .distance_tools import ContactsTool, DistanceMatrixTool
 from .inertia import MomentOfInertia
@@ -40,6 +41,7 @@ __all__ = [
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
+    "RamachandranPlot",
     "RMSDCalculator",
     "SimulationOutputFigures",
     "SolventAccessibleSurfaceArea",

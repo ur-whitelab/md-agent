@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import mdtraj as md
 from langchain.tools import BaseTool
 
@@ -20,7 +21,7 @@ class ComputeAngles(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
+                return "Failed.Trajectory could not be loaded."
 
             if (
                 not angle_indices
@@ -28,11 +29,12 @@ class ComputeAngles(BaseTool):
                 or not all(len(indices) == 3 for indices in angle_indices)
             ):
                 return (
-                    "Invalid angle_indices. It should be a list of tuples, each "
-                    "containing three atom indices."
+                    "Failed. Invalid angle_indices. It should be a list of tuples, "
+                    "each containing three atom indices."
                 )
 
-            return md.compute_angles(traj, angle_indices, periodic=True, opt=True)
+            result = md.compute_angles(traj, angle_indices, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -57,7 +59,7 @@ class ComputeDihedrals(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
+                return " Failed. Trajectory could not be loaded."
 
             if (
                 not indices
@@ -67,17 +69,42 @@ class ComputeDihedrals(BaseTool):
                     for tup in indices
                 )
             ):
-                return (
-                    "Invalid indices. It should be a list of tuples, each containing"
-                    "atom indices as integers."
-                )
+                return "Failed. Invalid indices. It should be a list of tuples."
 
-            return md.compute_dihedrals(traj, indices, periodic=True, opt=True)
+            result = md.compute_dihedrals(traj, indices, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
     async def _arun(self, traj_file, indices, top_file=None):
+        raise NotImplementedError("Async version not implemented")
+
+
+class ComputePhi(BaseTool):
+    name = "compute_phi"
+    description = """This class calculates phi torsion angles and provides a list of phi
+      angles and indices specifying which atoms are involved in the calculations"""
+
+    path_registry: PathRegistry | None = None
+
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, traj_file, top_file=None):
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return " Failed. Trajectory could not be loaded."
+
+            result = md.compute_phi(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
+
+    async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -97,33 +124,10 @@ class ComputePsi(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_psi(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
 
-        except Exception as e:
-            return f"Failed. {type(e).__name__}: {e}"
-
-    async def _arun(self, traj_file, top_file=None):
-        raise NotImplementedError("Async version not implemented")
-
-
-class ComputePhi(BaseTool):
-    name = "compute_phi"
-    description = """This class calculates phi torsion angles and provides a list of phi
-      angles and indices specifying which atoms are involved in the calculations"""
-
-    path_registry: PathRegistry | None = None
-
-    def __init__(self, path_registry: PathRegistry):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, traj_file, top_file=None):
-        try:
-            traj = load_single_traj(self.path_registry, traj_file, top_file)
-            if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_phi(traj, periodic=True, opt=True)
+            result = md.compute_psi(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -149,8 +153,10 @@ class ComputeChi1(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_chi1(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
+
+            result = md.compute_chi1(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -176,8 +182,10 @@ class ComputeChi2(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_chi2(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
+
+            result = md.compute_chi2(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -204,8 +212,10 @@ class ComputeChi3(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_chi3(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
+
+            result = md.compute_chi3(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -231,8 +241,10 @@ class ComputeChi4(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_chi4(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
+
+            result = md.compute_chi4(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -257,8 +269,10 @@ class ComputeOmega(BaseTool):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Trajectory could not be loaded."
-            return md.compute_omega(traj, periodic=True, opt=True)
+                return "Failed. Trajectory could not be loaded."
+
+            result = md.compute_omega(traj, periodic=True, opt=True)
+            return f"Succeeded. {result}"
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -267,4 +281,37 @@ class ComputeOmega(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-# class Ramachandran Plot
+class RamachandranPlot(BaseTool):
+    name = "ramachandran_plot"
+    description = """Generate a Ramachandran plot for the given trajectory, showing
+    the distribution of phi and psi angles for each frame."""
+
+    path_registry: PathRegistry | None = None
+
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, traj_file, top_file=None):
+        try:
+            traj = load_single_traj(self.path_registry, traj_file, top_file)
+            if not traj:
+                return "Failed. Trajectory could not be loaded."
+
+            phi_indices, phi_angles = md.compute_phi(traj, periodic=True, opt=True)
+            psi_indices, psi_angles = md.compute_psi(traj, periodic=True, opt=True)
+
+            plt.figure(figsize=(10, 8))
+            plt.scatter(phi_angles.flatten(), psi_angles.flatten(), s=1, color="blue")
+            plt.xlabel("Phi Angles (radians)")
+            plt.ylabel("Psi Angles (radians)")
+            plt.title("Ramachandran Plot")
+            plt.grid(True)
+            plt.show()
+            return "Succeeded. Ramachandran plot generated."
+
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {e}"
+
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")
