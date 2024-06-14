@@ -46,9 +46,10 @@ class CleaningToolFunction(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, **input_args) -> str:
         """Use the tool with specified operations."""

@@ -73,9 +73,10 @@ class ProteinName2PDBTool(BaseTool):
     )
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, query: str) -> str:
         """Use the tool."""
@@ -215,9 +216,10 @@ class SmallMolPDB(BaseTool):
     )
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, mol_str: str) -> str:
         """use the tool."""

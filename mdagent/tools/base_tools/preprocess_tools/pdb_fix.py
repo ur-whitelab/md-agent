@@ -668,9 +668,10 @@ class FixPDBFile(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, query: Dict):
         """use the tool."""

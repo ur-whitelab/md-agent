@@ -71,8 +71,10 @@ class Scholar2ResultLLM(BaseTool):
     llm: BaseLanguageModel = None
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, llm, path_registry):
+    def __init__(self, llm, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
+        self.path_registry = path_registry
+        self.callbacks = callbacks
         self.llm = llm
         self.path_registry = path_registry
 

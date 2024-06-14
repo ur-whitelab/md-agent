@@ -123,9 +123,10 @@ class VisualizeProtein(BaseTool):
                     system."""
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, cif_file_name: str) -> str:
         """use the tool."""

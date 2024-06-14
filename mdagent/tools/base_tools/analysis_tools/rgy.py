@@ -103,9 +103,10 @@ class RadiusofGyrationAverage(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, pdb_id: str) -> str:
         """use the tool."""
@@ -132,9 +133,10 @@ class RadiusofGyrationPerFrame(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, pdb_id: str) -> str:
         """use the tool."""
@@ -161,9 +163,10 @@ class RadiusofGyrationPlot(BaseTool):
 
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, pdb_id: str) -> str:
         """use the tool."""

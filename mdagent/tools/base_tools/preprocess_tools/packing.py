@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 import typing
-from typing import Any, Dict, List, Type, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 from langchain.tools import BaseTool
 from pydantic import BaseModel, Field, ValidationError
@@ -267,9 +267,10 @@ class PackMolTool(BaseTool):
 
     path_registry: typing.Optional[PathRegistry]
 
-    def __init__(self, path_registry: typing.Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _get_sm_pdbs(self, small_molecules):
         all_files = self.path_registry.list_path_names()

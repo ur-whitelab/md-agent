@@ -19,9 +19,10 @@ class MapPath2Name(BaseTool):
     You do not need to check that file was created."""
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, file_and_path: str) -> str:
         """Use the tool"""
@@ -48,9 +49,10 @@ class ListRegistryPaths(BaseTool):
     in the registry that are mapped to paths."""
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry]):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, paths: str) -> str:
         """Use the tool"""
