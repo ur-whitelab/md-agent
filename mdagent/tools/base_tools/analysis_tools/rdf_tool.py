@@ -31,9 +31,10 @@ class RDFTool(BaseTool):
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry] = None):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, **input):
         try:

@@ -80,8 +80,9 @@ class SerpGitTool(BaseTool):
                     Input: """
     serp_key: Optional[str]
 
-    def __init__(self, serp_key):
+    def __init__(self, serp_key, callbacks=None):
         super().__init__()
+        self.callbacks = callbacks
         self.serp_key = serp_key
 
     def _run(self, query: str):

@@ -37,6 +37,7 @@ from .base_tools import (
 def make_all_tools(
     llm: BaseLanguageModel,
     human=False,
+    callbacks=None,
 ):
     load_dotenv()
     all_tools = []
@@ -45,35 +46,39 @@ def make_all_tools(
         all_tools += agents.load_tools(["llm-math"], llm)
         # all_tools += [PythonREPLTool()]
         all_tools += [
-            ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-            Scholar2ResultLLM(llm=llm, path_registry=path_instance),
+            ModifyBaseSimulationScriptTool(
+                path_registry=path_instance, callbacks=callbacks, llm=llm
+            ),
+            Scholar2ResultLLM(
+                llm=llm, path_registry=path_instance, callbacks=callbacks
+            ),
         ]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
     # add base tools
     base_tools = [
-        CleaningToolFunction(path_registry=path_instance),
-        ComputeLPRMSD(path_registry=path_instance),
-        ComputeRMSD(path_registry=path_instance),
-        ComputeRMSF(path_registry=path_instance),
-        ContactsTool(path_registry=path_instance),
-        DistanceMatrixTool(path_registry=path_instance),
-        ListRegistryPaths(path_registry=path_instance),
-        MomentOfInertia(path_registry=path_instance),
-        PackMolTool(path_registry=path_instance),
-        PCATool(path_registry=path_instance),
-        PPIDistance(path_registry=path_instance),
-        ProteinName2PDBTool(path_registry=path_instance),
-        RadiusofGyrationAverage(path_registry=path_instance),
-        RadiusofGyrationPerFrame(path_registry=path_instance),
-        RadiusofGyrationPlot(path_registry=path_instance),
-        RDFTool(path_registry=path_instance),
-        SetUpandRunFunction(path_registry=path_instance),
-        SimulationOutputFigures(path_registry=path_instance),
-        SmallMolPDB(path_registry=path_instance),
-        SolventAccessibleSurfaceArea(path_registry=path_instance),
-        VisualizeProtein(path_registry=path_instance),
+        CleaningToolFunction(path_registry=path_instance, callbacks=callbacks),
+        ComputeLPRMSD(path_registry=path_instance, callbacks=callbacks),
+        ComputeRMSD(path_registry=path_instance, callbacks=callbacks),
+        ComputeRMSF(path_registry=path_instance, callbacks=callbacks),
+        ContactsTool(path_registry=path_instance, callbacks=callbacks),
+        DistanceMatrixTool(path_registry=path_instance, callbacks=callbacks),
+        ListRegistryPaths(path_registry=path_instance, callbacks=callbacks),
+        MomentOfInertia(path_registry=path_instance, callbacks=callbacks),
+        PackMolTool(path_registry=path_instance, callbacks=callbacks),
+        PCATool(path_registry=path_instance, callbacks=callbacks),
+        PPIDistance(path_registry=path_instance, callbacks=callbacks),
+        ProteinName2PDBTool(path_registry=path_instance, callbacks=callbacks),
+        RadiusofGyrationAverage(path_registry=path_instance, callbacks=callbacks),
+        RadiusofGyrationPerFrame(path_registry=path_instance, callbacks=callbacks),
+        RadiusofGyrationPlot(path_registry=path_instance, callbacks=callbacks),
+        RDFTool(path_registry=path_instance, callbacks=callbacks),
+        SetUpandRunFunction(path_registry=path_instance, callbacks=callbacks),
+        SimulationOutputFigures(path_registry=path_instance, callbacks=callbacks),
+        SmallMolPDB(path_registry=path_instance, callbacks=callbacks),
+        SolventAccessibleSurfaceArea(path_registry=path_instance, callbacks=callbacks),
+        VisualizeProtein(path_registry=path_instance, callbacks=callbacks),
     ]
 
     all_tools += base_tools

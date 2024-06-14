@@ -43,11 +43,12 @@ class MDAgent:
         max_iterations=40,
         verbose=True,
         ckpt_dir="ckpt",
-        top_k_tools=20,  # set "all" if you want to use all tools
+        top_k_tools="all",  # set "all" if you want to use all tools
         use_human_tool=False,
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=True,
+        call_backs=None,
     ):
         self.use_memory = use_memory
         self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
@@ -62,16 +63,25 @@ class MDAgent:
         self.agent = None
         self.agent_type = agent_type
         self.user_tools = tools
-        self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
+        if not call_backs:
+            self.call_backs = [StreamingStdOutCallbackHandler()]
+        else:
+            self.call_backs = call_backs
 
+        self.tools_llm = _make_llm(
+            tools_model,
+            temp,
+            verbose,
+            #  call_backs=self.call_backs
+        )
         self.llm = ChatOpenAI(
             temperature=temp,
             model=model,
             client=None,
             streaming=True,
-            callbacks=[StreamingStdOutCallbackHandler()],
+            callbacks=call_backs,
         )
 
     def _initialize_tools_and_agent(self, user_input=None):
@@ -91,6 +101,7 @@ class MDAgent:
                 self.tools = make_all_tools(
                     self.tools_llm,
                     human=self.use_human_tool,
+                    callbacks=self.call_backs,
                 )
         return AgentExecutor.from_agent_and_tools(
             tools=self.tools,

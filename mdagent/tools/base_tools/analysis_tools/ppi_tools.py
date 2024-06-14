@@ -62,9 +62,10 @@ class PPIDistance(BaseTool):
     args_schema: Type[BaseModel] = PPIDistanceInputSchema
     path_registry: PathRegistry | None
 
-    def __init__(self, path_registry=None):
+    def __init__(self, path_registry: Optional[PathRegistry], callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
 
     def _run(self, pdb_file: str, binding_site: str = "protein"):
         if not self.path_registry:

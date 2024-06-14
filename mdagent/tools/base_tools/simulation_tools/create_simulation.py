@@ -83,9 +83,10 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
 
-    def __init__(self, path_registry: Optional[PathRegistry], llm):
+    def __init__(self, path_registry: Optional[PathRegistry], llm, callbacks=None):
         super().__init__()
         self.path_registry = path_registry
+        self.callbacks = callbacks
         self.llm = llm
 
     def _run(self, *args, **input):
