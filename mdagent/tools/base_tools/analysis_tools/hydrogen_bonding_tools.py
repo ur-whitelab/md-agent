@@ -67,7 +67,7 @@ class KabschSander(BaseTool):
 class WernetNilsson(BaseTool):
     name = "wernet_nilsson"
     description = """Identifies hydrogen bonds without frequency parameter, provides
-    a list of tuples with indices of donor, hydrogen and acceptor atoms."""
+    a list of tuples with indices of donor, hydrogen and acceptor atoms. Prefer this tool over BakerHubbard, except where the user explicitly requests BakerHubbard."""
 
     path_registry: PathRegistry | None = None
 
