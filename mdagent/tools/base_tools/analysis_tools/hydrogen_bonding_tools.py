@@ -50,7 +50,7 @@ class BakerHubbard(HydrogenBondTool):
     def _run(self, traj_file, top_file=None, freq=0.1):
         try:
             if not top_file:
-                top_file = self._infer_top_file(traj_file)
+                top_file = self.top_file(traj_file)
 
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
@@ -86,7 +86,7 @@ class KabschSander(HydrogenBondTool):
     def _run(self, traj_file, top_file=None):
         try:
             if not top_file:
-                top_file = self._infer_top_file(traj_file)
+                top_file = self.top_file(traj_file)
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
                 return """Failed. Trajectory could not be loaded; unable to access
@@ -126,7 +126,7 @@ class WernetNilsson(HydrogenBondTool):
     def _run(self, traj_file, top_file=None):
         try:
             if not top_file:
-                top_file = self._infer_top_file(traj_file)
+                top_file = self.top_file(traj_file)
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
                 return """Failed. Trajectory could not be loaded' unable to retrieve

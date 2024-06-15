@@ -48,8 +48,9 @@ def test_run_success_baker_hubbard(
     result = baker_hubbard_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = baker_hubbard_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        baker_hubbard_tool.path_registry, top_file, traj_file
+        baker_hubbard_tool.path_registry, inferred_top_file, traj_file
     )
     mock_baker_hubbard.assert_called_once_with(
         mock_traj, 0.1, exclude_water=True, periodic=True, sidechain_only=False
@@ -70,10 +71,17 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, baker_hubbard_tool):
     result = baker_hubbard_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = baker_hubbard_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        baker_hubbard_tool.path_registry, top_file, traj_file
+        baker_hubbard_tool.path_registry, inferred_top_file, traj_file
     )
-    assert result == "Failed. Trajectory could not be loaded."
+    assert (
+        result
+        == """Failed. Trajectory could not be loaded; unable to retrieve
+                data needed to find hydrogen bonds. This may be due missing files,
+                corrupted files, or incorrect formatted file. Please check and try
+                again."""
+    )
 
 
 @patch(
@@ -97,8 +105,9 @@ def test_run_success_kabsch_sander(
     result = kabsch_sander_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = kabsch_sander_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        kabsch_sander_tool.path_registry, top_file, traj_file
+        kabsch_sander_tool.path_registry, inferred_top_file, traj_file
     )
     mock_kabsch_sander.assert_called_once_with(mock_traj)
     assert result == f"Succeeded. {expected_hbonds}"
@@ -117,10 +126,17 @@ def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander_tool):
     result = kabsch_sander_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = kabsch_sander_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        kabsch_sander_tool.path_registry, top_file, traj_file
+        kabsch_sander_tool.path_registry, inferred_top_file, traj_file
     )
-    assert result == "Failed. Trajectory could not be loaded."
+    assert (
+        result
+        == """Failed. Trajectory could not be loaded; unable to access
+            data required to calculate hydrogen bond energies. This could be due to
+            missing files, corrupted files, or incorrect formatted file. Please check
+            and try again."""
+    )
 
 
 @patch(
@@ -144,8 +160,9 @@ def test_run_success_wernet_nilsson(
     result = wernet_nilsson_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = wernet_nilsson_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        wernet_nilsson_tool.path_registry, top_file, traj_file
+        wernet_nilsson_tool.path_registry, inferred_top_file, traj_file
     )
     mock_wernet_nilsson.assert_called_once_with(
         mock_traj, exclude_water=True, periodic=True, sidechain_only=False
@@ -166,7 +183,14 @@ def test_run_fail_wernet_nilsson(mock_load_single_traj, wernet_nilsson_tool):
     result = wernet_nilsson_tool._run(traj_file, top_file)
 
     # Assertions
+    inferred_top_file = wernet_nilsson_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        wernet_nilsson_tool.path_registry, top_file, traj_file
+        wernet_nilsson_tool.path_registry, inferred_top_file, traj_file
     )
-    assert result == "Failed. Trajectory could not be loaded."
+    assert (
+        result
+        == """Failed. Trajectory could not be loaded' unable to retrieve
+                data needed to find hydrogen bonds. This may be due missing files,
+                corrupted files, or incorrect formatted file. Please check and try
+                again"""
+    )
