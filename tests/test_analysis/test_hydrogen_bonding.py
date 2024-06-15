@@ -44,7 +44,7 @@ def test_run_success_baker_hubbard(
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = baker_hubbard_tool._run(traj_file, top_file)
 
     # Assertions
@@ -66,7 +66,7 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, baker_hubbard_tool):
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = baker_hubbard_tool._run(traj_file, top_file)
 
     # Assertions
@@ -93,7 +93,7 @@ def test_run_success_kabsch_sander(
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = kabsch_sander_tool._run(traj_file, top_file)
 
     # Assertions
@@ -113,7 +113,7 @@ def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander_tool):
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = kabsch_sander_tool._run(traj_file, top_file)
 
     # Assertions
@@ -140,7 +140,7 @@ def test_run_success_wernet_nilsson(
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = wernet_nilsson_tool._run(traj_file, top_file)
 
     # Assertions
@@ -162,7 +162,7 @@ def test_run_fail_wernet_nilsson(mock_load_single_traj, wernet_nilsson_tool):
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = "top_sim0_butane_123456"
+    top_file = None
     result = wernet_nilsson_tool._run(traj_file, top_file)
 
     # Assertions

@@ -1,10 +1,5 @@
 from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
-from .analysis_tools.hydrogen_bonding_tools import (
-    BakerHubbard,
-    HydrogenBondTool,
-    KabschSander,
-    WernetNilsson,
-)
+from .analysis_tools.hydrogen_bonding_tools import HydrogenBondTool
 from .analysis_tools.inertia import MomentOfInertia
 from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
@@ -32,9 +27,7 @@ from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
 
 __all__ = [
-    "BakerHubbard",
     "CleaningToolFunction",
-    "KabschSander",
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
@@ -64,6 +57,5 @@ __all__ = [
     "SolventAccessibleSurfaceArea",
     "VisFunctions",
     "VisualizeProtein",
-    "WernetNilsson",
     "get_pdb",
 ]

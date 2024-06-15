@@ -1,10 +1,5 @@
 from .distance_tools import ContactsTool, DistanceMatrixTool
-from .hydrogen_bonding_tools import (
-    BakerHubbard,
-    HydrogenBondTool,
-    KabschSander,
-    WernetNilsson,
-)
+from .hydrogen_bonding_tools import HydrogenBondTool
 from .inertia import MomentOfInertia
 from .pca_tools import PCATool
 from .plot_tools import SimulationOutputFigures
@@ -15,8 +10,6 @@ from .sasa import SolventAccessibleSurfaceArea
 from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
-    "BakerHubbard",
-    "KabschSander",
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
@@ -34,5 +27,4 @@ __all__ = [
     "SolventAccessibleSurfaceArea",
     "VisFunctions",
     "VisualizeProtein",
-    "WernetNilsson",
 ]
