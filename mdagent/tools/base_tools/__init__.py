@@ -1,6 +1,7 @@
 from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
 from .analysis_tools.hydrogen_bonding_tools import (
     BakerHubbard,
+    HydrogenBondTool,
     KabschSander,
     WernetNilsson,
 )
@@ -39,6 +40,7 @@ __all__ = [
     "ComputeRMSF",
     "ContactsTool",
     "DistanceMatrixTool",
+    "HydrogenBondTool",
     "ListRegistryPaths",
     "MapPath2Name",
     "ModifyBaseSimulationScriptTool",
