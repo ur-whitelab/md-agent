@@ -17,13 +17,13 @@ class HydrogenBondTool(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None) -> str:
         raise NotImplementedError("Subclasses should implement this method.")
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None) -> str:
         raise NotImplementedError("Async version not implemented")
 
-    def save_results_to_file(self, results, file_name):
+    def save_results_to_file(self, results: dict, file_name: str) -> None:
         with open(file_name, "w") as f:
             json.dump(results, f)
 
@@ -47,7 +47,12 @@ class BakerHubbard(HydrogenBondTool):
         self.periodic = periodic
         self.sidechain_only = sidechain_only
 
-    def _run(self, traj_file, top_file=None, freq=0.1):
+    def _run(
+        self,
+        traj_file: str,
+        top_file: str | None = None,
+        freq: float = 0.1,
+    ) -> str:
         try:
             if not top_file:
                 top_file = self.top_file(traj_file)
@@ -71,7 +76,7 @@ class BakerHubbard(HydrogenBondTool):
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    def top_file(self, traj_file):
+    def top_file(self, traj_file: str) -> str:
         top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
         return top_file
 
@@ -83,7 +88,7 @@ class KabschSander(HydrogenBondTool):
     forming hydrogen bonds and the energy of these bonds for
       each frame."."""
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None) -> str:
         try:
             if not top_file:
                 top_file = self.top_file(traj_file)
@@ -100,7 +105,7 @@ class KabschSander(HydrogenBondTool):
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    def top_file(self, traj_file):
+    def top_file(self, traj_file: str) -> str:
         top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
         return top_file
 
@@ -123,7 +128,7 @@ class WernetNilsson(HydrogenBondTool):
         self.periodic = periodic
         self.sidechain_only = sidechain_only
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None) -> str:
         try:
             if not top_file:
                 top_file = self.top_file(traj_file)
@@ -145,7 +150,7 @@ class WernetNilsson(HydrogenBondTool):
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    def top_file(self, traj_file):
+    def top_file(self, traj_file: str) -> str:
         top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
         return top_file
 
