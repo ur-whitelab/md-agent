@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import mdtraj as md
+import numpy as np
 from langchain.tools import BaseTool
 
 from mdagent.utils import PathRegistry, load_single_traj
@@ -17,11 +18,11 @@ class ComputeAngles(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, angle_indices, top_file=None):
+    def _run(self, traj_file: str, angle_indices: list, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return "Failed.Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
 
             if (
                 not angle_indices
@@ -33,13 +34,25 @@ class ComputeAngles(BaseTool):
                     "each containing three atom indices."
                 )
 
-            result = md.compute_angles(traj, angle_indices, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            angles = md.compute_angles(traj, angle_indices, periodic=True, opt=True)
+
+            # Check if path_registry is not None
+            if self.path_registry is not None:
+                plot_save_path = self.path_registry.get_mapped_path("angles_plot.png")
+                plot_angles(angles, title="Bond Angles", save_path=plot_save_path)
+                return "Succeeded. Bond angles computed, saved to file and plot saved."
+            else:
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, angle_indices, top_file=None):
+    async def _arun(
+        self,
+        traj_file: str,
+        angle_indices: list,
+        top_file: str | None = None,
+    ):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -55,11 +68,11 @@ class ComputeDihedrals(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, indices, top_file=None):
+    def _run(self, traj_file: str, indices: list, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return " Failed. Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
 
             if (
                 not indices
@@ -71,13 +84,26 @@ class ComputeDihedrals(BaseTool):
             ):
                 return "Failed. Invalid indices. It should be a list of tuples."
 
-            result = md.compute_dihedrals(traj, indices, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            dihedrals = md.compute_dihedrals(traj, indices, periodic=True, opt=True)
+
+            # Check if path_registry is not None
+            if self.path_registry is not None:
+                plot_save_path = self.path_registry.get_mapped_path(
+                    "dihedrals_plot.png"
+                )
+                plot_angles(
+                    dihedrals, title="Dihedral Angles", save_path=plot_save_path
+                )
+                return (
+                    "Succeeded. Dihedral angles computed, saved to file and plot saved."
+                )
+            else:
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, indices, top_file=None):
+    async def _arun(self, traj_file: str, indices: list, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -92,19 +118,33 @@ class ComputePhi(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
-                return " Failed. Trajectory could not be loaded."
+                return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_phi(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_phi(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("phi_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("phi_plot.png")
+                plot_angles(angles, title="Phi Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. Phi angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -120,19 +160,33 @@ class ComputePsi(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_psi(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_psi(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("psi_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("psi_plot.png")
+                plot_angles(angles, title="Psi Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. Psi angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -149,14 +203,28 @@ class ComputeChi1(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_chi1(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_chi1(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("chi1_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("chi1_plot.png")
+                plot_angles(angles, title="Chi1 Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. chi1 angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -178,19 +246,33 @@ class ComputeChi2(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_chi2(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_chi2(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("chi2_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("chi2_plot.png")
+                plot_angles(angles, title="Chi2 Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. chi2 angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -208,19 +290,33 @@ class ComputeChi3(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_chi3(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_chi3(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("chi3_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("chi3_plot.png")
+                plot_angles(angles, title="Chi3 Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. chi3 angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -237,19 +333,33 @@ class ComputeChi4(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_chi4(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_chi4(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("chi4_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("chi4_plot.png")
+                plot_angles(angles, title="Chi4 Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. chi4 angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -265,19 +375,33 @@ class ComputeOmega(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
                 return "Failed. Trajectory could not be loaded."
 
-            result = md.compute_omega(traj, periodic=True, opt=True)
-            return f"Succeeded. {result}"
+            indices, angles = md.compute_omega(traj, periodic=True, opt=True)
+
+            # Check if path_registry is initialized
+            if self.path_registry is not None:
+                # Save results to a file
+                save_results_to_file("omega_results.npz", indices, angles)
+
+                # Generate and save a plot
+                plot_save_path = self.path_registry.get_mapped_path("omega_plot.png")
+                plot_angles(angles, title="Omega Angles", save_path=plot_save_path)
+
+                # Return success message
+                return "Succeeded. omega angles computed, saved to file and plot saved."
+            else:
+                # Return failure message if path_registry is not initialized
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -292,7 +416,7 @@ class RamachandranPlot(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
+    def _run(self, traj_file: str, top_file: str | None = None):
         try:
             traj = load_single_traj(self.path_registry, traj_file, top_file)
             if not traj:
@@ -301,17 +425,61 @@ class RamachandranPlot(BaseTool):
             phi_indices, phi_angles = md.compute_phi(traj, periodic=True, opt=True)
             psi_indices, psi_angles = md.compute_psi(traj, periodic=True, opt=True)
 
+            # Map indices to residues for further analysis or reporting
+            map_indices_to_residues(traj, phi_indices)
+            map_indices_to_residues(traj, psi_indices)
+
+            # can add further analysis or reporting here using phi_residues and
+            # psi_residues
             plt.figure(figsize=(10, 8))
             plt.scatter(phi_angles.flatten(), psi_angles.flatten(), s=1, color="blue")
             plt.xlabel("Phi Angles (radians)")
             plt.ylabel("Psi Angles (radians)")
             plt.title("Ramachandran Plot")
             plt.grid(True)
-            plt.show()
-            return "Succeeded. Ramachandran plot generated."
+
+            # Check if path_registry is not None
+            if self.path_registry is not None:
+                plot_save_path = self.path_registry.get_mapped_path(
+                    "ramachandran_plot.png"
+                )
+                plt.savefig(plot_save_path)
+                return "Succeeded. Ramachandran plot generated and saved to file."
+            else:
+                return "Failed. Path registry is not initialized."
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    async def _arun(self, traj_file, top_file=None):
+    async def _arun(self, traj_file: str, top_file: str | None = None):
         raise NotImplementedError("Async version not implemented")
+
+
+# Helper functions suggested by Jorge
+def map_indices_to_residues(traj, indices):
+    atom_to_residue = {atom.index: atom.residue for atom in traj.topology.atoms}
+    residues_per_angle = [
+        [atom_to_residue[idx] for idx in angle_set] for angle_set in indices
+    ]
+    return residues_per_angle
+
+
+def save_results_to_file(filename, indices, angles):
+    np.savez(filename, indices=indices, angles=angles)
+
+
+def plot_angles(angles, title="Angles", save_path=None):
+    print(f"Save path received: {save_path}")  # Debugging help
+    plt.figure(figsize=(10, 8))
+    for angle_set in angles.T:
+        plt.plot(angle_set, label="Angle")
+    plt.xlabel("Frame")
+    plt.ylabel("Angle (radians)")
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    if save_path:
+        print(f"Calling savefig with path: {save_path}")  # Debugging help
+        plt.savefig(save_path)
+    else:
+        plt.show()

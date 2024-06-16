@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+import numpy as np
 import pytest
 
 from mdagent.tools.base_tools.analysis_tools.bond_angles_dihedrals_tool import (
@@ -86,16 +87,22 @@ def ramachandran_plot_tool(get_registry):
 
 
 @patch("mdtraj.compute_angles")
+@patch("matplotlib.pyplot.savefig")
 def test_run_success_compute_angles(
-    mock_compute_angles, patched_load_single_traj, compute_angles_tool
+    mock_savefig, mock_compute_angles, patched_load_single_traj, compute_angles_tool
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
     patched_load_single_traj.return_value = mock_traj
 
     # Define the expected output from compute_angles
-    expected_angles = [0.1, 0.2, 0.3]
+    expected_angles = np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
     mock_compute_angles.return_value = expected_angles
+
+    # Mock the path registry get_mapped_path method
+    compute_angles_tool.path_registry.get_mapped_path = MagicMock(
+        return_value="angles_plot.png"
+    )
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
@@ -110,7 +117,11 @@ def test_run_success_compute_angles(
     mock_compute_angles.assert_called_once_with(
         mock_traj, angle_indices, periodic=True, opt=True
     )
-    assert result == f"Succeeded. {expected_angles}"
+    compute_angles_tool.path_registry.get_mapped_path.assert_called_once_with(
+        "angles_plot.png"
+    )
+    mock_savefig.assert_called_once_with("angles_plot.png")
+    assert result == "Succeeded. Bond angles computed, saved to file and plot saved."
 
 
 def test_run_fail_compute_angles(patched_load_single_traj, compute_angles_tool):
@@ -131,11 +142,16 @@ def test_run_fail_compute_angles(patched_load_single_traj, compute_angles_tool):
 
 
 # Similar tests for other classes (ComputeChi1, ComputeChi2, etc.)
-# ...
+
+
 @patch("mdtraj.compute_phi")
 @patch("mdtraj.compute_psi")
 def test_run_success_ramachandran_plot(
-    mock_compute_psi, mock_compute_phi, patched_load_single_traj, ramachandran_plot_tool
+    mock_savefig,
+    mock_compute_psi,
+    mock_compute_phi,
+    patched_load_single_traj,
+    ramachandran_plot_tool,
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -147,14 +163,24 @@ def test_run_success_ramachandran_plot(
     mock_compute_phi.return_value = expected_phi
     mock_compute_psi.return_value = expected_psi
 
+    # Mock the path registry get_mapped_path method
+    ramachandran_plot_tool.path_registry.get_mapped_path = MagicMock(
+        return_value="ramachandran_plot.png"
+    )
+
     # Call the _run method
     traj_file = "rec0_butane_123456"
     top_file = "top_sim0_butane_123456"
     result = ramachandran_plot_tool._run(traj_file, top_file)
+
     # Assertions
     patched_load_single_traj.assert_called_once_with(
         ramachandran_plot_tool.path_registry, traj_file, top_file
     )
     mock_compute_phi.assert_called_once_with(mock_traj, periodic=True, opt=True)
     mock_compute_psi.assert_called_once_with(mock_traj, periodic=True, opt=True)
-    assert result == "Succeeded. Ramachandran plot generated."
+    ramachandran_plot_tool.path_registry.get_mapped_path.assert_called_once_with(
+        "ramachandran_plot.png"
+    )
+    mock_savefig.assert_called_once_with("ramachandran_plot.png")
+    assert result == "Succeeded. Ramachandran plot generated and saved to file."
