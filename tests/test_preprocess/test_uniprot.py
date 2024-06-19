@@ -111,12 +111,14 @@ def test_get_protein_function(query_uniprot):
     fxn_data_specific = query_uniprot.get_protein_function("hemoglobin", "P69905")
     texts = [
         "Involved in oxygen transport from the lung to the various peripheral tissues",
-        ("Hemopressin acts as an antagonist "
-         "peptide of the cannabinoid receptor "
-         "CNR1 (PubMed:18077343). "
-         "Hemopressin-binding efficiently blocks "
-         "cannabinoid receptor CNR1 and "
-         "subsequent signaling (PubMed:18077343)")
+        (
+            "Hemopressin acts as an antagonist "
+            "peptide of the cannabinoid receptor "
+            "CNR1 (PubMed:18077343). "
+            "Hemopressin-binding efficiently blocks "
+            "cannabinoid receptor CNR1 and "
+            "subsequent signaling (PubMed:18077343)"
+        ),
     ]
     data_texts = [comment["texts"][0]["value"] for comment in fxn_data_specific[0]]
     assert all(text in data_texts for text in texts)
