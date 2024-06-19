@@ -1,6 +1,9 @@
 import pytest
 
-from mdagent.tools.base_tools.preprocess_tools.uniprot import QueryUniprot
+from mdagent.tools.base_tools.preprocess_tools.uniprot import (
+    GetAllKnownSites,
+    QueryUniprot,
+)
 
 
 @pytest.fixture()
@@ -77,6 +80,31 @@ def test_get_relevant_sites(query_uniprot):
     assert true_binding_sites in binding_sites
     assert not active_sites
     assert not sites
+
+
+def test_get_all_known_sites():
+    all_known_sites = GetAllKnownSites()
+    site_msg = all_known_sites._run("hemoglobin", "P69905")
+    assert "No known active sites." in site_msg
+
+    assert (
+        "Binding Sites: [{'start': 59, "
+        "'start_modifier': 'EXACT', 'end': 59, "
+        "'end_modifier': 'EXACT', 'description': "
+        "'', 'evidences': [{'evidenceCode': "
+        "'ECO:0000255', 'source': 'PROSITE-ProRule', "
+        "'id': 'PRU00238'}]},"
+    ) in site_msg
+
+    assert (
+        "Other Relevant Sites: [{'start': 9, "
+        "'start_modifier': 'EXACT', 'end': 10, "
+        "'end_modifier': 'EXACT', 'description': "
+        "'(Microbial infection) Cleavage; by "
+        "N.americanus apr-2', 'evidences': "
+        "[{'evidenceCode': 'ECO:0000269', 'source': "
+        "'PubMed', 'id': '12552433'}]}"
+    ) in site_msg
 
 
 def test_get_protein_function(query_uniprot):

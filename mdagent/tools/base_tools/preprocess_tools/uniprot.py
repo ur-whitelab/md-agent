@@ -927,15 +927,29 @@ class GetAllKnownSites(BaseTool):
             active_sites = self.uniprot.get_relevant_sites(
                 query, primary_accession, "active"
             )
+            active_sites_msg = (
+                f"Active Sites: {active_sites}"
+                if active_sites
+                else "No known active sites."
+            )
+
             binding_sites = self.uniprot.get_relevant_sites(
                 query, primary_accession, "binding"
             )
-            sites = self.uniprot.get_relevant_sites(query, primary_accession, "sites")
-            return (
-                f"Active sites: {active_sites}\n"
-                f"Binding sites: {binding_sites}\n"
-                f"Other relevant sites: {sites}"
+            binding_sites_msg = (
+                f"Binding Sites: {binding_sites}"
+                if binding_sites
+                else "No known binding sites."
             )
+
+            sites = self.uniprot.get_relevant_sites(query, primary_accession, "sites")
+            sites_msg = (
+                f"Other Relevant Sites: {sites}"
+                if sites
+                else "No other relevant sites."
+            )
+
+            return active_sites_msg + "\n" + binding_sites_msg + "\n" + sites_msg
         except Exception as e:
             return str(e)
 
