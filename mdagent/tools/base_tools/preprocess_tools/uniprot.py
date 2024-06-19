@@ -70,35 +70,44 @@ class QueryUniprot:
                     )
                 ),
             )
-            response = session.post(
-                f"{self.API_URL}/idmapping/run",
-                data={"from": from_db, "to": to_db, "ids": query},
-            )
-            response.raise_for_status()
-            job_id = response.json()["jobId"]
-
-            while True:
-                response = session.get(f"{self.API_URL}/idmapping/status/{job_id}")
+            try:
+                response = session.post(
+                    f"{self.API_URL}/idmapping/run",
+                    data={"from": from_db, "to": to_db, "ids": query},
+                )
                 response.raise_for_status()
-                status_data = response.json()
-                if status_data.get("jobStatus") == "RUNNING":
-                    print(f"Job is running. Retrying in {polling_interval}s.")
-                    time.sleep(polling_interval)
-                else:
-                    break
+                job_id = response.json()["jobId"]
 
-            response = session.get(f"{self.API_URL}/idmapping/details/{job_id}")
-            response.raise_for_status()
-            results_link = response.json().get("redirectURL")
+                while True:
+                    response = session.get(f"{self.API_URL}/idmapping/status/{job_id}")
+                    response.raise_for_status()
+                    status_data = response.json()
+                    if status_data.get("jobStatus") == "RUNNING":
+                        print(f"Job is running. Retrying in {polling_interval}s.")
+                        time.sleep(polling_interval)
+                    else:
+                        break
 
-            response = session.get(results_link)
-            response.raise_for_status()
-            if response.headers["Content-Type"] != "application/json":
-                raise ValueError("Expected JSON response but got a different format.")
+                response = session.get(f"{self.API_URL}/idmapping/details/{job_id}")
+                response.raise_for_status()
+                results_link = response.json().get("redirectURL")
 
-            results_json = response.json()
-            results = results_json.get("results", [])
-            return [r["to"] for r in results]
+                response = session.get(results_link)
+                response.raise_for_status()
+                if response.headers["Content-Type"] != "application/json":
+                    raise ValueError(
+                        "Expected JSON response but got a different format."
+                    )
+
+                results_json = response.json()
+                results = results_json.get("results", [])
+                return [r["to"] for r in results]
+            except requests.HTTPError as http_err:
+                print(f"HTTP error occurred: {http_err}")
+                return []
+            except Exception as err:
+                print(f"An error occurred: {err}")
+                return []
 
     def get_data(
         self, query: str, desired_field: str, format_type: str = "json"
