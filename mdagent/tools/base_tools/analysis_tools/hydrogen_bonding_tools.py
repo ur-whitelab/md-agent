@@ -35,6 +35,10 @@ class BakerHubbard(HydrogenBondTool):
     integers representing the indices of atoms (donor, hydrogen, acceptor) involved in
     the hydrogen bonding."""
 
+    exclude_water: bool
+    periodic: bool
+    sidechain_only: bool
+
     def __init__(
         self,
         path_registry: PathRegistry,
@@ -115,6 +119,10 @@ class WernetNilsson(HydrogenBondTool):
     description = """Identifies hydrogen bonds without a frequency parameter. Provides
     a list of tuples with indices of donor, hydrogen, and acceptor atoms. Prefer this
     tool over BakerHubbard unless explicitly requested."""
+
+    exclude_water: bool
+    periodic: bool
+    sidechain_only: bool
 
     def __init__(
         self,
