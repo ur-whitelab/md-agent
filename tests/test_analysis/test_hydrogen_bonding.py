@@ -42,7 +42,7 @@ def test_run_success_baker_hubbard(
     expected_hbonds = [(1, 2, 3), (4, 5, 6)]
     mock_baker_hubbard.return_value = expected_hbonds
 
-    # Call the _run method
+    # Call the run method
     traj_file = "rec0_butane_123456"
     top_file = None
     result = baker_hubbard_tool._run(traj_file, top_file)
@@ -55,7 +55,11 @@ def test_run_success_baker_hubbard(
     mock_baker_hubbard.assert_called_once_with(
         mock_traj, 0.1, exclude_water=True, periodic=True, sidechain_only=False
     )
-    assert result == f"Succeeded. {expected_hbonds}"
+    assert (
+        result
+        == """Succeeded. Baker-Hubbard analysis completed, results saved to file and
+        plot saved."""
+    )
 
 
 @patch(
@@ -96,8 +100,9 @@ def test_run_success_kabsch_sander(
     mock_load_single_traj.return_value = mock_traj
 
     # Define the expected output from kabsch_sander
-    expected_hbonds = ([(0, 1), (2, 3)], [0.5, 0.7])
-    mock_kabsch_sander.return_value = expected_hbonds
+    expected_indices = [(0, 1), (2, 3)]
+    expected_energies = [0.5, 0.7]
+    mock_kabsch_sander.return_value = (expected_indices, expected_energies)
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
@@ -110,7 +115,11 @@ def test_run_success_kabsch_sander(
         kabsch_sander_tool.path_registry, inferred_top_file, traj_file
     )
     mock_kabsch_sander.assert_called_once_with(mock_traj)
-    assert result == f"Succeeded. {expected_hbonds}"
+    assert (
+        result
+        == """Succeeded. Kabsch-Sander analysis completed, results saved to
+            file and plot saved."""
+    )
 
 
 @patch(
@@ -167,7 +176,11 @@ def test_run_success_wernet_nilsson(
     mock_wernet_nilsson.assert_called_once_with(
         mock_traj, exclude_water=True, periodic=True, sidechain_only=False
     )
-    assert result == f"Succeeded. {expected_hbonds}"
+    assert (
+        result
+        == """Succeeded. Wernet-Nilsson analysis completed, results saved to file
+            and plot saved."""
+    )
 
 
 @patch(

@@ -1,7 +1,9 @@
 import json
 import os
 
+import matplotlib.pyplot as plt
 import mdtraj as md
+import numpy as np
 from langchain.tools import BaseTool
 
 from mdagent.utils import PathRegistry, load_single_traj
@@ -75,7 +77,40 @@ class BakerHubbard(HydrogenBondTool):
                 periodic=self.periodic,
                 sidechain_only=self.sidechain_only,
             )
-            return f"Succeeded. {result}"
+
+            # Count the number of hydrogen bonds for each frame
+            hb_counts = np.array([len(frame) for frame in result])
+
+            # Check to see if path_registry is not None
+
+            if self.path_registry is not None:
+                self.save_results_to_file(
+                    {"results": result.tolist()},
+                    "baker_hubbard_results.json",
+                )
+                plot_save_path_hist = self.path_registry.get_mapped_path(
+                    "baker_hubbard_histogram_plot.png",
+                )
+                plot_histogram(
+                    hb_counts,
+                    title="Baker-Hubbard Histogram",
+                    save_path=plot_save_path_hist,
+                )
+
+                plot_save_path_time_series = self.path_registry.get_mapped_path(
+                    "baker_hubbard_time_series_plot.png",
+                )
+                plot_time_series(
+                    hb_counts,
+                    title="Baker-Hubbard Time Series",
+                    save_path=plot_save_path_time_series,
+                )
+                return """Succeeded. Baker-Hubbard analysis completed, results saved to
+                file and plot saved."""
+            else:
+                return """Failed. Path registry helps track
+            file locations and it is not set up. Please make sure it is set up
+            before running this tool."""
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -104,7 +139,34 @@ class KabschSander(HydrogenBondTool):
             and try again."""
 
             result = md.kabsch_sander(traj)
-            return f"Succeeded. {result}"
+
+            # Check to see if path_registry is not None
+
+            if self.path_registry is not None:
+                result_dict = {
+                    "indices": [
+                        list(pair) for pair in result[0]
+                    ],  # Convert each tuple to a list
+                    "energies": result[1].tolist()
+                    if hasattr(result[1], "tolist")
+                    else list(result[1]),
+                }
+                self.save_results_to_file(result_dict, "kabsch_sander_results.json")
+                plot_save_path_time_series = self.path_registry.get_mapped_path(
+                    "kabsch_sander_time_series_plot.png",
+                )
+                plot_time_series(
+                    result[1],  # assuming result[1] contains the bond energies
+                    title="Kabsch-Sander Time Series",
+                    ylabel="Bond Energy",
+                    save_path=plot_save_path_time_series,
+                )
+                return """Succeeded. Kabsch-Sander analysis completed, results saved
+                to file and plot saved."""
+            else:
+                return """Failed. Path registry helps track
+                file locations and it is not set up. Please make sure it is set up
+                before running this tool."""
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -153,7 +215,36 @@ class WernetNilsson(HydrogenBondTool):
                 periodic=self.periodic,
                 sidechain_only=self.sidechain_only,
             )
-            return f"Succeeded. {result}"
+            # Check to see if path_registry is not None
+
+            if self.path_registry is not None:
+                self.save_results_to_file(
+                    {"results": result.tolist()},
+                    "wernet_nilsson_results.json",
+                )
+                plot_save_path_hist = self.path_registry.get_mapped_path(
+                    "wernet_nilsson_histogram_plot.png",
+                )
+                plot_histogram(
+                    [len(r) for r in result],
+                    title="Wernet-Nilsson Histogram",
+                    save_path=plot_save_path_hist,
+                )
+
+                plot_save_path_time_series = self.path_registry.get_mapped_path(
+                    "wernet_nilsson_time_series_plot.png",
+                )
+                plot_time_series(
+                    [len(r) for r in result],
+                    title="Wernet-Nilsson Time Series",
+                    save_path=plot_save_path_time_series,
+                )
+                return """Succeeded. Wernet-Nilsson analysis completed, results
+                saved to file and plot saved."""
+            else:
+                return """Failed. Path registry helps track
+                file locations and it is not set up. Please make sure it is set up
+                before running this tool."""
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -163,17 +254,79 @@ class WernetNilsson(HydrogenBondTool):
         return top_file
 
 
-# def main():
-#     # Check if user mentioned "BakerHubbard"
-#     if "bakerhubbard" in user_input.lower():
-#         tool = BakerHubbard(path_registry=path_instance)
-#     else:
-#         tool = WernetNilsson(path_registry=path_instance)  # Default tool
+# Test instantiation and running of each tool
+if __name__ == "__main__":
+    path_registry = PathRegistry.get_instance("path_to_ckpt")
+    traj_file = "path_to_traj_file.dcd"
+    top_file = "path_to_topology_file.pdb"
 
-#     result = tool._run(traj_file, top_file)
+    user_input = (
+        input(
+            """Please specify the hydrogen bond tool to use
+            (baker_hubbard/wernet_nilsson): """
+        )
+        .strip()
+        .lower()
+    )
 
-#  print(result)
+    if "baker_hubbard" in user_input:
+        tool = BakerHubbard(path_registry)
+        print(f"Running {tool.name}...")
+        result = tool._run(traj_file, top_file)
+        print(result)
+    else:
+        tool = WernetNilsson(path_registry)
+        print(f"Running {tool.name}...")
+        result = tool._run(traj_file, top_file)
+        print(result)
+
+    # Always run KabschSander regardless of user input
+    tool = KabschSander(path_registry)
+    print(f"Running {tool.name}...")
+    result = tool._run(traj_file, top_file)
+    print(result)
+
+# Helper functions for plotting
 
 
-# if __name__ == "__main__":
-#  main()
+def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=None):
+    plt.figure(figsize=(10, 6))
+    plt.plot(data, label="Hydrogen Bonds")
+    plt.xlabel("Time (frames)")
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+
+def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=None):
+    plt.figure(figsize=(10, 6))
+    plt.hist(data, bins=bins, edgecolor="black")
+    plt.xlabel(xlabel)
+    plt.ylabel("Frequency")
+    plt.title(title)
+    plt.grid(True)
+
+    if save_path:
+        plt.savefig(save_path)
+    else:
+        plt.show()
+    plt.close()
+
+
+# Example usage of the plotting functions
+if __name__ == "__main__":
+    # Example data for plotting
+    example_data = np.random.randn(100)
+
+    # Plot time series
+    plot_time_series(example_data, title="Example Time Series Plot")
+
+    # Plot histogram
+    plot_histogram(example_data, title="Example Histogram")
