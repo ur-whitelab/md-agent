@@ -64,10 +64,10 @@ class SaltBridgeFunction:  # this class defines a method called find_salt_bridge
 
 class SaltBridgeToolInput(BaseModel):
     trajectory_fileid: str = Field(
-        None, description="Trajectory file. Either dcd, hdf5, xtc, or xyz"
+        None, description="Trajectory file ID. Either dcd, hdf5, xtc, or xyz"
     )
 
-    topology_fileid: Optional[str] = Field(None, description="Topology file")
+    topology_fileid: Optional[str] = Field(None, description="Topology file ID")
 
     threshold_distance: Optional[float] = Field(
         0.4,
