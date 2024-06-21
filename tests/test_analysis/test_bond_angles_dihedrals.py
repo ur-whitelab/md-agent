@@ -144,12 +144,13 @@ def test_run_fail_compute_angles(patched_load_single_traj, compute_angles_tool):
 # Similar tests for other classes (ComputeChi1, ComputeChi2, etc.)
 
 
+@patch("matplotlib.pyplot.savefig")
 @patch("mdtraj.compute_phi")
 @patch("mdtraj.compute_psi")
 def test_run_success_ramachandran_plot(
-    mock_savefig,
     mock_compute_psi,
     mock_compute_phi,
+    mock_savefig,
     patched_load_single_traj,
     ramachandran_plot_tool,
 ):
