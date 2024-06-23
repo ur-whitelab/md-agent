@@ -1,8 +1,27 @@
+import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
-import matplotlib.pyplot as plt
+
 from mdagent.utils import FileType, PathRegistry, load_single_traj
+
+
+def write_raw_x(x, values, traj_id, path_registry):
+    file_name = path_registry.write_file_name(
+        FileType.RECORD,
+        record_type=x,
+    )
+    file_id = path_registry.get_fileid(file_name, FileType.RECORD)
+
+    file_path = f"{path_registry.ckpt_records}/{x}_{traj_id}.npy"
+    np.save(file_path, values)
+
+    path_registry.map_path(
+        file_id,
+        file_name,
+        description=f"{x} values for trajectory with id: {traj_id}",
+    )
+    return file_id
 
 
 class ComputeDSSP(BaseTool):
@@ -14,7 +33,7 @@ class ComputeDSSP(BaseTool):
     path_registry: PathRegistry | None = None
     simplified: bool = True
 
-    def __init__(self, path_registry, simplified):
+    def __init__(self, path_registry, simplified: bool = True):
         super().__init__()
         self.path_registry = path_registry
         self.simplified = simplified
@@ -55,23 +74,6 @@ class ComputeDSSP(BaseTool):
                 dssp_dict[code] += 1
         return self._convert_dssp_counts(dssp_dict)
 
-    def _write_raw_dssp(self, dssp_array, traj_id):
-        file_name = self.path_registry.write_file_name(
-            FileType.RECORD,
-            record_type="dssp",
-        )
-        file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
-
-        file_path = f"{self.path_registry.ckpt_records}/dssp_{traj_id}.npy"
-        np.save(file_path, dssp_array)
-        
-        self.path_registry.map_path(
-            file_id,
-            file_name,
-            description=f"DSSP codes for trajectory with id: {traj_id}",
-        )
-        return None
-
     def _compute_dssp(self, traj):
         return md.compute_dssp(traj, simplified=self.simplified)
 
@@ -88,7 +90,7 @@ class ComputeDSSP(BaseTool):
             return str(e)
 
         dssp_array = self._compute_dssp(traj)
-        self._write_raw_dssp(dssp_array, traj_file)
+        write_raw_x("dssp", dssp_array, traj_file, self.path_registry)
         summary = self._summarize_dssp(dssp_array)
         return summary
 
@@ -109,23 +111,6 @@ class ComputeGyrationTensor(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _write_raw_rgy(self, gyration_tensors, traj_id):
-        file_name = self.path_registry.write_file_name(
-            FileType.RECORD,
-            record_type="gyration_tensor",
-        )
-        file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
-
-        file_path = f"{self.path_registry.ckpt_records}/gyration_tensors_{traj_id}.npy"
-        np.save(file_path, gyration_tensors)
-        
-        self.path_registry.map_path(
-            file_id,
-            file_name,
-            description=f"gyration tensors for trajectory with id: {traj_id}",
-        )
-        return file_id
-    
     def _compute_gyration_tensor(self, traj):
         return md.compute_gyration_tensor(traj)
 
@@ -140,14 +125,42 @@ class ComputeGyrationTensor(BaseTool):
                 raise Exception("Trajectory could not be loaded.")
         except Exception as e:
             return str(e)
-        
+
         gyration_tensors = self._compute_gyration_tensor(traj)
-        file_id = self._write_raw_rgy(gyration_tensors, traj_file)
-        return ("Gyration tensor computed successfully, "
-                f"saved to {file_id}")
+        file_id = write_raw_x(
+            "gyration_tensor", gyration_tensors, traj_file, self.path_registry
+        )
+        return "Gyration tensor computed successfully, " f"saved to {file_id}"
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
+
+
+def plot_x_over_time(x, values, traj_id, path_registry):
+    plt.figure(figsize=(10, 6))
+    plt.plot(values)
+    plt.xlabel("Frame")
+    plt.ylabel(x)
+    plt.title(f"{x} Over Time")
+    plt.grid(True)
+
+    file_name = path_registry.write_file_name(
+        FileType.FIGURE,
+        file_format="png",
+    )
+    file_id = path_registry.get_fileid(file_name, FileType.RECORD)
+
+    file_path = f"{path_registry.ckpt_figures}/{x}_over_time_{traj_id}.png"
+    plt.savefig(file_path, format="png", dpi=300, bbox_inches="tight")
+    plt.close()
+
+    path_registry.map_path(
+        file_id,
+        file_name,
+        description=(f"{x} plot for trajectory " f"with id: {traj_id}"),
+    )
+    return file_id
+
 
 class ComputeAsphericity(BaseTool):
     name = "ComputeAsphericity"
@@ -162,48 +175,6 @@ class ComputeAsphericity(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def plot_asphericity_over_time(self, asphericity_values, traj_id):
-        plt.figure(figsize=(10, 6))
-        plt.plot(asphericity_values)
-        plt.xlabel('Frame')
-        plt.ylabel('Asphericity')
-        plt.title('Asphericity Over Time')
-        plt.grid(True)
-
-        file_name = self.path_registry.write_file_name(
-            FileType.FIGURE,
-            file_format="png",
-        )
-        file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
-
-        file_path = f"{self.path_registry.ckpt_figures}/asphericity_over_time_{traj_id}.png"
-        plt.savefig(file_path, format="png", dpi=300, bbox_inches="tight")
-        plt.close()
-
-        self.path_registry.map_path(
-            file_id,
-            file_name,
-            description=f"asphericity plot for trajectory with id: {traj_id}",
-        )
-        return file_id
-
-    def _write_raw_asphericity(self, asphericity_values, traj_id):
-        file_name = self.path_registry.write_file_name(
-            FileType.RECORD,
-            record_type="asphericity",
-        )
-        file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
-
-        file_path = f"{self.path_registry.ckpt_records}/asphericity_{traj_id}.npy"
-        np.save(file_path, asphericity_values)
-        
-        self.path_registry.map_path(
-            file_id,
-            file_name,
-            description=f"asphericity values for trajectory with id: {traj_id}",
-        )
-        return file_id
-    
     def _compute_asphericity(self, traj):
         return md.asphericity(traj)
 
@@ -218,12 +189,18 @@ class ComputeAsphericity(BaseTool):
                 raise Exception("Trajectory could not be loaded.")
         except Exception as e:
             return str(e)
-        asphericity_values =  self._compute_asphericity(traj)
-        raw_file_id = self._write_raw_asphericity(asphericity_values, traj_file)
-        plot_file_id = self.plot_asphericity_over_time(asphericity_values, traj_file)
-        return ("asphericity_values saved to "
-                f"{raw_file_id}, plot saved to "
-                f"{plot_file_id}")
+        asphericity_values = self._compute_asphericity(traj)
+        raw_file_id = write_raw_x(
+            "asphericity", asphericity_values, traj_file, self.path_registry
+        )
+        plot_file_id = plot_x_over_time(
+            "Asphericity", asphericity_values, traj_file, self.path_registry
+        )
+        return (
+            "asphericity_values saved to "
+            f"{raw_file_id}, plot saved to "
+            f"{plot_file_id}"
+        )
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -236,18 +213,38 @@ class ComputeAcylindricity(BaseTool):
     xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop). The
     output is an array of acylindricity values for each frame of the
     trajectory."""
-    # TODO -> should this write to a file or return the array?
     path_registry: PathRegistry | None = None
 
     def __init__(self, path_registry: PathRegistry):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
-        traj = load_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
+    def _compute_acylindricity(self, traj):
         return md.acylindricity(traj)
+
+    def _run(self, traj_file, top_file=None):
+        try:
+            traj = load_single_traj(
+                path_registry=self.path_registry,
+                traj_fileid=traj_file,
+                top_fileid=top_file,
+            )
+            if not traj:
+                raise Exception("Trajectory could not be loaded.")
+        except Exception as e:
+            return str(e)
+        acylindricity_values = self._compute_acylindricity(traj)
+        raw_file_id = write_raw_x(
+            "acylindricity", acylindricity_values, traj_file, self.path_registry
+        )
+        plot_file_id = plot_x_over_time(
+            "acylindricity", acylindricity_values, traj_file
+        )
+        return (
+            "acylindricity_values saved to "
+            f"{raw_file_id}, plot saved to "
+            f"{plot_file_id}"
+        )
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
@@ -267,11 +264,38 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file, top_file=None):
-        traj = load_traj(self.path_registry, traj_file, top_file)
-        if not traj:
-            return "Trajectory could not be loaded."
+    def _compute_relative_shape_antisotropy(self, traj):
         return md.relative_shape_antisotropy(traj)
+
+    def _run(self, traj_file, top_file=None):
+        try:
+            traj = load_single_traj(
+                path_registry=self.path_registry,
+                traj_fileid=traj_file,
+                top_fileid=top_file,
+            )
+            if not traj:
+                raise Exception("Trajectory could not be loaded.")
+        except Exception as e:
+            return str(e)
+        relative_shape_antisotropy_values = self._compute_relative_shape_antisotropy(
+            traj
+        )
+
+        raw_file_id = write_raw_x(
+            "relative_shape_antisotropy",
+            relative_shape_antisotropy_values,
+            traj_file,
+            self.path_registry,
+        )
+        plot_file_id = plot_x_over_time(
+            "relative_shape_antisotropy", relative_shape_antisotropy_values, traj_file
+        )
+        return (
+            "relative_shape_antisotropy_values saved to "
+            f"{raw_file_id}, plot saved to "
+            f"{plot_file_id}"
+        )
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")

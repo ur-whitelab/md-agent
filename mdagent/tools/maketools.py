@@ -9,7 +9,12 @@ from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
+    ComputeAcylindricity,
+    ComputeAsphericity,
+    ComputeDSSP,
+    ComputeGyrationTensor,
     ComputeLPRMSD,
+    ComputeRelativeShapeAntisotropy,
     ComputeRMSD,
     ComputeRMSF,
     ContactsTool,
@@ -71,6 +76,11 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        ComputeAcylindricity(path_registry=path_instance),
+        ComputeAsphericity(path_registry=path_instance),
+        ComputeDSSP(path_registry=path_instance),
+        ComputeGyrationTensor(path_registry=path_instance),
+        ComputeRelativeShapeAntisotropy(path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ComputeLPRMSD(path_registry=path_instance),
         ComputeRMSD(path_registry=path_instance),
