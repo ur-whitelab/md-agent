@@ -62,8 +62,8 @@ class ComputeDSSP(BaseTool):
         )
         file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
 
-        file_path = f"{self.path_registry.ckpt_records}/dssp_{traj_id}.txt"
-        np.savetxt(file_path, dssp_array, fmt="%s")
+        file_path = f"{self.path_registry.ckpt_records}/dssp_{traj_id}.npy"
+        np.save(file_path, dssp_array)
         
         self.path_registry.map_path(
             file_id,
@@ -88,7 +88,7 @@ class ComputeDSSP(BaseTool):
             return str(e)
 
         dssp_array = self._compute_dssp(traj)
-        self._write_raw_dssp(dssp_array)
+        self._write_raw_dssp(dssp_array, traj_file)
         summary = self._summarize_dssp(dssp_array)
         return summary
 
@@ -96,121 +96,151 @@ class ComputeDSSP(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-# class ComputeGyrationTensor(BaseTool):
-#     name = "ComputeGyrationTensor"
-#     description = """Compute the gyration tensor for each frame in a
-#     molecular dynamics trajectory. Input is a trajectory file (e.g., .
-#     xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
-#     The output is an array of gyration tensors for each frame of the
-#     trajectory."""
-#     # TODO -> should this write to a file or return the array?
-#     path_registry: PathRegistry | None = None
+class ComputeGyrationTensor(BaseTool):
+    name = "ComputeGyrationTensor"
+    description = """Compute the gyration tensor for each frame in a
+    molecular dynamics trajectory. Input is a trajectory file (e.g., .
+    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
+    The output is an array of gyration tensors for each frame of the
+    trajectory."""
+    path_registry: PathRegistry | None = None
 
-#     def __init__(self, path_registry: PathRegistry):
-#         super().__init__()
-#         self.path_registry = path_registry
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
 
-#     def _run(self, traj_file, top_file=None):
-#         traj = load_traj(self.path_registry, traj_file, top_file)
-#         if not traj:
-#             return "Trajectory could not be loaded."
-#         return md.compute_gyration_tensor(traj)
+    def _write_raw_rgy(self, gyration_tensors, traj_id):
+        file_name = self.path_registry.write_file_name(
+            FileType.RECORD,
+            record_type="gyration_tensor",
+        )
+        file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
 
-#     async def _arun(self, traj_file, top_file=None):
-#         raise NotImplementedError("Async version not implemented")
+        file_path = f"{self.path_registry.ckpt_records}/gyration_tensors_{traj_id}.npy"
+        np.save(file_path, gyration_tensors)
+        
+        self.path_registry.map_path(
+            file_id,
+            file_name,
+            description=f"gyration tensors for trajectory with id: {traj_id}",
+        )
+        return file_id
+    
+    def _compute_gyration_tensor(self, traj):
+        return md.compute_gyration_tensor(traj)
 
+    def _run(self, traj_file, top_file=None):
+        try:
+            traj = load_single_traj(
+                path_registry=self.path_registry,
+                traj_fileid=traj_file,
+                top_fileid=top_file,
+            )
+            if not traj:
+                raise Exception("Trajectory could not be loaded.")
+        except Exception as e:
+            return str(e)
+        
+        gyration_tensors = self._compute_gyration_tensor(traj)
+        file_id = self._write_raw_rgy(gyration_tensors, traj_file)
+        return ("Gyration tensor computed successfully, "
+                f"saved to {file_id}")
 
-# class ComputePrincipleMoments(BaseTool):
-#     name = "ComputePrincipleMoments"
-#     description = """Compute the principle moments of inertia for each
-#       frame in a molecular dynamics trajectory. Input is a trajectory
-#       file (e.g., .xtc, .trr) and an optional topology file (e.g., .pdb, .
-#       prmtop). The output is an array of principle moments of inertia for
-#       each frame of the trajectory."""
-#     # TODO -> should this write to a file or return the array?
-#     path_registry: PathRegistry | None = None
-
-#     def __init__(self, path_registry: PathRegistry):
-#         super().__init__()
-#         self.path_registry = path_registry
-
-#     def _run(self, traj_file, top_file=None):
-#         traj = load_traj(self.path_registry, traj_file, top_file)
-#         if not traj:
-#             return "Trajectory could not be loaded."
-#         return md.compute_principal_moments(traj)
-
-#     async def _arun(self, traj_file, top_file=None):
-#         raise NotImplementedError("Async version not implemented")
-
-
-# class ComputeAsphericity(BaseTool):
-#     name = "ComputeAsphericity"
-#     description = """Compute the asphericity for each frame in a
-#     molecular dynamics trajectory. Input is a trajectory file (e.g., .
-#     xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
-#     The output is an array of asphericity values for each frame of the
-#     trajectory."""
-#     # TODO -> should this write to a file or return the array?
-#     path_registry: PathRegistry | None = None
-
-#     def __init__(self, path_registry: PathRegistry):
-#         super().__init__()
-#         self.path_registry = path_registry
-
-#     def _run(self, traj_file, top_file=None):
-#         traj = load_traj(self.path_registry, traj_file, top_file)
-#         if not traj:
-#             return "Trajectory could not be loaded."
-#         return md.asphericity(traj)
-
-#     async def _arun(self, traj_file, top_file=None):
-#         raise NotImplementedError("Async version not implemented")
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")
 
 
-# class ComputeAcylindricity(BaseTool):
-#     name = "ComputeAcylindricity"
-#     description = """Compute the acylindricity for each frame in a
-#     molecular dynamics trajectory. Input is a trajectory file (e.g., .
-#     xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop). The
-#     output is an array of acylindricity values for each frame of the
-#     trajectory."""
-#     # TODO -> should this write to a file or return the array?
-#     path_registry: PathRegistry | None = None
+class ComputePrincipleMoments(BaseTool):
+    name = "ComputePrincipleMoments"
+    description = """Compute the principle moments of inertia for each
+      frame in a molecular dynamics trajectory. Input is a trajectory
+      file (e.g., .xtc, .trr) and an optional topology file (e.g., .pdb, .
+      prmtop). The output is an array of principle moments of inertia for
+      each frame of the trajectory."""
+    # TODO -> should this write to a file or return the array?
+    path_registry: PathRegistry | None = None
 
-#     def __init__(self, path_registry: PathRegistry):
-#         super().__init__()
-#         self.path_registry = path_registry
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
 
-#     def _run(self, traj_file, top_file=None):
-#         traj = load_traj(self.path_registry, traj_file, top_file)
-#         if not traj:
-#             return "Trajectory could not be loaded."
-#         return md.acylindricity(traj)
+    def _run(self, traj_file, top_file=None):
+        traj = load_traj(self.path_registry, traj_file, top_file)
+        if not traj:
+            return "Trajectory could not be loaded."
+        return md.compute_principal_moments(traj)
 
-#     async def _arun(self, traj_file, top_file=None):
-#         raise NotImplementedError("Async version not implemented")
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")
 
 
-# class ComputeRelativeShapeAntisotropy(BaseTool):
-#     name = "ComputeRelativeShapeAntisotropy"
-#     description = """Compute the relative shape antisotropy for each
-#     frame in a molecular dynamics trajectory. Input is a trajectory
-#     file (e.g., .xtc, .trr) and an optional topology file (e.g., .pdb, .
-#     prmtop). The output is an array of relative shape antisotropy values
-#     for each frame of the trajectory."""
-#     # TODO -> should this write to a file or return the array?
-#     path_registry: PathRegistry | None = None
+class ComputeAsphericity(BaseTool):
+    name = "ComputeAsphericity"
+    description = """Compute the asphericity for each frame in a
+    molecular dynamics trajectory. Input is a trajectory file (e.g., .
+    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
+    The output is an array of asphericity values for each frame of the
+    trajectory."""
+    # TODO -> should this write to a file or return the array?
+    path_registry: PathRegistry | None = None
 
-#     def __init__(self, path_registry: PathRegistry):
-#         super().__init__()
-#         self.path_registry = path_registry
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
 
-#     def _run(self, traj_file, top_file=None):
-#         traj = load_traj(self.path_registry, traj_file, top_file)
-#         if not traj:
-#             return "Trajectory could not be loaded."
-#         return md.relative_shape_antisotropy(traj)
+    def _run(self, traj_file, top_file=None):
+        traj = load_traj(self.path_registry, traj_file, top_file)
+        if not traj:
+            return "Trajectory could not be loaded."
+        return md.asphericity(traj)
 
-#     async def _arun(self, traj_file, top_file=None):
-#         raise NotImplementedError("Async version not implemented")
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")
+
+
+class ComputeAcylindricity(BaseTool):
+    name = "ComputeAcylindricity"
+    description = """Compute the acylindricity for each frame in a
+    molecular dynamics trajectory. Input is a trajectory file (e.g., .
+    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop). The
+    output is an array of acylindricity values for each frame of the
+    trajectory."""
+    # TODO -> should this write to a file or return the array?
+    path_registry: PathRegistry | None = None
+
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, traj_file, top_file=None):
+        traj = load_traj(self.path_registry, traj_file, top_file)
+        if not traj:
+            return "Trajectory could not be loaded."
+        return md.acylindricity(traj)
+
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")
+
+
+class ComputeRelativeShapeAntisotropy(BaseTool):
+    name = "ComputeRelativeShapeAntisotropy"
+    description = """Compute the relative shape antisotropy for each
+    frame in a molecular dynamics trajectory. Input is a trajectory
+    file (e.g., .xtc, .trr) and an optional topology file (e.g., .pdb, .
+    prmtop). The output is an array of relative shape antisotropy values
+    for each frame of the trajectory."""
+    # TODO -> should this write to a file or return the array?
+    path_registry: PathRegistry | None = None
+
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def _run(self, traj_file, top_file=None):
+        traj = load_traj(self.path_registry, traj_file, top_file)
+        if not traj:
+            return "Trajectory could not be loaded."
+        return md.relative_shape_antisotropy(traj)
+
+    async def _arun(self, traj_file, top_file=None):
+        raise NotImplementedError("Async version not implemented")

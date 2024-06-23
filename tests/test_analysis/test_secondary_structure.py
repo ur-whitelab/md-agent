@@ -1,7 +1,7 @@
 import pytest 
 import mdtraj as md
 import numpy as np
-from mdagent.tools.base_tools.secondary_structure import ComputeDSSP
+from mdagent.tools.base_tools.secondary_structure import ComputeDSSP, ComputeGyrationTensor
 
 @pytest.fixture
 def traj():
@@ -85,3 +85,11 @@ def test_summarize_dssp(compute_dssp_simple, compute_dssp):
         'hydrogen bonded turn': 2,
         'bend': 0,
         'loop or irregular': 3}
+    
+def test_compute_gyration_tensor(get_registry):
+    gyration_tensor = np.array([[[ 3.45897484,  0.17571401, -0.08759158],
+    [ 0.17571401,  0.944077  ,  0.17698189],
+        [-0.08759158,  0.17698189,  0.73760228]]])
+    registry = get_registry("raw", True)
+    gy_tensor = ComputeGyrationTensor(path_registry=registry)._compute_gyration_tensor(traj)
+    assert np.allclose(gy_tensor, gyration_tensor)
