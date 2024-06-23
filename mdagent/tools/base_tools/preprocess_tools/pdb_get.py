@@ -4,6 +4,7 @@ import requests
 import streamlit as st
 from langchain.tools import BaseTool
 from rdkit import Chem
+from rdkit.Chem import AllChem
 
 from mdagent.utils import FileType, PathRegistry
 
@@ -32,7 +33,8 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
     else:
         filetype = "pdb"
     if "result_set" in r.json() and len(r.json()["result_set"]) > 0:
-        pdbid = r.json()["result_set"][0]["identifier"]
+        results = r.json()["result_set"]
+        pdbid = max(results, key=lambda x: x["score"])["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
         st.markdown(f"PDB file found with this ID: {pdbid}", unsafe_allow_html=True)
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
@@ -181,7 +183,7 @@ class MolPDB:
                 m = Chem.AddHs(m)
             except Exception:
                 pass
-            Chem.AllChem.EmbedMolecule(m)
+            AllChem.EmbedMolecule(m)
             file_name = f"{self.path_registry.ckpt_pdb}/{mol_name}.pdb"
             Chem.MolToPDBFile(m, file_name)
             print("finished writing pdb file")
