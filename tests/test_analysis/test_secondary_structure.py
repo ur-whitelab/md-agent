@@ -1,7 +1,7 @@
 import pytest 
 import mdtraj as md
 import numpy as np
-from mdagent.tools.base_tools.secondary_structure import ComputeDSSP, ComputeGyrationTensor
+from mdagent.tools.base_tools.secondary_structure import ComputeDSSP, ComputeGyrationTensor, ComputeAsphericity
 
 @pytest.fixture
 def traj():
@@ -93,3 +93,10 @@ def test_compute_gyration_tensor(get_registry):
     registry = get_registry("raw", True)
     gy_tensor = ComputeGyrationTensor(path_registry=registry)._compute_gyration_tensor(traj)
     assert np.allclose(gy_tensor, gyration_tensor)
+
+def test_compute_asphericity(get_registry):
+    registry = get_registry("raw", True)
+    asphericity = ComputeAsphericity(path_registry=registry)
+    output = asphericity._compute_asphericity(traj)
+    assert np.allclose(output, np.array([2.63956945]))
+

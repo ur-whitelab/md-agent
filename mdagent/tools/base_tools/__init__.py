@@ -40,7 +40,6 @@ from .secondary_structure import (
     ComputeAsphericity,
     ComputeDSSP,
     ComputeGyrationTensor,
-    ComputePrincipleMoments,
     ComputeRelativeShapeAntisotropy,
 )
 from .simulation_tools.create_simulation import ModifyBaseSimulationScriptTool
@@ -108,7 +107,6 @@ __all__ = [
     "RDFTool",
     "ComputeDSSP",
     "ComputeGyrationTensor",
-    "ComputePrincipleMoments",
     "ComputeAsphericity",
     "ComputeAcylindricity",
     "ComputeRelativeShapeAntisotropy",
