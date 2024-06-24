@@ -40,7 +40,6 @@ class MDAgent:
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
         tools_model="gpt-4-1106-preview",
         temp=0.1,
-        max_iterations=40,
         verbose=True,
         ckpt_dir="ckpt",
         top_k_tools=20,  # set "all" if you want to use all tools
