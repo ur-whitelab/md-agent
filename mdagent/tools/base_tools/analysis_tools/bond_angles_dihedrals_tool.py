@@ -429,21 +429,22 @@ class RamachandranPlot(BaseTool):
             map_indices_to_residues(traj, phi_indices)
             map_indices_to_residues(traj, psi_indices)
 
-            # can add further analysis or reporting here using phi_residues and
-            # psi_residues
-            plt.figure(figsize=(10, 8))
-            plt.scatter(phi_angles.flatten(), psi_angles.flatten(), s=1, color="blue")
-            plt.xlabel("Phi Angles (radians)")
-            plt.ylabel("Psi Angles (radians)")
-            plt.title("Ramachandran Plot")
-            plt.grid(True)
-
             # Check if path_registry is not None
             if self.path_registry is not None:
                 plot_save_path = self.path_registry.get_mapped_path(
                     "ramachandran_plot.png"
                 )
+                plt.figure(figsize=(10, 8))
+                plt.scatter(
+                    phi_angles.flatten(), psi_angles.flatten(), s=1, color="blue"
+                )
+                plt.xlabel("Phi Angles (radians)")
+                plt.ylabel("Psi Angles (radians)")
+                plt.title("Ramachandran Plot")
+                plt.grid(True)
+                print(f"Saving plot to: {plot_save_path}")
                 plt.savefig(plot_save_path)
+                print(f"Ramachandran plot saved to: {plot_save_path}")
                 return "Succeeded. Ramachandran plot generated and saved to file."
             else:
                 return "Failed. Path registry is not initialized."
