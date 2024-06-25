@@ -1,7 +1,15 @@
 # test_query_filter.py
 import pytest
 
-from mdagent.agent.query_filter import Example, FilteredQuery, Parameters, query_filter
+try:
+    from mdagent.agent.query_filter import (
+        Example,
+        FilteredQuery,
+        Parameters,
+        query_filter,
+    )
+except Exception:
+    pytest.skip(allow_module_level=True)
 
 
 @pytest.mark.skip(reason="We skip because query filter was moved to WIP branch.")
