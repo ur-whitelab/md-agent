@@ -41,9 +41,10 @@ def write_raw_x(
 class ComputeDSSP(BaseTool):
     name = "ComputeDSSP"
     description = """Compute the DSSP (secondary structure) assignment
-    for a protein trajectory. Input is a trajectory file (e.g., .xtc, .
-    trr) and an optional topology file (e.g., .pdb, .prmtop). The output
-    is an array with the DSSP code for each residue at each time point."""
+    for a protein trajectory. Input is a trajectory file ID
+    and an optional topology file ID.
+    The output is an array with the DSSP code for each
+    residue at each time point."""
     path_registry: PathRegistry = PathRegistry.get_instance()
     simplified: bool = True
 
@@ -164,8 +165,8 @@ class ComputeDSSP(BaseTool):
 class ComputeGyrationTensor(BaseTool):
     name = "ComputeGyrationTensor"
     description = """Compute the gyration tensor for each frame in a
-    molecular dynamics trajectory. Input is a trajectory file (e.g., .
-    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
+    molecular dynamics trajectory.
+    Input is a trajectory file ID and an optional topology file ID.
     The output is an array of gyration tensors for each frame of the
     trajectory."""
     path_registry: PathRegistry = PathRegistry.get_instance()
@@ -210,7 +211,6 @@ class ComputeGyrationTensor(BaseTool):
             return str(e)
 
         gyration_tensors = self._compute_gyration_tensor(traj)
-        # check if there is 1 frame only
         if traj.n_frames == 1:
             return (
                 "Gyration tensor computed for "
@@ -271,8 +271,8 @@ def plot_x_over_time(
 class ComputeAsphericity(BaseTool):
     name = "ComputeAsphericity"
     description = """Compute the asphericity for each frame in a
-    molecular dynamics trajectory. Input is a trajectory file (e.g., .
-    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop).
+    molecular dynamics trajectory.
+    Input is a trajectory file ID and an optional topology file ID.
     The output is asphericity values for each frame of the
     trajectory."""
     path_registry: PathRegistry = PathRegistry.get_instance()
@@ -341,10 +341,10 @@ class ComputeAsphericity(BaseTool):
 class ComputeAcylindricity(BaseTool):
     name = "ComputeAcylindricity"
     description = """Compute the acylindricity for each frame in a
-    molecular dynamics trajectory. Input is a trajectory file (e.g., .
-    xtc, .trr) and an optional topology file (e.g., .pdb, .prmtop). The
-    output is an array of acylindricity values for each frame of the
-    trajectory."""
+    molecular dynamics trajectory.
+    Input is a trajectory file ID and an optional topology file ID.
+    The output is an array of acylindricity values for
+    each frame of thetrajectory."""
     path_registry: PathRegistry = PathRegistry.get_instance()
 
     def __init__(self, path_registry: PathRegistry):
@@ -413,8 +413,8 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
     name = "ComputeRelativeShapeAntisotropy"
     description = """Compute the relative shape antisotropy for each
     frame in a molecular dynamics trajectory. Input is a trajectory
-    file (e.g., .xtc, .trr) and an optional topology file (e.g., .pdb, .
-    prmtop). The output is an array of relative shape antisotropy values
+    file ID and an optional topology file ID.
+    The output is an array of relative shape antisotropy values
     for each frame of the trajectory."""
     path_registry: PathRegistry = PathRegistry.get_instance()
 
@@ -495,8 +495,8 @@ class AnalyzeProteinStructure(BaseTool):
     name = "AnalyzeProtein"
     description = (
         "Analyze a protein trajectory. "
-        "Input is a trajectory file "
-        "and an optional topology file, "
+        "Input is a trajectory file ID"
+        "and an optional topology file ID, "
         "along with a list of analyses to perform."
         "enter the analyses you want to perform as "
         "a string, separated by commas. "
