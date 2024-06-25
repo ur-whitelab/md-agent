@@ -1,7 +1,10 @@
 # test_query_filter.py
+import pytest
+
 from mdagent.agent.query_filter import Example, FilteredQuery, Parameters, query_filter
 
 
+@pytest.mark.skip(reason="We skip because query filter was moved to WIP branch.")
 def test_parameters_repr():
     params = Parameters(
         Temperature=300,
@@ -30,6 +33,7 @@ def test_parameters_repr():
     assert repr(params) == expected_repr
 
 
+@pytest.mark.skip(reason="We skip because query filter was moved to WIP branch.")
 def test_query_filter_simple():
     raw_query = "Find the melting point of NaCl"
     example = Example(
