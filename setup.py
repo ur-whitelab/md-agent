@@ -36,7 +36,7 @@ setup(
         "streamlit",
         "tiktoken",
         "scikit-learn",
-        "scipy",
+        "scipy==1.14.0",
     ],
     test_suite="tests",
     long_description=long_description,
