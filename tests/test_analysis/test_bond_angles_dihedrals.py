@@ -81,7 +81,7 @@ def compute_omega_tool(get_registry):
 
 
 @pytest.fixture
-def ramachandran_plot_tool(get_registry):
+def ramachandran_plot(get_registry):
     path_registry = get_registry("raw", True)
     return RamachandranPlot(path_registry)
 
@@ -152,7 +152,7 @@ def test_run_success_ramachandran_plot(
     mock_compute_phi,
     mock_savefig,
     patched_load_single_traj,
-    ramachandran_plot_tool,
+    ramachandran_plot,
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -165,23 +165,26 @@ def test_run_success_ramachandran_plot(
     mock_compute_psi.return_value = expected_psi
 
     # Mock the path registry get_mapped_path method
-    ramachandran_plot_tool.path_registry.get_mapped_path = MagicMock(
+    ramachandran_plot.path_registry.get_mapped_path = MagicMock(
         return_value="ramachandran_plot.png"
     )
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
     top_file = "top_sim0_butane_123456"
-    result = ramachandran_plot_tool._run(traj_file, top_file)
+    result = ramachandran_plot._run(traj_file, top_file)
 
     # Assertions
     patched_load_single_traj.assert_called_once_with(
-        ramachandran_plot_tool.path_registry, traj_file, top_file
+        ramachandran_plot.path_registry, traj_file, top_file
     )
     mock_compute_phi.assert_called_once_with(mock_traj, periodic=True, opt=True)
     mock_compute_psi.assert_called_once_with(mock_traj, periodic=True, opt=True)
-    ramachandran_plot_tool.path_registry.get_mapped_path.assert_called_once_with(
+    ramachandran_plot.path_registry.get_mapped_path.assert_called_once_with(
         "ramachandran_plot.png"
     )
+    # Ensure savefig is called
+    print(mock_savefig.call_args_list)
     mock_savefig.assert_called_once_with("ramachandran_plot.png")
+
     assert result == "Succeeded. Ramachandran plot generated and saved to file."
