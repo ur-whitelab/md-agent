@@ -815,6 +815,7 @@ class UniprotID2Name(BaseTool):
         "of the protein."
     )
     uniprot = QueryUniprot()
+    all_names: bool = True
 
     def __init__(self, all_names: bool = True):
         super().__init__()
@@ -1202,6 +1203,7 @@ class GetUniprotID(BaseTool):
         "returned."
     )
     uniprot = QueryUniprot()
+    include_uniprotkbids: bool = False
 
     def __init__(self, include_uniprotkbids: bool = False):
         super().__init__()
