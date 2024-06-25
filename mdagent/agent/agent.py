@@ -9,6 +9,7 @@ from langchain.chat_models import ChatOpenAI
 from ..tools import get_tools, make_all_tools
 from ..utils import PathRegistry, SetCheckpoint, _make_llm
 from .memory import MemoryManager
+from .prompt import openaifxn_prompt, structured_prompt
 from .query_filter import make_prompt
 
 load_dotenv()
@@ -102,9 +103,10 @@ class MDAgent:
 
     def run(self, user_input, callbacks=None):
         run_memory = self.memory.run_id_mem if self.use_memory else None
-        self.prompt = make_prompt(
-            user_input, self.agent_type, model="gpt-3.5-turbo", run_memory=run_memory
-        )
+        if self.agent_type == "Structured":
+            self.prompt = structured_prompt.format(input=user_input, context=run_memory)
+        elif self.agent_type == "OpenAIFunctionsAgent":
+            self.prompt = openaifxn_prompt.format(input=user_input, context=run_memory)
         self.agent = self._initialize_tools_and_agent(user_input)
         model_output = self.agent.run(self.prompt, callbacks=callbacks)
         if self.use_memory:
