@@ -210,6 +210,14 @@ class ComputeGyrationTensor(BaseTool):
             return str(e)
 
         gyration_tensors = self._compute_gyration_tensor(traj)
+        # check if there is 1 frame only
+        if traj.n_frames == 1:
+            return (
+                "Gyration tensor computed for "
+                "a single frame, no file saved."
+                f"Gyrations tensor: {gyration_tensors}"
+            )
+
         file_id = write_raw_x(
             "gyration_tensor", gyration_tensors, traj_file, self.path_registry
         )
@@ -307,6 +315,12 @@ class ComputeAsphericity(BaseTool):
         except Exception as e:
             return str(e)
         asphericity_values = self._compute_asphericity(traj)
+        if traj.n_frames == 1:
+            return (
+                "Asphericity computed for "
+                "a single frame, no file saved."
+                f"Asphericity: {asphericity_values}"
+            )
         raw_file_id = write_raw_x(
             "asphericity", asphericity_values, traj_file, self.path_registry
         )
@@ -372,6 +386,12 @@ class ComputeAcylindricity(BaseTool):
         except Exception as e:
             return str(e)
         acylindricity_values = self._compute_acylindricity(traj)
+        if traj.n_frames == 1:
+            return (
+                "Acylindricity computed for "
+                "a single frame, no file saved."
+                f"Acylindricity: {acylindricity_values}"
+            )
         raw_file_id = write_raw_x(
             "acylindricity", acylindricity_values, traj_file, self.path_registry
         )
@@ -441,6 +461,12 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
         relative_shape_antisotropy_values = self._compute_relative_shape_antisotropy(
             traj
         )
+        if traj.n_frames == 1:
+            return (
+                "Relative shape antisotropy computed for "
+                "a single frame, no file saved."
+                f"Relative shape antisotropy: {relative_shape_antisotropy_values}"
+            )
 
         raw_file_id = write_raw_x(
             "relative_shape_antisotropy",
@@ -463,3 +489,63 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
     async def _arun(self, traj_file, top_file):
         """Runs the tool asynchronously."""
         raise NotImplementedError("Async version not implemented")
+
+
+class AnalyzeProteinStructure(BaseTool):
+    name = "AnalyzeProtein"
+    description = (
+        "Analyze a protein trajectory. "
+        "Input is a trajectory file "
+        "and an optional topology file, "
+        "along with a list of analyses to perform."
+        "enter the analyses you want to perform as "
+        "a string, separated by commas. "
+        "The output is a dictionary "
+        "containing the requested analyses."
+    )
+    path_registry: PathRegistry = PathRegistry.get_instance()
+
+    def __init__(self, path_registry: PathRegistry):
+        super().__init__()
+        self.path_registry = path_registry
+
+    def analyze_protein(self, traj, requested_analyses: list):
+        result = {}
+        if "n_atoms" in requested_analyses:
+            result["n_atoms"] = traj.n_atoms
+        if "n_residues" in requested_analyses:
+            result["n_residues"] = traj.n_residues
+        if "n_chains" in requested_analyses:
+            result["n_chains"] = traj.n_chains
+        if "n_frames" in requested_analyses:
+            result["n_frames"] = traj.n_frames
+        if "time" in requested_analyses:
+            result["time"] = traj.time
+        if "time_step" in requested_analyses:
+            result["time_step"] = traj.time_step
+        if "atoms" in requested_analyses:
+            result["atoms"] = traj.topology.atoms
+        if "bonds" in requested_analyses:
+            result["bonds"] = traj.topology.bonds
+        if "chains" in requested_analyses:
+            result["chains"] = traj.topology.chains
+        if "residues" in requested_analyses:
+            result["residues"] = traj.topology.residues
+        return result
+
+    def _run(
+        self, traj_file: str, requested_analyses: str, top_file: str | None = None
+    ) -> str:
+        try:
+            traj = load_single_traj(
+                path_registry=self.path_registry,
+                traj_fileid=traj_file,
+                top_fileid=top_file,
+            )
+            if not traj:
+                raise Exception("Trajectory could not be loaded.")
+        except Exception as e:
+            return str(e)
+        requested_analyses_list = requested_analyses.split(",")
+        result = self.analyze_protein(traj, requested_analyses_list)
+        return str(result)

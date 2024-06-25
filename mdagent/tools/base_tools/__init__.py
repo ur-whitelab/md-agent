@@ -12,6 +12,7 @@ from .analysis_tools.rgy import (
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.secondary_structure import (
+    AnalyzeProteinStructure,
     ComputeAcylindricity,
     ComputeAsphericity,
     ComputeDSSP,
@@ -110,4 +111,5 @@ __all__ = [
     "ComputeAsphericity",
     "ComputeAcylindricity",
     "ComputeRelativeShapeAntisotropy",
+    "AnalyzeProteinStructure",
 ]

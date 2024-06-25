@@ -8,6 +8,7 @@ from langchain.vectorstores import Chroma
 from mdagent.utils import PathRegistry
 
 from .base_tools import (
+    AnalyzeProteinStructure,
     CleaningToolFunction,
     ComputeAcylindricity,
     ComputeAsphericity,
@@ -76,6 +77,7 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        AnalyzeProteinStructure(path_registry=path_instance),
         ComputeAcylindricity(path_registry=path_instance),
         ComputeAsphericity(path_registry=path_instance),
         ComputeDSSP(path_registry=path_instance),

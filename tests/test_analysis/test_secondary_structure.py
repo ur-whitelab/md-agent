@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from mdagent.tools.base_tools.analysis_tools.secondary_structure import (
+    AnalyzeProteinStructure,
     ComputeAcylindricity,
     ComputeAsphericity,
     ComputeDSSP,
@@ -139,3 +140,15 @@ def test_compute_relative_shape_antisotropy(get_registry, loaded_cif_traj):
         loaded_cif_traj
     )
     assert np.allclose(output, np.array([0.26852832]))
+
+
+def test_analyze_protein_structure(get_registry, loaded_cif_traj):
+    registry = get_registry("raw", True)
+    analyze_protein_structure = AnalyzeProteinStructure(path_registry=registry)
+    output = analyze_protein_structure.analyze_protein(loaded_cif_traj, ["n_atoms"])
+    assert output == {"n_atoms": 2881}
+
+    output_long = analyze_protein_structure.analyze_protein(
+        loaded_cif_traj, ["n_atoms", "time"]
+    )
+    assert output_long == {"n_atoms": 2881, "time": np.array([0])}
