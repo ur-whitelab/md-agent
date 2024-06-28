@@ -44,6 +44,7 @@ def load_single_traj(
                     ),
                     UserWarning,
                 )
+
             return md.load(top_path)
         else:
             raise ValueError("Trajectory File ID is required, and it's not provided.")
@@ -74,6 +75,7 @@ def load_traj_with_ref(
         ref_traj = load_single_traj(
             path_registry, ref_top_id, ref_traj_id, traj_required, ignore_warnings
         )
+
     return traj, ref_traj
 
 
