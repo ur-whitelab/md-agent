@@ -9,7 +9,16 @@ from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
+    ComputeAngles,
+    ComputeChi1,
+    ComputeChi2,
+    ComputeChi3,
+    ComputeChi4,
+    ComputeDihedrals,
     ComputeLPRMSD,
+    ComputeOmega,
+    ComputePhi,
+    ComputePsi,
     ComputeRMSD,
     ComputeRMSF,
     ContactsTool,
@@ -41,6 +50,7 @@ from .base_tools import (
     RadiusofGyrationAverage,
     RadiusofGyrationPerFrame,
     RadiusofGyrationPlot,
+    RamachandranPlot,
     RDFTool,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -71,6 +81,15 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        ComputeAngles(path_registry=path_instance),
+        ComputeChi1(path_registry=path_instance),
+        ComputeChi2(path_registry=path_instance),
+        ComputeChi3(path_registry=path_instance),
+        ComputeChi4(path_registry=path_instance),
+        ComputeDihedrals(path_registry=path_instance),
+        ComputeOmega(path_registry=path_instance),
+        ComputePhi(path_registry=path_instance),
+        ComputePsi(path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ComputeLPRMSD(path_registry=path_instance),
         ComputeRMSD(path_registry=path_instance),
@@ -86,6 +105,7 @@ def make_all_tools(
         RadiusofGyrationAverage(path_registry=path_instance),
         RadiusofGyrationPerFrame(path_registry=path_instance),
         RadiusofGyrationPlot(path_registry=path_instance),
+        RamachandranPlot(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),
