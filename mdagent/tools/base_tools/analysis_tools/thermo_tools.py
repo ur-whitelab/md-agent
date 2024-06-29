@@ -3,72 +3,118 @@ import json
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
+import openmm
 from langchain.tools import BaseTool
+from openmm import app
 
 from mdagent.utils import FileType, PathRegistry, load_single_traj
 
 
-def load_charge_json(charge_file: str):
-    with open(charge_file, "r") as f:
-        charges = json.load(f)
-    return charges
+class GetTrajCharges:
+    def compute_charges_from_traj(
+        self, traj: md.Trajectory, forcefield: str = "amber14-all.xml"
+    ) -> np.ndarray:
+        """
+        This function computes the partial charges of each atom in a trajectory using OpenMM.
+        The charges are computed using the forcefield specified in the forcefield argument.
+        The charges are returned as a numpy array.
 
+        Parameters:
+        traj: The trajectory for which charges are to be computed.
+        forcefield: The forcefield to be used for computing charges. Default is 'amber14-all.xml'.
 
-def match_charges_to_traj(atom_charges: dict, traj: md.Trajectory):
-    topology = traj.topology
+        Returns:
+        charges: A numpy array containing the partial charges of each atom in the trajectory.
+        """
+        forcefield = app.ForceField(forcefield)
+        modeller = app.Modeller(traj.top.to_openmm(), traj.openmm_positions(0))
+        system = forcefield.createSystem(modeller.topology)
+        charges = np.zeros(traj.n_atoms)
+        for force in system.getForces():
+            if isinstance(force, openmm.NonbondedForce):
+                for i in range(force.getNumParticles()):
+                    charge, _, _ = force.getParticleParameters(i)
+                    charges[i] = charge._value
+        return charges
 
-    charges = []
-    for atom in topology.atoms:
-        atom_name = atom.name
-        if atom_name in atom_charges:
-            charges.append(atom_charges[atom_name])
-        else:
-            raise ValueError(f"Charge for atom '{atom_name}' not found in JSON file")
-    if len(charges) != len(traj.xyz[0]):
-        raise ValueError(
-            "Number of charges does not match number of atoms in trajectory"
-        )
-    return np.array(charges)
+    def _load_charge_json(self, charge_file: str) -> dict:
+        with open(charge_file, "r") as f:
+            charges = json.load(f)
+        return charges
 
+    def match_charges_to_traj(
+        self, atom_charges: dict, traj: md.Trajectory
+    ) -> np.ndarray:
+        topology = traj.topology
 
-def get_charges(path_registry, traj: md.Trajectory, charge_file_id: str):
-    try:
-        charge_json = path_registry.get_mapped_path(charge_file_id)
-    except Exception:
-        raise FileNotFoundError(
-            "Failed to load charge file. File ID not found in path registry."
-        )
-    try:
-        charges = load_charge_json(charge_json)
-    except Exception:
-        raise Exception(
-            "Failed to load charge file. Charge file should be a "
-            "json file mapping each atom in the trajectory to its partial charge."
-        )
-    try:
-        charges = match_charges_to_traj(charges, traj)
-    except Exception:
-        raise Exception(
-            "Failed to match charges to trajectory. Please ensure that "
-            "Each atom in the trajectory is mapped to its partial charge "
-            "in the json file."
-        )
+        charges = []
+        for atom in topology.atoms:
+            atom_name = atom.name
+            if atom_name in atom_charges:
+                charges.append(atom_charges[atom_name])
+            else:
+                raise ValueError(
+                    f"Charge for atom '{atom_name}' not found in JSON file"
+                )
+        if len(charges) != len(traj.xyz[0]):
+            raise ValueError(
+                "Number of charges does not match number of atoms in trajectory"
+            )
+        return np.array(charges)
+
+    def get_charges_given_file(
+        self, path_registry, traj: md.Trajectory, charge_file_id: str
+    ) -> np.ndarray:
+        try:
+            charge_json = path_registry.get_mapped_path(charge_file_id)
+        except Exception:
+            raise FileNotFoundError(
+                "Failed to load charge file. File ID not found in path registry."
+            )
+        try:
+            charges = self.load_charge_json(charge_json)
+        except Exception:
+            raise Exception(
+                "Failed to load charge file. Charge file should be a "
+                "json file mapping each atom in the trajectory to its partial charge."
+            )
+        try:
+            charges = self.match_charges_to_traj(charges, traj)
+        except Exception:
+            raise Exception(
+                "Failed to match charges to trajectory. Please ensure that "
+                "Each atom in the trajectory is mapped to its partial charge "
+                "in the json file."
+            )
+
+    def get_charges(
+        self, path_registry, traj: md.Trajectory, charge_file_id: str | None = None
+    ) -> np.ndarray:
+        if charge_file_id:
+            try:
+                return self.get_charges_given_file(path_registry, traj, charge_file_id)
+            except Exception:
+                pass
+        return self.compute_charges_from_traj(traj)
 
 
 class ComputeDipoleMoments(BaseTool):
     name = "ComputeDipoleMoments"
     description = """Compute the total dipole moment for each frame in a
-    molecular dynamics trajectory. Requires a trajectory file and a json file mapping
-    each atom in the trajectory to its partial charge.
-    Optionally requires a topology file.
+    molecular dynamics trajectory. Requires a trajectory file ID and optionally
+    a topology file ID. If the user provided a charges file, you should
+    provide the file ID for the charges file also. Otherwise, the charges
+    will be computed from the trajectory using OpenMM.
     Returns an array of dipole moments for each frame of the trajectory,
     written to a file."""
     path_registry: PathRegistry = PathRegistry().get_instance()
+    get_charges = GetTrajCharges()
 
     def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
         if path_registry is not None:
             self.path_registry = path_registry
+        self.get_charges = GetTrajCharges()
 
     def _compute_dipole_moments(self, traj: md.Trajectory, charges: np.ndarray):
         return md.dipole_moments(traj, charges)
@@ -99,7 +145,12 @@ class ComputeDipoleMoments(BaseTool):
         )
         return file_id
 
-    def _run(self, traj_file: str, charge_file: str, top_file: str | None = None):
+    def _run(
+        self,
+        traj_file: str,
+        charge_file: str | None = None,
+        top_file: str | None = None,
+    ):
         try:
             traj = load_single_traj(
                 path_registry=self.path_registry,
@@ -112,7 +163,9 @@ class ComputeDipoleMoments(BaseTool):
             return str(e)
 
         try:
-            charges = get_charges(self.path_registry, traj, charge_file)
+            charges = self.get_charges.get_charges(
+                self.path_registry, traj, charge_file
+            )
         except Exception as e:
             return str(e)
 
@@ -131,15 +184,20 @@ class ComputeStaticDielectric(BaseTool):
     name = "ComputeStaticDielectric"
     description = """Compute the static dielectric constant of a system
       from the dipole moments of a molecular dynamics trajectory.
-      Requires a trajectory file, charges, temperature and optionally a
-      topology file. Returns the static dielectric
+      Requires a trajectory file, temperature and optionally a
+      topology file. If the user provided a charges file, you should
+        provide the file ID for the charges file also. Otherwise, the charges
+        will be computed from the trajectory using OpenMM.
+      Returns the static dielectric
       constant."""
     path_registry: PathRegistry = PathRegistry().get_instance()
+    get_charges = GetTrajCharges()
 
     def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
         if path_registry is not None:
             self.path_registry = path_registry
+        self.get_charges = GetTrajCharges()
 
     def _compute_static_dielectric(
         self, traj: md.Trajectory, charges: np.ndarray, temperature: float
@@ -150,7 +208,7 @@ class ComputeStaticDielectric(BaseTool):
         self,
         traj_file: str,
         temperature: str,
-        charge_file: str,
+        charge_file: str | None = None,
         top_file: str | None = None,
     ):
         # convert temperature to float
@@ -168,7 +226,9 @@ class ComputeStaticDielectric(BaseTool):
 
         # load charges
         try:
-            charges = get_charges(self.path_registry, traj, charge_file)
+            charges = self.get_charges.get_charges(
+                self.path_registry, traj, charge_file
+            )
         except Exception as e:
             return str(e)
 

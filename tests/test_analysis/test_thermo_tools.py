@@ -7,8 +7,13 @@ from mdagent.tools.base_tools.analysis_tools.thermo_tools import (
     ComputeIsothermalCompressabilityKappaT,
     ComputeMassDensity,
     ComputeStaticDielectric,
-    match_charges_to_traj,
+    GetTrajCharges,
 )
+
+
+@pytest.fixture
+def get_traj_charges():
+    return GetTrajCharges()
 
 
 @pytest.fixture
@@ -38,9 +43,16 @@ def dummy_charges():
     return {"X": 0.1}
 
 
-def test_match_charges_to_traj(dummy_charges, dummy_traj_with_box):
-    output = match_charges_to_traj(dummy_charges, dummy_traj_with_box)
+def test_match_charges_to_traj(get_traj_charges, dummy_charges, dummy_traj_with_box):
+    output = get_traj_charges.match_charges_to_traj(dummy_charges, dummy_traj_with_box)
     assert all(x == 0.1 for x in output)
+
+
+@pytest.mark.skip(reason="Not implemented yet")
+def test_compute_charges_from_traj(raw_alanine_pdb_file, get_traj_charges):
+    traj = md.load(raw_alanine_pdb_file)
+    output = get_traj_charges.compute_charges_from_traj(traj)
+    assert len(output) == traj.n_atoms
 
 
 def test_compute_dipole_moments(get_registry, dummy_traj_with_box):
