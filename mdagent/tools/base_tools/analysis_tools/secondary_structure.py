@@ -221,7 +221,7 @@ class ComputeGyrationTensor(BaseTool):
         file_id = write_raw_x(
             "gyration_tensor", gyration_tensors, traj_file, self.path_registry
         )
-        return "Gyration tensor computed successfully, " f"saved to {file_id}"
+        return f"Gyration tensor computed successfully, saved to {file_id}"
 
     async def _arun(self, traj_file, top_file=None):
         """Runs the tool asynchronously."""
@@ -344,7 +344,7 @@ class ComputeAcylindricity(BaseTool):
     molecular dynamics trajectory.
     Input is a trajectory file ID and an optional topology file ID.
     The output is an array of acylindricity values for
-    each frame of thetrajectory."""
+    each frame of the trajectory."""
     path_registry: PathRegistry = PathRegistry.get_instance()
 
     def __init__(self, path_registry: PathRegistry):
@@ -491,20 +491,15 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
         raise NotImplementedError("Async version not implemented")
 
 
-class AnalyzeProteinStructure(BaseTool):
-    name = "AnalyzeProtein"
+class SummarizeProteinStructure(BaseTool):
+    name = "SummarizeProteinStructure"
     description = (
-        "Analyze a protein trajectory. "
+        "Get the number of atoms, residues, chains, "
+        "frames, and bonds in a protein trajectory. "
         "Input is a trajectory file ID"
-        "and an optional topology file ID, "
-        "along with a list of analyses to perform."
-        "enter the analyses you want to perform as "
-        "a string, separated by commas. "
+        "and an optional topology file ID. "
         "The output is a dictionary "
-        "containing the requested analyses."
-        "Here are the valid options: "
-        "atoms, residues, chains, frames, bonds"
-        "The tool will provide counts for each."
+        "containing the analyses."
     )
     path_registry: PathRegistry = PathRegistry.get_instance()
 
@@ -512,23 +507,39 @@ class AnalyzeProteinStructure(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def analyze_protein(self, traj, requested_analyses: list):
+    def summarize_protein_structure(
+        self, traj, requested_analyses: list | None = None
+    ) -> dict[str, int]:
+        """
+        Summarizes the structure of a protein trajectory.
+
+        Args:
+            traj: The trajectory to summarize the
+                structure of.
+            requested_analyses: A list of the analyses
+                to include in the summary.
+
+        Returns:
+            A dictionary containing the requested analyses.
+        """
+        if not traj.topology:
+            raise ValueError("Topolgy is required for this analysis to be meaningful.")
+        if not requested_analyses:
+            requested_analyses = ["atoms", "residues", "chains", "frames", "bonds"]
         result = {}
         if "atoms" in requested_analyses:
-            result['n_atoms'] = traj.n_atoms
+            result["n_atoms"] = traj.n_atoms
         if "residues" in requested_analyses:
-            result['n_residues'] = traj.n_residues
+            result["n_residues"] = traj.n_residues
         if "chains" in requested_analyses:
-            result['n_chains'] = traj.n_chains
+            result["n_chains"] = traj.n_chains
         if "frames" in requested_analyses:
-            result['n_frames'] = traj.n_frames
+            result["n_frames"] = traj.n_frames
         if "bonds" in requested_analyses:
-            result['n_bonds'] = len([bond for bond in traj.topology.bonds])
+            result["n_bonds"] = len([bond for bond in traj.topology.bonds])
         return result
 
-    def _run(
-        self, traj_file: str, requested_analyses: str, top_file: str | None = None
-    ) -> str:
+    def _run(self, traj_file: str, top_file: str | None = None) -> str:
         try:
             traj = load_single_traj(
                 path_registry=self.path_registry,
@@ -539,6 +550,8 @@ class AnalyzeProteinStructure(BaseTool):
                 raise Exception("Trajectory could not be loaded.")
         except Exception as e:
             return str(e)
-        requested_analyses_list = requested_analyses.split(",")
-        result = self.analyze_protein(traj, requested_analyses_list)
+        try:
+            result = self.summarize_protein_structure(traj)
+        except Exception as e:
+            return str(e)
         return str(result)

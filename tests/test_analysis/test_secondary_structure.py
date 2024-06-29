@@ -1,13 +1,14 @@
+import mdtraj as md
 import numpy as np
 import pytest
 
 from mdagent.tools.base_tools.analysis_tools.secondary_structure import (
-    AnalyzeProteinStructure,
     ComputeAcylindricity,
     ComputeAsphericity,
     ComputeDSSP,
     ComputeGyrationTensor,
     ComputeRelativeShapeAntisotropy,
+    SummarizeProteinStructure,
 )
 
 
@@ -142,13 +143,35 @@ def test_compute_relative_shape_antisotropy(get_registry, loaded_cif_traj):
     assert np.allclose(output, np.array([0.26852832]))
 
 
-def test_analyze_protein_structure(get_registry, loaded_cif_traj):
+def test_get_protein_stats(get_registry):
     registry = get_registry("raw", True)
-    analyze_protein_structure = AnalyzeProteinStructure(path_registry=registry)
-    output = analyze_protein_structure.analyze_protein(loaded_cif_traj, ["n_atoms"])
-    assert output == {"n_atoms": 2881}
+    get_stats = SummarizeProteinStructure(registry)
 
-    output_long = analyze_protein_structure.analyze_protein(
-        loaded_cif_traj, ["n_atoms", "time"]
-    )
-    assert output_long == {"n_atoms": 2881, "time": np.array([0])}
+    n_atoms = 5
+    n_frames = 2
+    coordinates = np.random.random((n_frames, n_atoms, 3))
+
+    topology = md.Topology()
+
+    for _ in range(n_atoms):
+        topology.add_atom(
+            "C",
+            md.element.carbon,
+            topology.add_residue("methane", topology.add_chain()),
+        )
+
+    bonds = [(0, i) for i in range(1, n_atoms)]
+    for bond in bonds:
+        topology.add_bond(topology.atom(bond[0]), topology.atom(bond[1]))
+
+    traj = md.Trajectory(coordinates, topology)
+    assert get_stats.summarize_protein_structure(
+        traj, ["atoms", "residues", "chains", "frames", "bonds"]
+    ) == {"n_atoms": 5, "n_residues": 5, "n_chains": 5, "n_frames": 2, "n_bonds": 4}
+
+    # without topology
+    traj = md.Trajectory(coordinates, None)
+    with pytest.raises(ValueError):
+        get_stats.summarize_protein_structure(
+            traj, ["atoms", "residues", "chains", "frames", "bonds"]
+        )

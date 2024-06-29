@@ -12,12 +12,12 @@ from .analysis_tools.rgy import (
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.secondary_structure import (
-    AnalyzeProteinStructure,
     ComputeAcylindricity,
     ComputeAsphericity,
     ComputeDSSP,
     ComputeGyrationTensor,
     ComputeRelativeShapeAntisotropy,
+    SummarizeProteinStructure,
 )
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
@@ -111,5 +111,5 @@ __all__ = [
     "ComputeAsphericity",
     "ComputeAcylindricity",
     "ComputeRelativeShapeAntisotropy",
-    "AnalyzeProteinStructure",
+    "SummarizeProteinStructure",
 ]
