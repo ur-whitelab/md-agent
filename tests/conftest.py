@@ -34,6 +34,13 @@ def path_to_cif():
     os.chdir(original_cwd)
 
 
+@pytest.fixture
+def loaded_cif_traj():
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    cif_path = os.path.join(tests_dir, "3pqr.cif")
+    return md.load(cif_path)
+
+
 @pytest.fixture(scope="module")
 def raw_alanine_pdb_file(request):
     pdb_content = """

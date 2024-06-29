@@ -11,6 +11,14 @@ from .analysis_tools.rgy import (
 )
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
+from .analysis_tools.secondary_structure import (
+    ComputeAcylindricity,
+    ComputeAsphericity,
+    ComputeDSSP,
+    ComputeGyrationTensor,
+    ComputeRelativeShapeAntisotropy,
+    SummarizeProteinStructure,
+)
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -94,4 +102,14 @@ __all__ = [
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
+    "CleaningToolFunction",
+    "SetUpandRunFunction",
+    "ModifyBaseSimulationScriptTool",
+    "RDFTool",
+    "ComputeDSSP",
+    "ComputeGyrationTensor",
+    "ComputeAsphericity",
+    "ComputeAcylindricity",
+    "ComputeRelativeShapeAntisotropy",
+    "SummarizeProteinStructure",
 ]
