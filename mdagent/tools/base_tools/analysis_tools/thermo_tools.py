@@ -1,4 +1,3 @@
-import csv
 import json
 
 import matplotlib.pyplot as plt
@@ -25,10 +24,10 @@ def match_charges_to_traj(atom_charges: dict, traj: md.Trajectory):
             charges.append(atom_charges[atom_name])
         else:
             raise ValueError(f"Charge for atom '{atom_name}' not found in JSON file")
-        if len(charges) != len(traj.xyz[0]):
-            raise ValueError(
-                "Number of charges does not match number of atoms in trajectory"
-            )
+    if len(charges) != len(traj.xyz[0]):
+        raise ValueError(
+            "Number of charges does not match number of atoms in trajectory"
+        )
     return np.array(charges)
 
 
@@ -40,7 +39,7 @@ def get_charges(path_registry, traj: md.Trajectory, charge_file_id: str):
             "Failed to load charge file. File ID not found in path registry."
         )
     try:
-        charges = load_charge_json(path_registry, charge_json)
+        charges = load_charge_json(charge_json)
     except Exception:
         raise Exception(
             "Failed to load charge file. Charge file should be a "
@@ -51,7 +50,8 @@ def get_charges(path_registry, traj: md.Trajectory, charge_file_id: str):
     except Exception:
         raise Exception(
             "Failed to match charges to trajectory. Please ensure that "
-            "Each atom in the trajectory is mapped to its partial charge in the json file."
+            "Each atom in the trajectory is mapped to its partial charge "
+            "in the json file."
         )
 
 
@@ -59,40 +59,24 @@ class ComputeDipoleMoments(BaseTool):
     name = "ComputeDipoleMoments"
     description = """Compute the total dipole moment for each frame in a
     molecular dynamics trajectory. Requires a trajectory file and a json file mapping
-    each atom in the trajectory to its partial charge. Optionally requires a topology file.
-    Returns an array of dipole moments for each frame of the trajectory, written to a file."""
-    path_registry: PathRegistry | None = None
+    each atom in the trajectory to its partial charge.
+    Optionally requires a topology file.
+    Returns an array of dipole moments for each frame of the trajectory,
+    written to a file."""
+    path_registry: PathRegistry = PathRegistry().get_instance()
 
-    def __init__(self, path_registry: PathRegistry):
+    def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
-        self.path_registry = path_registry
-        if not self.path_registry:
-            self.path_registry = PathRegistry().get_instance()
+        if path_registry is not None:
+            self.path_registry = path_registry
 
-    def _run(self, traj_file: str, charge_file: str, top_file: str | None = None):
-        # load traj
-        traj = load_single_traj(
-            path_registry=self.path_registry, traj_fileid=traj_file, top_fileid=top_file
-        )
-        if not traj:
-            return "Failed to load trajectory file."
+    def _compute_dipole_moments(self, traj: md.Trajectory, charges: np.ndarray):
+        return md.dipole_moments(traj, charges)
 
-        # load charges
-        try:
-            charges = get_charges(traj, charge_file)
-        except Exception as e:
-            return str(e)
-
-        # compute dipole moments
-        try:
-            dipole_moments = md.dipole_moments(traj, charges)
-        except Exception as e:
-            return str(e)
-
-        # save dipole moments to file
+    def _save_dipoles_to_file(self, dipole_moments: np.ndarray, traj_file: str):
         file_name = self.path_registry.write_file_name(
-            type=FileType.UNKNOWN,
-            fig_analysis=f"dipole_moments_{traj_file}",
+            type=FileType.RECORD,
+            record_type="dipole_moments",
             file_format="csv",
         )
 
@@ -113,7 +97,29 @@ class ComputeDipoleMoments(BaseTool):
             header="Dipole_X,Dipole_Y,Dipole_Z",
             comments="",
         )
-        return "Dipole moments computed and saved to file {file_id}."
+        return file_id
+
+    def _run(self, traj_file: str, charge_file: str, top_file: str | None = None):
+        try:
+            traj = load_single_traj(
+                path_registry=self.path_registry,
+                traj_fileid=traj_file,
+                top_fileid=top_file,
+            )
+            if not traj:
+                raise Exception("Failed to load trajectory file.")
+        except Exception as e:
+            return str(e)
+
+        try:
+            charges = get_charges(self.path_registry, traj, charge_file)
+        except Exception as e:
+            return str(e)
+
+        dipole_moments = self._compute_dipole_moments(traj, charges)
+        file_id = self._save_dipoles_to_file(dipole_moments, traj_file)
+
+        return "Dipole moments computed and " f"saved to file {file_id}."
 
     async def _arun(
         self, traj_file: str, top_file: str | None = None, charges: np.ndarray = None
@@ -128,13 +134,17 @@ class ComputeStaticDielectric(BaseTool):
       Requires a trajectory file, charges, temperature and optionally a
       topology file. Returns the static dielectric
       constant."""
-    path_registry: PathRegistry | None = None
+    path_registry: PathRegistry = PathRegistry().get_instance()
 
-    def __init__(self, path_registry: PathRegistry):
+    def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
-        self.path_registry = path_registry
-        if not self.path_registry:
-            self.path_registry = PathRegistry().get_instance()
+        if path_registry is not None:
+            self.path_registry = path_registry
+
+    def _compute_static_dielectric(
+        self, traj: md.Trajectory, charges: np.ndarray, temperature: float
+    ):
+        return md.static_dielectric(traj, charges, temperature)
 
     def _run(
         self,
@@ -145,7 +155,7 @@ class ComputeStaticDielectric(BaseTool):
     ):
         # convert temperature to float
         try:
-            temperature = float(temperature)
+            temp_ = float(temperature)
         except Exception:
             return "Temperature must be a number."
 
@@ -158,18 +168,18 @@ class ComputeStaticDielectric(BaseTool):
 
         # load charges
         try:
-            charges = get_charges(traj, charge_file)
+            charges = get_charges(self.path_registry, traj, charge_file)
         except Exception as e:
             return str(e)
 
-        return str(md.static_dielectric(traj, charges, temperature))
+        return str(self._compute_static_dielectric(traj, charges, temp_))
 
     async def _arun(
         self,
         traj_file: str,
-        temperature: float,
+        temperature: str,
+        charge_file: str,
         top_file: str | None = None,
-        charges: np.ndarray = None,
     ):
         raise NotImplementedError("Async version not implemented")
 
@@ -180,18 +190,22 @@ class ComputeIsothermalCompressabilityKappaT(BaseTool):
       a molecular dynamics trajectory. Requires a trajectory file and
       temperature and optionally a topology file. Returns the isothermal
       compressibility."""
-    path_registry: PathRegistry | None = None
+    path_registry: PathRegistry = PathRegistry().get_instance()
 
-    def __init__(self, path_registry: PathRegistry):
+    def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
-        self.path_registry = path_registry
-        if not self.path_registry:
-            self.path_registry = PathRegistry().get_instance()
+        if path_registry is not None:
+            self.path_registry = path_registry
+
+    def _compute_isothermal_compressability_kappa_T(
+        self, traj: md.Trajectory, temperature: float
+    ):
+        return md.isothermal_compressability_kappa_T(traj, temperature)
 
     def _run(self, traj_file: str, temperature: str, top_file: str | None = None):
         # convert temperature to float
         try:
-            temperature = float(temperature)
+            temp_ = float(temperature)
         except Exception:
             return "Temperature must be a number."
         traj = load_single_traj(
@@ -199,99 +213,11 @@ class ComputeIsothermalCompressabilityKappaT(BaseTool):
         )
         if not traj:
             return "Failed to load trajectory file."
-        return str(md.isothermal_compressability_kappa_T(traj, temperature))
+        return str(self._compute_isothermal_compressability_kappa_T(traj, temp_))
 
     async def _arun(
         self, traj_file: str, temperature: float, top_file: str | None = None
     ):
-        raise NotImplementedError("Async version not implemented")
-
-
-class ComputeThermalExpansionAlphaP(BaseTool):
-    name = "ComputeThermalExpansionAlphaP"
-    description = """Compute the thermal expansion coefficient (alpha_P)
-    for a molecular dynamics trajectory. Requires a trajectory file and
-      temperature and energies as an array containing the potential
-      energies of each trajectory frame, in units of kJ/mol. Optionally
-      requires a topology file. Returns the thermal expanssion
-      coefficient, units of inverse Kelvin."""
-    path_registry: PathRegistry | None = None
-
-    def __init__(self, path_registry: PathRegistry):
-        super().__init__()
-        self.path_registry = path_registry
-        if not self.path_registry:
-            self.path_registry = PathRegistry().get_instance()
-
-    def _load_energies(self, energy_file: str):
-        if energy_file.endswith(".csv"):
-            csv_reader = csv.DictReader(energy_file)
-            potential_energy_column = None
-            for field in csv_reader.fieldnames:
-                if "potential" in field.lower() and "energy" in field.lower():
-                    potential_energy_column = field
-                    break
-            if potential_energy_column is None:
-                raise ValueError(
-                    "CSV file must contain a column with both 'potential' and 'energy' in its name."
-                )
-            for row in csv_reader:
-                potential_energies.append(float(row[potential_energy_column]))
-        elif energy_file.endswith(".json"):
-            with open(energy_file, "r") as f:
-                data = json.load(f)
-            potential_energy_key = None
-            for key in data:
-                if "potential" in key.lower() and "energy" in key.lower():
-                    potential_energy_key = key
-                    break
-            if potential_energy_key is None:
-                raise ValueError(
-                    "JSON file must contain a key with both 'potential' and 'energy' in its name."
-                )
-            potential_energies = data[potential_energy_key]
-        else:
-            raise ValueError(
-                "Unsupported file format. Please upload a CSV or JSON file."
-            )
-        return potential_energies
-
-    def _run(
-        self,
-        traj_file,
-        temperature: str,
-        energy_file: str,
-        top_file=None,
-    ):
-        # convert temperature to float
-        try:
-            temperature = float(temperature)
-        except Exception:
-            return "Temperature must be a number."
-
-        traj = load_single_traj(
-            path_registry=self.path_registry, traj_fileid=traj_file, top_fileid=top_file
-        )
-        if not traj:
-            return "Failed to load trajectory file."
-
-        try:
-            energies = self._load_energies(energy_file)
-        except Exception as e:
-            return str(e)
-        if not energies:
-            return (
-                "Error loading energies file. Please ensure that the file "
-                "contains a list of potential energies for each frame."
-            )
-        if energies.shape[0] != traj.n_frames:
-            return (
-                "The length of the energies array must match the number"
-                "of frames in the trajectory."
-            )
-        return str(md.thermal_expansion_alpha_P(traj, temperature, energies))
-
-    async def _arun(self, traj_file, top_file=None, temperature=300, energies=None):
         raise NotImplementedError("Async version not implemented")
 
 
@@ -301,13 +227,12 @@ class ComputeMassDensity(BaseTool):
     trajectory. Requires a trajectory file optionally
     a topology file. Returns an array of mass densities for
     each frame."""
-    path_registry: PathRegistry | None = None
+    path_registry: PathRegistry = PathRegistry().get_instance()
 
-    def __init__(self, path_registry: PathRegistry):
+    def __init__(self, path_registry: PathRegistry | None = None):
         super().__init__()
-        self.path_registry = path_registry
-        if not self.path_registry:
-            self.path_registry = PathRegistry().get_instance()
+        if path_registry is not None:
+            self.path_registry = path_registry
 
     def _plot_data(self, data: np.ndarray, traj_file: str):
         plt.figure(figsize=(10, 6))
@@ -385,7 +310,11 @@ class ComputeMassDensity(BaseTool):
         try:
             self._plot_data(data, traj_file)
         except Exception as e:
-            return f"Mass density computed and saved to file {file_id}. Failed to plot data: {str(e)}"
+            return (
+                "Mass density computed and saved "
+                f"to file {file_id}. "
+                f"Failed to plot data: {str(e)}"
+            )
         return f"Mass density computed and saved to file {file_id}."
 
     async def _arun(

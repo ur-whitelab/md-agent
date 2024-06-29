@@ -16,7 +16,6 @@ from .analysis_tools.thermo_tools import (
     ComputeIsothermalCompressabilityKappaT,
     ComputeMassDensity,
     ComputeStaticDielectric,
-    ComputeThermalExpansionAlphaP,
 )
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
@@ -66,6 +65,5 @@ __all__ = [
     "ComputeDipoleMoments",
     "ComputeStaticDielectric",
     "ComputeIsothermalCompressabilityKappaT",
-    "ComputeThermalExpansionAlphaP",
     "ComputeMassDensity",
 ]
