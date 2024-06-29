@@ -26,9 +26,9 @@ class GetTrajCharges:
         Returns:
         charges: A numpy array containing the partial charges of each atom in the trajectory.
         """
-        forcefield = app.ForceField(forcefield)
+        forcefield_loaded = app.ForceField(forcefield)
         modeller = app.Modeller(traj.top.to_openmm(), traj.openmm_positions(0))
-        system = forcefield.createSystem(modeller.topology)
+        system = forcefield_loaded.createSystem(modeller.topology)
         charges = np.zeros(traj.n_atoms)
         for force in system.getForces():
             if isinstance(force, openmm.NonbondedForce):
@@ -72,7 +72,7 @@ class GetTrajCharges:
                 "Failed to load charge file. File ID not found in path registry."
             )
         try:
-            charges = self.load_charge_json(charge_json)
+            charges = self._load_charge_json(charge_json)
         except Exception:
             raise Exception(
                 "Failed to load charge file. Charge file should be a "
