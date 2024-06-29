@@ -3,12 +3,13 @@ import re
 from typing import Optional
 
 import langchain
+import nest_asyncio
 import paperqa
 import paperscraper
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 from pypdf.errors import PdfReadError
-import nest_asyncio
+
 from mdagent.utils import PathRegistry
 
 
