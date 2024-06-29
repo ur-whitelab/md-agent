@@ -92,6 +92,8 @@ class RadiusofGyration:
             f"{self.path_registry.ckpt_figures}/{plot_name}",
             description=f"Plot of radii of gyration over time for {self.pdb_id}",
         )
+        plt.close()
+        plt.clf()
         return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"
 
 
