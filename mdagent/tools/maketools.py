@@ -11,12 +11,16 @@ from .base_tools import (
     CleaningToolFunction,
     ComputeAcylindricity,
     ComputeAsphericity,
+    ComputeDipoleMoments,
     ComputeDSSP,
     ComputeGyrationTensor,
+    ComputeIsothermalCompressabilityKappaT,
     ComputeLPRMSD,
+    ComputeMassDensity,
     ComputeRelativeShapeAntisotropy,
     ComputeRMSD,
     ComputeRMSF,
+    ComputeStaticDielectric,
     ContactsTool,
     DistanceMatrixTool,
     GetActiveSites,
@@ -77,6 +81,10 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        ComputeIsothermalCompressabilityKappaT(path_registry=path_instance),
+        ComputeMassDensity(path_registry=path_instance),
+        ComputeStaticDielectric(path_registry=path_instance),
+        ComputeDipoleMoments(path_registry=path_instance),
         SummarizeProteinStructure(path_registry=path_instance),
         ComputeAcylindricity(path_registry=path_instance),
         ComputeAsphericity(path_registry=path_instance),

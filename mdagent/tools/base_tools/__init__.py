@@ -19,6 +19,12 @@ from .analysis_tools.secondary_structure import (
     ComputeRelativeShapeAntisotropy,
     SummarizeProteinStructure,
 )
+from .analysis_tools.thermo_tools import (
+    ComputeDipoleMoments,
+    ComputeIsothermalCompressabilityKappaT,
+    ComputeMassDensity,
+    ComputeStaticDielectric,
+)
 from .analysis_tools.vis_tools import VisFunctions, VisualizeProtein
 from .preprocess_tools.clean_tools import CleaningToolFunction
 from .preprocess_tools.packing import PackMolTool
@@ -102,6 +108,10 @@ __all__ = [
     "VisFunctions",
     "VisualizeProtein",
     "get_pdb",
+    "ComputeDipoleMoments",
+    "ComputeStaticDielectric",
+    "ComputeIsothermalCompressabilityKappaT",
+    "ComputeMassDensity",
     "CleaningToolFunction",
     "SetUpandRunFunction",
     "ModifyBaseSimulationScriptTool",
