@@ -92,14 +92,18 @@ class GetTrajCharges:
             )
 
     def get_charges(
-        self, path_registry, traj: md.Trajectory, charge_file_id: str | None = None
+        self,
+        path_registry,
+        traj: md.Trajectory,
+        charge_file_id: str | None = None,
+        forcefield: str = "amber14-all.xml",
     ) -> np.ndarray:
         if charge_file_id:
             try:
                 return self.get_charges_given_file(path_registry, traj, charge_file_id)
             except Exception:
                 pass
-        return self.compute_charges_from_traj(traj)
+        return self.compute_charges_from_traj(traj, forcefield)
 
 
 class ComputeDipoleMoments(BaseTool):
@@ -109,6 +113,7 @@ class ComputeDipoleMoments(BaseTool):
     a topology file ID. If the user provided a charges file, you should
     provide the file ID for the charges file also. Otherwise, the charges
     will be computed from the trajectory using OpenMM.
+    In that case, you should provide a forcefield (default is amber14-all.xml).
     Returns an array of dipole moments for each frame of the trajectory,
     written to a file."""
     path_registry: PathRegistry = PathRegistry().get_instance()
@@ -154,6 +159,7 @@ class ComputeDipoleMoments(BaseTool):
         traj_file: str,
         charge_file: str | None = None,
         top_file: str | None = None,
+        forcefield: str = "amber14-all.xml",
     ):
         try:
             traj = load_single_traj(
@@ -168,7 +174,7 @@ class ComputeDipoleMoments(BaseTool):
 
         try:
             charges = self.get_charges.get_charges(
-                self.path_registry, traj, charge_file
+                self.path_registry, traj, charge_file, forcefield
             )
         except Exception as e:
             return str(e)
@@ -190,8 +196,9 @@ class ComputeStaticDielectric(BaseTool):
       from the dipole moments of a molecular dynamics trajectory.
       Requires a trajectory file, temperature and optionally a
       topology file. If the user provided a charges file, you should
-        provide the file ID for the charges file also. Otherwise, the charges
-        will be computed from the trajectory using OpenMM.
+    provide the file ID for the charges file also. Otherwise, the charges
+    will be computed from the trajectory using OpenMM.
+    In that case, you should provide a forcefield (default is amber14-all.xml).
       Returns the static dielectric
       constant."""
     path_registry: PathRegistry = PathRegistry().get_instance()
@@ -214,6 +221,7 @@ class ComputeStaticDielectric(BaseTool):
         temperature: str,
         charge_file: str | None = None,
         top_file: str | None = None,
+        forcefield: str = "amber14-all.xml",
     ):
         # convert temperature to float
         try:
@@ -231,7 +239,7 @@ class ComputeStaticDielectric(BaseTool):
         # load charges
         try:
             charges = self.get_charges.get_charges(
-                self.path_registry, traj, charge_file
+                self.path_registry, traj, charge_file, forcefield
             )
         except Exception as e:
             return str(e)
