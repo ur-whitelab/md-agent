@@ -187,9 +187,9 @@ class ComputeStaticDielectric(BaseTool):
 class ComputeIsothermalCompressabilityKappaT(BaseTool):
     name = "ComputeIsothermalCompressabilityKappaT"
     description = """Compute the isothermal compressibility (kappa_T) for
-      a molecular dynamics trajectory. Requires a trajectory file and
-      temperature and optionally a topology file. Returns the isothermal
-      compressibility."""
+    a molecular dynamics trajectory. Requires a trajectory file and
+    temperature. Returns the isothermal
+    compressibility."""
     path_registry: PathRegistry = PathRegistry().get_instance()
 
     def __init__(self, path_registry: PathRegistry | None = None):
@@ -266,20 +266,18 @@ class ComputeMassDensity(BaseTool):
         )
         self.path_registry.map_path(file_id, plot_path, description)
         plt.savefig(plot_path)
-        return None
+        return file_id
 
-    def _run(self, traj_file: str, top_file: str | None = None):
-        # todo -> might need to convert inputs to the right types
-        traj = load_single_traj(
-            path_registry=self.path_registry, traj_fileid=traj_file, top_fileid=top_file
-        )
-        if not traj:
-            return "Failed to load trajectory file."
-        # todo -> load specific masses file provided by user
-        # low priority, as usually masses are standard
-
+    def _compute_density(self, traj: md.Trajectory) -> np.ndarray:
         mass_density = md.density(traj)
-        # save masses to file
+        return mass_density
+
+    def _stack_data(self, mass_density: np.ndarray) -> np.ndarray:
+        frame_ids = np.arange(len(mass_density))
+        data = np.column_stack((frame_ids, mass_density))
+        return data
+
+    def stack_and_save(self, data: np.ndarray, traj_file: str) -> str:
         file_name = self.path_registry.write_file_name(
             type=FileType.UNKNOWN,
             fig_analysis=f"mass_density_{traj_file}",
@@ -296,9 +294,6 @@ class ComputeMassDensity(BaseTool):
         )
         self.path_registry.map_path(file_id, save_path, description)
 
-        frame_ids = np.arange(len(mass_density))
-        data = np.column_stack((frame_ids, mass_density))
-
         np.savetxt(
             save_path,
             data,
@@ -307,15 +302,32 @@ class ComputeMassDensity(BaseTool):
             fmt="%d,%.6f",
             comments="",
         )
+        return file_id
+
+    def _run(self, traj_file: str, top_file: str | None = None):
+        traj = load_single_traj(
+            path_registry=self.path_registry, traj_fileid=traj_file, top_fileid=top_file
+        )
+        if not traj:
+            return "Failed to load trajectory file."
+        # todo -> load specific masses file provided by user
+        # low priority, as usually masses are standard
+
+        mass_density = md.density(traj)
+        data = self._stack_data(mass_density)
+        file_id = self.stack_and_save(data, traj_file)
         try:
-            self._plot_data(data, traj_file)
+            plot_id = self._plot_data(data, traj_file)
         except Exception as e:
             return (
                 "Mass density computed and saved "
                 f"to file {file_id}. "
                 f"Failed to plot data: {str(e)}"
             )
-        return f"Mass density computed and saved to file {file_id}."
+        return (
+            f"Mass density computed and saved to file {file_id}."
+            f"Plot saved to file {plot_id}."
+        )
 
     async def _arun(
         self, traj_file: str, masses: np.ndarray, top_file: str | None = None

@@ -5,6 +5,7 @@ import pytest
 from mdagent.tools.base_tools.analysis_tools.thermo_tools import (
     ComputeDipoleMoments,
     ComputeIsothermalCompressabilityKappaT,
+    ComputeMassDensity,
     ComputeStaticDielectric,
     match_charges_to_traj,
 )
@@ -87,3 +88,32 @@ def test_compute_isothermal_compressability_kappa_T(dummy_traj_with_box, get_reg
         traj=dummy_traj_with_box, temperature=300
     )
     assert np.allclose(output, 0.0, rtol=1e-3)
+
+
+def test_compute_density(dummy_traj_with_box, get_registry):
+    registry = get_registry("raw", True)
+    density = ComputeMassDensity(registry)
+    density = density._compute_density(dummy_traj_with_box)
+    density_should_be = np.array(
+        [
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+            24.930458,
+        ]
+    )
+    assert np.allclose(density, density_should_be)
+
+
+def test_stack_data(get_registry):
+    registry = get_registry("raw", True)
+    test_inputs = [1, 2, 3, 4, 5]
+    shold_be = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+    data = ComputeMassDensity(registry)._stack_data(test_inputs)
+    assert np.allclose(data, shold_be)

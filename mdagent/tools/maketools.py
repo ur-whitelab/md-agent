@@ -9,9 +9,13 @@ from mdagent.utils import PathRegistry
 
 from .base_tools import (
     CleaningToolFunction,
+    ComputeDipoleMoments,
+    ComputeIsothermalCompressabilityKappaT,
     ComputeLPRMSD,
+    ComputeMassDensity,
     ComputeRMSD,
     ComputeRMSF,
+    ComputeStaticDielectric,
     ContactsTool,
     DistanceMatrixTool,
     ListRegistryPaths,
@@ -53,6 +57,10 @@ def make_all_tools(
 
     # add base tools
     base_tools = [
+        ComputeIsothermalCompressabilityKappaT(path_registry=path_instance),
+        ComputeMassDensity(path_registry=path_instance),
+        ComputeStaticDielectric(path_registry=path_instance),
+        ComputeDipoleMoments(path_registry=path_instance),
         CleaningToolFunction(path_registry=path_instance),
         ComputeLPRMSD(path_registry=path_instance),
         ComputeRMSD(path_registry=path_instance),
