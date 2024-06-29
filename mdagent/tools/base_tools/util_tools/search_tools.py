@@ -8,7 +8,7 @@ import paperscraper
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
 from pypdf.errors import PdfReadError
-
+import nest_asyncio
 from mdagent.utils import PathRegistry
 
 
@@ -77,6 +77,7 @@ class Scholar2ResultLLM(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, query) -> str:
+        nest_asyncio.apply()
         return scholar2result_llm(self.llm, query, self.path_registry)
 
     async def _arun(self, query) -> str:
