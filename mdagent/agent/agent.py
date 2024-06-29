@@ -9,7 +9,7 @@ from langchain.chat_models import ChatOpenAI
 from ..tools import get_tools, make_all_tools
 from ..utils import PathRegistry, SetCheckpoint, _make_llm
 from .memory import MemoryManager
-from .query_filter import make_prompt
+from .prompt import openaifxn_prompt, structured_prompt
 
 load_dotenv()
 
@@ -40,7 +40,6 @@ class MDAgent:
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
         tools_model="gpt-4-1106-preview",
         temp=0.1,
-        max_iterations=40,
         verbose=True,
         ckpt_dir="ckpt",
         top_k_tools=20,  # set "all" if you want to use all tools
@@ -103,9 +102,10 @@ class MDAgent:
 
     def run(self, user_input, callbacks=None):
         run_memory = self.memory.run_id_mem if self.use_memory else None
-        self.prompt = make_prompt(
-            user_input, self.agent_type, model="gpt-3.5-turbo", run_memory=run_memory
-        )
+        if self.agent_type == "Structured":
+            self.prompt = structured_prompt.format(input=user_input, context=run_memory)
+        elif self.agent_type == "OpenAIFunctionsAgent":
+            self.prompt = openaifxn_prompt.format(input=user_input, context=run_memory)
         self.agent = self._initialize_tools_and_agent(user_input)
         model_output = self.agent.run(self.prompt, callbacks=callbacks)
         if self.use_memory:
@@ -114,13 +114,20 @@ class MDAgent:
         return model_output, self.run_id
 
     def iter(self, user_input, include_run_info=True):
+        run_memory = self.memory.run_id_mem if self.use_memory else None
+
         if self.agent is None:
-            self.prompt = make_prompt(
-                user_input, self.agent_type, model="gpt-3.5-turbo"
-            )
-            self.agent = self._initialize_tools_and_agent(user_input)
-        for step in self.agent.iter(self.prompt, include_run_info=include_run_info):
-            yield step
+            if self.agent_type == "Structured":
+                self.prompt = structured_prompt.format(
+                    input=user_input, context=run_memory
+                )
+            elif self.agent_type == "OpenAIFunctionsAgent":
+                self.prompt = openaifxn_prompt.format(
+                    input=user_input, context=run_memory
+                )
+                self.agent = self._initialize_tools_and_agent(user_input)
+            for step in self.agent.iter(self.prompt, include_run_info=include_run_info):
+                yield step
 
     def force_clear_mem(self, all=False) -> str:
         if all:

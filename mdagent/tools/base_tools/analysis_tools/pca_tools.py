@@ -106,8 +106,8 @@ class PCA_analysis:
         cos = np.cos(np.pi * t * (i + 1) / T)
         return (
             (2.0 / T)
-            * (scipy.integrate.simps(cos * pca_space[:, i])) ** 2
-            / scipy.integrate.simps(pca_space[:, i] ** 2)
+            * (scipy.integrate.simpson(cos * pca_space[:, i])) ** 2
+            / scipy.integrate.simpson(pca_space[:, i] ** 2)
         )
 
     def make_scree_plot(self):
