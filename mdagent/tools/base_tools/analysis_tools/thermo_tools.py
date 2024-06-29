@@ -15,16 +15,20 @@ class GetTrajCharges:
         self, traj: md.Trajectory, forcefield: str = "amber14-all.xml"
     ) -> np.ndarray:
         """
-        This function computes the partial charges of each atom in a trajectory using OpenMM.
-        The charges are computed using the forcefield specified in the forcefield argument.
+        This function computes the partial charges of each atom in a
+            trajectory using OpenMM.
+        The charges are computed using the forcefield specified
+            in the forcefield argument.
         The charges are returned as a numpy array.
 
         Parameters:
         traj: The trajectory for which charges are to be computed.
-        forcefield: The forcefield to be used for computing charges. Default is 'amber14-all.xml'.
+        forcefield: The forcefield to be used for computing charges.
+            Default is 'amber14-all.xml'.
 
         Returns:
-        charges: A numpy array containing the partial charges of each atom in the trajectory.
+        charges: A numpy array containing the partial charges of each
+            atom in the trajectory.
         """
         forcefield_loaded = app.ForceField(forcefield)
         modeller = app.Modeller(traj.top.to_openmm(), traj.openmm_positions(0))
