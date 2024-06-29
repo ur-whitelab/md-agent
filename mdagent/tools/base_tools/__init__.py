@@ -11,6 +11,14 @@ from .analysis_tools.rgy import (
 )
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
+from .analysis_tools.secondary_structure import (
+    ComputeAcylindricity,
+    ComputeAsphericity,
+    ComputeDSSP,
+    ComputeGyrationTensor,
+    ComputeRelativeShapeAntisotropy,
+    SummarizeProteinStructure,
+)
 from .analysis_tools.thermo_tools import (
     ComputeDipoleMoments,
     ComputeIsothermalCompressabilityKappaT,
@@ -104,4 +112,14 @@ __all__ = [
     "ComputeStaticDielectric",
     "ComputeIsothermalCompressabilityKappaT",
     "ComputeMassDensity",
+    "CleaningToolFunction",
+    "SetUpandRunFunction",
+    "ModifyBaseSimulationScriptTool",
+    "RDFTool",
+    "ComputeDSSP",
+    "ComputeGyrationTensor",
+    "ComputeAsphericity",
+    "ComputeAcylindricity",
+    "ComputeRelativeShapeAntisotropy",
+    "SummarizeProteinStructure",
 ]
