@@ -59,8 +59,8 @@ class ComputeDSSP(BaseTool):
         the codes H, E, and C are used. Otherwise, the full set of codes is
         used."""
         if self.simplified:
-            return ["H", "E", "C"]
-        return ["H", "B", "E", "G", "I", "T", "S", " "]
+            return ["H", "E", "C", "NA"]
+        return ["H", "B", "E", "G", "I", "T", "S", " ", "NA"]
 
     def _dssp_natural_language(self) -> dict[str, str]:
         """
@@ -68,7 +68,12 @@ class ComputeDSSP(BaseTool):
         descriptions. If simplified is True, only the codes H, E, and C are
         used. Otherwise, the full set of codes is used."""
         if self.simplified:
-            return {"H": "helix", "E": "strand", "C": "coil"}
+            return {
+                "H": "helix",
+                "E": "strand",
+                "C": "coil",
+                "NA": "not assigned, not a protein residue",
+            }
         return {
             "H": "alpha helix",
             "B": "beta bridge",
@@ -78,6 +83,7 @@ class ComputeDSSP(BaseTool):
             "T": "hydrogen bonded turn",
             "S": "bend",
             " ": "loop or irregular",
+            "NA": "not assigned, not a protein residue",
         }
 
     def _convert_dssp_counts(self, dssp_counts: dict) -> dict:
