@@ -30,7 +30,7 @@ class CleaningToolFunctionInput(BaseModel):
     add_hydrogens: bool = Field(
         True, description="Whether to add hydrogens to the file."
     )
-    add_hydrogens_ph: int = Field(7.0, description="pH at which hydrogens are added.")
+    add_hydrogens_ph: float = Field(7.0, description="pH at which hydrogens are added.")
 
 
 class CleaningToolFunction(BaseTool):

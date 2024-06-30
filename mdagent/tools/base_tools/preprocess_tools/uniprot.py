@@ -697,7 +697,7 @@ class QueryUniprot:
             entry["primaryAccession"] for entry in accession
         ] if accession else []
         if single_id:
-            return all_ids.pop()
+            return [all_ids[0]] if all_ids else []
         return list(set(all_ids))
 
     def get_gene_names(self, query: str, primary_accession: str | None = None) -> list:

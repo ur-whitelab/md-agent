@@ -478,7 +478,7 @@ def test_get_structure_info(query_uniprot):
     )
 
 
-def get_ids(query_uniprot):
+def test_get_ids(query_uniprot):
     hg_ids = [
         "P84792",
         "P02042",
@@ -508,7 +508,8 @@ def get_ids(query_uniprot):
     ]
     all_ids = query_uniprot.get_ids("hemoglobin")
     single_id = query_uniprot.get_ids("hemoglobin", single_id=True)
-    assert single_id in hg_ids
+    assert single_id[0] in hg_ids
+    assert len(single_id) == 1
     assert all(i in all_ids for i in hg_ids)
 
 
