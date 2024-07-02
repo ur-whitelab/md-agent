@@ -45,7 +45,7 @@ def test_dssp_codes(compute_dssp_simple, compute_dssp):
     assert nl_simple == {"H": "helix", "E": "strand", "C": "coil", "NA": "not assigned"}
 
     dssp_codes = compute_dssp._dssp_codes()
-    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " ", "NA"]
+    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " "]
 
     nl = compute_dssp._dssp_natural_language()
     assert nl == {
