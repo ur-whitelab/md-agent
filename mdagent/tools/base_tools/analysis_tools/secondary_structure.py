@@ -1,3 +1,5 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
@@ -68,7 +70,7 @@ class ComputeDSSP(BaseTool):
         descriptions. If simplified is True, only the codes H, E, and C are
         used. Otherwise, the full set of codes is used."""
         if self.simplified:
-            return {"H": "helix", "E": "strand", "C": "coil"}
+            return {"H": "helix", "E": "strand", "C": "coil", "NA": "not assigned"}
         return {
             "H": "alpha helix",
             "B": "beta bridge",
@@ -78,6 +80,7 @@ class ComputeDSSP(BaseTool):
             "T": "hydrogen bonded turn",
             "S": "bend",
             " ": "loop or irregular",
+            "NA": "not assigned",
         }
 
     def _convert_dssp_counts(self, dssp_counts: dict) -> dict:
@@ -114,7 +117,10 @@ class ComputeDSSP(BaseTool):
         dssp_dict = {code: 0 for code in dssp_codes}
         for frame in dssp_array:
             for code in frame:
-                dssp_dict[code] += 1
+                if code in dssp_dict.keys():
+                    dssp_dict[code] += 1
+                else:
+                    dssp_dict[code] = 1
         return self._convert_dssp_counts(dssp_dict)
 
     def _compute_dssp(self, traj: md.Trajectory) -> np.ndarray:
@@ -129,7 +135,7 @@ class ComputeDSSP(BaseTool):
         """
         return md.compute_dssp(traj, simplified=self.simplified)
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         """
         Computes the DSSP assignments for a trajectory and saves the results
         to a file.
@@ -150,6 +156,7 @@ class ComputeDSSP(BaseTool):
             if not traj:
                 raise Exception("Trajectory could not be loaded.")
         except Exception as e:
+            print("Error loading trajectory: ", e)
             return str(e)
 
         dssp_array = self._compute_dssp(traj)
@@ -187,7 +194,7 @@ class ComputeGyrationTensor(BaseTool):
         """
         return md.compute_gyration_tensor(traj)
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         """
         Computes the gyration tensor for a trajectory and saves the results
         to a file.
@@ -292,7 +299,7 @@ class ComputeAsphericity(BaseTool):
             An array of asphericity values for each frame of the trajectory."""
         return md.asphericity(traj)
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         """
         Computes the asphericity for a trajectory and saves the results
         to a file.
@@ -363,7 +370,7 @@ class ComputeAcylindricity(BaseTool):
         """
         return md.acylindricity(traj)
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         """
         Computes the acylindricity for a trajectory and saves the results
         to a file.
@@ -435,7 +442,7 @@ class ComputeRelativeShapeAntisotropy(BaseTool):
         """
         return md.relative_shape_antisotropy(traj)
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         """
         Computes the relative shape antisotropy for a trajectory and saves the results
         to a file.
@@ -539,7 +546,7 @@ class SummarizeProteinStructure(BaseTool):
             result["n_bonds"] = len([bond for bond in traj.topology.bonds])
         return result
 
-    def _run(self, traj_file: str, top_file: str | None = None) -> str:
+    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
         try:
             traj = load_single_traj(
                 path_registry=self.path_registry,
