@@ -42,10 +42,10 @@ def test_dssp_codes(compute_dssp_simple, compute_dssp):
     assert dssp_codes_simple == ["H", "E", "C"]
 
     nl_simple = compute_dssp_simple._dssp_natural_language()
-    assert nl_simple == {"H": "helix", "E": "strand", "C": "coil"}
+    assert nl_simple == {"H": "helix", "E": "strand", "C": "coil", "NA": "not assigned"}
 
     dssp_codes = compute_dssp._dssp_codes()
-    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " "]
+    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " ", "NA"]
 
     nl = compute_dssp._dssp_natural_language()
     assert nl == {
@@ -57,6 +57,7 @@ def test_dssp_codes(compute_dssp_simple, compute_dssp):
         "T": "hydrogen bonded turn",
         "S": "bend",
         " ": "loop or irregular",
+        "NA": "not assigned",
     }
 
 
