@@ -39,13 +39,18 @@ def test_compute_dssp(loaded_cif_traj, compute_dssp_simple, compute_dssp):
 
 def test_dssp_codes(compute_dssp_simple, compute_dssp):
     dssp_codes_simple = compute_dssp_simple._dssp_codes()
-    assert dssp_codes_simple == ["H", "E", "C"]
+    assert dssp_codes_simple == ["H", "E", "C", "NA"]
 
     nl_simple = compute_dssp_simple._dssp_natural_language()
-    assert nl_simple == {"H": "helix", "E": "strand", "C": "coil"}
+    assert nl_simple == {
+        "H": "helix",
+        "E": "strand",
+        "C": "coil",
+        "NA": "not assigned, not a protein residue",
+    }
 
     dssp_codes = compute_dssp._dssp_codes()
-    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " "]
+    assert dssp_codes == ["H", "B", "E", "G", "I", "T", "S", " ", "NA"]
 
     nl = compute_dssp._dssp_natural_language()
     assert nl == {
@@ -57,6 +62,7 @@ def test_dssp_codes(compute_dssp_simple, compute_dssp):
         "T": "hydrogen bonded turn",
         "S": "bend",
         " ": "loop or irregular",
+        "NA": "not assigned, not a protein residue",
     }
 
 
@@ -64,7 +70,11 @@ def test_convert_dssp_counts(compute_dssp_simple, compute_dssp):
     dssp_counts = {"H": 0, "E": 5, "C": 5}
 
     descriptive_counts = compute_dssp_simple._convert_dssp_counts(dssp_counts)
-    assert descriptive_counts == {"helix": 0, "strand": 5, "coil": 5}
+    assert descriptive_counts == {
+        "helix": 0,
+        "strand": 5,
+        "coil": 5,
+    }
 
     dssp_counts = {"H": 0, "B": 0, "E": 5, "G": 0, "I": 0, "T": 0, "S": 0, " ": 5}
 
@@ -85,7 +95,12 @@ def test_convert_dssp_counts(compute_dssp_simple, compute_dssp):
 def test_summarize_dssp(compute_dssp_simple, compute_dssp):
     dssp_array = np.array([["C", "C", "C", "E", "E", "E", "C", "C", "E", "E"]])
     summary = compute_dssp_simple._summarize_dssp(dssp_array)
-    assert summary == {"helix": 0, "strand": 5, "coil": 5}
+    assert summary == {
+        "helix": 0,
+        "strand": 5,
+        "coil": 5,
+        "not assigned, not a protein residue": 0,
+    }
 
     dssp_array = np.array([[" ", " ", " ", "E", "E", "E", "T", "T", "E", "E"]])
     summary = compute_dssp._summarize_dssp(dssp_array)
@@ -98,6 +113,7 @@ def test_summarize_dssp(compute_dssp_simple, compute_dssp):
         "hydrogen bonded turn": 2,
         "bend": 0,
         "loop or irregular": 3,
+        "not assigned, not a protein residue": 0,
     }
 
 
