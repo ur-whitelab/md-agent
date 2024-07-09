@@ -905,39 +905,17 @@ class OpenMMSimulation:
                 except ValueError as e:
                     print("Error adding solvent", type(e).__name__, "–", e)
                     if "No template found for" in str(e):
-                        pattern = r"residue \d+ \((\w+)\)"
-                        # Search for the pattern in the error message
-                        match = re.search(pattern, str(e))
-                        if match:
-                            residue_code = match.group(1)
-                            print(f"Residue code: {residue_code}")
-                        else:
-                            print("No residue code found in the error message.")
-                            raise ValueError(str(e))
-                        if residue_code not in solvent_list:
-                            print(
-                                "Residue code not in solvent list. Adding forcefield \
-                                  not supported."
-                            )
-                            raise ValueError(str(e))
-                        else:
-                            print("Trying to add missing component to Forcefield...")
-                            smiles = self._code_to_smiles(residue_code)
-                            if not smiles:
-                                print("No SMILES found for HET code.")
-                                raise ValueError(str(e))
+                        smiles = self._error_to_smiles(e, solvent_list)
 
-                            print(f"Found SMILES from HET code: {smiles}")
-
-                            molecule = Molecule.from_smiles(smiles)
-                            smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
-                            forcefield.registerTemplateGenerator(smirnoff.generator)
-                            attempts += 1
-                            print(
-                                f"Attempt {attempts} to add small \
-                                  molecules to forcefield."
-                            )
-                            continue
+                        molecule = Molecule.from_smiles(smiles)
+                        smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
+                        forcefield.registerTemplateGenerator(smirnoff.generator)
+                        attempts += 1
+                        print(
+                            f"Attempt {attempts} to add small \
+                                molecules to forcefield."
+                        )
+                        continue
                     else:
                         raise ValueError(str(e))
 
@@ -975,44 +953,22 @@ class OpenMMSimulation:
                 except ValueError as e:
                     if "No template found for" in str(e):
                         print("Trying to add component to Forcefield...")
-                        pattern = r"residue \d+ \((\w+)\)"
-                        # Search for the pattern in the error message
-                        match = re.search(pattern, str(e))
-                        if match:
-                            residue_code = match.group(1)
-                            print(f"Residue code: {residue_code}")
-                        else:
-                            print("No residue code found in the error message.")
-                            raise ValueError(str(e))
-                        if residue_code not in solvent_list:
-                            print(
-                                "Residue code not in solvent list. Adding forcefield \
-                                  not supported."
-                            )
-                            raise ValueError(str(e))
-                        else:
-                            smiles = self._code_to_smiles(residue_code)
-                            if not smiles:
-                                print("No SMILES found for HET code.")
-                                raise ValueError(str(e))
+                        smiles = self._error_to_smiles(e, solvent_list)
 
-                            print(f"Found SMILES from HET code: {smiles}")
-
-                            molecule = Molecule.from_smiles(smiles)
-                            smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
-                            forcefield.registerTemplateGenerator(smirnoff.generator)
-                            attempts += 1
-                            print(
-                                f"Attempt {attempts} to add small \
-                                  molecules to forcefield."
-                            )
-                            continue
+                        molecule = Molecule.from_smiles(smiles)
+                        smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
+                        forcefield.registerTemplateGenerator(smirnoff.generator)
+                        attempts += 1
+                        print(
+                            f"Attempt {attempts} to add small \
+                                molecules to forcefield."
+                        )
+                        continue
                     else:
                         raise ValueError(str(e))
 
         if attempts == 3:
             raise ValueError("Could not create system after 3 attemps.")
-        print("returning system")
         return system
 
     def _code_to_smiles(
@@ -1030,6 +986,31 @@ class OpenMMSimulation:
         except KeyError:
             return None
         return smi
+
+    def _error_to_smiles(self, e, solvent_list):
+        pattern = r"residue \d+ \((\w+)\)"
+        # Search for the pattern in the error message
+        match = re.search(pattern, str(e))
+        if not match:
+            print("No residue code found in the error message.")
+            raise ValueError(str(e))
+        residue_code = match.group(1)
+        print(f"Residue code: {residue_code}")
+        if residue_code not in solvent_list:
+            print(
+                "Residue code not in solvent list. Adding forcefield \
+                        not supported."
+            )
+            raise ValueError(str(e))
+
+        print("Trying to add missing component to Forcefield...")
+        smiles = self._code_to_smiles(residue_code)
+        if not smiles:
+            print("No SMILES found for HET code.")
+            raise ValueError(str(e))
+
+        print(f"Found SMILES from HET code: {smiles}")
+        return smiles
 
     def unit_to_string(self, unit):
         """Needed to convert units to strings for the script
