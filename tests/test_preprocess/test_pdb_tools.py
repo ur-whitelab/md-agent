@@ -131,3 +131,38 @@ def test_packmol_download_only(packmol, small_molecule):
     )
     assert time_before == time_after
     os.remove(f"{packmol.path_registry.ckpt_pdb}/{small_molecule[0]}.pdb")
+
+
+cids = {
+    "CO": 887,
+    "CCO": 702,
+    "O": 962,
+    "CC(=O)C": 180,
+    "C(=O)(N)N": 1176,
+    "CS(=O)C": 679,
+    "CN(C)C=O": 6228,
+    "C(C(CO)O)O": 753,
+}
+
+
+def get_cid(smiles):
+    return cids[smiles]
+
+
+pairs = [
+    ("CO", "MOH"),
+    ("CCO", "EOH"),
+    ("O", "HOH"),
+    ("CC(=O)C", "ACN"),
+    ("C(=O)(N)N", "URE"),
+    ("CS(=O)C", "DMS"),
+    ("CN(C)C=O", "DMF"),
+    ("CCO", "EOH"),
+    ("C(C(CO)O)O", "GOL"),
+]
+
+
+@pytest.mark.parametrize("smiles, codes", pairs)
+def test_get_het_codes(molpdb, smiles, codes):
+    cid = get_cid(smiles)  # to not test the get_cid function
+    assert molpdb.get_hetcode_from_cid(cid) == codes
