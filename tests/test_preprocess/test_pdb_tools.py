@@ -142,7 +142,6 @@ cids = {
     "CS(=O)C": 679,
     "CN(C)C=O": 6228,
     "C(C(CO)O)O": 753,
-    "C1=CC=CC=C1": 241,
 }
 
 
@@ -160,7 +159,6 @@ pairs = [
     ("CN(C)C=O", "DMF"),
     ("CCO", "EOH"),
     ("C(C(CO)O)O", "GOL"),
-    ("C1=CC=CC=C1", "BNZ"),
 ]
 
 
