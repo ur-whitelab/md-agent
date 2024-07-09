@@ -159,6 +159,7 @@ pairs = [
     ("CN(C)C=O", "DMF"),
     ("CCO", "EOH"),
     ("C(C(CO)O)O", "GOL"),
+    ("C1=CC=CC=C1", "BNZ"),
 ]
 
 
