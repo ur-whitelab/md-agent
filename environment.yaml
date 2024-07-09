@@ -5,6 +5,8 @@ dependencies:
   - openmm >= 7.6
   - pdbfixer >= 1.5
   - mdtraj
+  - openff-toolkit
+  - openmmforcefields
   - pip
   - pip:
     - flake8
