@@ -207,6 +207,9 @@ class MolPDB:
         """This code is unnecesarilly big considering i only want to add
         the HET code to the molecule, but there is a bug in RDKIT that screws the
         PDB file if all the other attributes are not added.
+        Updating residue Name from UNL to the HET code present in pubchem
+        Everythin else (number, is heteroatom, etc) is kept the same but needs to be
+        added to avoid the bug.
         See: https://github.com/rdkit/rdkit/pull/7286#issue-2200600916"""
         block = AllChem.MolToPDBBlock(m)
         for line in block.split("\n"):
@@ -252,7 +255,7 @@ class MolPDB:
                 pass
 
             AllChem.EmbedMolecule(m)
-            # aff HET code to molecule
+            # add HET code to molecule
 
             file_name = f"{self.path_registry.ckpt_pdb}/{mol_name}.pdb"
             if HET_code != "UNL":  # if HET code is UNL no need for this...
