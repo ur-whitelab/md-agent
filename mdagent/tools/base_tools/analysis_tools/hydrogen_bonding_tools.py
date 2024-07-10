@@ -12,9 +12,8 @@ from mdagent.utils import PathRegistry, load_single_traj
 class HydrogenBondTool(BaseTool):
     name = "hydrogen_bond_tool"
     description = """Identifies hydrogen bonds using different methods;
-    Baker-Hubbard ( simpliest method, distance based),
-    Wernet-Nilsson (most accurate, use both distance and angle criteria, no
-    energy calculation)
+    Baker-Hubbard and Wernet-Nilsson. Input a trajectory file ID and a method (either baker_hubbard or wernet_nilsson). If baker_hubbard is used, a frequency must be provided as a float. Optionally provide the topology file ID. Output is a file and plot of the hydrogen bonds found.
+
     """
 
     path_registry: PathRegistry | None = None
