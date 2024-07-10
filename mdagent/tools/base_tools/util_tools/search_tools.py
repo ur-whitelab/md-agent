@@ -3,6 +3,7 @@ import re
 from typing import Optional
 
 import langchain
+import nest_asyncio
 import paperqa
 import paperscraper
 from langchain.base_language import BaseLanguageModel
@@ -77,6 +78,7 @@ class Scholar2ResultLLM(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, query) -> str:
+        nest_asyncio.apply()
         return scholar2result_llm(self.llm, query, self.path_registry)
 
     async def _arun(self, query) -> str:

@@ -9,10 +9,12 @@ import textwrap
 from typing import Any, Dict, List, Optional, Type
 
 import langchain
+import requests
 import streamlit as st
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from openff.toolkit.topology import Molecule
 from openmm import (
     AndersenThermostat,
     BrownianIntegrator,
@@ -44,7 +46,9 @@ from openmm.app import (
     StateDataReporter,
 )
 from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
+from openmmforcefields.generators import SMIRNOFFTemplateGenerator
 from pydantic import BaseModel, Field
+from rdkit import Chem
 
 # Local Library/Application Imports
 from mdagent.utils import FileType, PathRegistry
@@ -683,7 +687,19 @@ class OpenMMSimulation:
         self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
         self.forcefield = ForceField(*self.params["forcefield_files"])
-        self.system = self._create_system(self.pdb, self.forcefield, **self.sys_params)
+        try:
+            self.system = self._create_system(
+                self.pdb, self.forcefield, **self.sys_params
+            )
+            print("System built successfully")
+            print(self.system)
+        except ValueError as e:
+            if "No template found for" in str(e):
+                raise ValueError(str(e))
+            else:
+                raise ValueError(
+                    f"Error building system. Please check the forcefield files {str(e)}"
+                )
 
         if self.sys_params.get("nonbondedMethod", None) in [
             CutoffPeriodic,
@@ -873,39 +889,124 @@ class OpenMMSimulation:
 
         # if use_constraint_tolerance:
         #    constraintTolerance = system_params.pop('constraintTolerance')
+        print("About to create system...")
         self.modeller = Modeller(pdb.topology, pdb.positions)
-        if solvate:
-            try:
-                self.modeller.addSolvent(forcefield)
-            except ValueError as e:
-                print("Error adding solvent", type(e).__name__, "–", e)
-                if "No Template for" in str(e):
-                    raise ValueError(str(e))
-            except AttributeError as e:
-                print("Error adding solvent: ", type(e).__name__, "–", e)
-                print("Trying to add solvent with 1 nm padding")
-                if "NoneType" and "value_in_unit" in str(e):
-                    try:
-                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
-                    except Exception as e:
-                        print("Error adding solvent", type(e).__name__, "–", e)
-                        raise (e)
-            except Exception as e:
-                if "Cannot neutralize the system because the" in str(e):
-                    try:
-                        self.modeller.addSolvent(forcefield, padding=1 * nanometers)
-                    except Exception as e:
-                        print("Error adding solvent", type(e).__name__, "–", e)
-                        raise (e)
-                else:
-                    print("Exception: ", str(e))
-                    raise (e)
+        attempts = 0
+        solvent_list = ["MOH", "EOH", "HOH", "ACN", "URE", "DMS", "DMF", "GOL", "BNZ"]
+        while attempts < 3:
+            print(f"Attempts at creating system: {attempts}/3")
+            if solvate:
+                try:
+                    self.modeller.addSolvent(forcefield)
+                except ValueError as e:
+                    print("Error adding solvent", type(e).__name__, "–", e)
+                    if "No template found for" in str(e):
+                        smiles = self._error_to_smiles(e, solvent_list)
 
-            system = forcefield.createSystem(self.modeller.topology, **system_params)
-        else:
-            system = forcefield.createSystem(self.modeller.topology, **system_params)
+                        molecule = Molecule.from_smiles(smiles)
+                        smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
+                        forcefield.registerTemplateGenerator(smirnoff.generator)
+                        attempts += 1
+                        print(
+                            f"Attempt {attempts} to add small \
+                                molecules to forcefield."
+                        )
+                        continue
+                    else:
+                        raise ValueError(str(e))
 
+                except AttributeError as e:
+                    print("Error adding solvent: ", type(e).__name__, "–", e)
+                    print("Trying to add solvent with 1 nm padding")
+                    if "NoneType" and "value_in_unit" in str(e):
+                        try:
+                            self.modeller.addSolvent(forcefield, padding=1 * nanometers)
+                        except Exception as e:
+                            print("Error adding solvent", type(e).__name__, "–", e)
+                            raise (e)
+                except Exception as e:
+                    if "Cannot neutralize the system because the" in str(e):
+                        try:
+                            self.modeller.addSolvent(forcefield, padding=1 * nanometers)
+                        except Exception as e:
+                            print("Error adding solvent", type(e).__name__, "–", e)
+                            raise (e)
+                    else:
+                        print("Exception: ", str(e))
+                        raise (e)
+
+                system = forcefield.createSystem(
+                    self.modeller.topology, **system_params
+                )
+                break
+            else:
+                try:
+                    print("adding system without solvent")
+                    system = forcefield.createSystem(
+                        self.modeller.topology, **system_params
+                    )
+                    break
+                except ValueError as e:
+                    if "No template found for" in str(e):
+                        print("Trying to add component to Forcefield...")
+                        smiles = self._error_to_smiles(e, solvent_list)
+
+                        molecule = Molecule.from_smiles(smiles)
+                        smirnoff = SMIRNOFFTemplateGenerator(molecules=molecule)
+                        forcefield.registerTemplateGenerator(smirnoff.generator)
+                        attempts += 1
+                        print(
+                            f"Attempt {attempts} to add small \
+                                molecules to forcefield."
+                        )
+                        continue
+                    else:
+                        raise ValueError(str(e))
+
+        if attempts == 3:
+            raise ValueError("Could not create system after 3 attemps.")
         return system
+
+    def _code_to_smiles(
+        self, query: str
+    ) -> (
+        str | None
+    ):  # from https://github.com/ur-whitelab/chemcrow-public/blob/main/chemcrow/tools/databases.py
+        url = " https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/{}/{}"
+        r = requests.get(url.format(query, "property/IsomericSMILES/JSON"))
+        # convert the response to a json object
+        data = r.json()
+        # return the SMILES string
+        try:
+            smi = data["PropertyTable"]["Properties"][0]["IsomericSMILES"]
+        except KeyError:
+            return None
+        return smi
+
+    def _error_to_smiles(self, e, solvent_list):
+        pattern = r"residue \d+ \((\w+)\)"
+        # Search for the pattern in the error message
+        match = re.search(pattern, str(e))
+        if not match:
+            print("No residue code found in the error message.")
+            raise ValueError(str(e))
+        residue_code = match.group(1)
+        print(f"Residue code: {residue_code}")
+        if residue_code not in solvent_list:
+            print(
+                "Residue code not in solvent list. Adding forcefield \
+                        not supported."
+            )
+            raise ValueError(str(e))
+
+        print("Trying to add missing component to Forcefield...")
+        smiles = self._code_to_smiles(residue_code)
+        if not smiles:
+            print("No SMILES found for HET code.")
+            raise ValueError(str(e))
+
+        print(f"Found SMILES from HET code: {smiles}")
+        return smiles
 
     def unit_to_string(self, unit):
         """Needed to convert units to strings for the script
@@ -1083,6 +1184,20 @@ class OpenMMSimulation:
         simulation.step(steps)
 """
         return script_content
+
+    def het_to_smiles(het_code):
+        try:
+            # Fetch the molecule using RDKit's PDB parser
+            molecule = Chem.MolFromPDBCode(het_code)
+
+            if molecule:
+                # Convert the molecule to SMILES
+                smiles = Chem.MolToSmiles(molecule)
+                return smiles
+            else:
+                return "Invalid HET code or molecule not found."
+        except Exception as e:
+            return str(e)
 
     def write_standalone_script(self, filename="reproduce_simulation.py"):
         """Extracting parameters from the class instance
