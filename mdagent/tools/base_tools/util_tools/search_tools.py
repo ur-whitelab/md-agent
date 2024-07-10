@@ -54,12 +54,15 @@ def scholar2result_llm(llm, query, path_registry, k=5, max_sources=2):
             docs.add(path, data["citation"])
         except (ValueError, FileNotFoundError, PdfReadError):
             not_loaded += 1
+        except Exception as e:
+            print(f"Cannot load this paper. {type(e).__name__}: {e}")
 
     print(
         f"\nFound {len(papers)} papers"
         + (f" but couldn't load {not_loaded}" if not_loaded > 0 else "")
     )
     answer = docs.query(query, k=k, max_sources=max_sources).formatted_answer
+    print(answer)
     return "Succeeded. " + answer
 
 

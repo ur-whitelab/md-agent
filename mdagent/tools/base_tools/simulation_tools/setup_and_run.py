@@ -1817,7 +1817,13 @@ class SetUpandRunFunction(BaseTool):
         else:
             for file in forcefield_files:
                 if file not in FORCEFIELD_LIST:
-                    error_msg += "The forcefield file is not present"
+                    error_msg += "The forcefield file is not present. "
+                    error_msg += (
+                        "Leave blank for Amber14 (default) or choose "
+                        "['charmm36.xml', 'charmm36/water.xml'] for CHARMM36, "
+                        "['amoeba2018.xml'] for AMOEBA,"
+                        "['charmm_polar_2013.xml'] for CHARMM polarizable force field."
+                    )
 
         save = values.get("save", True)
         if type(save) != bool:
