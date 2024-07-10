@@ -697,10 +697,6 @@ class OpenMMSimulation:
             if "No template found for" in str(e):
                 raise ValueError(str(e))
             else:
-                print(
-                    f"Error building system. Please check the forcefield \
-                      files {str(e)}"
-                )
                 raise ValueError(
                     f"Error building system. Please check the forcefield files {str(e)}"
                 )
