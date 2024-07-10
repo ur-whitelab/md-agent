@@ -5,6 +5,7 @@ from .plot_tools import SimulationOutputFigures
 from .ppi_tools import PPIDistance
 from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
 from .rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
+from .salt_bridge_tool import SaltBridgeTool
 from .sasa import SolventAccessibleSurfaceArea
 from .vis_tools import VisFunctions, VisualizeProtein
 
@@ -20,7 +21,7 @@ __all__ = [
     "RadiusofGyrationAverage",
     "RadiusofGyrationPerFrame",
     "RadiusofGyrationPlot",
-    "RMSDCalculator",
+    "SaltBridgeTool",
     "SimulationOutputFigures",
     "SolventAccessibleSurfaceArea",
     "VisFunctions",
