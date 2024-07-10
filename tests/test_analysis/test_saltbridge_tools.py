@@ -41,7 +41,6 @@ def test_find_salt_bridges(fake_path_registry, mock_md_load):
     mock_md_load.assert_called_once_with(
         "/fake/path/traj_file.dcd", top="/fake/path/top_file.top"
     )
-    # mock_md_compute_distances.assert_called()
 
 
 def test_salt_bridge_function_without_top(fake_path_registry, mock_md_load):
