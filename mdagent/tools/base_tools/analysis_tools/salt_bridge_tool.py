@@ -9,7 +9,7 @@ from mdagent.utils import PathRegistry
 
 class SaltBridgeFunction:  # this class defines a method called find_salt_bridge
     # using MD traj and top files and threshold distance default, residue pair list
-    # used to account for salt bridge analysis
+    path_registry:PathRegistry
     def __init__(self, path_registry):
         self.path_registry = path_registry
         self.salt_bridges = []  # stores paired salt bridges
