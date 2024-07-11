@@ -183,7 +183,7 @@ def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=N
     plt.close()
 
 
-def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=None):
+def plot_histogram(data:?, bins:int=10, title:str="Histogram", xlabel:str="Value"):
     plt.figure(figsize=(10, 6))
     plt.hist(data, bins=bins, edgecolor="black")
     plt.xlabel(xlabel)
