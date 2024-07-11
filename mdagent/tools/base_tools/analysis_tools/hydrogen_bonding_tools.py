@@ -167,7 +167,7 @@ class KabschSander(BaseTool):
 # Helper functions for plotting
 
 
-def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=None):
+def plot_time_series(data:?, title:str="Time Series Plot", ylabel:str="Value":
     plt.figure(figsize=(10, 6))
     plt.plot(data, label="Hydrogen Bonds")
     plt.xlabel("Time (frames)")
@@ -176,10 +176,7 @@ def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=N
     plt.legend()
     plt.grid(True)
 
-    if save_path:
-        plt.savefig(save_path)
-    else:
-        plt.show()
+    plt.savefig(save_path)
     plt.close()
 
 
