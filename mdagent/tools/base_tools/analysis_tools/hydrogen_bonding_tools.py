@@ -198,13 +198,3 @@ def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=N
     plt.close()
 
 
-# Example usage of the plotting functions
-if __name__ == "__main__":
-    # Example data for plotting
-    example_data = np.random.randn(100)
-
-    # Plot time series
-    plot_time_series(example_data, title="Example Time Series Plot")
-
-    # Plot histogram
-    plot_histogram(example_data, title="Example Histogram")
