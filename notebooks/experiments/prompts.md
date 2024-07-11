@@ -19,7 +19,7 @@ Download the PDB file for 1XQ8. Then, save the visualization for it.
 Download the PDB for 2YXF. Tell me about its stability, as found in literature. Then, simulate it for 1ns and plot its RMSD over time.
 Simulate 1MBN in water and in methanol solutions.
 Download Protein 1ATN
-Download and clean protein 1A3N
+Download  clean protein 1A3N
 Perform a short simulation of protein 1PQ2
 Analyze the rdf of the simulation of 1A3N solvated in water
 Make an rdf analysis of both oxygenated and deoxygenated hemoglobin structures
