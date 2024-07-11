@@ -191,10 +191,7 @@ def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=N
     plt.title(title)
     plt.grid(True)
 
-    if save_path:
-        plt.savefig(save_path)
-    else:
-        plt.show()
+   plt.savefig(save_path)
     plt.close()
 
 
