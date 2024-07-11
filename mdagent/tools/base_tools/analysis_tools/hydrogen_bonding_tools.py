@@ -30,8 +30,6 @@ class HydrogenBondTool(BaseTool):
         freq: str | None = "0.1",
     ) -> str:
         try:
-            if not top_file:
-                top_file = self.top_file(traj_file)
 
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
