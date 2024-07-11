@@ -93,9 +93,6 @@ class HydrogenBondTool(BaseTool):
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
 
-    def top_file(self, traj_file: str) -> str:
-        top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
-        return top_file
 
     def save_results_to_file(self, results: dict, file_name: str) -> None:
         with open(file_name, "w") as f:
