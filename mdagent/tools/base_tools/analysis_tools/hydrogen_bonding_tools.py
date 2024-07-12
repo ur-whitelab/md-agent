@@ -6,15 +6,107 @@ import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
 
-from mdagent.utils import PathRegistry, load_single_traj
+from mdagent.utils import FileType, PathRegistry, load_single_traj
+
+
+def compute_baker_hubbard(traj, freq):
+    frequency = float(freq) if freq else 0.1
+    return md.baker_hubbard(
+        traj,
+        frequency,
+        exclude_water=True,
+        periodic=True,
+        sidechain_only=False,
+    )
+
+
+def compute_wernet_nilsson(traj):
+    return md.wernet_nilsson(
+        traj,
+        exclude_water=True,
+        periodic=True,
+        sidechain_only=False,
+    )
+
+
+def save_hb_results(results: dict, method: str, path_registry: PathRegistry) -> str:
+    file_name = path_registry.write_file_name(
+        FileType.RECORD,
+        record_type=f"{method}_results",
+    )
+    file_id = path_registry.get_fileid(file_name, FileType.RECORD)
+    file_path = f"{path_registry.ckpt_records}/{method}_results.json"
+    with open(file_path, "w") as f:
+        json.dump(results, f)
+    path_registry.map_path(
+        file_id,
+        file_name,
+        description=f"Hydrogen bond results for {method}",
+    )
+    return file_id
+
+
+def plot_and_save_hb_plot(
+    data: np.ndarray,
+    title: str,
+    plot_type: str,
+    method: str,
+    path_registry: PathRegistry,
+    ylabel: str = "Value",  # Added ylabel parameter with default value
+) -> str:
+    """
+    Plots the data and saves the plot to a file.
+
+    Args:
+    data: The data to plot.
+    title: The title of the plot.
+    plot_type: The type of plot ('histogram' or 'time_series').
+    method: The method name used for file naming.
+    path_registry: The path registry to save the file to.
+
+    Returns:
+    The file ID of the saved plot.
+    """
+
+    plt.figure(figsize=(10, 6))
+    if plot_type == "histogram":
+        plt.hist(data, bins=10, edgecolor="black")
+        plt.xlabel("Value")
+        plt.ylabel("Frequency")
+    elif plot_type == "time_series":
+        plt.plot(data, label="Hydrogen Bonds")
+        plt.xlabel("Time (frames)")
+        plt.ylabel("Value")
+    plt.title(title)
+    plt.grid(True)
+
+    file_name = path_registry.write_file_name(
+        FileType.FIGURE,
+        file_format="png",
+    )
+    file_id = path_registry.get_fileid(file_name, FileType.FIGURE)
+
+    file_path = f"{path_registry.ckpt_figures}/{method}_{plot_type}.png"
+
+    plt.savefig(file_path, format="png", dpi=300, bbox_inches="tight")
+
+    plt.close()
+
+    path_registry.map_path(
+        file_id,
+        file_name,
+        description=(f"{title} for {method}"),
+    )
+    return file_id
 
 
 class HydrogenBondTool(BaseTool):
     name = "hydrogen_bond_tool"
     description = """Identifies hydrogen bonds using different methods;
-    Baker-Hubbard and Wernet-Nilsson. Input a trajectory file ID and a method (either baker_hubbard or wernet_nilsson). If baker_hubbard is used, a frequency must be provided as a float. Optionally provide the topology file ID. Output is a file and plot of the hydrogen bonds found.
-
-    """
+    Baker-Hubbard and Wernet-Nilsson. Input a trajectory file ID and a method (either
+    baker_hubbard or wernet_nilsson). If baker_hubbard is used, a frequency must
+    be provided as a float. Optionally provide the topology file ID. Output is a
+    file and plot of the hydrogen bonds found."""
 
     path_registry: PathRegistry | None = None
 
@@ -40,53 +132,45 @@ class HydrogenBondTool(BaseTool):
                 corrupted files, or incorrect formatted file. Please check and try
                 again."""
 
-            # baker_hubbard is the default method if user doesnt specify which method
-
+            # Call the appropriate helper function based on the method
             if method == "wernet_nilsson":
-                result = md.wernet_nilsson(
-                    traj,
-                    exclude_water=True,
-                    periodic=True,
-                    sidechain_only=False,
-                )
+                result = compute_wernet_nilsson(traj)
             else:
-                frequency = float(freq) if freq else 0.1
-                result = md.baker_hubbard(
-                    traj,
-                    frequency,
-                    exclude_water=True,
-                    periodic=True,
-                    sidechain_only=False,
-                )
+                result = compute_baker_hubbard(traj, freq)
 
             # Count the number of hydrogen bonds for each frame
             hb_counts = np.array([len(frame) for frame in result])
 
             if self.path_registry is not None:
-                self.save_results_to_file(
+                result_file_id = save_hb_results(
                     {"results": [list(item) for item in result]},
-                    f"{method}_results.json",
+                    method,
+                    self.path_registry,
                 )
-                plot_save_path_hist = self.path_registry.get_mapped_path(
-                    f"{method}_histogram_plot.png",
-                )
-                plot_histogram(
+
+                plot_hist_file_id = plot_and_save_hb_plot(
                     hb_counts,
                     title=f"{method.capitalize()} Histogram",
-                    save_path=plot_save_path_hist,
+                    plot_type="histogram",
+                    method=method,
+                    path_registry=self.path_registry,
                 )
 
-                plot_save_path_time_series = self.path_registry.get_mapped_path(
-                    f"{method}_time_series_plot.png",
-                )
-                plot_time_series(
+                plot_time_series_file_id = plot_and_save_hb_plot(
                     hb_counts,
                     title=f"{method.capitalize()} Time Series",
-                    save_path=plot_save_path_time_series,
+                    plot_type="time_series",
+                    method=method,
+                    path_registry=self.path_registry,
+                    ylabel="Bond Energy",
                 )
-                return """Succeeded. Analysis completed, results saved to file and plot
-                saved."""
-
+                return (
+                    "Succeeded. Analysis completed, results saved to file and plot"
+                    "saved. "
+                    f"Results file: {result_file_id}, "
+                    f"Histogram plot: {plot_hist_file_id}, "
+                    f"Time series plot: {plot_time_series_file_id}"
+                )
             else:
                 return """Failed. Path registry helps track
                 file locations and it is not set up. Please make sure it is set up
@@ -102,6 +186,13 @@ class HydrogenBondTool(BaseTool):
     def save_results_to_file(self, results: dict, file_name: str) -> None:
         with open(file_name, "w") as f:
             json.dump(results, f)
+        if self.path_registry:
+            file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
+            self.path_registry.map_path(
+                file_id,
+                file_name,
+                description=f"Results saved to {file_name}",
+            )
 
 
 class KabschSander(BaseTool):
@@ -137,18 +228,20 @@ class KabschSander(BaseTool):
                     if hasattr(result[1], "tolist")
                     else list(result[1]),
                 }
+
                 self.save_results_to_file(result_dict, "kabsch_sander_results.json")
-                plot_save_path_time_series = self.path_registry.get_mapped_path(
-                    "kabsch_sander_time_series_plot.png",
-                )
-                plot_time_series(
+                plot_time_series_file_id = plot_and_save_hb_plot(
                     result[1],  # assuming result[1] contains the bond energies
                     title="Kabsch-Sander Time Series",
+                    plot_type="time_series",
+                    method="kabsch_sander",
+                    path_registry=self.path_registry,
                     ylabel="Bond Energy",
-                    save_path=plot_save_path_time_series,
                 )
-                return """Succeeded. Kabsch-Sander analysis completed, results saved
-                to file and plot saved."""
+                return (
+                    "Succeeded. Kabsch-Sander analysis completed, results saved to "
+                    f"file and plot saved. Plot file: {plot_time_series_file_id}"
+                )
             else:
                 return """Failed. Path registry helps track
                 file locations and it is not set up. Please make sure it is set up
@@ -167,6 +260,13 @@ class KabschSander(BaseTool):
     def save_results_to_file(self, results: dict, file_name: str) -> None:
         with open(file_name, "w") as f:
             json.dump(results, f)
+        if self.path_registry:
+            file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
+            self.path_registry.map_path(
+                file_id,
+                file_name,
+                description=f"Results saved to {file_name}",
+            )
 
 
 # Helper functions for plotting
@@ -183,6 +283,8 @@ def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=N
 
     if save_path:
         plt.savefig(save_path)
+        if PathRegistry.get_instance() is not None:
+            PathRegistry.get_instance().register_path(save_path)
     else:
         plt.show()
     plt.close()
@@ -198,18 +300,31 @@ def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=N
 
     if save_path:
         plt.savefig(save_path)
+        if PathRegistry.get_instance() is not None:
+            PathRegistry.get_instance().register_path(save_path)
     else:
         plt.show()
     plt.close()
 
 
-# Example usage of the plotting functions
 if __name__ == "__main__":
-    # Example data for plotting
     example_data = np.random.randn(100)
 
     # Plot time series
-    plot_time_series(example_data, title="Example Time Series Plot")
+    plot_and_save_hb_plot(
+        example_data,
+        title="Example Time Series Plot",
+        plot_type="time_series",
+        method="example",
+        path_registry=PathRegistry.get_instance(),
+        ylabel="Value",
+    )
 
     # Plot histogram
-    plot_histogram(example_data, title="Example Histogram")
+    plot_and_save_hb_plot(
+        example_data,
+        title="Example Histogram",
+        plot_type="histogram",
+        method="example",
+        path_registry=PathRegistry.get_instance(),
+    )
