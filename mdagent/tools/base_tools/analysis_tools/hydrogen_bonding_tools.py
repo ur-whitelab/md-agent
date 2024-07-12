@@ -9,8 +9,23 @@ from langchain.tools import BaseTool
 from mdagent.utils import FileType, PathRegistry, load_single_traj
 
 
-def compute_baker_hubbard(traj, freq):
-    frequency = float(freq) if freq else 0.1
+def compute_baker_hubbard(traj, freq=0.1):
+    """
+    Computes hydrogen bonds using the Baker-Hubbard method.
+
+    Args:
+        traj: The trajectory data.
+        freq: The frequency cutoff.
+
+    Returns:
+        The hydrogen bonds found using the Baker-Hubbard method.
+    """
+    frequency = float(freq)
+    try:
+        frequency = float(freq)
+    except ValueError:
+        raise ValueError("Frequency must be a float.")
+
     return md.baker_hubbard(
         traj,
         frequency,
@@ -197,8 +212,11 @@ class HydrogenBondTool(BaseTool):
 
 class KabschSander(BaseTool):
     name = "kabsch_sander"
-    description = """Compute the hydrogen bond energy between each pair
-    of residues in every frame."""
+    description = """This function compute the hydrogen bond energy between each pair
+    of residues in every frame. THe input isthe file ID of a traj file containing
+    MD data and optional top file with the molecular structure data. The
+    output is a string telling the user whether the simulation was a success
+    or a failure."""
 
     path_registry: PathRegistry | None = None
 
@@ -269,7 +287,11 @@ class KabschSander(BaseTool):
             )
 
 
-# Helper functions for plotting
+def plot_helper_functions():
+    """
+    Helper function for plotting
+    """
+    # Helper functions for plotting
 
 
 def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=None):
