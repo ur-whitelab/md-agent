@@ -179,8 +179,11 @@ class QueryUniprot:
                 "The primary accession number provided does not "
                 "match any entry in the data, using the first entry instead."
             )
-            return [data][0]
-        return [data][0]
+            pa_nbr = data[0].get("primaryAccession")
+            if pa_nbr:
+                print("The first entry is pulled from this primary accession:", pa_nbr)
+            return [data[0]]
+        return [data[0]]
 
     def get_protein_name(
         self,
@@ -775,6 +778,38 @@ class QueryUniprot:
 
         return [entry["comments"] for entry in data if entry["comments"]]
 
+    def get_ph_temp(self, query: str, primary_accession: str | None = None) -> list:
+        """
+        Get the pH and temperature dependence information for a specific
+        protein, given the primary accession number.
+
+        Args:
+            query: The query string to search (e.g. 'hemoglobin')
+            primary_accession: The primary accession number of the protein
+
+        Returns:
+            The pH and temperature dependence information for the protein
+            with the given primary accession number
+        """
+        data = self.get_data(query, desired_field="kinetics")
+        if not data:
+            return []
+
+        if primary_accession:
+            data = self._match_primary_accession(data, primary_accession)
+
+        results: list = []
+        for entry in data:
+            comments = entry.get("comments", [])
+            for comment in comments:
+                for key in ["phDependence", "temperatureDependence"]:
+                    if key in comment:
+                        texts = comment[key].get("texts", [])
+                        results.extend(
+                            text["value"] for text in texts if "value" in text
+                        )
+        return results
+
 
 class MapProteinRepresentation(BaseTool):
     name = "MapProteinRepresentation"
@@ -843,7 +878,7 @@ class GetBindingSites(BaseTool):
     name = "GetBindingSites"
     description = (
         "Get the binding sites known for a specific "
-        "protein, given the primary accession number. "
+        "protein, given the primary accession number (Uniprot ID). "
         "Both the query string and primary accession "
         "number are required. "
     )
@@ -866,7 +901,7 @@ class GetActiveSites(BaseTool):
     name = "GetActiveSites"
     description = (
         "Get the active sites known for a specific "
-        "protein, given the primary accession number. "
+        "protein, given the primary accession number (Uniprot ID). "
         "Both the query string and primary accession "
         "number are required. "
     )
@@ -891,7 +926,7 @@ class GetRelevantSites(BaseTool):
         "Get the relevant sites for a specific protein, "
         "given the primary accession number. You must "
         "provide the query string and primary accession "
-        "number. The relevant sites are sites that are "
+        "number (Uniprot ID). The relevant sites are sites that are "
         "known to be important for the protein's function, "
         "but are not necessarily active or binding sites."
     )
@@ -916,7 +951,7 @@ class GetAllKnownSites(BaseTool):
         "Get all known sites for a specific protein, "
         "given the primary accession number. You must "
         "provide the query string and primary accession "
-        "number. This tool is a one-stop shop to get all known sites "
+        "number (Uniprot ID). This tool is a one-stop shop to get all known sites "
         "for the protein, including active sites, binding "
         "sites, and other relevant sites."
     )
@@ -963,7 +998,7 @@ class GetProteinFunction(BaseTool):
     name = "GetProteinFunction"
     description = (
         "Get the protein function for a specific protein, "
-        "with the option to filter by primary accession number. "
+        "with the option to filter by primary accession number (Uniprot ID). "
         "If you have the primary accession number, you can use "
         "it to filter the results. Otherwise, all functions "
         "associated with the protein will be returned. "
@@ -991,7 +1026,7 @@ class GetProteinAssociatedKeywords(BaseTool):
     description = (
         "Get the keywords associated with a specific protein, with "
         "the option to filter by primary accession number. If you "
-        "have the primary accession number, you can use it to "
+        "have the primary accession number (Uniprot ID), you can use it to "
         "filter the results. Otherwise, all keywords associated "
         "with the protein will be returned. Input the uniprot ID "
         "of the protein."
@@ -1040,7 +1075,7 @@ class GetInteractions(BaseTool):
     description = (
         "Get the interactions for a specific protein, given the "
         "primary accession number. Both the query string and primary "
-        "accession number are required. This tool will return the "
+        "accession number (Uniprot ID) are required. This tool will return the "
         "interactions for the protein."
     )
     uniprot = QueryUniprot()
@@ -1063,7 +1098,7 @@ class GetSubunitStructure(BaseTool):
     description = (
         "Get the subunit structure information for a specific protein, "
         "given the primary accession number. Both the query string and "
-        "primary accession number are required. This tool will return "
+        "primary accession number (Uniprot ID) are required. This tool will return "
         "the subunit structure information for the protein."
     )
     uniprot = QueryUniprot()
@@ -1088,7 +1123,7 @@ class GetSequenceInfo(BaseTool):
     description = (
         "Get the sequence information for a specific protein, "
         "given the primary accession number. Both the query string "
-        "and primary accession number are required. This tool will "
+        "and primary accession number (Uniprot ID) are required. This tool will "
         "return the sequence, length, and molecular weight. "
     )
     uniprot = QueryUniprot()
@@ -1114,8 +1149,9 @@ class GetPDBProcessingInfo(BaseTool):
     description = (
         "Get the processing information for a specific protein, "
         "given the primary accession number. Both the query string "
-        "and primary accession number are required. Input the query, accession "
-        "number, and the type of processing information to retrieve (e.g., "
+        "and primary accession number (Uniprot ID) are required. "
+        "Input the query, accession number, and the type of processing "
+        "information to retrieve (e.g., "
         "chain, crosslink, disulfide-bond, etc.). Here is a list of the "
         "processing types you can retrieve: chain, crosslink, disulfide-bond, "
         "glycosylation, initiator-methionine, lipidation, modified-residue, "
@@ -1145,7 +1181,7 @@ class GetPDB3DInfo(BaseTool):
     description = (
         "Get the 3D structure information for a specific protein, "
         "given the primary accession number. Both the query string "
-        "and primary accession number are required. This tool will "
+        "and primary accession number (Uniprot ID) are required. This tool will "
         "return information from the PDB database for the protein, "
         "including the PDB ID, chain, and resolution."
     )
@@ -1169,7 +1205,7 @@ class GetTurnsBetaSheetsHelices(BaseTool):
     description = (
         "Get the number and location of turns, beta sheets, and helices "
         "for a specific protein, given the primary accession number. Both "
-        "the query string and primary accession number are required. This "
+        "the query string and primary accession number (Uniprot ID) are required. This "
         "tool will return the number and location of turns, beta sheets, and "
         "helices for the protein. "
     )
@@ -1231,7 +1267,7 @@ class GetGeneNames(BaseTool):
     description = (
         "Get the gene names associated with a specific protein, "
         "with the option to filter by primary accession number. "
-        "If you have the primary accession number, you can use it "
+        "If you have the primary accession number (Uniprot ID), you can use it "
         "to filter the results. Otherwise, all gene names associated "
         "with the protein will be returned. Input the uniprot ID of "
         "the protein."
@@ -1257,8 +1293,8 @@ class GetKineticProperties(BaseTool):
     name = "GetKineticProperties"
     description = (
         "Get the kinetics information for a specific protein, "
-        "given the primary accession number. "
-        "Both the query string and primary accession number are required. "
+        "given the primary accession number. Both the query string and "
+        "primary accession number (Uniprot ID) are required. "
     )
     uniprot = QueryUniprot()
 
@@ -1269,6 +1305,29 @@ class GetKineticProperties(BaseTool):
             return str(kinetics)
         except Exception as e:
             return str(e)
+
+    async def _arun(self, query: str, dependency: str, primary_accession: str) -> str:
+        """use the tool asynchronously."""
+        raise NotImplementedError("This tool does not support asynchronous execution.")
+
+
+class GetOptimalConditions(BaseTool):
+    name = "GetOptimalConditions"
+    description = (
+        "Get the pH and temperature information for a specific queried protein, "
+        "given the primary accession number. Both the query string (protein name) "
+        "and primary accession number (Uniprot ID) are required. "
+    )
+    uniprot = QueryUniprot()
+
+    def _run(self, query: str, primary_accession: str = "") -> str:
+        """use the tool."""
+        try:
+            opt_conditions = self.uniprot.get_ph_temp(query, primary_accession)
+            print(opt_conditions)
+            return str(opt_conditions)
+        except Exception as e:
+            return f"Failed. {type(e).__name__}: {str(e)}"
 
     async def _arun(self, query: str, dependency: str, primary_accession: str) -> str:
         """use the tool asynchronously."""
