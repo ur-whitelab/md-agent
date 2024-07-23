@@ -83,6 +83,7 @@ class MDAgent:
                 self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
+                    top_k_tools=self.top_k_tools,
                     human=self.use_human_tool,
                 )
             else:
