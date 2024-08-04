@@ -3,8 +3,6 @@ import os
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chat_models import ChatOpenAI
 
 from ..tools import get_tools, make_all_tools
 from ..utils import PathRegistry, SetCheckpoint, _make_llm
@@ -60,18 +58,12 @@ class MDAgent:
 
         self.agent = None
         self.agent_type = agent_type
-        self.user_tools = tools
+        self.llm = _make_llm(tools_model, temp, verbose)
         self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
-
-        self.llm = ChatOpenAI(
-            temperature=temp,
-            model=model,
-            client=None,
-            streaming=True,
-            callbacks=[StreamingStdOutCallbackHandler()],
-        )
+        self.user_tools = tools
+        self.verbose = verbose
 
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
@@ -97,6 +89,7 @@ class MDAgent:
                 self.llm,
                 self.tools,
             ),
+            verbose=self.verbose,
             handle_parsing_errors=True,
         )
 

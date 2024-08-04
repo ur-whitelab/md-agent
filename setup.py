@@ -19,8 +19,11 @@ setup(
     install_requires=[
         "chromadb==0.4.24",
         "google-search-results",
-        "langchain==0.0.336",
-        "langchain_experimental",
+        "langchain==0.2.12",
+        "langchain-community",
+        "langchain_experimental",  # todo: check - do we need this?
+        "langchain-openai",  # todo: pin this
+        "langchain-together==0.1.4",
         "matplotlib",
         "nbformat",
         "openai",
