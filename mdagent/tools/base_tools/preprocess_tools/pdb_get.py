@@ -27,7 +27,7 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
     }
     r = requests.post(url, json=query)
     if r.status_code == 204:
-        return None
+        return None, None
     if "cif" in query_string or "CIF" in query_string:
         filetype = "cif"
     else:
@@ -55,9 +55,8 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
             f"{path_registry.ckpt_pdb}/{filename}",
             "PDB file downloaded from RSCB",
         )
-
         return filename, file_id
-    return None
+    return None, None
 
 
 class ProteinName2PDBTool(BaseTool):
