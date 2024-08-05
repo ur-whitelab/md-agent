@@ -1,11 +1,11 @@
-import langchain
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain_openai import ChatOpenAI
 from langchain_together import ChatTogether
 
 
 def _make_llm(model, temp, verbose):
     if model.startswith("gpt-3.5-turbo") or model.startswith("gpt-4"):
-        llm = langchain.chat_models.ChatOpenAI(
+        llm = ChatOpenAI(
             temperature=temp,
             model_name=model,
             request_timeout=1000,
@@ -23,12 +23,3 @@ def _make_llm(model, temp, verbose):
     else:
         raise ValueError(f"Invalid or Unsupported model name: {model}")
     return llm
-
-
-# ChatOpenAI(
-#             temperature=temp,
-#             model=model,
-#             client=None,
-#             streaming=True,
-#             callbacks=[StreamingStdOutCallbackHandler()],
-#         )

@@ -2,8 +2,8 @@ import streamlit as st
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
+from langchain_openai import OpenAIEmbeddings
 
 from mdagent.utils import PathRegistry
 
@@ -151,7 +151,7 @@ def get_tools(
             ids=[tool.name],
             metadatas=[{"tool_name": tool.name, "index": i}],
         )
-        vectordb.persist()
+        # vectordb.persist()
 
     # retrieve 'k' tools
     k = min(top_k_tools, vectordb._collection.count())

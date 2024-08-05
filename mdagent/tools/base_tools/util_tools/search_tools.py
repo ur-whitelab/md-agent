@@ -8,6 +8,7 @@ import paperqa
 import paperscraper
 from langchain.base_language import BaseLanguageModel
 from langchain.tools import BaseTool
+from langchain_core.output_parsers import StrOutputParser
 from pypdf.errors import PdfReadError
 
 from mdagent.utils import PathRegistry
@@ -32,7 +33,7 @@ def paper_search(llm, query, path_registry):
     )
 
     path = f"{path_registry.ckpt_files}/query"
-    query_chain = langchain.chains.llm.LLMChain(llm=llm, prompt=prompt)
+    query_chain = prompt | llm | StrOutputParser()
     if not os.path.isdir(path):
         os.mkdir(path)
     search = query_chain.run(query)

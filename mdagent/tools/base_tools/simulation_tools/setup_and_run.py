@@ -8,12 +8,11 @@ import re
 import textwrap
 from typing import Any, Dict, List, Optional, Type
 
-import langchain
 import requests
 import streamlit as st
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from langchain_core.output_parsers import StrOutputParser
 from openff.toolkit.topology import Molecule
 from openmm import (
     AndersenThermostat,
@@ -111,26 +110,9 @@ FORCEFIELD_LIST = [
 
 
 class SimulationFunctions:
-    def __init__(
-        self,
-        path_registry,
-        temperature: float = 0.05,
-        model_name: str = "gpt-4",
-        request_timeout: int = 1000,
-        max_tokens: int = 2000,
-    ):
+    def __init__(self, path_registry, llm):
         self.path_registry = path_registry
-        self.temperature = temperature
-        self.model_name = model_name
-        self.request_timeout = request_timeout
-        self.max_tokens = max_tokens
-
-        self.llm = langchain.chat_models.ChatOpenAI(
-            temperature=self.temperature,
-            model_name=self.model_name,
-            request_timeout=self.request_timeout,
-            max_tokens=self.request_timeout,
-        )
+        self.llm = llm
 
     #######==================System Congifuration==================########
     # System Configuration initialization.
@@ -271,7 +253,7 @@ class SimulationFunctions:
                             you may fill in with the default, but explicitly state so.
                             Here is the information:{query}"""
         prompt = PromptTemplate(template=prompt_template, input_variables=["query"])
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
+        llm_chain = prompt | self.llm | StrOutputParser()
 
         return llm_chain.run(" ".join(query))
 
@@ -483,12 +465,10 @@ class SetUpAndRunTool(BaseTool):
                     """
     path_registry: Optional[PathRegistry]
 
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-    ):
+    def __init__(self, path_registry: Optional[PathRegistry], llm):
         super().__init__()
         self.path_registry = path_registry
+        self.llm = llm
 
     def _run(self, query: str) -> str:
         """Use the tool"""
@@ -496,7 +476,9 @@ class SetUpAndRunTool(BaseTool):
         try:
             if self.path_registry is None:  # this should not happen
                 return "Registry not initialized"
-            sim_fxns = SimulationFunctions(path_registry=self.path_registry)
+            sim_fxns = SimulationFunctions(
+                path_registry=self.path_registry, llm=self.llm
+            )
             parameters = sim_fxns._extract_parameters_path()
 
         except ValueError as e:
