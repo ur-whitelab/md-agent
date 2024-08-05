@@ -78,6 +78,7 @@ class MDAgent:
                 self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
+                    top_k_tools=self.top_k_tools,
                     human=self.use_human_tool,
                 )
             else:
@@ -103,6 +104,7 @@ class MDAgent:
         elif self.agent_type == "OpenAIFunctionsAgent":
             self.prompt = openaifxn_prompt.format(input=user_input, context=run_memory)
         self.agent = self._initialize_tools_and_agent(user_input)
+        print("Num of tokens:", self.llm.get_num_tokens(self.prompt))
         model_output = self.agent.invoke(self.prompt, callbacks=callbacks)
         if self.use_memory:
             self.memory.generate_agent_summary(model_output)

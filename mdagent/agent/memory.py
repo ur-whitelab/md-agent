@@ -128,7 +128,6 @@ class MemoryManager:
         Returns:
         - None
         """
-        print(agent_trace)
         llm_out = self.llm_agent_trace.invoke({"agent_trace": agent_trace})
         key_str = f"{self.run_id}.{self.get_summary_number()}"
         run_summary = {key_str: llm_out}
