@@ -73,21 +73,21 @@ class ComputeDSSP(BaseTool):
         used. Otherwise, the full set of codes is used."""
         if self.simplified:
             return {
-                "H": "helix",
-                "E": "strand",
-                "C": "coil",
-                "NA": "not assigned, not a protein residue",
+                "H": "residues in helix",
+                "E": "residues in strand",
+                "C": "residues in coil",
+                "NA": "residues not assigned, not a protein residue",
             }
         return {
-            "H": "alpha helix",
-            "B": "beta bridge",
-            "E": "extended strand",
-            "G": "three helix",
-            "I": "five helix",
-            "T": "hydrogen bonded turn",
-            "S": "bend",
-            " ": "loop or irregular",
-            "NA": "not assigned, not a protein residue",
+            "H": "residues in alpha helix",
+            "B": "residues in beta bridge",
+            "E": "residues in extended strand",
+            "G": "residues in three helix",
+            "I": "residues in five helix",
+            "T": "residues in hydrogen bonded turn",
+            "S": "residues in bend",
+            " ": "residues in loop or irregular",
+            "NA": "residues not assigned, not a protein residue",
         }
 
     def _convert_dssp_counts(self, dssp_counts: dict) -> dict:
