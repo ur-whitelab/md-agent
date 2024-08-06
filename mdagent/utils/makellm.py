@@ -1,6 +1,6 @@
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain_openai import ChatOpenAI
 from langchain_anthropic import ChatAnthropic
+from langchain_openai import ChatOpenAI
 
 
 def _make_llm(model, temp, verbose):
@@ -19,7 +19,7 @@ def _make_llm(model, temp, verbose):
             streaming=True if verbose else False,
             callbacks=[StreamingStdOutCallbackHandler()] if verbose else None,
         )
-   
+
     else:
         raise ValueError(f"Invalid or Unsupported model name: {model}")
     return llm
