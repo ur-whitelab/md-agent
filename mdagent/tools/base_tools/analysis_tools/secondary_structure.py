@@ -49,11 +49,13 @@ class ComputeDSSP(BaseTool):
     residue at each time point."""
     path_registry: PathRegistry = PathRegistry.get_instance()
     simplified: bool = True
+    last_only: bool = True
 
-    def __init__(self, path_registry: PathRegistry, simplified: bool = True):
+    def __init__(self, path_registry: PathRegistry, simplified: bool = True, last_only=True):
         super().__init__()
         self.path_registry = path_registry
         self.simplified = simplified
+        self.last_only=last_only
 
     def _dssp_codes(self) -> list[str]:
         """
@@ -160,6 +162,8 @@ class ComputeDSSP(BaseTool):
             )
             if not traj:
                 raise Exception("Trajectory could not be loaded.")
+            if self.last_only and len(traj)>1:
+                traj = traj[-1]
         except Exception as e:
             print("Error loading trajectory: ", e)
             return str(e)
