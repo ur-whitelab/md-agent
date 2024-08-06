@@ -17,10 +17,12 @@ def compute_dssp_simple(get_registry):
     registry = get_registry("raw", True)
     return ComputeDSSP(path_registry=registry, simplified=True)
 
+
 @pytest.fixture
 def compute_dssp(get_registry):
     registry = get_registry("raw", True)
     return ComputeDSSP(path_registry=registry, simplified=False)
+
 
 def test_compute_dssp(loaded_cif_traj, compute_dssp_simple, compute_dssp):
     dssp_simple = compute_dssp_simple._compute_dssp(loaded_cif_traj)
