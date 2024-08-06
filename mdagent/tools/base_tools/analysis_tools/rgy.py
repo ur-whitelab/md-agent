@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -80,16 +81,25 @@ class RadiusofGyration:
         plot_id = self.path_registry.get_fileid(
             file_name=plot_name, type=FileType.FIGURE
         )
+        if plot_name.ends_with(".png"):
+            plot_name = plot_name.split(".png"[0])
+        plot_path = next(
+            f"{self.path_registry.ckpt_figures}/{plot_name}_{i}.png"
+            for i in range(1000)
+            if not os.path.exists(
+                f"{self.path_registry.ckpt_figures}/{plot_name}_{i}.png"
+            )
+        )
 
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
         plt.title(f"{pdb_id} - Radius of Gyration Over Time")
 
-        plt.savefig(f"{self.path_registry.ckpt_figures}/{plot_name}")
+        plt.savefig(f"{plot_path}")
         self.path_registry.map_path(
             plot_id,
-            f"{self.path_registry.ckpt_figures}/{plot_name}",
+            plot_path,
             description=f"Plot of radii of gyration over time for {self.pdb_id}",
         )
         plt.close()
