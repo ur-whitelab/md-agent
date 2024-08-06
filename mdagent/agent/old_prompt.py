@@ -14,13 +14,8 @@ structured_prompt = PromptTemplate(
 
     Complete format:
     Thought: (reflect on your progress and decide what " "to do next)
-    Action:
-    ```
-    {{
-        action: (the action name, should be the name of a tool),
-        action_input: (the input string to the action)
-    }}
-    '''
+    Action: (the action name, should be the name of a tool)
+    Action Input: (the input string to the action)
 
     OR
 
@@ -46,17 +41,6 @@ structured_prompt = PromptTemplate(
     Question: {input} """,
 )
 
-
-# Example:
-# Action:
-# ```
-# {
-#     "action": "PDBFileDownloader",
-#     "action_input": {
-#         "query": "1LYZ"
-#     }
-# }
-# ```
 
 modular_analysis_prompt = PromptTemplate(
     input_variables=[
