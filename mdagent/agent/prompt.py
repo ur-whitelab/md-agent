@@ -14,8 +14,13 @@ structured_prompt = PromptTemplate(
 
     Complete format:
     Thought: (reflect on your progress and decide what " "to do next)
-    Action: (the action name, should be the name of a tool)
-    Action Input: (the input string to the action)
+    Action:
+    ```
+    {{
+        action: (the action name, should be the name of a tool),
+        action_input: (the input string to the action)
+    }}
+    '''
 
     OR
 
@@ -39,77 +44,6 @@ structured_prompt = PromptTemplate(
     Here is the input:
     Previous Context: {context}
     Question: {input} """,
-)
-
-
-modular_analysis_prompt = PromptTemplate(
-    input_variables=[
-        "Main_Task",
-        "Subtask_types",
-        "Proteins",
-        "Parameters",
-        "UserProposedPlan",
-        "context",
-    ],
-    template="""
-        Approach the molecular dynamics inquiry by dissecting it into its modular
-        components:
-        Main Task: {Main_Task}
-        Subtasks: {Subtask_types}
-        Target Proteins: {Proteins}
-        Parameters: {Parameters}
-        Initial Plan Proposed by User: {UserProposedPlan}
-
-        The Main Task is the user's request.
-
-        The Subtasks are (some of/all) the individual steps that may need to be taken
-        to complete the Main Task; Preprocessing/Preparation usually involves
-        cleaning the initial pdb file (adding hydrogens, removing/adding water, etc.)
-        or making the required box for the simulation, Simulation involves running the
-        simulation and/or modifying the simulation script, Postprocessing involves
-        analyzing the results of the simulation (either using provided tools or figuring
-        it out on your own). Finally, Question is used if the user query is more
-        of a question than a request for a specific task.
-
-        the Target Proteins are the protein(s) that the user wants to focus on,
-        the Parameters are the 'special' conditions that the user wants to set and use
-        for the simulation, preprocessing and or analysis.
-
-        Sometimes users already have an idea of what is needed to be done.
-        Initial Plan Proposed by User is the user's initial plan for the simulation. You
-        can use this as a guide to understand what the user wants to do. You can also
-        modify it if you think is necessary.
-
-        You can only respond with a single complete
-        'Thought, Action, Action Input' format
-        OR a single 'Final Answer' format.
-
-        Complete format:
-        Thought: (reflect on your progress and decide what " "to do next)
-        Action: (the action name, should be the name of a tool)
-        Action Input: (the input string to the action)
-
-        OR
-
-        Final Answer: (the final answer to the original input
-        question)
-
-        Use the tools provided, using the most specific tool
-        available for each action.
-        Your final answer should contain all information
-        necessary to answer the question and subquestions.
-        Your thought process should be clean and clear,
-        and you must explicitly state the actions you are taking.
-
-        If you are asked to continue
-        or reference previous runs,
-        the context will be provided to you.
-        If context is provided, you should assume
-        you are continuing a chat.
-
-        Here is the input:
-        Previous Context: {context}
-    """,
 )
 
 openaifxn_prompt = PromptTemplate(
