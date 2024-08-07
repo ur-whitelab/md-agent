@@ -36,7 +36,7 @@ def paper_search(llm, query, path_registry):
     query_chain = prompt | llm | StrOutputParser()
     if not os.path.isdir(path):
         os.mkdir(path)
-    search = query_chain.run(query)
+    search = query_chain.invoke(query)
     print("\nSearch:", search)
     papers = paper_scraper(search, pdir=f"{path}/{re.sub(' ', '', search)}")
     return papers

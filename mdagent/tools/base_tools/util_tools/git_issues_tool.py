@@ -46,7 +46,7 @@ class GitToolFunctions:
         )
         llm_chain = prompt | self.llm | StrOutputParser()
 
-        return llm_chain.run({"query": query, "output": output})
+        return llm_chain.invoke({"query": query, "output": output})
 
     """Function to get the number of requests remaining for the Github API """
 

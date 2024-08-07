@@ -255,7 +255,7 @@ class SimulationFunctions:
         prompt = PromptTemplate(template=prompt_template, input_variables=["query"])
         llm_chain = prompt | self.llm | StrOutputParser()
 
-        return llm_chain.run(" ".join(query))
+        return llm_chain.invoke(" ".join(query))
 
     def _save_to_file(self, summary: str, filename: str):
         """Parse the summary string and
