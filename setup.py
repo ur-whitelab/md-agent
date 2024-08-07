@@ -24,7 +24,7 @@ setup(
         "langchain-community",
         "langchain-fireworks==0.1.7",
         "langchain-openai==0.1.19",
-        # "langchain-together==0.1.4",
+        "langchain-together==0.1.4",
         "matplotlib",
         "nbformat",
         "openai",

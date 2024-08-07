@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from typing import Optional
@@ -12,6 +13,16 @@ from langchain_core.output_parsers import StrOutputParser
 from pypdf.errors import PdfReadError
 
 from mdagent.utils import PathRegistry
+
+
+def configure_logging(path):
+    # to log all runtime errors from paperscraper, which can be VERY noisy
+    log_file = os.path.join(path, "scraping_errors.log")
+    logging.basicConfig(
+        filename=log_file,
+        level=logging.ERROR,
+        format="%(asctime)s:%(levelname)s:%(message)s",
+    )
 
 
 def paper_scraper(search: str, pdir: str = "query") -> dict:
@@ -36,6 +47,7 @@ def paper_search(llm, query, path_registry):
     query_chain = prompt | llm | StrOutputParser()
     if not os.path.isdir(path):
         os.mkdir(path)
+    configure_logging(path)
     search = query_chain.invoke(query)
     print("\nSearch:", search)
     papers = paper_scraper(search, pdir=f"{path}/{re.sub(' ', '', search)}")
@@ -45,10 +57,14 @@ def paper_search(llm, query, path_registry):
 def scholar2result_llm(llm, query, path_registry, k=5, max_sources=2):
     """Useful to answer questions that require
     technical knowledge. Ask a specific question."""
+    if llm.model_name.startswith("gpt"):
+        docs = paperqa.Docs(llm=llm.model_name)
+    else:
+        docs = paperqa.Docs()  # default gpt model
+
     papers = paper_search(llm, query, path_registry)
     if len(papers) == 0:
         return "Failed. Not enough papers found"
-    docs = paperqa.Docs(llm=llm.model_name)
     not_loaded = 0
     for path, data in papers.items():
         try:

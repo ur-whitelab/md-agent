@@ -1,3 +1,5 @@
+import os
+
 import streamlit as st
 from dotenv import load_dotenv
 from langchain import agents
@@ -70,8 +72,10 @@ def make_all_tools(
         # all_tools += [PythonREPLTool()]
         all_tools += [
             ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-            Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         ]
+        if "OPENAI_API_KEY" in os.environ:
+            # LiteratureSearch only works with OpenAI
+            all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
