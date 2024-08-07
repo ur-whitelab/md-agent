@@ -33,6 +33,15 @@ def _make_llm(model, temp, verbose):
             streaming=True if verbose else False,
             callbacks=[StreamingStdOutCallbackHandler()] if verbose else None,
         )
+    elif model.startswith("claude"):
+        from langchain_anthropic import ChatAnthropic
+
+        llm = ChatAnthropic(
+            temperature=temp,
+            model_name=model,
+            streaming=True if verbose else False,
+            callbacks=[StreamingStdOutCallbackHandler()] if verbose else None,
+        )
     else:
         raise ValueError(f"Unrecognized or unsupported model name: {model}")
     return llm

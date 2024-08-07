@@ -20,6 +20,7 @@ setup(
         "chromadb",
         "google-search-results",
         "langchain==0.2.12",
+        "langchain-anthropic",
         "langchain-chroma",
         "langchain-community",
         "langchain-fireworks==0.1.7",
