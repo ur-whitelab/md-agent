@@ -43,21 +43,21 @@ def write_raw_x(
 class ComputeDSSP(BaseTool):
     name = "ComputeDSSP"
     description = """Compute the DSSP (secondary structure) assignment
-    for a protein trajectory. Input is a trajectory file ID
+    for a protein trajectory. Input is a trajectory file ID and
+    a target_frames, which can be "first", "last", or "all",
     and an optional topology file ID.
+    Input "first" to get DSSP of only the first frame.
+    Input "last" to get DSSP of only the last frame.
+    Input "all" to get DSSP of all frames in trajectory, combined.
     The output is an array with the DSSP code for each
     residue at each time point."""
     path_registry: PathRegistry = PathRegistry.get_instance()
     simplified: bool = True
-    last_only: bool = True
 
-    def __init__(
-        self, path_registry: PathRegistry, simplified: bool = True, last_only=True
-    ):
+    def __init__(self, path_registry: PathRegistry, simplified: bool = True):
         super().__init__()
         self.path_registry = path_registry
         self.simplified = simplified
-        self.last_only = last_only
 
     def _dssp_codes(self) -> list[str]:
         """
@@ -144,7 +144,32 @@ class ComputeDSSP(BaseTool):
         """
         return md.compute_dssp(traj, simplified=self.simplified)
 
-    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
+    def _get_frame(self, traj, target_frames):
+        """
+        Retrieves the target frame(s) of the trajectory for DSSP.
+
+        Args:
+            traj: the trajectory
+            target_frames: the target frames to select. can be first, last, or all
+
+        Returns:
+            the trajectory with only target frames"""
+
+        if target_frames.lower().strip() == "all":
+            return traj
+        if target_frames.lower().strip() == "first":
+            return traj[0]
+        if target_frames.lower().strip() == "last":
+            return traj[-1]
+        else:
+            raise ValueError("Target Frames must be 'all', 'first', or 'last'.")
+
+    def _run(
+        self,
+        traj_file: str,
+        top_file: Optional[str] = None,
+        target_frames: str = "last",
+    ) -> str:
         """
         Computes the DSSP assignments for a trajectory and saves the results
         to a file.
@@ -164,8 +189,7 @@ class ComputeDSSP(BaseTool):
             )
             if not traj:
                 raise Exception("Trajectory could not be loaded.")
-            if self.last_only and len(traj) > 1:
-                traj = traj[-1]
+            traj = self._get_frame(traj, target_frames)
         except Exception as e:
             print("Error loading trajectory: ", e)
             return str(e)

@@ -37,6 +37,32 @@ def test_compute_dssp(loaded_cif_traj, compute_dssp_simple, compute_dssp):
     assert np.all(dssp[0][:10] == [" ", " ", " ", "E", "E", "E", "T", "T", "E", "E"])
 
 
+def test_get_frame(compute_dssp):
+    # random dummy traj with 3 frames
+    xyz = np.random.rand(10, 10, 3)
+    topology = md.Topology()
+    chain = topology.add_chain()
+    residue = topology.add_residue("ALA", chain)
+    for _ in range(10):
+        topology.add_atom("CA", md.element.carbon, residue)
+    traj = md.Trajectory(xyz, topology)
+
+    # first frame
+    first_frame = compute_dssp._get_frame(traj, "first")
+    assert first_frame.n_frames == 1
+    assert np.array_equal(first_frame.xyz, traj.xyz[0].reshape(1, -1, 3))
+
+    # last frame
+    last_frame = compute_dssp._get_frame(traj, "last")
+    assert last_frame.n_frames == 1
+    assert np.array_equal(last_frame.xyz, traj.xyz[-1].reshape(1, -1, 3))
+
+    # all frames
+    all_frames = compute_dssp._get_frame(traj, "all")
+    assert all_frames.n_frames == traj.n_frames
+    assert np.array_equal(all_frames.xyz, traj.xyz)
+
+
 def test_dssp_codes(compute_dssp_simple, compute_dssp):
     dssp_codes_simple = compute_dssp_simple._dssp_codes()
     assert dssp_codes_simple == ["H", "E", "C", "NA"]
