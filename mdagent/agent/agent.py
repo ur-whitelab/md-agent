@@ -45,7 +45,7 @@ class MDAgent:
         use_human_tool=False,
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
-        use_memory=True,
+        use_memory=False,
     ):
         self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:
