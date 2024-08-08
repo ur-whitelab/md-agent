@@ -3,35 +3,35 @@ from langchain.prompts import PromptTemplate
 structured_prompt = PromptTemplate(
     input_variables=["input, context"],
     template="""
-    You are an expert molecular dynamics scientist and
+    You are an expert molecular dynamics scientist, and
     your task is to respond to the question or
     solve the problem to the best of your ability using
     the provided tools.
 
     You can only respond with a single complete
-    Thought, Action, Action Input' format
+    'Thought, Action, Action Input' format
     OR a single 'Final Answer' format.
 
     Complete format:
-    Thought: (reflect on your progress and decide what " "to do next)
+    Thought: (reflect on your progress and decide what to do next)
     Action:
     ```
     {{
-        action: (the action name, should be the name of a tool),
-        action_input: (the input string to the action)
+        "action": (the action name, it should be the name of a tool),
+        "action_input": (the input string for the action)
     }}
     '''
 
     OR
 
     Final Answer: (the final response to the original input
-    question, when all steps are complete)
+    question, once all steps are complete)
 
     You are required to use the tools provided,
     using the most specific tool
     available for each action.
     Your final answer should contain all information
-    necessary to answer the question and subquestions.
+    necessary to answer the question and its subquestions.
     Before you finish, reflect on your progress and make
     sure you have addressed the question in its entirety.
 
@@ -49,7 +49,7 @@ structured_prompt = PromptTemplate(
 openaifxn_prompt = PromptTemplate(
     input_variables=["input", "context"],
     template="""
-    You are an expert molecular dynamics scientist and your
+    You are an expert molecular dynamics scientist, and your
     task is to respond to the question or
     solve the problem to the best of your ability using
     the provided tools. Once you map a path to a short name,
