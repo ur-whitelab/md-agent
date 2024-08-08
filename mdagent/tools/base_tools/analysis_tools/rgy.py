@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -55,19 +54,13 @@ class RadiusofGyration:
         plot_name = self.path_registry.write_file_name(
             type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
         )
+        print("plot_name: ", plot_name)
         plot_id = self.path_registry.get_fileid(
             file_name=plot_name, type=FileType.FIGURE
         )
         if plot_name.endswith(".png"):
-            plot_name = plot_name.split(".png"[0])
-        plot_path = next(
-            f"{self.path_registry.ckpt_figures}/{plot_name}_{i}.png"
-            for i in range(1000)
-            if not os.path.exists(
-                f"{self.path_registry.ckpt_figures}/{plot_name}_{i}.png"
-            )
-        )
-
+            plot_name = plot_name.split(".png")[0]
+        plot_path = f"{self.path_registry.ckpt_figures}/{plot_name}"
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
