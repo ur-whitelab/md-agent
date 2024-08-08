@@ -30,14 +30,19 @@ class RadiusofGyration:
         self.rgy_file = (
             f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.traj_file}.csv"
         )
-        np.savetxt(
-            self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
-        )
-        self.path_registry.map_path(
-            f"rgy_{self.traj_file}",
-            self.rgy_file,
-            description=f"Radii of gyration per frame for {self.traj_file}",
-        )
+        rgy_id = f"rgy_{self.traj_file}"
+        if rgy_id not in self.path_registry.list_path_names():
+            np.savetxt(
+                self.rgy_file, 
+                rg_per_frame,
+                delimiter=",", 
+                header="Radius of Gyration (nm)"
+            )
+            self.path_registry.map_path(
+                f"rgy_{self.traj_file}",
+                self.rgy_file,
+                description=f"Radii of gyration per frame for {self.traj_file}",
+            )            
         return f"Radii of gyration saved to {self.rgy_file}"
 
     def rgy_average(self) -> str:
