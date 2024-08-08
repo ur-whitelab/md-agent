@@ -2,27 +2,17 @@ from typing import List, Optional
 
 import requests
 import tiktoken
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from langchain_core.output_parsers import StrOutputParser
 from serpapi import GoogleSearch
-
-from mdagent.utils import _make_llm
 
 
 class GitToolFunctions:
     """Class to store the functions of the tool."""
 
-    def __init__(
-        self,
-        model: str = "gpt-3.5-turbo-16k",
-        temp: float = 0.05,
-        verbose: bool = False,
-    ):
-        self.model = model
-        self.temp = temp
-        self.verbose = verbose
-        self.llm = _make_llm(model=self.model, temp=self.temp, verbose=self.verbose)
+    def __init__(self, llm):
+        self.llm = llm
 
     def _prompt_summary(self, query: str, output: str):
         prompt_template = """You're receiving the following github issues and comments.
@@ -54,9 +44,9 @@ class GitToolFunctions:
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["query", "output"]
         )
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
+        llm_chain = prompt | self.llm | StrOutputParser()
 
-        return llm_chain.run({"query": query, "output": output})
+        return llm_chain.invoke({"query": query, "output": output})
 
     """Function to get the number of requests remaining for the Github API """
 
@@ -80,12 +70,13 @@ class SerpGitTool(BaseTool):
                     Input: """
     serp_key: Optional[str]
 
-    def __init__(self, serp_key):
+    def __init__(self, serp_key, llm):
         super().__init__()
         self.serp_key = serp_key
+        self.llm = llm
 
     def _run(self, query: str):
-        fxns = GitToolFunctions()
+        fxns = GitToolFunctions(self.llm)
         # print("this is the key", self.serp_key)
         params = {
             "engine": "google",

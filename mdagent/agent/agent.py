@@ -3,8 +3,6 @@ import os
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chat_models import ChatOpenAI
 
 from ..tools import get_tools, make_all_tools
 from ..utils import PathRegistry, SetCheckpoint, _make_llm
@@ -38,9 +36,10 @@ class MDAgent:
         tools=None,
         agent_type="OpenAIFunctionsAgent",  # this can also be structured_chat
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
-        tools_model="gpt-4-1106-preview",
+        tools_model=None,
         temp=0.1,
-        verbose=True,
+        streaming=True,
+        verbose=False,
         ckpt_dir="ckpt",
         top_k_tools=20,  # set "all" if you want to use all tools
         use_human_tool=False,
@@ -48,10 +47,15 @@ class MDAgent:
         run_id="",
         use_memory=False,
     ):
+        self.llm = _make_llm(model, temp, streaming)
+        if tools_model is None:
+            tools_model = model
+        self.tools_llm = _make_llm(tools_model, temp, streaming)
+
         self.use_memory = use_memory
         self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
-        self.memory = MemoryManager(self.path_registry, run_id=run_id)
+        self.memory = MemoryManager(self.path_registry, self.tools_llm, run_id=run_id)
         self.run_id = self.memory.run_id
 
         self.uploaded_files = uploaded_files
@@ -60,18 +64,10 @@ class MDAgent:
 
         self.agent = None
         self.agent_type = agent_type
-        self.user_tools = tools
-        self.tools_llm = _make_llm(tools_model, temp, verbose)
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
-
-        self.llm = ChatOpenAI(
-            temperature=temp,
-            model=model,
-            client=None,
-            streaming=True,
-            callbacks=[StreamingStdOutCallbackHandler()],
-        )
+        self.user_tools = tools
+        self.verbose = verbose
 
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
@@ -83,6 +79,7 @@ class MDAgent:
                 self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
+                    top_k_tools=self.top_k_tools,
                     human=self.use_human_tool,
                 )
             else:
@@ -97,6 +94,7 @@ class MDAgent:
                 self.llm,
                 self.tools,
             ),
+            verbose=self.verbose,
             handle_parsing_errors=True,
         )
 
@@ -107,7 +105,7 @@ class MDAgent:
         elif self.agent_type == "OpenAIFunctionsAgent":
             self.prompt = openaifxn_prompt.format(input=user_input, context=run_memory)
         self.agent = self._initialize_tools_and_agent(user_input)
-        model_output = self.agent.run(self.prompt, callbacks=callbacks)
+        model_output = self.agent.invoke(self.prompt, callbacks=callbacks)
         if self.use_memory:
             self.memory.generate_agent_summary(model_output)
             print("Your run id is: ", self.run_id)

@@ -44,11 +44,7 @@ from .preprocess_tools.uniprot import (
     UniprotID2Name,
 )
 from .simulation_tools.create_simulation import ModifyBaseSimulationScriptTool
-from .simulation_tools.setup_and_run import (
-    SetUpandRunFunction,
-    SetUpAndRunTool,
-    SimulationFunctions,
-)
+from .simulation_tools.setup_and_run import SetUpandRunFunction
 from .util_tools.git_issues_tool import SerpGitTool
 from .util_tools.registry_tools import ListRegistryPaths, MapPath2Name
 from .util_tools.search_tools import Scholar2ResultLLM
@@ -92,9 +88,7 @@ __all__ = [
     "RMSDCalculator",
     "Scholar2ResultLLM",
     "SerpGitTool",
-    "SetUpAndRunTool",
     "SetUpandRunFunction",
-    "SimulationFunctions",
     "SimulationOutputFigures",
     "SmallMolPDB",
     "UniprotID2Name",
