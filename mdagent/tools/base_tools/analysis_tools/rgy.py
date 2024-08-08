@@ -25,15 +25,15 @@ class RadiusofGyration:
             traj_required=True,
         )
 
-    def rgy_per_frame(self, force_recompute:bool=False) -> str:
+    def rgy_per_frame(self, force_recompute: bool = False) -> str:
         rg_per_frame = md.compute_rg(self.traj)
         self.rgy_file = (
             f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.traj_file}.csv"
         )
         rgy_id = f"rgy_{self.traj_file}"
-        if rgy_id in self.path_registry.list_path_names() and force_recompute==False:
-            print ("RGY already computed, skipping re-compute") 
-            #todo -> maybe allow re-compute & save under different id/path
+        if rgy_id in self.path_registry.list_path_names() and force_recompute is False:
+            print("RGY already computed, skipping re-compute")
+            # todo -> maybe allow re-compute & save under different id/path
         else:
             np.savetxt(
                 self.rgy_file,
