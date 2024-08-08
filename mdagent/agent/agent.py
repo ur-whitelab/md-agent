@@ -38,7 +38,8 @@ class MDAgent:
         model="gpt-4-1106-preview",  # current name for gpt-4 turbo
         tools_model=None,
         temp=0.1,
-        verbose=True,
+        streaming=True,
+        verbose=False,
         ckpt_dir="ckpt",
         top_k_tools=20,  # set "all" if you want to use all tools
         use_human_tool=False,
@@ -46,10 +47,10 @@ class MDAgent:
         run_id="",
         use_memory=True,
     ):
-        self.llm = _make_llm(model, temp, verbose)
+        self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:
             tools_model = model
-        self.tools_llm = _make_llm(tools_model, temp, verbose)
+        self.tools_llm = _make_llm(tools_model, temp, streaming)
 
         self.use_memory = use_memory
         self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
@@ -66,6 +67,7 @@ class MDAgent:
         self.top_k_tools = top_k_tools
         self.use_human_tool = use_human_tool
         self.user_tools = tools
+        self.verbose = verbose
 
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
@@ -77,13 +79,13 @@ class MDAgent:
                 self.tools = get_tools(
                     query=user_input,
                     llm=self.tools_llm,
+                    top_k_tools=self.top_k_tools,
                     human=self.use_human_tool,
                 )
             else:
                 # retrieve all tools, including new tools if any
                 self.tools = make_all_tools(
                     self.tools_llm,
-                    top_k_tools=self.top_k_tools,
                     human=self.use_human_tool,
                 )
         return AgentExecutor.from_agent_and_tools(
