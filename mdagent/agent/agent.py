@@ -46,7 +46,7 @@ class MDAgent:
         use_human_tool=False,
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
-        use_memory=True,
+        use_memory=False,
     ):
         self.use_memory = use_memory
         self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
