@@ -24,17 +24,16 @@ def write_raw_x(
             The file id of the saved file.
     """
     file_name = path_registry.write_file_name(
-        FileType.RECORD,
-        record_type=x,
+        FileType.RECORD, record_type=x, file_format="npy"
     )
     file_id = path_registry.get_fileid(file_name, FileType.RECORD)
 
-    file_path = f"{path_registry.ckpt_records}/{x}_{traj_id}.npy"
+    file_path = f"{path_registry.ckpt_records}/{file_name}"
     np.save(file_path, values)
 
     path_registry.map_path(
         file_id,
-        file_name,
+        file_path,
         description=f"{x} values for trajectory with id: {traj_id}",
     )
     return file_id
