@@ -24,17 +24,16 @@ def write_raw_x(
             The file id of the saved file.
     """
     file_name = path_registry.write_file_name(
-        FileType.RECORD,
-        record_type=x,
+        FileType.RECORD, record_type=x, file_format="npy"
     )
     file_id = path_registry.get_fileid(file_name, FileType.RECORD)
 
-    file_path = f"{path_registry.ckpt_records}/{x}_{traj_id}.npy"
+    file_path = f"{path_registry.ckpt_records}/{file_name}"
     np.save(file_path, values)
 
     path_registry.map_path(
         file_id,
-        file_name,
+        file_path,
         description=f"{x} values for trajectory with id: {traj_id}",
     )
     return file_id
@@ -43,8 +42,12 @@ def write_raw_x(
 class ComputeDSSP(BaseTool):
     name = "ComputeDSSP"
     description = """Compute the DSSP (secondary structure) assignment
-    for a protein trajectory. Input is a trajectory file ID
+    for a protein trajectory. Input is a trajectory file ID and
+    a target_frames, which can be "first", "last", or "all",
     and an optional topology file ID.
+    Input "first" to get DSSP of only the first frame.
+    Input "last" to get DSSP of only the last frame.
+    Input "all" to get DSSP of all frames in trajectory, combined.
     The output is an array with the DSSP code for each
     residue at each time point."""
     path_registry: PathRegistry = PathRegistry.get_instance()
@@ -71,21 +74,21 @@ class ComputeDSSP(BaseTool):
         used. Otherwise, the full set of codes is used."""
         if self.simplified:
             return {
-                "H": "helix",
-                "E": "strand",
-                "C": "coil",
-                "NA": "not assigned, not a protein residue",
+                "H": "residues in helix",
+                "E": "residues in strand",
+                "C": "residues in coil",
+                "NA": "residues not assigned, not a protein residue",
             }
         return {
-            "H": "alpha helix",
-            "B": "beta bridge",
-            "E": "extended strand",
-            "G": "three helix",
-            "I": "five helix",
-            "T": "hydrogen bonded turn",
-            "S": "bend",
-            " ": "loop or irregular",
-            "NA": "not assigned, not a protein residue",
+            "H": "residues in alpha helix",
+            "B": "residues in beta bridge",
+            "E": "residues in extended strand",
+            "G": "residues in three helix",
+            "I": "residues in five helix",
+            "T": "residues in hydrogen bonded turn",
+            "S": "residues in bend",
+            " ": "residues in loop or irregular",
+            "NA": "residues not assigned, not a protein residue",
         }
 
     def _convert_dssp_counts(self, dssp_counts: dict) -> dict:
@@ -140,7 +143,32 @@ class ComputeDSSP(BaseTool):
         """
         return md.compute_dssp(traj, simplified=self.simplified)
 
-    def _run(self, traj_file: str, top_file: Optional[str] = None) -> str:
+    def _get_frame(self, traj, target_frames):
+        """
+        Retrieves the target frame(s) of the trajectory for DSSP.
+
+        Args:
+            traj: the trajectory
+            target_frames: the target frames to select. can be first, last, or all
+
+        Returns:
+            the trajectory with only target frames"""
+
+        if target_frames.lower().strip() == "all":
+            return traj
+        if target_frames.lower().strip() == "first":
+            return traj[0]
+        if target_frames.lower().strip() == "last":
+            return traj[-1]
+        else:
+            raise ValueError("Target Frames must be 'all', 'first', or 'last'.")
+
+    def _run(
+        self,
+        traj_file: str,
+        top_file: Optional[str] = None,
+        target_frames: str = "last",
+    ) -> str:
         """
         Computes the DSSP assignments for a trajectory and saves the results
         to a file.
@@ -160,6 +188,7 @@ class ComputeDSSP(BaseTool):
             )
             if not traj:
                 raise Exception("Trajectory could not be loaded.")
+            traj = self._get_frame(traj, target_frames)
         except Exception as e:
             print("Error loading trajectory: ", e)
             return str(e)
