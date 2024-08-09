@@ -1,9 +1,11 @@
+import os
+
 import streamlit as st
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
+from langchain_openai import OpenAIEmbeddings
 
 from mdagent.utils import PathRegistry
 
@@ -70,8 +72,9 @@ def make_all_tools(
         # all_tools += [PythonREPLTool()]
         all_tools += [
             ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
-            Scholar2ResultLLM(llm=llm, path_registry=path_instance),
         ]
+        if "OPENAI_API_KEY" in os.environ:
+            all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
 
@@ -151,7 +154,6 @@ def get_tools(
             ids=[tool.name],
             metadatas=[{"tool_name": tool.name, "index": i}],
         )
-        vectordb.persist()
 
     # retrieve 'k' tools
     k = min(top_k_tools, vectordb._collection.count())
