@@ -2,6 +2,7 @@ import json
 import os
 
 import pytest
+from langchain_openai import ChatOpenAI
 
 from mdagent.agent.agent import MDAgent
 from mdagent.agent.memory import MemoryManager
@@ -9,7 +10,8 @@ from mdagent.agent.memory import MemoryManager
 
 @pytest.fixture
 def memory_manager(get_registry):
-    return MemoryManager(get_registry("raw", False))
+    llm = ChatOpenAI()
+    return MemoryManager(get_registry("raw", False), llm)
 
 
 def test_mdagent_memory():
@@ -26,11 +28,13 @@ def test_mdagent_memory():
 
 
 def test_memory_init(memory_manager, get_registry):
+    llm = ChatOpenAI()
+
     assert memory_manager is not None
     assert memory_manager.run_id is not None
     assert len(memory_manager.run_id) == 8
 
-    mm_path_id = MemoryManager(get_registry("raw", False), run_id="TESTRUNN")
+    mm_path_id = MemoryManager(get_registry("raw", False), llm, run_id="TESTRUNN")
     assert mm_path_id.run_id == "TESTRUNN"
 
 
