@@ -4,8 +4,6 @@ import numpy as np
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
-
-# from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -132,52 +130,6 @@ def make_all_tools(
 
     all_tools += base_tools
     return all_tools
-
-
-# def get_tools(
-#     query,
-#     llm: BaseLanguageModel,
-#     top_k_tools=15,
-#     human=False,
-# ):
-#     ckpt_dir = PathRegistry.get_instance().ckpt_dir
-
-#     all_tools = make_all_tools(llm, human=human)
-
-#     # set vector DB for all tools
-#     vectordb = Chroma(
-#         collection_name="all_tools_vectordb",
-#         embedding_function=OpenAIEmbeddings(),
-#         persist_directory=f"{ckpt_dir}/all_tools_vectordb",
-#     )
-#     # vectordb.delete_collection()      #<--- to clear previous vectordb directory
-#     for i, tool in enumerate(all_tools):
-#         vectordb.add_texts(
-#             texts=[tool.description],
-#             ids=[tool.name],
-#             metadatas=[{"tool_name": tool.name, "index": i}],
-#         )
-
-#     # retrieve 'k' tools
-#     k = min(top_k_tools, vectordb._collection.count())
-#     if k == 0:
-#         return None
-#     docs = vectordb.similarity_search(query, k=k)
-
-#     retrieved_tools = []
-#     for d in docs:
-#         index = d.metadata.get("index")
-#         if index is not None and 0 <= index < len(all_tools):
-#             retrieved_tools.append(all_tools[index])
-#         else:
-#             print(f"Invalid index {index}.")
-#             print("Some tools may be duplicated.")
-#             print(f"Try to delete vector DB at {ckpt_dir}/all_tools_vectordb.")
-#             st.markdown(
-#                 "Invalid index. Some tools may be duplicated Try to delete VDB.",
-#                 unsafe_allow_html=True,
-#             )
-#     return retrieved_tools
 
 
 def get_relevant_tools(query, llm: BaseLanguageModel, top_k_tools=15, human=False):
