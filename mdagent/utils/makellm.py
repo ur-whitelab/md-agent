@@ -1,4 +1,13 @@
+import importlib.util
+
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+
+
+def check_package_exists(package_name, model):
+    if not importlib.util.find_spec(package_name):
+        raise ImportError(
+            f"The package required to run model '{model}' is missing: '{package_name}'."
+        )
 
 
 def _make_llm(model, temp, streaming):
@@ -13,6 +22,7 @@ def _make_llm(model, temp, streaming):
             callbacks=[StreamingStdOutCallbackHandler()] if streaming else None,
         )
     elif model.startswith("accounts/fireworks"):
+        check_package_exists("langchain_fireworks", model)
         from langchain_fireworks import ChatFireworks
 
         llm = ChatFireworks(
@@ -24,6 +34,7 @@ def _make_llm(model, temp, streaming):
         )
     elif model.startswith("together/"):
         # user needs to add 'together/' prefix to use TogetherAI provider
+        check_package_exists("langchain_together", model)
         from langchain_together import ChatTogether
 
         llm = ChatTogether(
@@ -34,6 +45,7 @@ def _make_llm(model, temp, streaming):
             callbacks=[StreamingStdOutCallbackHandler()] if streaming else None,
         )
     elif model.startswith("claude"):
+        check_package_exists("langchain_anthropic", model)
         from langchain_anthropic import ChatAnthropic
 
         llm = ChatAnthropic(
