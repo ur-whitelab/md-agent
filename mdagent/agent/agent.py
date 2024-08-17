@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
 
-from ..tools import get_tools, make_all_tools
+from ..tools import get_relevant_tools, make_all_tools
 from ..utils import PathRegistry, SetCheckpoint, _make_llm
 from .memory import MemoryManager
 from .prompt import openaifxn_prompt, structured_prompt
@@ -76,7 +76,7 @@ class MDAgent:
         else:
             if self.top_k_tools != "all" and user_input is not None:
                 # retrieve only tools relevant to user input
-                self.tools = get_tools(
+                self.tools = get_relevant_tools(
                     query=user_input,
                     llm=self.tools_llm,
                     top_k_tools=self.top_k_tools,
