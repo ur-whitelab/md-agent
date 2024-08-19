@@ -7,7 +7,6 @@ import textwrap
 from typing import Any, Dict, List, Optional, Type
 
 import requests
-import streamlit as st
 from langchain.tools import BaseTool
 from openff.toolkit.topology import Molecule
 from openmm import (
@@ -251,7 +250,6 @@ class OpenMMSimulation:
 
     def setup_system(self):
         print("Building system...")
-        st.markdown("Building system", unsafe_allow_html=True)
         self.pdb_id = self.params["pdb_id"]
         self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
@@ -285,7 +283,6 @@ class OpenMMSimulation:
 
     def setup_integrator(self):
         print("Setting up integrator...")
-        st.markdown("Setting up integrator", unsafe_allow_html=True)
         int_params = self.int_params
         integrator_type = int_params.get("integrator_type", "LangevinMiddle")
 
@@ -310,7 +307,6 @@ class OpenMMSimulation:
 
     def create_simulation(self):
         print("Creating simulation...")
-        st.markdown("Creating simulation", unsafe_allow_html=True)
         self.simulation = Simulation(
             self.modeller.topology,
             self.system,
@@ -838,12 +834,10 @@ class OpenMMSimulation:
             file.write(script_content)
 
         print(f"Standalone simulation script written to {directory}/{filename}")
-        st.markdown("Standalone simulation script written", unsafe_allow_html=True)
 
     def run(self):
         # Minimize and Equilibrate
         print("Performing energy minimization...")
-        st.markdown("Performing energy minimization", unsafe_allow_html=True)
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
@@ -857,7 +851,6 @@ class OpenMMSimulation:
             )
         self.path_registry.map_path(f"top_{self.sim_id}", top_name, top_description)
         print("Initial Positions saved to initial_positions.pdb")
-        st.markdown("Minimization complete! Equilibrating...", unsafe_allow_html=True)
         print("Equilibrating...")
         _temp = self.int_params["Temperature"]
         self.simulation.context.setVelocitiesToTemperature(_temp)
@@ -865,11 +858,9 @@ class OpenMMSimulation:
         self.simulation.step(_eq_steps)
         # Simulate
         print("Simulating...")
-        st.markdown("Simulating...", unsafe_allow_html=True)
         self.simulation.currentStep = 0
         self.simulation.step(self.sim_params["Number of Steps"])
         print("Done!")
-        st.markdown("Done!", unsafe_allow_html=True)
         if not self.save:
             if os.path.exists("temp_trajectory.dcd"):
                 os.remove("temp_trajectory.dcd")
@@ -950,7 +941,6 @@ class SetUpandRunFunction(BaseTool):
             openmmsim.create_simulation()
 
             print("simulation set!")
-            st.markdown("simulation set!", unsafe_allow_html=True)
         except ValueError as e:
             msg = str(e) + f"This were the inputs {input_args}"
             if "No template for" in msg:
@@ -1492,11 +1482,9 @@ class SetUpandRunFunction(BaseTool):
         forcefield_files = values.get("forcefield_files")
         if forcefield_files is None or forcefield_files is []:
             print("Setting default forcefields")
-            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         elif len(forcefield_files) == 0:
             print("Setting default forcefields v2")
-            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         else:
             for file in forcefield_files:

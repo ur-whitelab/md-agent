@@ -1,11 +1,12 @@
 import os
 
-import streamlit as st
+import numpy as np
 from dotenv import load_dotenv
 from langchain import agents
 from langchain.base_language import BaseLanguageModel
-from langchain_chroma import Chroma
 from langchain_openai import OpenAIEmbeddings
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 from mdagent.utils import PathRegistry
 
@@ -73,7 +74,7 @@ def make_all_tools(
         all_tools += [
             ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         ]
-        if "OPENAI_API_KEY" in os.environ:
+        if "OPENAI_API_KEY" in os.environ and "PQA_API_KEY" in os.environ:
             all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
@@ -131,46 +132,44 @@ def make_all_tools(
     return all_tools
 
 
-def get_tools(
-    query,
-    llm: BaseLanguageModel,
-    top_k_tools=15,
-    human=False,
-):
-    ckpt_dir = PathRegistry.get_instance().ckpt_dir
+def get_relevant_tools(query, llm: BaseLanguageModel, top_k_tools=15, human=False):
+    """
+    Get most relevant tools for the query using vector similarity search.
+    Query and tools are vectorized using either OpenAI embeddings or TF-IDF.
+
+    If an OpenAI API key is available, it uses embeddings for a more
+    sophisticated search. Otherwise, it falls back to using TF-IDF for
+    simpler, term-based matching.
+
+    Returns:
+    - A list of the most relevant tools, or None if no tools are found.
+    """
 
     all_tools = make_all_tools(llm, human=human)
+    if not all_tools:
+        return None
 
-    # set vector DB for all tools
-    vectordb = Chroma(
-        collection_name="all_tools_vectordb",
-        embedding_function=OpenAIEmbeddings(),
-        persist_directory=f"{ckpt_dir}/all_tools_vectordb",
-    )
-    # vectordb.delete_collection()      #<--- to clear previous vectordb directory
-    for i, tool in enumerate(all_tools):
-        vectordb.add_texts(
-            texts=[tool.description],
-            ids=[tool.name],
-            metadatas=[{"tool_name": tool.name, "index": i}],
-        )
+    tool_texts = [f"{tool.name} {tool.description}" for tool in all_tools]
 
-    # retrieve 'k' tools
-    k = min(top_k_tools, vectordb._collection.count())
+    # convert texts to vectors
+    if "OPENAI_API_KEY" in os.environ:
+        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        try:
+            tool_vectors = np.array(embeddings.embed_documents(tool_texts))
+            query_vector = np.array(embeddings.embed_query(query)).reshape(1, -1)
+        except Exception as e:
+            print(f"Error generating embeddings for tool retrieval: {e}")
+            return None
+    else:
+        vectorizer = TfidfVectorizer()
+        tool_vectors = vectorizer.fit_transform(tool_texts)
+        query_vector = vectorizer.transform([query])
+
+    similarities = cosine_similarity(query_vector, tool_vectors).flatten()
+    k = min(max(top_k_tools, 1), len(all_tools))
     if k == 0:
         return None
-    docs = vectordb.similarity_search(query, k=k)
-    retrieved_tools = []
-    for d in docs:
-        index = d.metadata.get("index")
-        if index is not None and 0 <= index < len(all_tools):
-            retrieved_tools.append(all_tools[index])
-        else:
-            print(f"Invalid index {index}.")
-            print("Some tools may be duplicated.")
-            print(f"Try to delete vector DB at {ckpt_dir}/all_tools_vectordb.")
-            st.markdown(
-                "Invalid index. Some tools may be duplicated Try to delete VDB.",
-                unsafe_allow_html=True,
-            )
+    top_k_indices = np.argsort(similarities)[-k:][::-1]
+    retrieved_tools = [all_tools[i] for i in top_k_indices]
+
     return retrieved_tools
