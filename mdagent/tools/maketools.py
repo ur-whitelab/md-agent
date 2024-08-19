@@ -146,6 +146,9 @@ def get_relevant_tools(query, llm: BaseLanguageModel, top_k_tools=15, human=Fals
     """
 
     all_tools = make_all_tools(llm, human=human)
+    if not all_tools:
+        return None
+
     tool_texts = [f"{tool.name} {tool.description}" for tool in all_tools]
 
     # convert texts to vectors
