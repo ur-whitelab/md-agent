@@ -31,7 +31,6 @@ setup(
         "rdkit",
         "requests",
         "seaborn",
-        "tiktoken",
         "scikit-learn",
         "scipy==1.14.0",
     ],
