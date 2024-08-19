@@ -17,7 +17,6 @@ setup(
     license="MIT",
     packages=find_packages(),
     install_requires=[
-        "google-search-results",
         "langchain==0.2.12",
         "langchain-community",
         "langchain-openai==0.1.19",
@@ -32,7 +31,6 @@ setup(
         "rdkit",
         "requests",
         "seaborn",
-        "tiktoken",
         "scikit-learn",
         "scipy==1.14.0",
     ],
