@@ -11,7 +11,10 @@ from mdagent.utils import PathRegistry
 def scholar2result_llm(llm, query, path_registry):
     paper_directory = path_registry.ckpt_papers
     if paper_directory is None:
-        raise ValueError("The 'paper_dir' is None and wasn't set from the start.")
+        raise ValueError(
+            "'paper_dir' is None. To use this tool, the user "
+            "must provide a directory with PDFs at the start."
+        )
     print("Paper Directory", paper_directory)
     llm_name = llm.model_name
     if llm_name.startswith("gpt") or llm_name.startswith("claude"):
