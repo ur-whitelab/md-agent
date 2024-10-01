@@ -24,7 +24,6 @@ setup(
         "nbformat",
         "openai",
         "paper-qa==5.0.6",
-        "paper-scraper @ git+https://github.com/blackadad/paper-scraper.git",
         "pandas",
         "pydantic>=2.6",
         "python-dotenv",
