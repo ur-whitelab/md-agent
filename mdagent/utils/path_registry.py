@@ -22,19 +22,24 @@ class PathRegistry:
 
     @classmethod
     # set ckpt_dir to None by default
-    def get_instance(cls, ckpt_dir=None):
+    def get_instance(cls, ckpt_dir=None, paper_dir=None):
         # todo: use same ckpt if run_id is given
         if not cls.instance or ckpt_dir is not None:
-            cls.instance = cls(ckpt_dir)
+            cls.instance = cls(ckpt_dir, paper_dir)
         return cls.instance
 
-    def __init__(self, ckpt_dir: str = "ckpt"):
-        self._set_ckpt(ckpt_dir)
+    def __init__(
+        self, ckpt_dir: str = "ckpt", paper_dir: str = "ckpt/paper_collection"
+    ):
+        self._set_ckpt(ckpt_dir, paper_dir)
         self._make_all_dirs()
         self._init_path_registry()
 
-    def _set_ckpt(self, ckpt: str):
+    def _set_ckpt(self, ckpt: str, paper_dir: str):
         self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
+        if paper_dir is not None:
+            paper_dir = os.path.join(self.set_ckpt.find_root_dir(), paper_dir)
+        self.ckpt_papers = paper_dir
 
     def _make_all_dirs(self):
         self.json_file_path = os.path.join(self.ckpt_dir, "paths_registry.json")
