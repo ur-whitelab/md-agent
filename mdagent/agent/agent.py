@@ -46,7 +46,7 @@ class MDAgent:
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=False,
-        paper_dir="ckpt/paper_collection",  # papers for pqa, relative path within repo
+        paper_dir=None,  # papers for pqa, relative path within repo
     ):
         self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:

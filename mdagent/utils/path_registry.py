@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from mdagent.utils.set_ckpt import SetCheckpoint
 
@@ -28,18 +29,26 @@ class PathRegistry:
             cls.instance = cls(ckpt_dir, paper_dir)
         return cls.instance
 
-    def __init__(
-        self, ckpt_dir: str = "ckpt", paper_dir: str = "ckpt/paper_collection"
-    ):
-        self._set_ckpt(ckpt_dir, paper_dir)
+    def __init__(self, ckpt_dir: str = "ckpt", paper_dir=None):
+        self._set_ckpt(ckpt_dir)
+        self._set_paper_dir(paper_dir)
         self._make_all_dirs()
         self._init_path_registry()
 
-    def _set_ckpt(self, ckpt: str, paper_dir: str):
+    def _set_ckpt(self, ckpt: str):
         self.ckpt_dir = self.set_ckpt.set_ckpt_subdir(ckpt_dir=ckpt)
-        if paper_dir is not None:
-            paper_dir = os.path.join(self.set_ckpt.find_root_dir(), paper_dir)
-        self.ckpt_papers = paper_dir
+
+    def _set_paper_dir(self, paper_dir: Optional[str]):
+        if paper_dir is None:
+            self.ckpt_papers = None
+            return
+        absolute_path = os.path.abspath(paper_dir)
+        if not os.path.exists(absolute_path) or not os.path.isdir(absolute_path):
+            raise ValueError(
+                f"Invalid paper directory: '{absolute_path}' either doesn't exist "
+                "or isn't a directory."
+            )
+        self.ckpt_papers = absolute_path
 
     def _make_all_dirs(self):
         self.json_file_path = os.path.join(self.ckpt_dir, "paths_registry.json")
