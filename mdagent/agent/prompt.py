@@ -1,7 +1,7 @@
 from langchain.prompts import PromptTemplate
 
 structured_prompt = PromptTemplate(
-    input_variables=["input, context"],
+    input_variables=["input", "context"],
     template="""
     You are an expert molecular dynamics scientist, and
     your task is to respond to the question or
