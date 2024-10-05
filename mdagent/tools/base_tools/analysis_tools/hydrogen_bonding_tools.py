@@ -137,9 +137,6 @@ class HydrogenBondTool(BaseTool):
         freq: str | None = "0.1",
     ) -> str:
         try:
-            if not top_file:
-                top_file = self.top_file(traj_file)
-
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
                 return """Failed. Trajectory could not be loaded; unable to retrieve
@@ -193,10 +190,6 @@ class HydrogenBondTool(BaseTool):
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
-
-    def top_file(self, traj_file: str) -> str:
-        top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
-        return top_file
 
     def save_results_to_file(self, results: dict, file_name: str) -> None:
         with open(file_name, "w") as f:
@@ -287,14 +280,9 @@ class KabschSander(BaseTool):
             )
 
 
-def plot_helper_functions():
-    """
-    Helper function for plotting
-    """
-    # Helper functions for plotting
-
-
-def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=None):
+def plot_time_series(
+    data, title: str = "Time Series Plot", ylabel: str = "Value", save_path=None
+):
     plt.figure(figsize=(10, 6))
     plt.plot(data, label="Hydrogen Bonds")
     plt.xlabel("Time (frames)")
@@ -312,7 +300,13 @@ def plot_time_series(data, title="Time Series Plot", ylabel="Value", save_path=N
     plt.close()
 
 
-def plot_histogram(data, bins=10, title="Histogram", xlabel="Value", save_path=None):
+def plot_histogram(
+    data,
+    bins: int = 10,
+    title: str = "Histogram",
+    xlabel: str = "Value",
+    save_path=None,
+):
     plt.figure(figsize=(10, 6))
     plt.hist(data, bins=bins, edgecolor="black")
     plt.xlabel(xlabel)
