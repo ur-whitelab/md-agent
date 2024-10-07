@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
@@ -46,6 +47,7 @@ class MDAgent:
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=False,
+        safe_mode=False,
     ):
         self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:
@@ -68,6 +70,39 @@ class MDAgent:
         self.use_human_tool = use_human_tool
         self.user_tools = tools
         self.verbose = verbose
+
+        if self.uploaded_files:
+            self.add_file(self.uploaded_files)
+
+    def _add_single_file(self, file_path, description=None):
+        now = datetime.now()
+        # Format the date and time as "YYYYMMDD_HHMMSS"
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        ID = "UPL_" + timestamp
+
+        if not description:
+            # asks for user input to add description for file file_path
+            # wait for 20 seconds or set up a default description
+            description = "User uploaded file"
+        print(f"Adding file {file_path} with ID {ID}\n")
+        self.path_registry.map_path(ID, file_path, description=description)
+
+    def add_file(self, uploaded_files):
+        if type(uploaded_files) == str:
+            self._add_single_file(uploaded_files)
+        elif type(uploaded_files) == tuple:
+            self._add_single_file(uploaded_files[0], description=uploaded_files[1])
+        elif type(uploaded_files) == list:
+            for file_path in uploaded_files:
+                print(f"Adding file {file_path}\n")
+                print(type(file_path))
+                self.add_file(file_path)
+        else:
+            raise ValueError(
+                "Invalid input. Please provide a file path \
+                             or list of file paths. Optionally, tuple or list of tuples\
+                             of file path and description"
+            )
 
     def _initialize_tools_and_agent(self, user_input=None):
         """Retrieve tools and initialize the agent."""
