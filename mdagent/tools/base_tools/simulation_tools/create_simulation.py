@@ -2,9 +2,9 @@ import textwrap
 from typing import Optional
 
 from langchain.base_language import BaseLanguageModel
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
+from langchain_core.output_parsers import StrOutputParser
 from pydantic import BaseModel, Field
 
 from mdagent.utils import FileType, PathRegistry
@@ -48,7 +48,7 @@ class ModifyScriptUtils:
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["base_script", "query"]
         )
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
+        llm_chain = prompt | self.llm | StrOutputParser()
 
         return llm_chain.invoke(query)
 

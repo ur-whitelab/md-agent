@@ -3,10 +3,8 @@ import os
 import random
 import string
 
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chains import LLMChain
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 from mdagent.utils import PathRegistry
 
@@ -32,8 +30,7 @@ class MemoryManager:
     def __init__(
         self,
         path_registry: PathRegistry,
-        model="gpt-3.5-turbo",
-        temp=0.1,
+        llm,
         run_id="",
     ):
         self.path_registry = path_registry
@@ -46,14 +43,7 @@ class MemoryManager:
         else:
             pull_mem = True
 
-        llm = ChatOpenAI(
-            temperature=temp,
-            model=model,
-            client=None,
-            streaming=True,
-            callbacks=[StreamingStdOutCallbackHandler()],
-        )
-        self.llm_agent_trace = LLMChain(llm=llm, prompt=agent_summary_template)
+        self.llm_agent_trace = agent_summary_template | llm | StrOutputParser()
 
         self._make_all_dirs()
         if pull_mem:
@@ -138,7 +128,7 @@ class MemoryManager:
         Returns:
         - None
         """
-        llm_out = self.llm_agent_trace({"agent_trace": agent_trace})["text"]
+        llm_out = self.llm_agent_trace.invoke({"agent_trace": agent_trace})
         key_str = f"{self.run_id}.{self.get_summary_number()}"
         run_summary = {key_str: llm_out}
         self._write_to_json(run_summary, self.agent_trace_summary)

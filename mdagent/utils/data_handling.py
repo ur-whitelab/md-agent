@@ -10,7 +10,7 @@ from .path_registry import FileType, PathRegistry
 
 def load_single_traj(
     path_registry,
-    top_fileid,
+    top_fileid=None,
     traj_fileid=None,
     traj_required=False,
     ignore_warnings=False,
@@ -20,7 +20,7 @@ def load_single_traj(
 
     Parameters:
     path_registry (PathRegistry): mapping file IDs to file paths.
-    top_fileid (str): File ID for the topology file.
+    top_fileid (str, optional): File ID for the topology file.
     traj_fileid (str, optional): File ID for the trajectory file.
     traj_required (bool, optional): Whether the traj file is required. Default is False.
 
@@ -30,9 +30,18 @@ def load_single_traj(
     if not isinstance(path_registry, PathRegistry):
         raise ValueError("path_registry must be an instance of PathRegistry.")
     all_fileids = path_registry.list_path_names()
-    if top_fileid not in all_fileids:
-        raise ValueError(f"Topology File ID '{top_fileid}' not found in PathRegistry")
-    top_path = path_registry.get_mapped_path(top_fileid)
+
+    if top_fileid is None:
+        # check for traj_fileid
+        if traj_fileid is None:
+            raise ValueError("Trajectory File ID is required, and it's not provided.")
+    else:
+        if top_fileid not in all_fileids:
+            raise ValueError(
+                f"Topology File ID '{top_fileid}' not found in PathRegistry"
+            )
+        else:
+            top_path = path_registry.get_mapped_path(top_fileid)
 
     if traj_fileid is None:
         if not traj_required:
@@ -48,12 +57,17 @@ def load_single_traj(
             return md.load(top_path)
         else:
             raise ValueError("Trajectory File ID is required, and it's not provided.")
-
-    if traj_fileid not in all_fileids:
-        raise ValueError(
-            f"Trajectory File ID '{traj_fileid}' not found in PathRegistry."
-        )
-    traj_path = path_registry.get_mapped_path(traj_fileid)
+    else:
+        if traj_fileid not in all_fileids:
+            raise ValueError(
+                f"Trajectory File ID '{traj_fileid}' not found in PathRegistry."
+            )
+        else:
+            traj_path = path_registry.get_mapped_path(traj_fileid)
+    if top_fileid is None:
+        return md.load(traj_path)
+    elif traj_fileid is None:
+        return md.load(top_path)
     return md.load(traj_path, top=top_path)
 
 
