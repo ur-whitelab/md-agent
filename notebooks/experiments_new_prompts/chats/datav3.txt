@@ -1,0 +1,389 @@
+Model	"Parameters(B)"	Month	Year		
+GPT-4o mini	8	7	2024		
+NeMo	12	7	2024		
+Codestral Mamba	7	7	2024		
+Mathstral	7	7	2024		
+SpreadsheetLLM	1760	7	2024		
+next-gen		7	2024		
+SmolLM	1.7	7	2024		
+Mockingbird	9	7	2024		
+FLAMe	24	7	2024		
+H2O-Danube3-4B	4	7	2024		
+Causal Axioms	0.067	7	2024		
+SenseNova 5.5	600	7	2024		
+Helium 7B	7	7	2024		
+InternLM2.5	7	7	2024		
+Llama 3 405B	405	6	2024		
+ERNIE 4.0 Turbo		6	2024		
+Gemma 2	27	6	2024		
+CriticGPT		6	2024		
+4M-21	3	6	2024		
+ESM3	98	6	2024		
+PanGu 5.0 Super	1000	6	2024		
+Claude 3.5 Sonnet		6	2024		
+DeepSeek-Coder-V2	236	6	2024		
+DCLM-Baseline 7B 2.6T	7	6	2024		
+Nemotron-4-340B	340	6	2024		
+Apple On-Device model Jun/2024	3.04	6	2024		
+MatMul-Free LM	2.7	6	2024		
+Luna	0.44	6	2024		
+Qwen2	72	6	2024		
+Qwen2-57B-A14B	57	6	2024		
+Skywork MoE 16x13B	146	6	2024		
+Mamba-2	2.7	5	2024		
+MAP-Neo	7	5	2024		
+K2	65	5	2024		
+Codestral	22	5	2024		
+Aya-23-35B	35	5	2024		
+Yi-XLarge	2000	5	2024		
+Yi-Large	1000	5	2024		
+Chameleon	34	5	2024		
+Sparse Llama 7B	7	5	2024		
+Gemini 1.5 Flash		5	2024		
+GPT-4o		5	2024		
+Falcon 2 11B	11	5	2024		
+Fugaku-LLM	13	5	2024		
+Yi 1.5 34B	34.4	5	2024		
+YOCO	3	5	2024		
+DeepSeek-V2	236	5	2024		
+ChuXin	1.6	5	2024		
+RWKV-v6 Finch	7.63	5	2024		
+xLSTM	2.7	5	2024		
+Granite Code	34	5	2024		
+Qwen-Max	300	5	2024		
+Med-Gemini-L 1.0	1500	5	2024		
+Tele-FLM	52	4	2024		
+Qwen-1.5 110B	111	4	2024		
+Arctic	480	4	2024		
+SenseNova 5.0	600	4	2024		
+OpenELM	3.04	4	2024		
+phi-3-medium	14	4	2024		
+phi-3-mini	3.8	4	2024		
+Llama 3 70B	70	4	2024		
+HLAT	7	4	2024		
+Idefics2	8.4	4	2024		
+Reka Core	300	4	2024		
+WizardLM-2-8x22B	141	4	2024		
+Pile-T5	11	4	2024		
+Zephyr 141B-A35B	35	4	2024		
+Rerank 3	104	4	2024		
+gpt-4-turbo-2024-04-09		4	2024		
+MiniCPM-2.4B	2.4	4	2024		
+Ferret-UI	13	4	2024		
+mixtral-8x22b	141	4	2024		
+Sailor	7	4	2024		
+JetMoE-8B	8	4	2024		
+Eurus	70	4	2024		
+Command-R+	104	4	2024		
+Viking	33	4	2024		
+OLMo-Bitnet-1B	1	4	2024		
+Aurora-M	15.5	3	2024		
+ReALM-3B	3	3	2024		
+Qwen1.5-MoE-A2.7B	14.3	3	2024		
+Grok-1.5	314	3	2024		
+Jamba	52	3	2024		
+DBRX	132	3	2024		
+Stable Code Instruct 3B	2.7	3	2024		
+EvoLLM-JP	10	3	2024		
+RakutenAI-7B	7	3	2024		
+Parakeet	0.378	3	2024		
+RWKV-v5 EagleX	7.52	3	2024		
+MM1	30	3	2024		
+RFM-1	8	3	2024		
+Command-R	35	3	2024		
+DeepSeek-VL	7	3	2024		
+AnyGPT	7	3	2024		
+Stable Beluga 2.5	70	3	2024		
+Inflection-2.5	1200	3	2024		
+Apollo	7	3	2024		
+Claude 3 Opus	2000	3	2024		
+Nemotron-4 15B	15	2	2024		
+TowerLLM	7	2	2024		
+Hawk	7	2	2024		
+Griffin	14	2	2024		
+BitNet b1.58	70	2	2024		
+Samba-1	1400	2	2024		
+Aya-101	13	2	2024		
+Cosmo-1B	1.8	2	2024		
+Poro	34.2	2	2024		
+StarCoder 2	15	2	2024		
+530B	530	2	2024		
+175B	175	2	2024		
+Mistral Small	7	2	2024		
+Mistral Large	300	2	2024		
+Hanooman	40	2	2024		
+Ask	20	2	2024		
+Reka Edge	7	2	2024		
+Reka Flash	21	2	2024		
+Gemma	7	2	2024		
+Gemini 1.5 Pro	1500	2	2024		
+Qwen-1.5 72B	72	2	2024		
+GOODY-2		2	2024		
+Natural-SQL-7B	7	2	2024		
+Sea-Lion	7.5	2	2024		
+TimesFM	0.2	2	2024		
+OLMo	7	2	2024		
+FLOR-6.3B	6.3	1	2024		
+Weaver	34	1	2024		
+miqu 70b	70	1	2024		
+iFlytekSpark-13B	13	1	2024		
+Xinghuo 3.5 (Spark)	200	1	2024		
+MGIE	7	1	2024		
+CodeLlama-70B	70	1	2024		
+RWKV-v5 Eagle 7B	7.52	1	2024		
+MaLA-500	10	1	2024		
+MambaByte	0.972	1	2024		
+DeepSeek-Coder	33	1	2024		
+FuseLLM	7	1	2024		
+Fuyu-Heavy	120	1	2024		
+Orion-14B	14	1	2024		
+InternLM2	20	1	2024		
+GLM-4	200	1	2024		
+DeepSeekMoE	16	1	2024		
+DeepSeek	67	1	2024		
+LLaMA Pro	8.3	1	2024		
+TinyLlama	1.1	1	2024		
+DocLLM	7	1	2024		
+Unified-IO 2	7	12	2023		
+WaveCoder-DS-6.7B	6.7	12	2023		
+YunShan	7	12	2023		
+PanGu-Pi	7	12	2023		
+YAYI 2	30	12	2023		
+Emu2	37	12	2023		
+MedLM		12	2023		
+SOLAR-10.7B	10.7	12	2023		
+DeciLM-7B	7.04	12	2023		
+Mistral-medium	180	12	2023		
+mixtral-8x7b-32kseqlen	46.7	12	2023		
+StripedHyena 7B	7.65	12	2023		
+NexusRaven-V2 13B		12	2023		
+Gemini Ultra 1.0	1500	12	2023		
+Mamba	2.8	12	2023		
+LVM-3B	3	12	2023		
+SeaLLM-13b	13	12	2023		
+pplx-70b-online	70	11	2023		
+SeamlessM4T-Large v2	2.3	11	2023		
+Q-Transformer		11	2023		
+Yuan 2.0	102.6	11	2023		
+MEDITRON	70	11	2023		
+Transformers-Arithmetic	0.1	11	2023		
+Starling-7B	7	11	2023		
+Inflection-2	1200	11	2023		
+Claude 2.1	130	11	2023		
+TÜLU 2	70	11	2023		
+Nemotron-3 22B	22	11	2023		
+Nemotron-2 43B	43	11	2023		
+Orca 2	13	11	2023		
+Phi-2	2.7	11	2023		
+Florence-2	0.771	11	2023		
+Mirasol3B	3	11	2023		
+OtterHD-8B	8	11	2023		
+Gauss	7	11	2023		
+Grok-1	314	11	2023		
+Grok-0	33	11	2023		
+Yi-34B	34.4	11	2023		
+GPT-4 Turbo		11	2023		
+Skywork-13B	13	10	2023		
+Kimi Chat	100	10	2023		
+jina-embeddings-v2	0.435	10	2023		
+Fuyu	8	10	2023		
+ERNIE 4.0	1000	10	2023		
+Zephyr	7.3	10	2023		
+PaLI-3	5	10	2023		
+Retro 48B	48	10	2023		
+Ferret	13	10	2023		
+Lemur	70	10	2023		
+AceGPT	13	10	2023		
+Yasa-1		10	2023		
+RT-X	55	10	2023		
+MotionLM	0.09	9	2023		
+GAIA-1	9	9	2023		
+Qwen	72	9	2023		
+Llama 2 Long	70	9	2023		
+LeoLM	13	9	2023		
+Mistral 7B	7.3	9	2023		
+Kosmos-2.5	1.3	9	2023		
+Baichuan 2	13	9	2023		
+BOLT2.5B	2.5	9	2023		
+DeciLM	5.7	9	2023		
+MoLM	8	9	2023		
+NExT-GPT	7	9	2023		
+Phi-1.5	1.3	9	2023		
+UniLM	0.034	9	2023		
+Persimmon-8B	8	9	2023		
+FLM-101B	101	9	2023		
+Falcon 180B	180	9	2023		
+Hunyuan	100	9	2023		
+phi-CTNL	0.1	9	2023		
+Jais	13	8	2023		
+Code Llama 34B	34	8	2023		
+IDEFICS	80	8	2023		
+Raven	11	8	2023		
+DukunLM	13	8	2023		
+WizardLM	70	8	2023		
+Platypus	70	8	2023		
+Japanese StableLM Alpha 7B	7	8	2023		
+Stable Code 3B	2.7	8	2023		
+Med-Flamingo	8.3	7	2023		
+Alfred-40B-0723	40	7	2023		
+LLaMA-2-7B-32K	7	7	2023		
+Med-PaLM M	540	7	2023		
+BTLM-3B-8K	3	7	2023		
+Stable Beluga 2	70	7	2023		
+Stable Beluga 1	65	7	2023		
+Meta-Transformer	2	7	2023		
+Llama 2	70	7	2023		
+WormGPT	6	7	2023		
+Claude 2	130	7	2023		
+LongLLaMA	7	7	2023		
+xTrimoPGLM	100	7	2023		
+XGen	7	7	2023		
+Zhinao (Intellectual Brain)	100	7	2023		
+Yasa		6	2023		
+Kosmos-2	1.6	6	2023		
+AudioPaLM	340	6	2023		
+Inflection-1	120	6	2023		
+Phi-1	1.3	6	2023		
+InternLM	104	6	2023		
+BlenderBot 3x	175	6	2023		
+Orca	13	6	2023		
+PassGPT		6	2023		
+DIDACT		6	2023		
+LTM-1		6	2023		
+GPT-4 MathMix	1760	5	2023		
+PandaGPT	13	5	2023		
+Falcon	40	5	2023		
+202305-refact2b-mqa-lion	1.6	5	2023		
+Guanaco	65	5	2023		
+LIMA	65	5	2023		
+Formosa (FFM)	176	5	2023		
+CodeT5+	16	5	2023		
+PaLM 2	340	5	2023		
+StarCoder	15.5	5	2023		
+MPT	7	5	2023		
+Pi	60	5	2023		
+GPT-2B-001	2	5	2023		
+Titan	200	4	2023		
+WizardLM	7	4	2023		
+MPT	1.3	4	2023		
+StableLM	65	4	2023		
+Dolly 2.0	12	4	2023		
+Pythia	12	4	2023		
+Koala-13B	13	4	2023		
+C1.2	33	3	2023		
+BloombergGPT	50	3	2023		
+OpenFlamingo-9B	8.3	3	2023		
+GPT4All-LoRa	7	3	2023		
+Cerebras-GPT	13	3	2023		
+PanGu-Sigma	1085	3	2023		
+CoLT5	5.2	3	2023		
+Med-PaLM 2		3	2023		
+"GPT-4 Classic (gpt-4-0314 & gpt-4-0613, non-Turbo)"	1760	3	2023		
+Alpaca	7	3	2023		
+Jurassic-2	178	3	2023		
+GPT-NeoX-Chat-Base-20B	20	3	2023		
+Kosmos-1	1.6	2	2023		
+LLaMA-65B	65	2	2023		
+MOSS	16	2	2023		
+Palmyra	20	2	2023		
+Luminous Supreme Control	70	2	2023		
+Toolformer+Atlas 11B+NLLB 54B	6.7	2	2023		
+Multimodal-CoT	0.738	2	2023		
+FLAME	0.06	1	2023		
+Med-PaLM 1	540	12	2022		
+OPT-IML	175	12	2022		
+RL-CAI	52	12	2022		
+ERNIE-Code	0.56	12	2022		
+RT-1	0.035	12	2022		
+ChatGPT (gpt-3.5-turbo)	20	11	2022		
+text-davinci-003		11	2022		
+GPT-JT	6	11	2022		
+RWKV-4	14	11	2022		
+Galactica	120	11	2022		
+SED		11	2022		
+mT0	13	11	2022		
+BLOOMZ	176	11	2022		
+PACT		10	2022		
+Flan-T5	11	10	2022		
+Flan-PaLM	540	10	2022		
+U-PaLM	540	10	2022		
+VIMA	0.2	10	2022		
+OpenChat	13	9	2022		
+WeLM	10	9	2022		
+CodeGeeX	13	9	2022		
+Sparrow	70	9	2022		
+PaLI	17	9	2022		
+NeMo Megatron-GPT 20B	20	9	2022		
+Z-Code++	0.71	8	2022		
+Atlas	11	8	2022		
+BlenderBot 3	175	8	2022		
+GLM-130B	130	8	2022		
+AlexaTM 20B	20	8	2022		
+6.9B FIM	6.9	7	2022		
+‘monorepo-Transformer’	0.5	7	2022		
+PanGu-Coder	2.6	7	2022		
+NLLB	54.5	7	2022		
+J-1 RBG	178	7	2022		
+BLOOM (tr11-176B-ml)	176	7	2022		
+Minerva	540	6	2022		
+GODEL-XL	2.7	6	2022		
+YaLM 100B	100	6	2022		
+Unified-IO	2.8	6	2022		
+Perceiver AR	1	6	2022		
+LIMoE	5.6	6	2022		
+GPT-4chan	6	6	2022		
+Diffusion-LM	0.3	5	2022		
+UL2 20B	20	5	2022		
+Gato (Cat)	1	5	2022		
+LaMDA 2	137	5	2022		
+OPT-175B	175	5	2022		
+Tk-Instruct	11	4	2022		
+InCoder	6.7	4	2022		
+NOOR	10	4	2022		
+mGPT	13	4	2022		
+PaLM-Coder	540	4	2022		
+PaLM	540	4	2022		
+SeeKeR	2.7	3	2022		
+CodeGen	16	3	2022		
+VLM-4	10	3	2022		
+CM3	13	1	2022		
+Luminous	200	11	2021		
+Chinchilla	70	3	2022		
+GPT-NeoX-20B	20	2	2022		
+ERNIE 3.0 Titan	260	12	2021		
+XGLM	7.5	12	2021		
+Fairseq	1100	12	2021		
+Gopher	280	12	2021		
+GLaM	1200	12	2021		
+Anthropic-LM 52B	52	12	2021		
+RETRO	7.5	12	2021		
+DeBERTaV3	1.5	11	2021		
+BERT-480	480	11	2021		
+BERT-200	200	11	2021		
+Cedille FR-Boris	6	11	2021		
+MT-NLG	530	10	2021		
+FLAN	137	9	2021		
+Command xlarge	52.4	9	2021		
+PLATO-XL	11	9	2021		
+Macaw	11	9	2021		
+CodeT5	0.7	3	2022		
+Codex	12	8	2021		
+Jurassic-1	178	8	2021		
+BlenderBot 2.0	9.4	7	2021		
+GPT-J	6	6	2021		
+LaMDA	137	6	2021		
+ruGPT-3	1.3	2	2021		
+Switch	1600	1	2021		
+GPT-3	175	5	2020		
+Megatron-11B	11	4	2020		
+Transformer++	0.212	3	2020		
+Meena	2.6	1	2020		
+T5	11	10	2019		
+Megatron-LM	8.3	9	2019		
+RoBERTa	0.355	7	2019		
+GPT-2	1.5	2	2019		
+BERT	0.34	10	2018		
+GPT-1	0.117	6	2018		
+ULMFiT	0.034	1	2018		
+Transformer (big)	0.213	6	2017		
+Transformer (base)	0.065	6	2017		
