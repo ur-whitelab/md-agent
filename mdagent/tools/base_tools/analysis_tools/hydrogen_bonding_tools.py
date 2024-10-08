@@ -4,9 +4,10 @@ import os
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
+import pandas as pd
 from langchain.tools import BaseTool
 
-from mdagent.utils import FileType, PathRegistry, load_single_traj
+from mdagent.utils import FileType, PathRegistry, load_single_traj, save_plot
 
 
 def compute_baker_hubbard(traj, freq=0.1):
@@ -43,20 +44,43 @@ def compute_wernet_nilsson(traj):
     )
 
 
-def save_hb_results(results: dict, method: str, path_registry: PathRegistry) -> str:
+def save_hb_results(
+    results: dict,
+    method: str,
+    path_registry: PathRegistry,
+) -> str:
+    data = []
+    if method == "wernet_nilsson":
+        for frame_index, frame in enumerate(results):
+            for bond in frame:
+                donor, hydrogen, acceptor = bond
+                data.append([frame_index, donor, hydrogen, acceptor])
+
+        df = pd.DataFrame(
+            data,
+            columns=["frame", "donor", "hydrogen atom", "acceptor"],
+        )
+    else:
+        df = pd.DataFrame(
+            data,
+            columns=["donor atom", "Hydrogen atom", "acceptor atom"],
+        )
+
     file_name = path_registry.write_file_name(
         FileType.RECORD,
         record_type=f"{method}_results",
     )
     file_id = path_registry.get_fileid(file_name, FileType.RECORD)
-    file_path = f"{path_registry.ckpt_records}/{method}_results.json"
-    with open(file_path, "w") as f:
-        json.dump(results, f)
+
+    file_path = f"{path_registry.ckpt_records}/{file_name}.csv"
+    df.to_csv(file_path, index=False)
+
     path_registry.map_path(
         file_id,
-        file_name,
+        file_path,
         description=f"Hydrogen bond results for {method}",
     )
+
     return file_id
 
 
@@ -85,10 +109,15 @@ def plot_and_save_hb_plot(
 
     plt.figure(figsize=(10, 6))
     if plot_type == "histogram":
-        plt.hist(data, bins=10, edgecolor="black", alpha=0.7)
+        plt.hist(
+            data,
+            bins=10,
+            edgecolor="black",
+            alpha=0.7,
+        )
         plt.xlabel(
             "Hydrogen Bond Persistence (%)"
-            if method == "bakker_hubbard"
+            if method == "baker_hubbard"
             else "Bond Length (nm)"
             if method == "wernet_nilsson"
             else "Bond Energy (kcal/mol)"
@@ -96,8 +125,9 @@ def plot_and_save_hb_plot(
         plt.ylabel("Frequency")
     elif plot_type == "time_series":
         plt.plot(data, label="Hydrogen Bonds")
-        plt.xlabel("Time (frames)")
+        plt.xlabel("Frame Number")
         plt.ylabel("Value")
+
     plt.title(title)
     plt.grid(True)
 
@@ -105,7 +135,12 @@ def plot_and_save_hb_plot(
         FileType.FIGURE,
         file_format="png",
     )
-    file_id = path_registry.get_fileid(file_name, FileType.FIGURE)
+
+    file_id = save_plot(
+        path_registry,
+        fig_analysis=f"{method}_{plot_type}",
+        description=f"{title} for {method}",
+    )
 
     file_path = f"{path_registry.ckpt_figures}/{method}_{plot_type}.png"
 
@@ -154,7 +189,11 @@ class HydrogenBondTool(BaseTool):
             raise ValueError("Path registry is not set.")
         try:
             print("Loading trajectory...")
-            traj = load_single_traj(self.path_registry, top_file, traj_file)
+            traj = load_single_traj(
+                self.path_registry,
+                top_file,
+                traj_file,
+            )
             if not traj:
                 return """Failed. Trajectory could not be loaded; unable to retrieve
                 data needed to find hydrogen bonds. This may be due to missing files,
@@ -170,7 +209,7 @@ class HydrogenBondTool(BaseTool):
             hb_counts = np.array([len(frame) for frame in result])
 
             result_file_id = save_hb_results(
-                {"results": [list(item) for item in result]},
+                {i: res for i, res in enumerate(result)},
                 method,
                 self.path_registry,
             )
@@ -183,7 +222,7 @@ class HydrogenBondTool(BaseTool):
                 path_registry=self.path_registry,
             )
 
-            plot_time_series_file_id = plot_and_save_hb_plot(
+            plot_and_save_hb_plot(
                 hb_counts,
                 title=f"{method.capitalize()} Time Series",
                 plot_type="time_series",
@@ -195,8 +234,7 @@ class HydrogenBondTool(BaseTool):
                 "Succeeded. Analysis completed, results saved to file and plot"
                 "saved. "
                 f"Results file: {result_file_id}, "
-                f"Histogram plot: {plot_hist_file_id}, "
-                f"Time series plot: {plot_time_series_file_id}"
+                f"Histogram plot or time series plot: {plot_hist_file_id}, "
             )
 
         except Exception as e:
