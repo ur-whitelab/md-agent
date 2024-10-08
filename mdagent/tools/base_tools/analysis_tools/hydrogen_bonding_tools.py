@@ -66,6 +66,7 @@ def plot_and_save_hb_plot(
     plot_type: str,
     method: str,
     path_registry: PathRegistry,
+    annotations: list | None = None,
     ylabel: str = "Value",  # Added ylabel parameter with default value
 ) -> str:
     """
@@ -84,8 +85,14 @@ def plot_and_save_hb_plot(
 
     plt.figure(figsize=(10, 6))
     if plot_type == "histogram":
-        plt.hist(data, bins=10, edgecolor="black")
-        plt.xlabel("Value")
+        plt.hist(data, bins=10, edgecolor="black", alpha=0.7)
+        plt.xlabel(
+            "Hydrogen Bond Persistence (%)"
+            if method == "bakker_hubbard"
+            else "Bond Length (nm)"
+            if method == "wernet_nilsson"
+            else "Bond Energy (kcal/mol)"
+        )
         plt.ylabel("Frequency")
     elif plot_type == "time_series":
         plt.plot(data, label="Hydrogen Bonds")
@@ -146,6 +153,7 @@ class HydrogenBondTool(BaseTool):
         if self.path_registry is None:
             raise ValueError("Path registry is not set.")
         try:
+            print("Loading trajectory...")
             traj = load_single_traj(self.path_registry, top_file, traj_file)
             if not traj:
                 return """Failed. Trajectory could not be loaded; unable to retrieve
@@ -153,7 +161,6 @@ class HydrogenBondTool(BaseTool):
                 corrupted files, or incorrect formatted file. Please check and try
                 again."""
 
-            # Call the appropriate helper function based on the method
             if method == "wernet_nilsson":
                 result = compute_wernet_nilsson(traj)
             else:
