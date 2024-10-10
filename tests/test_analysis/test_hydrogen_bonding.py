@@ -25,28 +25,35 @@ def kabsch_sander(get_registry):
 )
 @patch("mdtraj.baker_hubbard")
 def test_run_success_baker_hubbard(
-    mock_baker_hubbard, mock_load_single_traj, hydrogen_bond_tool
+    mock_plot,
+    mock_save_results,
+    mock_baker_hubbard,
+    mock_load_single_traj,
+    hydrogen_bond_tool,
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
     mock_load_single_traj.return_value = mock_traj
 
     # Define the expected output from baker_hubbard
-    expected_hbonds = [(1, 2, 3), (4, 5, 6)]
-    mock_baker_hubbard.return_value = expected_hbonds
+    mock_baker_hubbard.return_value = [(1, 2, 3), (4, 5, 6)]
 
     # Call the run method
     traj_file = "rec0_butane_123456"
     top_file = None
-    result = hydrogen_bond_tool._run(traj_file, top_file, "baker_hubbard", "0.1")
+    result = hydrogen_bond_tool._run(traj_file, top_file, "baker_hubbard", freq="0.1")
 
     # Assertions
     inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, inferred_top_file, traj_file
+        hydrogen_bond_tool.path_registry,
+        inferred_top_file,
+        traj_file,
     )
+    mock_save_results.assert_called_once()
+    mock_plot.assert_called_once()
     assert result, """Succeeded. Baker-Hubbard analysis completed, results saved to file
-      and plot saved."""
+    and plot saved."""
 
 
 @patch(
@@ -59,12 +66,11 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, hydrogen_bond_tool):
     # Call the _run method
     traj_file = "rec0_butane_123456"
     top_file = None
-    result = hydrogen_bond_tool._run(traj_file, top_file, "baker_hubbard", "0.1")
-
-    # Assertions
-    inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
-    mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, inferred_top_file, traj_file
+    result = hydrogen_bond_tool._run(
+        traj_file,
+        top_file,
+        "baker_hubbard",
+        freq="0.1",
     )
     assert result, """Failed. Trajectory could not be loaded; unable to retrieve
                 data needed to find hydrogen bonds. This may be due missing files,
