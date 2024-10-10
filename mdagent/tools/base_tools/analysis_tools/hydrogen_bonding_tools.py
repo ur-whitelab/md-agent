@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 
@@ -45,25 +46,31 @@ def compute_wernet_nilsson(traj):
 
 
 def save_hb_results(
-    results: dict,
+    result: dict,
     method: str,
     path_registry: PathRegistry,
 ) -> str:
-    data = []
     if method == "wernet_nilsson":
-        for frame_index, frame in enumerate(results):
+        data = []
+        for frame_index, frame in enumerate(result):
             for bond in frame:
                 donor, hydrogen, acceptor = bond
                 data.append([frame_index, donor, hydrogen, acceptor])
 
         df = pd.DataFrame(
             data,
-            columns=["frame", "donor", "hydrogen atom", "acceptor"],
+            columns=["frame", "donor atom", "h atom", "acceptor atom"],
         )
     else:
+        data = []
+        for frame_index, frame in enumerate(result):
+            for bond in frame:
+                donor, hydrogen, acceptor = bond
+                data.append([frame_index, donor, hydrogen, acceptor])
+
         df = pd.DataFrame(
             data,
-            columns=["donor atom", "Hydrogen atom", "acceptor atom"],
+            columns=["donor atom", "h atom", "acceptor atom"],
         )
 
     file_name = path_registry.write_file_name(
@@ -71,16 +78,13 @@ def save_hb_results(
         record_type=f"{method}_results",
     )
     file_id = path_registry.get_fileid(file_name, FileType.RECORD)
-
     file_path = f"{path_registry.ckpt_records}/{file_name}.csv"
     df.to_csv(file_path, index=False)
-
     path_registry.map_path(
         file_id,
         file_path,
         description=f"Hydrogen bond results for {method}",
     )
-
     return file_id
 
 
@@ -109,49 +113,37 @@ def plot_and_save_hb_plot(
 
     plt.figure(figsize=(10, 6))
     if plot_type == "histogram":
-        plt.hist(
-            data,
-            bins=10,
-            edgecolor="black",
-            alpha=0.7,
-        )
-        plt.xlabel(
-            "Hydrogen Bond Persistence (%)"
-            if method == "baker_hubbard"
-            else "Bond Length (nm)"
-            if method == "wernet_nilsson"
-            else "Bond Energy (kcal/mol)"
-        )
+        hbond_frequencies = np.mean(data < 0.25, axis=0)
+        most_frequent_indices = np.argsort(-hbond_frequencies)[:3]
+        color = itertools.cycle(["r", "g", "blue"])
+        for i in most_frequent_indices:
+            if annotations:
+                label = annotations[i]
+            else:
+                label = f"Hydrogen Bond {i}"
+
+            plt.hist(
+                data[:, i],
+                color=next(color),
+                label=label,
+                alpha=0.5,
+                edgecolor="black",
+            )
+        plt.xlabel("Donor-acceptor distance [nm]")
         plt.ylabel("Frequency")
     elif plot_type == "time_series":
         plt.plot(data, label="Hydrogen Bonds")
         plt.xlabel("Frame Number")
-        plt.ylabel("Value")
+        plt.ylabel("Count")
 
     plt.title(title)
     plt.grid(True)
-
-    file_name = path_registry.write_file_name(
-        FileType.FIGURE,
-        file_format="png",
-    )
+    plt.legend()
 
     file_id = save_plot(
         path_registry,
         fig_analysis=f"{method}_{plot_type}",
         description=f"{title} for {method}",
-    )
-
-    file_path = f"{path_registry.ckpt_figures}/{method}_{plot_type}.png"
-
-    plt.savefig(file_path, format="png", dpi=300, bbox_inches="tight")
-
-    plt.close()
-
-    path_registry.map_path(
-        file_id,
-        file_name,
-        description=(f"{title} for {method}"),
     )
     return file_id
 
@@ -185,8 +177,6 @@ class HydrogenBondTool(BaseTool):
         method: str = "baker_hubbard",
         freq: str = "0.1",
     ) -> str:
-        if self.path_registry is None:
-            raise ValueError("Path registry is not set.")
         try:
             print("Loading trajectory...")
             traj = load_single_traj(
@@ -205,36 +195,58 @@ class HydrogenBondTool(BaseTool):
             else:
                 result = compute_baker_hubbard(traj, freq)
 
-            # Count the number of hydrogen bonds for each frame
-            hb_counts = np.array([len(frame) for frame in result])
+            if self.path_registry is None:
+                raise ValueError("PathRegistry is not set")
 
             result_file_id = save_hb_results(
                 {i: res for i, res in enumerate(result)},
                 method,
                 self.path_registry,
             )
+            if method == "wernet_nilsson":
+                hb_counts = np.array([len(frame) for frame in result])
+                if self.path_registry is None:
+                    raise ValueError("PathRegistry is not set")
 
-            plot_hist_file_id = plot_and_save_hb_plot(
-                hb_counts,
-                title=f"{method.capitalize()} Histogram",
-                plot_type="histogram",
-                method=method,
-                path_registry=self.path_registry,
-            )
+                plot_file_id = plot_and_save_hb_plot(
+                    hb_counts,
+                    title=f"{method.capitalize()} Time Series",
+                    plot_type="Time Series",
+                    method=method,
+                    path_registry=self.path_registry,
+                )
+            else:
+                # compute distance between H bonds
+                da_distances = md.compute_distances(
+                    traj,
+                    result[:, [0, 2]],
+                    periodic=False,
+                )
 
-            plot_and_save_hb_plot(
-                hb_counts,
-                title=f"{method.capitalize()} Time Series",
-                plot_type="time_series",
-                method=method,
-                path_registry=self.path_registry,
-                ylabel="Bond Energy",
-            )
+                annotations = np.array(
+                    [
+                        "%s -- %s"
+                        % (traj.topology.atom(hbond[0]), traj.topology.atom(hbond[2]))
+                        for hbond in result
+                    ],
+                )
+                if self.path_registry is None:
+                    raise ValueError("PathRegistry is not set")
+
+                plot_file_id = plot_and_save_hb_plot(
+                    da_distances,
+                    title=f"{method.capitalize()} Histogram - Top 3 HBonds",
+                    plot_type="histogram",
+                    method=method,
+                    path_registry=self.path_registry,
+                    annotations=annotations,
+                )
+
             return (
                 "Succeeded. Analysis completed, results saved to file and plot"
                 "saved. "
                 f"Results file: {result_file_id}, "
-                f"Histogram plot or time series plot: {plot_hist_file_id}, "
+                f"Histogram plot or time series plot: {plot_file_id}, "
             )
 
         except Exception as e:
@@ -276,6 +288,9 @@ class KabschSander(BaseTool):
 
             result = md.kabsch_sander(traj)
 
+            if self.path_registry is None:
+                raise ValueError("PathRegistry is not set")
+
             if self.path_registry is not None:
                 result_dict = {
                     "indices": [
@@ -287,6 +302,10 @@ class KabschSander(BaseTool):
                 }
 
                 self.save_results_to_file(result_dict, "kabsch_sander_results.json")
+
+                if self.path_registry is None:
+                    raise ValueError("PathRegistry is not set")
+
                 plot_time_series_file_id = plot_and_save_hb_plot(
                     result[1],  # assuming result[1] contains the bond energies
                     title="Kabsch-Sander Time Series",
