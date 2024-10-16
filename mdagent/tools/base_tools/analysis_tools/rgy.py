@@ -69,6 +69,7 @@ class RadiusofGyration:
         if plot_name.endswith(".png"):
             plot_name = plot_name.split(".png")[0]
         plot_path = f"{self.path_registry.ckpt_figures}/{plot_name}"
+        print("plot_path", plot_path)
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
@@ -77,7 +78,7 @@ class RadiusofGyration:
         plt.savefig(f"{plot_path}")
         self.path_registry.map_path(
             plot_id,
-            plot_path,
+            plot_path + ".png",
             description=f"Plot of radii of gyration over time for {self.traj_file}",
         )
         plt.close()
