@@ -49,6 +49,7 @@ class MDAgent:
         use_memory=False,
         paper_dir=None,  # papers for pqa, relative path within repo
         safe_mode=False,
+        paper_dir=None,  # papers for pqa, relative path within repo
     ):
         self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:
