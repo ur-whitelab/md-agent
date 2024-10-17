@@ -46,6 +46,7 @@ class MDAgent:
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=False,
+        paper_dir=None,  # papers for pqa, relative path within repo
     ):
         self.llm = _make_llm(model, temp, streaming)
         if tools_model is None:
@@ -53,7 +54,7 @@ class MDAgent:
         self.tools_llm = _make_llm(tools_model, temp, streaming)
 
         self.use_memory = use_memory
-        self.path_registry = PathRegistry.get_instance(ckpt_dir=ckpt_dir)
+        self.path_registry = PathRegistry.get_instance(ckpt_dir, paper_dir)
         self.ckpt_dir = self.path_registry.ckpt_dir
         self.memory = MemoryManager(self.path_registry, self.tools_llm, run_id=run_id)
         self.run_id = self.memory.run_id
