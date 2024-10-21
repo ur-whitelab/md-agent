@@ -84,11 +84,13 @@ class ModifyBaseSimulationScriptTool(BaseTool):
     args_schema = ModifyScriptInput
     llm: Optional[BaseLanguageModel]
     path_registry: Optional[PathRegistry]
+    safe_mode: Optional[bool] 
 
-    def __init__(self, path_registry: Optional[PathRegistry], llm):
+    def __init__(self, path_registry, llm, safe_mode = False):
         super().__init__()
         self.path_registry = path_registry
         self.llm = llm
+        self.safe_mode = safe_mode
 
     def _run(self, script_id: str, query: str) -> str:
         # if len(args) > 0:
@@ -150,7 +152,18 @@ class ModifyBaseSimulationScriptTool(BaseTool):
             file.write(script_content)
 
         self.path_registry.map_path(file_id, f"{directory}/{filename}", description)
-        return f"Succeeded. Script modified successfully. Modified Script ID: {file_id}"
+        #if safe mode is on, return the file id
+        if self.safe_mode:
+            return f"Succeeded. Script modified successfully. Modified Script ID: {file_id}"
+        #if safe mode is off, try to run the script
+        try:
+            exec(script_content)
+            return f"Succeeded. Script modified and ran \
+                successfully. Modified Script ID: {file_id}"
+        except Exception as e:
+            return (f"Failed. Error running the script: {e}."
+                "Modified Script ID: {file_id}. If you want to try to correct the "
+                "script, use the file id of the modified to correct the script.")
 
     async def _arun(self, query) -> str:
         """Use the tool asynchronously."""
