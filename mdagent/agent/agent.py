@@ -47,7 +47,6 @@ class MDAgent:
         uploaded_files=[],  # user input files to add to path registry
         run_id="",
         use_memory=False,
-        paper_dir=None,  # papers for pqa, relative path within repo
         safe_mode=False,
         paper_dir=None,  # papers for pqa, relative path within repo
     ):
