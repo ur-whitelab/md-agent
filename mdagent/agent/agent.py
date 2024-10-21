@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-
+from time import time
 from dotenv import load_dotenv
 from langchain.agents import AgentExecutor, OpenAIFunctionsAgent
 from langchain.agents.structured_chat.base import StructuredChatAgent
@@ -61,8 +61,8 @@ class MDAgent:
         self.run_id = self.memory.run_id
 
         self.uploaded_files = uploaded_files
-        for file in uploaded_files:  # todo -> allow users to add descriptions?
-            self.path_registry.map_path(file, file, description="User uploaded file")
+        # for file in uploaded_files:  # todo -> allow users to add descriptions?
+            # self.path_registry.map_path(file, file, description="User uploaded file")
 
         self.agent = None
         self.agent_type = agent_type
@@ -73,13 +73,16 @@ class MDAgent:
 
         if self.uploaded_files:
             self.add_file(self.uploaded_files)
-
+        self.safe_mode = safe_mode
     def _add_single_file(self, file_path, description=None):
         now = datetime.now()
         # Format the date and time as "YYYYMMDD_HHMMSS"
         timestamp = now.strftime("%Y%m%d_%H%M%S")
-        ID = "UPL_" + timestamp
-
+        i = 0
+        ID = "UPL_"+str(i) + timestamp
+        while ID in self.path_registry.list_path_names():   # check if ID already exists
+            i += 1
+            ID = "UPL_"+str(i) + timestamp
         if not description:
             # asks for user input to add description for file file_path
             # wait for 20 seconds or set up a default description
@@ -122,6 +125,7 @@ class MDAgent:
                 self.tools = make_all_tools(
                     self.tools_llm,
                     human=self.use_human_tool,
+                    safe_mode=self.safe_mode,
                 )
         return AgentExecutor.from_agent_and_tools(
             tools=self.tools,
