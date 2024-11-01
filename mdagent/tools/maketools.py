@@ -74,7 +74,7 @@ def make_all_tools(
         all_tools += [
             ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         ]
-        if "OPENAI_API_KEY" in os.environ and "PQA_API_KEY" in os.environ:
+        if path_instance.ckpt_papers:
             all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
