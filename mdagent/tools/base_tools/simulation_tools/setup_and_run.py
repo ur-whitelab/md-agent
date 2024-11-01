@@ -273,13 +273,18 @@ class OpenMMSimulation:
             PME,
         ]:
             if self.sim_params["Ensemble"] == "NPT":
-                self.system.addForce(
-                    MonteCarloBarostat(
-                        self.int_params["Pressure"],
-                        self.int_params["Temperature"],
-                        self.sim_params.get("barostatInterval", 25),
-                    )
+                pressure = self.int_params.get("Pressure", 1.0)  
+            
+            if "Pressure" not in self.int_params:
+                print("Warning: 'Pressure' not provided. Using default pressure of 1.0 atm.")
+            
+            self.system.addForce(
+                MonteCarloBarostat(
+                    pressure,
+                    self.int_params["Temperature"],
+                    self.sim_params.get("barostatInterval", 25),
                 )
+            )
 
     def setup_integrator(self):
         print("Setting up integrator...")
