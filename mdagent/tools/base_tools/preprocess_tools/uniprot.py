@@ -475,7 +475,7 @@ class QueryUniprot:
                 - 'crc64': The CRC64 hash of the protein sequence (probably not useful)
                 - 'md5': The MD5 hash of the protein sequence (probably not useful)
         """
-        seq_info = self.data = self.get_data(query, desired_field="sequence")
+        seq_info = self.get_data(query, desired_field="sequence")
         if not seq_info:
             return {}
         seq_info_specific = self._match_primary_accession(seq_info, primary_accession)[
