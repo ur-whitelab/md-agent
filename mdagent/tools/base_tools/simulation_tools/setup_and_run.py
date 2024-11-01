@@ -273,11 +273,14 @@ class OpenMMSimulation:
             PME,
         ]:
             if self.sim_params["Ensemble"] == "NPT":
-                pressure = self.int_params.get("Pressure", 1.0)  
-            
+                pressure = self.int_params.get("Pressure", 1.0)
+
             if "Pressure" not in self.int_params:
-                print("Warning: 'Pressure' not provided. Using default pressure of 1.0 atm.")
-            
+                print(
+                    "Warning: 'Pressure' not provided. ",
+                    "Using default pressure of 1.0 atm.",
+                )
+
             self.system.addForce(
                 MonteCarloBarostat(
                     pressure,
