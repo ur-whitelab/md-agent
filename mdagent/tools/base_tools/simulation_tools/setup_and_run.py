@@ -1227,7 +1227,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "constraints":
                     try:
-                        if type(value) == str:
+                        if isinstance(value, str):
                             if value == "None":
                                 processed_params[key] = None
                             elif value == "HBonds":
@@ -1251,7 +1251,7 @@ class SetUpandRunFunction(BaseTool):
                             "part of the parameters.\n"
                         )
                 if key == "rigidWater" or key == "rigidwater":
-                    if type(value) == bool:
+                    if isinstance(value, bool):
                         processed_params[key] = value
                     elif value == "True":
                         processed_params[key] = True
@@ -1276,7 +1276,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "solvate":
                     try:
-                        if type(value) == bool:
+                        if isinstance(value, bool):
                             processed_params[key] = value
                         elif value == "True":
                             processed_params[key] = True
@@ -1488,7 +1488,7 @@ class SetUpandRunFunction(BaseTool):
 
         # forcefield
         forcefield_files = values.get("forcefield_files")
-        if forcefield_files is None or forcefield_files is []:
+        if forcefield_files is None or forcefield_files == []:
             print("Setting default forcefields")
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         elif len(forcefield_files) == 0:
@@ -1500,7 +1500,7 @@ class SetUpandRunFunction(BaseTool):
                     error_msg += "The forcefield file is not present"
 
         save = values.get("save", True)
-        if type(save) != bool:
+        if not isinstance(save, bool):
             error_msg += "save must be a boolean value"
 
         if error_msg != "":

@@ -124,7 +124,7 @@ class SimulationOutputFigures(BaseTool):
             plotting_tools._find_file(file_id)
             plotting_tools.process_csv()
             plot_result = plotting_tools.plot_data()
-            if type(plot_result) == str:
+            if isinstance(plot_result, str):
                 return "Succeeded. IDs of figures created: " + plot_result
             else:
                 return "Failed. No figures created."
