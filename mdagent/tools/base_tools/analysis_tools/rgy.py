@@ -66,9 +66,8 @@ class RadiusofGyration:
         plot_id = self.path_registry.get_fileid(
             file_name=plot_name, type=FileType.FIGURE
         )
-        if plot_name.endswith(".png"):
-            plot_name = plot_name.split(".png")[0]
         plot_path = f"{self.path_registry.ckpt_figures}/{plot_name}"
+        plot_path = plot_path if plot_path.endswith(".png") else plot_path + ".png"
         print("plot_path", plot_path)
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
@@ -78,12 +77,12 @@ class RadiusofGyration:
         plt.savefig(f"{plot_path}")
         self.path_registry.map_path(
             plot_id,
-            plot_path + ".png",
+            plot_path,
             description=f"Plot of radii of gyration over time for {self.traj_file}",
         )
         plt.close()
         plt.clf()
-        return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"
+        return "Plot saved as: " + f"{plot_name} with plot ID {plot_id}"
 
 
 class RadiusofGyrationAverage(BaseTool):

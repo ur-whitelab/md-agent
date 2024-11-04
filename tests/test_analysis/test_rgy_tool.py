@@ -26,3 +26,4 @@ def test_rgy_average(rgy):
 def test_plot_rgy(rgy):
     output = rgy.plot_rgy()
     assert "Plot saved as: " in output
+    assert ".png" in output
