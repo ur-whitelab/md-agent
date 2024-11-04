@@ -265,7 +265,7 @@ class OpenMMSimulation:
                 raise ValueError(str(e))
             else:
                 raise ValueError(
-                    f"Error building system. Please check the forcefield files {str(e)}"
+                    f"Error building system. Please check the forcefield files {str(e)}. Included force fields are: {FORCEFIELD_LIST}"
                 )
 
         if self.sys_params.get("nonbondedMethod", None) in [
@@ -1497,8 +1497,10 @@ class SetUpandRunFunction(BaseTool):
         else:
             for file in forcefield_files:
                 if file not in FORCEFIELD_LIST:
-                    error_msg += "The forcefield file is not present"
-
+                    error_msg += (
+                        "The forcefield file is not present: forcefield files are: "
+                        + str(FORCEFIELD_LIST)
+                    )
         save = values.get("save", True)
         if not isinstance(save, bool):
             error_msg += "save must be a boolean value"
@@ -1558,7 +1560,10 @@ def create_simulation_input(pdb_path, forcefield_files):
     Water_model = Forcefield_files[1]
     # check if they are part of the list
     if Forcefield not in FORCEFIELD_LIST:
-        raise Exception("Forcefield not recognized")
+        raise Exception(
+            "Forcefield not recognized: Possible forcefields are: "
+            + str(FORCEFIELD_LIST)
+        )
     if Water_model not in FORCEFIELD_LIST:
         raise Exception("Water model not recognized")
 
