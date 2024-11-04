@@ -159,7 +159,7 @@ class RDFTool(BaseTool):
             )
 
         if stride:
-            if type(stride) != int:
+            if not isinstance(stride, int):
                 try:
                     stride = int(stride)
                     if stride <= 0:
