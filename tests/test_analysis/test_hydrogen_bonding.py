@@ -25,10 +25,10 @@ def kabsch_sander(get_registry):
 )
 @patch("mdtraj.baker_hubbard")
 def test_run_success_baker_hubbard(
-    mock_plot,
-    mock_save_results,
     mock_baker_hubbard,
     mock_load_single_traj,
+    mock_save_results,
+    mock_plot,
     hydrogen_bond_tool,
 ):
     # Create a mock trajectory
@@ -83,7 +83,7 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, hydrogen_bond_tool):
 )
 @patch("mdtraj.kabsch_sander")
 def test_run_success_kabsch_sander(
-    mock_kabsch_sander, mock_load_single_traj, kabsch_sander
+    mock_kabsch_sander, mock_load_single_traj, mock_top_file, kabsch_sander
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -93,6 +93,10 @@ def test_run_success_kabsch_sander(
     expected_indices = [(0, 1), (2, 3)]
     expected_energies = [0.5, 0.7]
     mock_kabsch_sander.return_value = (expected_indices, expected_energies)
+
+    # mock top_file method
+
+    mock_top_file.return_value = "mock_topology.pdb"
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
@@ -127,8 +131,8 @@ def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander):
     )
     assert result, """Failed. Trajectory could not be loaded; unable to access
             data required to calculate hydrogen bond energies. This could be due to
-            missing files, corrupted files, or incorrectly formatted file. Please check
-            and try again."""
+            missing files, corrupted files, or incorrectly formatted file.
+            Please check and try again."""
 
 
 @patch(
@@ -136,7 +140,7 @@ def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander):
 )
 @patch("mdtraj.wernet_nilsson")
 def test_run_success_wernet_nilsson(
-    mock_wernet_nilsson, mock_load_single_traj, hydrogen_bond_tool
+    mock_wernet_nilsson, mock_load_single_traj, mock_top_file, hydrogen_bond_tool
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -144,6 +148,7 @@ def test_run_success_wernet_nilsson(
 
     # Define the expected output from wernet_nilsson
     expected_hbonds = [(1, 2, 3), (4, 5, 6)]
+
     mock_wernet_nilsson.return_value = expected_hbonds
 
     # Call the _run method
@@ -152,10 +157,13 @@ def test_run_success_wernet_nilsson(
     result = hydrogen_bond_tool._run(traj_file, top_file, method="wernet_nilsson")
 
     # Assertions
-    inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
+
+    # inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
+
     mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, inferred_top_file, traj_file
+        hydrogen_bond_tool.path_registry, None, traj_file
     )
+
     mock_wernet_nilsson.assert_called_once_with(
         mock_traj, exclude_water=True, periodic=True, sidechain_only=False
     )
@@ -176,9 +184,10 @@ def test_run_fail_wernet_nilsson(mock_load_single_traj, hydrogen_bond_tool):
     result = hydrogen_bond_tool._run(traj_file, top_file, method="wernet_nilsson")
 
     # Assertions
-    inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
+    # inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
+
     mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, inferred_top_file, traj_file
+        hydrogen_bond_tool.path_registry, None, traj_file
     )
     assert result, """Failed. Trajectory could not be loaded; unable to retrieve
             data needed to find hydrogen bonds. This may be due to missing files,

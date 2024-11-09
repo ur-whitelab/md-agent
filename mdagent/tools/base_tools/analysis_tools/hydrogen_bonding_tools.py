@@ -1,6 +1,5 @@
 import itertools
-import json
-import os
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import mdtraj as md
@@ -45,23 +44,19 @@ def compute_wernet_nilsson(traj):
     )
 
 
-def save_hb_results(
-    result: dict,
-    method: str,
-    path_registry: PathRegistry,
-) -> str:
-    if method == "wernet_nilsson":
+def save_hb_results(result, method: str, path_registry: PathRegistry) -> str:
+    if method == "kabsch_sander":
         data = []
-        for frame_index, frame in enumerate(result):
-            for bond in frame:
-                donor, hydrogen, acceptor = bond
-                data.append([frame_index, donor, hydrogen, acceptor])
-
+        for frame_idx, sparse_matrix in enumerate(result):
+            coo_matrix = sparse_matrix.tocoo()
+            # converts to COO format for easy iteration
+            for i, j, energy in zip(coo_matrix.row, coo_matrix.col, coo_matrix.data):
+                data.append([frame_idx, i, j, energy])
         df = pd.DataFrame(
             data,
-            columns=["frame", "donor atom", "h atom", "acceptor atom"],
+            columns=["frame", "residue_i", "residue_j", "energy"],
         )
-    else:
+    elif method == "wernet_nilsson":
         data = []
         for frame_index, frame in enumerate(result):
             for bond in frame:
@@ -72,13 +67,19 @@ def save_hb_results(
             data,
             columns=["donor atom", "h atom", "acceptor atom"],
         )
+    else:
+        df = pd.DataFrame(
+            result,
+            columns=["donor atom", "h atom", "acceptor atom"],
+        )
 
     file_name = path_registry.write_file_name(
         FileType.RECORD,
         record_type=f"{method}_results",
+        file_format="csv",
     )
     file_id = path_registry.get_fileid(file_name, FileType.RECORD)
-    file_path = f"{path_registry.ckpt_records}/{file_name}.csv"
+    file_path = f"{path_registry.ckpt_records}/{file_name}"
     df.to_csv(file_path, index=False)
     path_registry.map_path(
         file_id,
@@ -94,8 +95,8 @@ def plot_and_save_hb_plot(
     plot_type: str,
     method: str,
     path_registry: PathRegistry,
-    annotations: list | None = None,
-    ylabel: str = "Value",  # Added ylabel parameter with default value
+    ylabel: str = "Count",
+    annotations: Optional[List[str]] = None,
 ) -> str:
     """
     Plots the data and saves the plot to a file.
@@ -115,26 +116,26 @@ def plot_and_save_hb_plot(
     if plot_type == "histogram":
         hbond_frequencies = np.mean(data < 0.25, axis=0)
         most_frequent_indices = np.argsort(-hbond_frequencies)[:3]
-        color = itertools.cycle(["r", "g", "blue"])
-        for i in most_frequent_indices:
-            if annotations:
-                label = annotations[i]
-            else:
-                label = f"Hydrogen Bond {i}"
+        color = itertools.cycle(["r", "b", "gold"])
 
-            plt.hist(
-                data[:, i],
-                color=next(color),
-                label=label,
-                alpha=0.5,
-                edgecolor="black",
-            )
+        if annotations is not None:
+            for i in most_frequent_indices:
+                plt.hist(
+                    data[:, i],
+                    color=next(color),
+                    label=annotations[i],
+                    alpha=0.5,
+                )
+        else:
+            for i in most_frequent_indices:
+                plt.hist(data[:, i], color=next(color), alpha=0.5)
+
         plt.xlabel("Donor-acceptor distance [nm]")
         plt.ylabel("Frequency")
     elif plot_type == "time_series":
         plt.plot(data, label="Hydrogen Bonds")
-        plt.xlabel("Frame Number")
-        plt.ylabel("Count")
+        plt.xlabel("Time (frames)")
+        plt.ylabel(ylabel)
 
     plt.title(title)
     plt.grid(True)
@@ -145,6 +146,8 @@ def plot_and_save_hb_plot(
         fig_analysis=f"{method}_{plot_type}",
         description=f"{title} for {method}",
     )
+    plt.close()
+
     return file_id
 
 
@@ -195,25 +198,34 @@ class HydrogenBondTool(BaseTool):
             else:
                 result = compute_baker_hubbard(traj, freq)
 
-            if self.path_registry is None:
-                raise ValueError("PathRegistry is not set")
-
-            result_file_id = save_hb_results(
-                {i: res for i, res in enumerate(result)},
-                method,
-                self.path_registry,
-            )
-            if method == "wernet_nilsson":
-                hb_counts = np.array([len(frame) for frame in result])
                 if self.path_registry is None:
                     raise ValueError("PathRegistry is not set")
 
+                if self.path_registry is not None:
+                    result_file_id = save_hb_results(
+                        result,
+                        method,
+                        self.path_registry,
+                    )
+
+                annotations: Optional[List[str]] = None
+
+            if method == "wernet_nilsson":
+                # Count the number of hydrogen bonds for each frame
+                hb_counts = np.array([len(frame) for frame in result])
+                da_distances = hb_counts
+
+            if self.path_registry is None:
+                raise ValueError("PathRegistry is not set")
+
+            if self.path_registry is not None:
                 plot_file_id = plot_and_save_hb_plot(
                     hb_counts,
                     title=f"{method.capitalize()} Time Series",
-                    plot_type="Time Series",
+                    plot_type="time Series",
                     method=method,
                     path_registry=self.path_registry,
+                    ylabel="Count",
                 )
             else:
                 # compute distance between H bonds
@@ -228,11 +240,12 @@ class HydrogenBondTool(BaseTool):
                         "%s -- %s"
                         % (traj.topology.atom(hbond[0]), traj.topology.atom(hbond[2]))
                         for hbond in result
-                    ],
+                    ]
                 )
-                if self.path_registry is None:
-                    raise ValueError("PathRegistry is not set")
+            if self.path_registry is None:
+                raise ValueError("PathRegistry is not set")
 
+            if self.path_registry is not None:
                 plot_file_id = plot_and_save_hb_plot(
                     da_distances,
                     title=f"{method.capitalize()} Histogram - Top 3 HBonds",
@@ -246,7 +259,7 @@ class HydrogenBondTool(BaseTool):
                 "Succeeded. Analysis completed, results saved to file and plot"
                 "saved. "
                 f"Results file: {result_file_id}, "
-                f"Histogram plot or time series plot: {plot_file_id}, "
+                f"Histogram or Time series plot: {plot_file_id}, "
             )
 
         except Exception as e:
@@ -292,36 +305,28 @@ class KabschSander(BaseTool):
                 raise ValueError("PathRegistry is not set")
 
             if self.path_registry is not None:
-                result_dict = {
-                    "indices": [
-                        list(pair) for pair in result[0]
-                    ],  # Convert each tuple to a list
-                    "energies": result[1].tolist()
-                    if hasattr(result[1], "tolist")
-                    else list(result[1]),
-                }
-
-                self.save_results_to_file(result_dict, "kabsch_sander_results.json")
-
-                if self.path_registry is None:
-                    raise ValueError("PathRegistry is not set")
-
-                plot_time_series_file_id = plot_and_save_hb_plot(
-                    result[1],  # assuming result[1] contains the bond energies
-                    title="Kabsch-Sander Time Series",
-                    plot_type="time_series",
+                result_file_id = save_hb_results(
+                    result,
                     method="kabsch_sander",
                     path_registry=self.path_registry,
-                    ylabel="Bond Energy",
                 )
-                return (
-                    "Succeeded. Kabsch-Sander analysis completed, results saved to "
-                    f"file and plot saved. Plot file: {plot_time_series_file_id}"
-                )
-            else:
-                return """Failed. Path registry helps track
-                file locations and it is not set up. Please make sure it is set up
-                before running this tool."""
+
+            total_energies = [matrix.sum() for matrix in result]
+            plot_time_series_file_id = plot_and_save_hb_plot(
+                total_energies,
+                title="Kabsch-Sander Time Series",
+                plot_type="time_series",
+                method="kabsch_sander",
+                path_registry=self.path_registry,
+                ylabel="Total HBond Energy (kcal/mol)",
+            )
+
+            return (
+                "Succeeded. Kabsch-Sander analysis completed, results saved to file"
+                "and plot saved"
+                f"Results file:{result_file_id},"
+                f"Plot file: {plot_time_series_file_id},"
+            )
 
         except Exception as e:
             return f"Failed. {type(e).__name__}: {e}"
@@ -329,6 +334,8 @@ class KabschSander(BaseTool):
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
 
+
+"""
     def top_file(self, traj_file: str) -> str:
         top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
         return top_file
@@ -343,3 +350,6 @@ class KabschSander(BaseTool):
                 file_name,
                 description=f"Results saved to {file_name}",
             )
+
+
+"""
