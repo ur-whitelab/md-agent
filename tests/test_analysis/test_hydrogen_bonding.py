@@ -115,7 +115,16 @@ def test_run_success_kabsch_sander(
 @patch(
     "mdagent.tools.base_tools.analysis_tools.hydrogen_bonding_tools.load_single_traj"
 )
-def test_run_fail_kabsch_sander(mock_load_single_traj, kabsch_sander):
+@patch("mdtraj.kabsch_sander")
+def test_run_fail_kabsch_sander(
+    mock_kabsch_sander, mock_load_single_traj, mock_top_file, kabsch_sander
+):
+    mock_traj = MagicMock()
+    mock_load_single_traj.return_value = mock_traj
+    # mock the top_file method to return a value
+
+    mock_top_file.return_value = "mock_topology.pdb"
+
     # Simulate the trajectory loading failure
     mock_load_single_traj.return_value = None
 
