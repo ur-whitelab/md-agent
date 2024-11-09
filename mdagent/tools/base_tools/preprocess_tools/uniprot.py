@@ -475,7 +475,7 @@ class QueryUniprot:
                 - 'crc64': The CRC64 hash of the protein sequence (probably not useful)
                 - 'md5': The MD5 hash of the protein sequence (probably not useful)
         """
-        seq_info = self.data = self.get_data(query, desired_field="sequence")
+        seq_info = self.get_data(query, desired_field="sequence")
         if not seq_info:
             return {}
         seq_info_specific = self._match_primary_accession(seq_info, primary_accession)[
@@ -693,9 +693,11 @@ class QueryUniprot:
         if include_uniprotkbids:
             all_ids + [entry["uniProtkbId"] for entry in ids_] if ids_ else []
         accession = self.get_data(query, desired_field="accession")
-        all_ids + [
-            entry["primaryAccession"] for entry in accession
-        ] if accession else []
+        (
+            all_ids + [entry["primaryAccession"] for entry in accession]
+            if accession
+            else []
+        )
         if single_id:
             return [all_ids[0]] if all_ids else []
         return list(set(all_ids))

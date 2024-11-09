@@ -265,7 +265,7 @@ class OpenMMSimulation:
                 raise ValueError(str(e))
             else:
                 raise ValueError(
-                    f"Error building system. Please check the forcefield files {str(e)}"
+                    f"Error building system. Please check the forcefield files {str(e)}. Included force fields are: {FORCEFIELD_LIST}"
                 )
 
         if self.sys_params.get("nonbondedMethod", None) in [
@@ -273,13 +273,21 @@ class OpenMMSimulation:
             PME,
         ]:
             if self.sim_params["Ensemble"] == "NPT":
-                self.system.addForce(
-                    MonteCarloBarostat(
-                        self.int_params["Pressure"],
-                        self.int_params["Temperature"],
-                        self.sim_params.get("barostatInterval", 25),
-                    )
+                pressure = self.int_params.get("Pressure", 1.0)
+
+            if "Pressure" not in self.int_params:
+                print(
+                    "Warning: 'Pressure' not provided. ",
+                    "Using default pressure of 1.0 atm.",
                 )
+
+            self.system.addForce(
+                MonteCarloBarostat(
+                    pressure,
+                    self.int_params["Temperature"],
+                    self.sim_params.get("barostatInterval", 25),
+                )
+            )
 
     def setup_integrator(self):
         print("Setting up integrator...")
@@ -1219,7 +1227,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "constraints":
                     try:
-                        if type(value) == str:
+                        if isinstance(value, str):
                             if value == "None":
                                 processed_params[key] = None
                             elif value == "HBonds":
@@ -1243,7 +1251,7 @@ class SetUpandRunFunction(BaseTool):
                             "part of the parameters.\n"
                         )
                 if key == "rigidWater" or key == "rigidwater":
-                    if type(value) == bool:
+                    if isinstance(value, bool):
                         processed_params[key] = value
                     elif value == "True":
                         processed_params[key] = True
@@ -1268,7 +1276,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "solvate":
                     try:
-                        if type(value) == bool:
+                        if isinstance(value, bool):
                             processed_params[key] = value
                         elif value == "True":
                             processed_params[key] = True
@@ -1480,7 +1488,7 @@ class SetUpandRunFunction(BaseTool):
 
         # forcefield
         forcefield_files = values.get("forcefield_files")
-        if forcefield_files is None or forcefield_files is []:
+        if forcefield_files is None or forcefield_files == []:
             print("Setting default forcefields")
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         elif len(forcefield_files) == 0:
@@ -1489,10 +1497,12 @@ class SetUpandRunFunction(BaseTool):
         else:
             for file in forcefield_files:
                 if file not in FORCEFIELD_LIST:
-                    error_msg += "The forcefield file is not present"
-
+                    error_msg += (
+                        "The forcefield file is not present: forcefield files are: "
+                        + str(FORCEFIELD_LIST)
+                    )
         save = values.get("save", True)
-        if type(save) != bool:
+        if not isinstance(save, bool):
             error_msg += "save must be a boolean value"
 
         if error_msg != "":
@@ -1550,7 +1560,10 @@ def create_simulation_input(pdb_path, forcefield_files):
     Water_model = Forcefield_files[1]
     # check if they are part of the list
     if Forcefield not in FORCEFIELD_LIST:
-        raise Exception("Forcefield not recognized")
+        raise Exception(
+            "Forcefield not recognized: Possible forcefields are: "
+            + str(FORCEFIELD_LIST)
+        )
     if Water_model not in FORCEFIELD_LIST:
         raise Exception("Water model not recognized")
 
