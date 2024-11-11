@@ -169,7 +169,7 @@ class HydrogenBondTool(BaseTool):
 
     path_registry: PathRegistry | None = None
 
-    def __init__(self, path_registry: PathRegistry):
+    def __init__(self, path_registry):
         super().__init__()
         self.path_registry = path_registry
 
@@ -180,6 +180,9 @@ class HydrogenBondTool(BaseTool):
         method: str = "baker_hubbard",
         freq: str = "0.1",
     ) -> str:
+        if self.path_registry is None:
+            raise ValueError("PathRegistry is not set")
+
         try:
             print("Loading trajectory...")
             traj = load_single_traj(
@@ -194,31 +197,22 @@ class HydrogenBondTool(BaseTool):
                 again."""
 
             if method == "wernet_nilsson":
+
                 result = compute_wernet_nilsson(traj)
-            else:
+            else:  # this is the baker-hubbard method
                 result = compute_baker_hubbard(traj, freq)
 
-                if self.path_registry is None:
-                    raise ValueError("PathRegistry is not set")
-
-                if self.path_registry is not None:
-                    result_file_id = save_hb_results(
-                        result,
-                        method,
-                        self.path_registry,
-                    )
-
-                annotations: Optional[List[str]] = None
+            result_file_id = save_hb_results(
+                result,
+                method,
+                self.path_registry,
+            )
 
             if method == "wernet_nilsson":
                 # Count the number of hydrogen bonds for each frame
                 hb_counts = np.array([len(frame) for frame in result])
-                da_distances = hb_counts
+                # da_distances = hb_counts
 
-            if self.path_registry is None:
-                raise ValueError("PathRegistry is not set")
-
-            if self.path_registry is not None:
                 plot_file_id = plot_and_save_hb_plot(
                     hb_counts,
                     title=f"{method.capitalize()} Time Series",
@@ -227,7 +221,8 @@ class HydrogenBondTool(BaseTool):
                     path_registry=self.path_registry,
                     ylabel="Count",
                 )
-            else:
+
+            else:  # this is the baker-hubbard method
                 # compute distance between H bonds
                 da_distances = md.compute_distances(
                     traj,
@@ -242,10 +237,7 @@ class HydrogenBondTool(BaseTool):
                         for hbond in result
                     ]
                 )
-            if self.path_registry is None:
-                raise ValueError("PathRegistry is not set")
 
-            if self.path_registry is not None:
                 plot_file_id = plot_and_save_hb_plot(
                     da_distances,
                     title=f"{method.capitalize()} Histogram - Top 3 HBonds",
@@ -289,6 +281,9 @@ class KabschSander(BaseTool):
         self.path_registry = path_registry
 
     def _run(self, traj_file: str, top_file: str | None = None) -> str:
+
+        if self.path_registry is None:
+            raise ValueError("PathRegistry is not set")
         try:
             if not top_file:
                 top_file = self.top_file(traj_file)
@@ -301,15 +296,11 @@ class KabschSander(BaseTool):
 
             result = md.kabsch_sander(traj)
 
-            if self.path_registry is None:
-                raise ValueError("PathRegistry is not set")
-
-            if self.path_registry is not None:
-                result_file_id = save_hb_results(
-                    result,
-                    method="kabsch_sander",
-                    path_registry=self.path_registry,
-                )
+            result_file_id = save_hb_results(
+                result,
+                method="kabsch_sander",
+                path_registry=self.path_registry,
+            )
 
             total_energies = [matrix.sum() for matrix in result]
             plot_time_series_file_id = plot_and_save_hb_plot(
@@ -333,23 +324,3 @@ class KabschSander(BaseTool):
 
     async def _arun(self, traj_file, top_file=None):
         raise NotImplementedError("Async version not implemented")
-
-
-"""
-    def top_file(self, traj_file: str) -> str:
-        top_file = os.path.join(os.path.dirname(traj_file), "topology.pdb")
-        return top_file
-
-    def save_results_to_file(self, results: dict, file_name: str) -> None:
-        with open(file_name, "w") as f:
-            json.dump(results, f)
-        if self.path_registry:
-            file_id = self.path_registry.get_fileid(file_name, FileType.RECORD)
-            self.path_registry.map_path(
-                file_id,
-                file_name,
-                description=f"Results saved to {file_name}",
-            )
-
-
-"""
