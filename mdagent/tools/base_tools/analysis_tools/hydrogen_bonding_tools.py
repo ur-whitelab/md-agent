@@ -181,7 +181,7 @@ class HydrogenBondTool(BaseTool):
         freq: str = "0.1",
     ) -> str:
         if self.path_registry is None:
-            raise ValueError("PathRegistry is not set")
+            return "PathRegistry is not set"
 
         try:
             print("Loading trajectory...")
@@ -216,7 +216,7 @@ class HydrogenBondTool(BaseTool):
                 plot_file_id = plot_and_save_hb_plot(
                     hb_counts,
                     title=f"{method.capitalize()} Time Series",
-                    plot_type="time Series",
+                    plot_type="time_series",
                     method=method,
                     path_registry=self.path_registry,
                     ylabel="Count",
@@ -248,7 +248,7 @@ class HydrogenBondTool(BaseTool):
                 )
 
             return (
-                "Succeeded. Analysis completed, results saved to file and plot"
+                "Succeeded. Analysis completed, results saved to file and plot "
                 "saved. "
                 f"Results file: {result_file_id}, "
                 f"Histogram or Time series plot: {plot_file_id}, "
@@ -283,7 +283,7 @@ class KabschSander(BaseTool):
     def _run(self, traj_file: str, top_file: str | None = None) -> str:
 
         if self.path_registry is None:
-            raise ValueError("PathRegistry is not set")
+            return "PathRegistry is not set"
         try:
             if not top_file:
                 top_file = self.top_file(traj_file)
@@ -313,10 +313,10 @@ class KabschSander(BaseTool):
             )
 
             return (
-                "Succeeded. Kabsch-Sander analysis completed, results saved to file"
-                "and plot saved"
-                f"Results file:{result_file_id},"
-                f"Plot file: {plot_time_series_file_id},"
+                "Succeeded. Kabsch-Sander analysis completed, results saved to file "
+                "and plot saved. "
+                f"Results file:{result_file_id}, "
+                f"Plot file: {plot_time_series_file_id}, "
             )
 
         except Exception as e:
