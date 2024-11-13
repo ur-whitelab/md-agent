@@ -98,10 +98,6 @@ def test_run_success_kabsch_sander(
     expected_energies = [0.5, 0.7]
     mock_kabsch_sander.return_value = (expected_indices, expected_energies)
 
-    # mock top_file method
-
-    # mock_top_file.return_value = "mock_topology.pdb"
-
     # Call the _run method
     traj_file = "rec0_butane_123456"
     top_file = "top_sim0_butane_123456"
