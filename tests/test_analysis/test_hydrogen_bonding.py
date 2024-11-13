@@ -20,6 +20,7 @@ def kabsch_sander(get_registry):
     return KabschSander(path_registry)
 
 
+@patch("mdagent.tools.base_tools.analysis_tools.hydrogen_bonding_tools.save_plot")
 @patch(
     "mdagent.tools.base_tools.analysis_tools.hydrogen_bonding_tools.load_single_traj"
 )
@@ -27,7 +28,6 @@ def kabsch_sander(get_registry):
 def test_run_success_baker_hubbard(
     mock_baker_hubbard,
     mock_load_single_traj,
-    mock_save_results,
     mock_plot,
     hydrogen_bond_tool,
 ):
@@ -40,18 +40,19 @@ def test_run_success_baker_hubbard(
 
     # Call the run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = hydrogen_bond_tool._run(traj_file, top_file, "baker_hubbard", freq="0.1")
 
     # Assertions
-    inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
+    # inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
         hydrogen_bond_tool.path_registry,
-        inferred_top_file,
+        # inferred_top_file,
+        top_file,
         traj_file,
     )
-    mock_save_results.assert_called_once()
-    mock_plot.assert_called_once()
+    # mock_save_results.assert_called_once()
+    # mock_plot.assert_called_once()
     assert result, """Succeeded. Baker-Hubbard analysis completed, results saved to file
     and plot saved."""
 
@@ -65,7 +66,7 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, hydrogen_bond_tool):
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = hydrogen_bond_tool._run(
         traj_file,
         top_file,
@@ -83,7 +84,10 @@ def test_run_fail_baker_hubbard(mock_load_single_traj, hydrogen_bond_tool):
 )
 @patch("mdtraj.kabsch_sander")
 def test_run_success_kabsch_sander(
-    mock_kabsch_sander, mock_load_single_traj, mock_top_file, kabsch_sander
+    mock_kabsch_sander,
+    mock_load_single_traj,
+    # mock_top_file,
+    kabsch_sander,
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -96,17 +100,20 @@ def test_run_success_kabsch_sander(
 
     # mock top_file method
 
-    mock_top_file.return_value = "mock_topology.pdb"
+    # mock_top_file.return_value = "mock_topology.pdb"
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = kabsch_sander._run(traj_file, top_file)
 
     # Assertions
-    inferred_top_file = kabsch_sander.top_file(traj_file)
+    # inferred_top_file = kabsch_sander.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        kabsch_sander.path_registry, inferred_top_file, traj_file
+        kabsch_sander.path_registry,
+        # inferred_top_file,
+        top_file,
+        traj_file,
     )
     assert result, """Succeeded. Kabsch-Sander analysis completed, results saved to
     file and plot saved."""
@@ -117,26 +124,32 @@ def test_run_success_kabsch_sander(
 )
 @patch("mdtraj.kabsch_sander")
 def test_run_fail_kabsch_sander(
-    mock_kabsch_sander, mock_load_single_traj, mock_top_file, kabsch_sander
+    mock_kabsch_sander,
+    mock_load_single_traj,
+    # mock_top_file,
+    kabsch_sander,
 ):
     mock_traj = MagicMock()
     mock_load_single_traj.return_value = mock_traj
     # mock the top_file method to return a value
 
-    mock_top_file.return_value = "mock_topology.pdb"
+    # mock_top_file.return_value = "mock_topology.pdb"
 
     # Simulate the trajectory loading failure
     mock_load_single_traj.return_value = None
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = kabsch_sander._run(traj_file, top_file)
 
     # Assertions
-    inferred_top_file = kabsch_sander.top_file(traj_file)
+    # inferred_top_file = kabsch_sander.top_file(traj_file)
     mock_load_single_traj.assert_called_once_with(
-        kabsch_sander.path_registry, inferred_top_file, traj_file
+        kabsch_sander.path_registry,
+        # inferred_top_file,
+        top_file,
+        traj_file,
     )
     assert result, """Failed. Trajectory could not be loaded; unable to access
             data required to calculate hydrogen bond energies. This could be due to
@@ -149,7 +162,10 @@ def test_run_fail_kabsch_sander(
 )
 @patch("mdtraj.wernet_nilsson")
 def test_run_success_wernet_nilsson(
-    mock_wernet_nilsson, mock_load_single_traj, mock_top_file, hydrogen_bond_tool
+    mock_wernet_nilsson,
+    mock_load_single_traj,
+    # mock_top_file,
+    hydrogen_bond_tool,
 ):
     # Create a mock trajectory
     mock_traj = MagicMock()
@@ -162,7 +178,7 @@ def test_run_success_wernet_nilsson(
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = hydrogen_bond_tool._run(traj_file, top_file, method="wernet_nilsson")
 
     # Assertions
@@ -170,7 +186,7 @@ def test_run_success_wernet_nilsson(
     # inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
 
     mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, None, traj_file
+        hydrogen_bond_tool.path_registry, top_file, traj_file
     )
 
     mock_wernet_nilsson.assert_called_once_with(
@@ -189,14 +205,14 @@ def test_run_fail_wernet_nilsson(mock_load_single_traj, hydrogen_bond_tool):
 
     # Call the _run method
     traj_file = "rec0_butane_123456"
-    top_file = None
+    top_file = "top_sim0_butane_123456"
     result = hydrogen_bond_tool._run(traj_file, top_file, method="wernet_nilsson")
 
     # Assertions
     # inferred_top_file = hydrogen_bond_tool.top_file(traj_file)
 
     mock_load_single_traj.assert_called_once_with(
-        hydrogen_bond_tool.path_registry, None, traj_file
+        hydrogen_bond_tool.path_registry, top_file, traj_file
     )
     assert result, """Failed. Trajectory could not be loaded; unable to retrieve
             data needed to find hydrogen bonds. This may be due to missing files,

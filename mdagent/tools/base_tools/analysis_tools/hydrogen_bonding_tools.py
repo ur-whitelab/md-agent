@@ -65,7 +65,7 @@ def save_hb_results(result, method: str, path_registry: PathRegistry) -> str:
 
         df = pd.DataFrame(
             data,
-            columns=["donor atom", "h atom", "acceptor atom"],
+            columns=["frame_index", "donor atom", "h atom", "acceptor atom"],
         )
     else:
         df = pd.DataFrame(
