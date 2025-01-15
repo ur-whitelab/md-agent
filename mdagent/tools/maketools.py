@@ -46,9 +46,7 @@ from .base_tools import (
     PCATool,
     PPIDistance,
     ProteinName2PDBTool,
-    RadiusofGyrationAverage,
-    RadiusofGyrationPerFrame,
-    RadiusofGyrationPlot,
+    RadiusofGyrationTool,
     RDFTool,
     Scholar2ResultLLM,
     SetUpandRunFunction,
@@ -78,7 +76,7 @@ def make_all_tools(
                                             safe_mode=safe_mode
                                             ),
         ]
-        if "OPENAI_API_KEY" in os.environ and "PQA_API_KEY" in os.environ:
+        if path_instance.ckpt_papers:
             all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]
         if human:
             all_tools += [agents.load_tools(["human"], llm)[0]]
@@ -103,9 +101,7 @@ def make_all_tools(
         PCATool(path_registry=path_instance),
         PPIDistance(path_registry=path_instance),
         ProteinName2PDBTool(path_registry=path_instance),
-        RadiusofGyrationAverage(path_registry=path_instance),
-        RadiusofGyrationPerFrame(path_registry=path_instance),
-        RadiusofGyrationPlot(path_registry=path_instance),
+        RadiusofGyrationTool(path_registry=path_instance),
         RDFTool(path_registry=path_instance),
         SetUpandRunFunction(path_registry=path_instance),
         SimulationOutputFigures(path_registry=path_instance),

@@ -4,11 +4,7 @@ from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
 from .analysis_tools.ppi_tools import PPIDistance
 from .analysis_tools.rdf_tool import RDFTool
-from .analysis_tools.rgy import (
-    RadiusofGyrationAverage,
-    RadiusofGyrationPerFrame,
-    RadiusofGyrationPlot,
-)
+from .analysis_tools.rgy import RadiusofGyrationTool
 from .analysis_tools.rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .analysis_tools.sasa import SolventAccessibleSurfaceArea
 from .analysis_tools.secondary_structure import (
@@ -80,9 +76,7 @@ __all__ = [
     "PCATool",
     "PPIDistance",
     "ProteinName2PDBTool",
-    "RadiusofGyrationAverage",
-    "RadiusofGyrationPerFrame",
-    "RadiusofGyrationPlot",
+    "RadiusofGyrationTool",
     "RDFTool",
     "RMSDCalculator",
     "Scholar2ResultLLM",
