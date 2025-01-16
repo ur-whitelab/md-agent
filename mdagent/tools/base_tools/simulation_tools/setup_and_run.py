@@ -275,19 +275,19 @@ class OpenMMSimulation:
             if self.sim_params["Ensemble"] == "NPT":
                 pressure = self.int_params.get("Pressure", 1.0)
 
-            if "Pressure" not in self.int_params:
-                print(
-                    "Warning: 'Pressure' not provided. ",
-                    "Using default pressure of 1.0 atm.",
-                )
+                if "Pressure" not in self.int_params:
+                    print(
+                        "Warning: 'Pressure' not provided. ",
+                        "Using default pressure of 1.0 atm.",
+                    )
 
-            self.system.addForce(
-                MonteCarloBarostat(
-                    pressure,
-                    self.int_params["Temperature"],
-                    self.sim_params.get("barostatInterval", 25),
+                self.system.addForce(
+                    MonteCarloBarostat(
+                        pressure,
+                        self.int_params["Temperature"],
+                        self.sim_params.get("barostatInterval", 25),
+                    )
                 )
-            )
 
     def setup_integrator(self):
         print("Setting up integrator...")
@@ -723,18 +723,22 @@ class OpenMMSimulation:
             system.addForce(MonteCarloBarostat(pressure, temperature, barostatInterval))
             """
 
-        if integrator_type == "LangevinMiddle" and \
-            constraints != "None" and constraints:
+        if (
+            integrator_type == "LangevinMiddle"
+            and constraints != "None"
+            and constraints
+        ):
             print("Constraints must be set to 'None' for LangevinMiddle integrator.")
-            print(integrator_type, "constraints: ",constraints)
+            print(integrator_type, "constraints: ", constraints)
             script_content += """
         integrator = LangevinMiddleIntegrator(temperature, friction, dt)
         integrator.setConstraintTolerance(constraintTolerance)
         simulation = Simulation(modeller.topology, system, integrator, platform)
         simulation.context.setPositions(modeller.positions)
         """
-        if integrator_type == "LangevinMiddle" and \
-            (constraints == "None" or constraints is None):
+        if integrator_type == "LangevinMiddle" and (
+            constraints == "None" or constraints is None
+        ):
             script_content += """
             integrator = LangevinMiddleIntegrator(temperature, friction, dt)
             simulation = Simulation(modeller.topology, system, integrator, platform)
