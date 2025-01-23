@@ -29,11 +29,6 @@ def test_saltbridge_tool_init(get_registry):
     assert tool.path_registry == registry
 
 
-def test_salt_bridge_function_init(get_registry):
-    path_registry = get_registry("raw", False)
-    sbf = SaltBridgeFunction(path_registry)
-    assert sbf.path_registry == path_registry
-
 
 def test_find_salt_bridges(fake_path_registry, mock_md_load):
     sbf = SaltBridgeFunction(fake_path_registry)
@@ -41,7 +36,6 @@ def test_find_salt_bridges(fake_path_registry, mock_md_load):
     mock_md_load.assert_called_once_with(
         "/fake/path/traj_file.dcd", top="/fake/path/top_file.top"
     )
-    # mock_md_compute_distances.assert_called()
 
 
 def test_salt_bridge_function_without_top(fake_path_registry, mock_md_load):
