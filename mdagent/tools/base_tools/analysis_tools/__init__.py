@@ -1,4 +1,5 @@
 from .distance_tools import ContactsTool, DistanceMatrixTool
+from .hydrogen_bonding_tools import HydrogenBondTool
 from .inertia import MomentOfInertia
 from .pca_tools import PCATool
 from .plot_tools import SimulationOutputFigures
@@ -14,6 +15,7 @@ __all__ = [
     "ComputeRMSF",
     "ContactsTool",
     "DistanceMatrixTool",
+    "HydrogenBondTool",
     "MomentOfInertia",
     "PCATool",
     "PPIDistance",

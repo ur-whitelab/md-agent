@@ -1,4 +1,5 @@
 from .analysis_tools.distance_tools import ContactsTool, DistanceMatrixTool
+from .analysis_tools.hydrogen_bonding_tools import HydrogenBondTool
 from .analysis_tools.inertia import MomentOfInertia
 from .analysis_tools.pca_tools import PCATool
 from .analysis_tools.plot_tools import SimulationOutputFigures
@@ -67,6 +68,7 @@ __all__ = [
     "ComputeRMSF",
     "ContactsTool",
     "DistanceMatrixTool",
+    "HydrogenBondTool",
     "ListRegistryPaths",
     "MapPath2Name",
     "MapProteinRepresentation",
