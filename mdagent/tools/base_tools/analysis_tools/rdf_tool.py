@@ -26,7 +26,8 @@ class RDFTool(BaseTool):
     name = "RDFTool"
     description = (
         "Calculate the radial distribution function (RDF) of a trajectory "
-        "of a protein with respect to water molecules."
+        "of a protein with respect to water molecules using the trajectory file ID "
+        "(trajectory_fileid) and optionally the topology file ID (topology_fileid). "
     )
     args_schema = RDFToolInput
     path_registry: Optional[PathRegistry]
@@ -45,6 +46,9 @@ class RDFTool(BaseTool):
             elif "Invalid file extension" in str(e):
                 print("File Extension Not Supported in RDF tool: ", str(e))
                 return ("Failed. File Extension Not Supported", str(e))
+            elif "not in path registry" in str(e):
+                print("File ID not in Path Registry in RDF tool: ", str(e))
+                return ("Failed. File ID not in Path Registry", str(e))
             else:
                 raise ValueError(f"Error during inputs in RDF tool {e}")
 
@@ -92,11 +96,11 @@ class RDFTool(BaseTool):
             Log_id=trajectory_id,
         )
         fig_id = self.path_registry.get_fileid(plot_name, type=FileType.FIGURE)
-
-        plt.savefig(f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png")
+        file_path = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
+        plt.savefig(file_path)
         self.path_registry.map_path(
             fig_id,
-            plot_name,
+            file_path,
             description=f"RDF plot for the trajectory file with id: {trajectory_id}",
         )
         plt.close()
@@ -106,6 +110,10 @@ class RDFTool(BaseTool):
         pass
 
     def validate_input(self, input):
+        input = input.get("input", input)
+
+        input = input.get("action_input", input)
+
         trajectory_id = input.get("trajectory_fileid", None)
 
         topology_id = input.get("topology_fileid", None)
@@ -115,7 +123,9 @@ class RDFTool(BaseTool):
         atom_indices = input.get("atom_indices", None)
 
         if not trajectory_id:
-            raise ValueError("Incorrect Inputs: Trajectory file ID is required")
+            raise ValueError(
+                "Incorrect Inputs: Trajectory file ID ('trajectory_fileid')is required"
+            )
 
         # check if trajectory id is valid
         fileids = self.path_registry.list_path_names()
@@ -131,7 +141,7 @@ class RDFTool(BaseTool):
             if not topology_id:
                 raise ValueError(
                     "Incorrect Inputs: "
-                    "Topology file is required for trajectory "
+                    "Topology file (topology_fileid) is required for trajectory "
                     "file with extension {}".format(ending)
                 )
             if topology_id not in fileids:
@@ -149,7 +159,7 @@ class RDFTool(BaseTool):
             )
 
         if stride:
-            if type(stride) != int:
+            if not isinstance(stride, int):
                 try:
                     stride = int(stride)
                     if stride <= 0:

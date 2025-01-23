@@ -5,175 +5,122 @@ import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
 
-from mdagent.utils import FileType, PathRegistry
+from mdagent.utils import FileType, PathRegistry, load_single_traj
 
 
 class RadiusofGyration:
     def __init__(self, path_registry):
         self.path_registry = path_registry
-        self.includes_top = [".h5", ".lh5", ".pdb"]
+        self.top_file = ""
+        self.traj_file = ""
+        self.traj = None
+        self.rgy_file = ""
 
-    def _grab_files(self, pdb_id: str) -> None:
-        if "_" in pdb_id:
-            pdb_id = pdb_id.split("_")[0]
-        self.pdb_id = pdb_id
-        all_names = self.path_registry._list_all_paths()
-        try:
-            self.pdb_path = [
-                name
-                for name in all_names
-                if pdb_id in name and ".pdb" in name and "records" in name
-            ][0]
-        except IndexError:
-            raise ValueError(f"No pdb file found for {pdb_id}")
-        try:
-            self.dcd_path = [
-                name
-                for name in all_names
-                if pdb_id in name and ".dcd" in name and "records" in name
-            ][0]
-        except IndexError:
-            self.dcd_path = None
-            pass
-        return None
-
-    def _load_traj(self, pdb_id: str) -> None:
-        self._grab_files(pdb_id)
-        if self.dcd_path:
-            self.traj = md.load(self.dcd_path, top=self.pdb_path)
-        else:
-            self.traj = md.load(self.pdb_path)
-        return None
-
-    def rad_gyration_per_frame(self, pdb_id: str) -> str:
-        self._load_traj(pdb_id)
-        rg_per_frame = md.compute_rg(self.traj)
-
-        self.rgy_file = (
-            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv"
+    def _load_traj(self, top_file: str, traj_file: str):
+        self.traj_file = traj_file
+        self.top_file = top_file
+        self.traj = load_single_traj(
+            path_registry=self.path_registry,
+            top_fileid=top_file,
+            traj_fileid=traj_file,
+            traj_required=True,
         )
 
+    def rgy_per_frame(self) -> str:
+        rg_per_frame = md.compute_rg(self.traj)
+        self.rgy_file = (
+            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.traj_file}.csv"
+        )
+        rgy_id = f"rgy_{self.traj_file}"
         np.savetxt(
-            self.rgy_file, rg_per_frame, delimiter=",", header="Radius of Gyration (nm)"
+            self.rgy_file,
+            rg_per_frame,
+            delimiter=",",
+            header="Radius of Gyration (nm)",
         )
         self.path_registry.map_path(
-            f"{self.path_registry.ckpt_figures}/radii_of_gyration_{self.pdb_id}.csv",
+            f"rgy_{self.traj_file}",
             self.rgy_file,
-            description=f"Radii of gyration per frame for {self.pdb_id}",
+            description=f"Radii of gyration per frame for {self.traj_file}",
         )
-        return f"Radii of gyration saved to {self.rgy_file}"
+        return f"Radii of gyration saved to {self.rgy_file} with id {rgy_id}."
 
-    def rad_gyration_average(self, pdb_id: str) -> str:
-        _ = self.rad_gyration_per_frame(pdb_id)
+    def rgy_average(self) -> str:
+        if not self.rgy_file:
+            _ = self.rgy_per_frame()
         rg_per_frame = np.loadtxt(self.rgy_file, delimiter=",", skiprows=1)
         avg_rg = rg_per_frame.mean()
 
         return f"Average radius of gyration: {avg_rg:.2f} nm"
 
-    def plot_rad_gyration(self, pdb_id: str) -> str:
-        _ = self.rad_gyration_per_frame(pdb_id)
+    def plot_rgy(self) -> str:
+        if not self.rgy_file:
+            _ = self.rgy_per_frame()
         rg_per_frame = np.loadtxt(self.rgy_file, delimiter=",", skiprows=1)
-        fig_analysis = f"rgy_{self.pdb_id}"
+        fig_analysis = f"rgy_{self.traj_file}"
         plot_name = self.path_registry.write_file_name(
             type=FileType.FIGURE, fig_analysis=fig_analysis, file_format="png"
         )
+        print("plot_name: ", plot_name)
         plot_id = self.path_registry.get_fileid(
             file_name=plot_name, type=FileType.FIGURE
         )
-
+        plot_path = f"{self.path_registry.ckpt_figures}/{plot_name}"
+        plot_path = plot_path if plot_path.endswith(".png") else plot_path + ".png"
+        print("plot_path", plot_path)
         plt.plot(rg_per_frame)
         plt.xlabel("Frame")
         plt.ylabel("Radius of Gyration (nm)")
-        plt.title(f"{pdb_id} - Radius of Gyration Over Time")
+        plt.title(f"{self.traj_file} - Radius of Gyration Over Time")
 
-        plt.savefig(f"{self.path_registry.ckpt_figures}/{plot_name}")
+        plt.savefig(f"{plot_path}")
         self.path_registry.map_path(
             plot_id,
-            f"{self.path_registry.ckpt_figures}/{plot_name}",
-            description=f"Plot of radii of gyration over time for {self.pdb_id}",
+            plot_path,
+            description=f"Plot of radii of gyration over time for {self.traj_file}",
         )
-        return "Plot saved as: " + f"{plot_name}.png with plot ID {plot_id}"
+        plt.close()
+        plt.clf()
+        return "Plot saved as: " + f"{plot_name} with plot ID {plot_id}"
+
+    def compute_plot_return_avg(self) -> str:
+        rgy_per_frame = self.rgy_per_frame()
+        avg_rgy = self.rgy_average()
+        plot_rgy = self.plot_rgy()
+        return rgy_per_frame + plot_rgy + avg_rgy
 
 
-class RadiusofGyrationAverage(BaseTool):
-    name = "RadiusofGyrationAverage"
-    description = """This tool calculates the average radius of gyration
-    for the given trajectory file. Give this tool the
-    protein ID (PDB ID) only. The tool will automatically find the necessary files."""
-
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, pdb_id: str) -> str:
-        """use the tool."""
-        try:
-            RGY = RadiusofGyration(self.path_registry)
-            return "Succeeded. " + RGY.rad_gyration_average(pdb_id)
-        except ValueError as e:
-            return f"Failed. ValueError: {e}"
-        except Exception as e:
-            return f"Failed. {type(e).__name__}: {e}"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class RadiusofGyrationPerFrame(BaseTool):
-    name = "RadiusofGyrationPerFrame"
-    description = """This tool calculates the radius of gyration
-    at each frame of a given trajectory file. Give this tool the
-    protein ID (PDB ID) only. The tool will automatically find the necessary files.
-    The tool will save the radii of gyration to a csv file and
-    map it to the registry."""
+class RadiusofGyrationTool(BaseTool):
+    name = "RadiusofGyrationTool"
+    description = """This tool calculates and plots
+    the radius of gyration
+    at each frame of a given trajectory and retuns the average.
+    Give this tool BOTH the trajectory file ID and the
+    topology file ID."""
 
     path_registry: Optional[PathRegistry]
+    rgy: Optional[RadiusofGyration]
+    load_traj: bool = True
 
-    def __init__(self, path_registry):
+    def __init__(self, path_registry, load_traj=True):
         super().__init__()
         self.path_registry = path_registry
+        self.rgy = RadiusofGyration(path_registry)
+        self.load_traj = load_traj  # only for testing
 
-    def _run(self, pdb_id: str) -> str:
+    def _run(self, traj_file: str, top_file: str) -> str:
         """use the tool."""
+        assert self.rgy is not None, "RadiusofGyration instance is not initialized"
+
+        if self.load_traj:
+            try:
+                self.rgy._load_traj(top_file=top_file, traj_file=traj_file)
+            except Exception as e:
+                return f"Error loading traj: {e}"
         try:
-            RGY = RadiusofGyration(self.path_registry)
-            return "Succeeded. " + RGY.rad_gyration_per_frame(pdb_id)
-        except ValueError as e:
-            return f"Failed. ValueError: {e}"
+            return "Succeeded. " + self.rgy.compute_plot_return_avg()
         except Exception as e:
-            return f"Failed. {type(e).__name__}: {e}"
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-class RadiusofGyrationPlot(BaseTool):
-    name = "RadiusofGyrationPlot"
-    description = """This tool calculates the radius of gyration
-    at each frame of a given trajectory file and plots it.
-    Give this tool the protein ID (PDB ID) only.
-    The tool will automatically find the necessary files.
-    The tool will save the plot to a png file and map it to the registry."""
-
-    path_registry: Optional[PathRegistry]
-
-    def __init__(self, path_registry):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, pdb_id: str) -> str:
-        """use the tool."""
-        try:
-            RGY = RadiusofGyration(self.path_registry)
-            return "Succeeded. " + RGY.plot_rad_gyration(pdb_id)
-        except ValueError as e:
-            return f"Failed. ValueError: {e}"
-        except Exception as e:
-            return f"Failed. {type(e).__name__}: {e}"
+            return f"Failed Computing RGY: {e}"
 
     async def _arun(self, query: str) -> str:
         """Use the tool asynchronously."""
