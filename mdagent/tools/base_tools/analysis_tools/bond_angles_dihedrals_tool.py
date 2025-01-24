@@ -1,16 +1,44 @@
+from typing import Optional
+
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
 from langchain.tools import BaseTool
+from pydantic import BaseModel, Field
 
-from mdagent.utils import PathRegistry, load_single_traj
+from mdagent.utils import FileType, PathRegistry, load_single_traj
+
+
+class ComputingAnglesSchema(BaseModel):
+    trajectory_fileid: str = Field(
+        description="Trajectory File ID of the simulation to be analyzed"
+    )
+    topology_fileid: str = Field(
+        description=("Topology File ID of the simulation to be analyzed")
+    )
+    analysis: str = Field(
+        "all",
+        description=(
+            "Which analysis to be done. Availables are: "
+            "phi-psi (saves a Ramachandran plot and histograms for the Phi-Psi angles),"
+            "chi1-chi2 (gets the chi1 and chi2 dihedral angles and the chi1-chi2 plot"
+            "is saved. For the plots it only uses sidechains with enough carbons),"
+            "all (makes all of the previous analysis)"
+        ),
+    )
+    selection: Optional[str] = Field(
+        "backbone and sidechain",
+        description=(
+            "Which selection of atoms from the simulation "
+            "to use for the pca analysis"
+        ),
+    )
 
 
 class ComputeAngles(BaseTool):
     name = "compute_angles"
-    description = """Calculate the bond angles for the given sets of three atoms in
-    each snapshot, and provide a list of indices specifying which atoms are involved
-    in each bond angle calculation.."""
+    description = """Analyze dihedral angles from a trajectory file. The tool allows for
+    analysis of the phi-psi angles, chi1-chi2 angles, or both. """
 
     path_registry: PathRegistry | None = None
 
@@ -18,42 +46,307 @@ class ComputeAngles(BaseTool):
         super().__init__()
         self.path_registry = path_registry
 
-    def _run(self, traj_file: str, angle_indices: list, top_file: str | None = None):
-        try:
-            traj = load_single_traj(self.path_registry, traj_file, top_file)
-            if not traj:
-                return "Failed. Trajectory could not be loaded."
+    def _run(self, input):
 
+        try:
+            input = self.validate_input(**input)
+
+        except ValueError as e:
+            return f"Failed. Error using the PCA Tool: {str(e)}"
+
+        (
+            traj_id,
+            top_id,
+            analysis,
+            selection,
+            error,
+            system_input_message,
+        ) = self.get_values(input)
+
+        if error:
+            return f"Failed. Error with the tool inputs: {error} "
+        if system_input_message == "Tool Messages:":
+            system_input_message = ""
+
+        try:
+            traj = load_single_traj(
+                self.path_registry,
+                top_id,
+                traj_fileid=traj_id,
+                traj_required=True,
+            )
+        except ValueError as e:
             if (
-                not angle_indices
-                or not isinstance(angle_indices, list)
-                or not all(len(indices) == 3 for indices in angle_indices)
+                "The topology and the trajectory files might not\
+                  contain the same atoms"
+                in str(e)
             ):
                 return (
-                    "Failed. Invalid angle_indices. It should be a list of tuples, "
-                    "each containing three atom indices."
+                    "Failed. Error loading trajectory. Make sure the topology file"
+                    " is from the initial positions of the trajectory. Error: {str(e)}"
                 )
-
-            angles = md.compute_angles(traj, angle_indices, periodic=True, opt=True)
-
-            # Check if path_registry is not None
-            if self.path_registry is not None:
-                plot_save_path = self.path_registry.get_mapped_path("angles_plot.png")
-                plot_angles(angles, title="Bond Angles", save_path=plot_save_path)
-                return "Succeeded. Bond angles computed, saved to file and plot saved."
-            else:
-                return "Failed. Path registry is not initialized."
-
+            return f"Failed. Error loading trajectory: {str(e)}"
+        except OSError as e:
+            if (
+                "The topology is loaded by filename extension, \
+                and the detected"
+                in str(e)
+            ):
+                return (
+                    "Failed. Error loading trajectory. Make sure you include the"
+                    "correct file for the topology. Supported extensions are:"
+                    "'.pdb', '.pdb.gz', '.h5', '.lh5', '.prmtop', '.parm7', '.prm7',"
+                    "  '.psf', '.mol2', '.hoomdxml', '.gro', '.arc', '.hdf5' and '.gsd'"
+                )
+            return f"Failed. Error loading trajectory: {str(e)}"
         except Exception as e:
-            return f"Failed. {type(e).__name__}: {e}"
+            return f"Failed. Error loading trajectory: {str(e)}"
 
-    async def _arun(
-        self,
-        traj_file: str,
-        angle_indices: list,
-        top_file: str | None = None,
-    ):
+        return self.analyze_trajectory(traj, analysis, self.path_registry, traj_id)
+
+    async def _arun(self, input):
         raise NotImplementedError("Async version not implemented")
+
+    # Example helper functions (optional). You can instead just keep them as
+    # blocks in the if-statements.
+    def compute_and_plot_phi_psi(self, traj, path_registry, sim_id):
+        """
+        Computes phi-psi angles, saves results to file, and produces Ramachandran plot.
+        """
+        try:
+            # Compute phi and psi angles
+            phi_indices, phi_angles = md.compute_phi(traj)
+            psi_indices, psi_angles = md.compute_psi(traj)
+
+            # Convert angles to degrees
+            phi_angles = phi_angles * (180.0 / np.pi)
+            psi_angles = psi_angles * (180.0 / np.pi)
+        except Exception as e:
+            return None, f"Failed. Error computing phi-psi angles: {str(e)}"
+
+        # If path_registry is available, save files and produce plot
+        if path_registry is not None:
+            # Save angle results
+            save_results_to_file("phi_results.npz", phi_indices, phi_angles)
+            save_results_to_file("psi_results.npz", psi_indices, psi_angles)
+
+            # Make Ramachandran plot
+            try:
+                plt.hist2d(
+                    phi_angles.flatten(), psi_angles.flatten(), bins=150, cmap="Blues"
+                )
+                plt.xlabel(r"$\phi$")
+                plt.ylabel(r"$\psi$")
+                plt.colorbar()
+
+                file_name = path_registry.write_file_name(
+                    FileType.FIGURE,
+                    fig_analysis="ramachandran",
+                    file_format="png",
+                    Sim_id=sim_id,
+                )
+                desc = f"Ramachandran plot for the simulation {sim_id}"
+                plot_id = path_registry.get_fileid(file_name, FileType.FIGURE)
+                path = path_registry.ckpt_dir + "/figures/"
+                plt.savefig(path + file_name)
+                path_registry.map_path(plot_id, path + file_name, description=desc)
+                plt.clf()  # Clear the current figure so it does not overlay next plot
+                print("Ramachandran plot saved to file")
+                return plot_id, "Succeeded. Ramachandran plot saved."
+            except Exception as e:
+                return None, f"Failed. Error saving Ramachandran plot: {str(e)}"
+        else:
+            return (
+                None,
+                "Succeeded. Computed phi-psi angles (no path_registry to save).",
+            )
+
+    def compute_and_plot_chi1_chi2(self, traj, path_registry, sim_id):
+        """
+        Computes chi1-chi2 angles, saves results to file, and produces Chi1-Chi2 plot.
+        """
+        try:
+            # Compute chi1 and chi2 angles
+            chi1_indices, chi1_angles = md.compute_chi1(traj)
+            chi2_indices, chi2_angles = md.compute_chi2(traj)
+
+            # Convert angles to degrees
+            chi1_angles = chi1_angles * (180.0 / np.pi)
+            chi2_angles = chi2_angles * (180.0 / np.pi)
+        except Exception as e:
+            return None, f"Failed. Error computing chi1-chi2 angles: {str(e)}"
+
+        # If path_registry is available, save files and produce plot
+        if path_registry is not None:
+            # Get the indices of the first side-chain atoms from chi1 and chi2
+            chi1_atoms = [atom_idx[1] for atom_idx in chi1_indices]
+            chi2_atoms = [atom_idx[0] for atom_idx in chi2_indices]
+
+            # Filter chi1 angles to match atoms that appear in chi2
+            chi1_angles_long = np.array(
+                [
+                    chi1_angles[:, i]
+                    for i, chi1_atom in enumerate(chi1_atoms)
+                    if chi1_atom in chi2_atoms
+                ]
+            )
+
+            # Save angle results
+            save_results_to_file("chi1_results.npz", chi1_indices, chi1_angles)
+            save_results_to_file("chi2_results.npz", chi2_indices, chi2_angles)
+
+            # Make Chi1-Chi2 plot
+            try:
+                plt.hist2d(
+                    chi1_angles_long.T.flatten(),
+                    chi2_angles.flatten(),
+                    bins=200,
+                    cmap="Blues",
+                )
+                plt.xlabel(r"$\chi1$")
+                plt.ylabel(r"$\chi2$")
+                plt.title(f"Chi1-Chi2 plot for the simulation {sim_id}")
+                plt.colorbar()
+
+                file_name = path_registry.write_file_name(
+                    FileType.FIGURE,
+                    fig_analysis="chi1-chi2",
+                    file_format="png",
+                    Sim_id=sim_id,
+                )
+                desc = f"Chi1-Chi2 plot for the simulation {sim_id}"
+                chi_plot_id = path_registry.get_fileid(file_name, FileType.FIGURE)
+                path = path_registry.ckpt_dir + "/figures/"
+                plt.savefig(path + file_name)
+                path_registry.map_path(chi_plot_id, path + file_name, description=desc)
+                plt.clf()  # Clear the current figure so it does not overlay next plot
+                print("Chi1-Chi2 plot saved to file")
+                return chi_plot_id, "Succeeded. Chi1-Chi2 plot saved."
+            except Exception as e:
+                return None, f"Failed. Error saving Chi1-Chi2 plot: {str(e)}"
+        else:
+
+            return None, "Succeeded. Computed chi1-chi2 angles."
+
+    def analyze_trajectory(self, traj, analysis, path_registry=None, sim_id="sim"):
+        """
+        Main function to decide which analysis to do:
+        'phi-psi', 'chi1-chi2', or 'all'.
+        """
+        # Store optional references for convenience
+        self_path_registry = path_registry
+        self_sim_id = sim_id
+
+        # ================ PHI-PSI ONLY =================
+        if analysis == "phi-psi":
+            plot_id, message = self.compute_and_plot_phi_psi(
+                traj, self_path_registry, self_sim_id
+            )
+            return message
+
+        # ================ CHI1-CHI2 ONLY ================
+        elif analysis == "chi1-chi2":
+            plot_id, message = self.compute_and_plot_chi1_chi2(
+                traj, self_path_registry, self_sim_id
+            )
+            return message
+
+        # ================ ALL =================
+        elif analysis == "all":
+            # First do phi-psi
+            phi_plot_id, phi_message = self.compute_and_plot_phi_psi(
+                traj, self_path_registry, self_sim_id
+            )
+            if "Failed." in phi_message:
+                return phi_message
+
+            # Then do chi1-chi2
+            chi_plot_id, chi_message = self.compute_and_plot_chi1_chi2(
+                traj, self_path_registry, self_sim_id
+            )
+            if "Failed." in chi_message:
+                return chi_message
+
+            return (
+                "Succeeded. All analyses completed. "
+                f"Ramachandran plot message: {phi_message} "
+                f"Chi1-Chi2 plot message: {chi_message}"
+            )
+
+        else:
+            # Unknown analysis type
+            return f"Failed. Unknown analysis type: {analysis}"
+
+    def validate_input(self, **input):
+        input = input.get("action_input", input)
+        input = input.get("input", input)
+        trajectory_id = input.get("trajectory_fileid", None)
+        topology_id = input.get("topology_fileid", None)
+        analysis = input.get("analysis", "all")
+        selection = input.get("selection", "backbone and sidechain")
+        if not trajectory_id:
+            raise ValueError("Incorrect Inputs: trajectory_fileid is required")
+        if not topology_id:
+            raise ValueError("Incorrect Inputs: topology_fileid is required")
+        # check if trajectory id is valid
+        fileids = self.path_registry.list_path_names()
+        error = ""
+        system_message = "Tool Messages:"
+        if trajectory_id not in fileids:
+            error += " Trajectory File ID not in path registry"
+        if topology_id not in fileids:
+            error += " Topology File ID not in path registry"
+
+        if analysis.lower() not in [
+            "all",
+            "phi-psi",
+            "chi1-chi2",
+        ]:
+            analysis = "all"
+            system_message += (
+                " analysis arg not recognized, using analysis = 'all' as default"
+            )
+
+        if selection not in [
+            "backbone",
+            "name CA",
+            "backbone and name CA",
+            "protein",
+            "backbone and sidechain",
+            "sidechain",
+            "all",
+        ]:
+            selection = "all"  # just alpha carbons
+        # get all the kwargs:
+        keys = input.keys()
+        for key in keys:
+            if key not in [
+                "trajectory_fileid",
+                "pc_percentage",
+                "analysis",
+                "selection",
+            ]:
+                system_message += f"{key} is not part of admitted tool inputs"
+        if error == "":
+            error = None
+        return {
+            "trajectory_fileid": trajectory_id,
+            "topology_fileid": topology_id,
+            "analysis": analysis,
+            "selection": selection,
+            "error": error,
+            "system_message": system_message,
+        }
+
+    def get_values(self, input):
+        traj_id = input.get("trajectory_fileid")
+        top_id = input.get("topology_fileid")
+        analysis = input.get("analysis")
+        sel = input.get("selection")
+        error = input.get("error")
+        syst_mes = input.get("system_message")
+
+        return traj_id, top_id, analysis, sel, error, syst_mes
 
 
 class ComputeDihedrals(BaseTool):
