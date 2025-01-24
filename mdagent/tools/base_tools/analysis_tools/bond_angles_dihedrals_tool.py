@@ -26,6 +26,8 @@ class ComputingAnglesSchema(BaseModel):
             "all (makes all of the previous analysis)"
         ),
     )
+    # This arg is here, but is not used in the code. As of now it will get the analysis
+    # of all the residues in the simulation
     selection: Optional[str] = Field(
         "backbone and sidechain",
         description=(
@@ -36,7 +38,7 @@ class ComputingAnglesSchema(BaseModel):
 
 
 class ComputeAngles(BaseTool):
-    name = "compute_angles"
+    name = "ComputeAngles"
     description = """Analyze dihedral angles from a trajectory file. The tool allows for
     analysis of the phi-psi angles, chi1-chi2 angles, or both. """
 
@@ -53,7 +55,7 @@ class ComputeAngles(BaseTool):
             input = self.validate_input(**input)
 
         except ValueError as e:
-            return f"Failed. Error using the PCA Tool: {str(e)}"
+            return f"Failed. Error using the ComputeAngle Tool: {str(e)}"
 
         (
             traj_id,
@@ -323,7 +325,7 @@ class ComputeAngles(BaseTool):
         for key in keys:
             if key not in [
                 "trajectory_fileid",
-                "pc_percentage",
+                "topology_fileid",
                 "analysis",
                 "selection",
             ]:
