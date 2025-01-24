@@ -41,6 +41,7 @@ class ComputeAngles(BaseTool):
     analysis of the phi-psi angles, chi1-chi2 angles, or both. """
 
     path_registry: PathRegistry | None = None
+    args_schema = ComputingAnglesSchema
 
     def __init__(self, path_registry: PathRegistry):
         super().__init__()

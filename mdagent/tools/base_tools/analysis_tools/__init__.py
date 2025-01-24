@@ -1,15 +1,4 @@
-from .bond_angles_dihedrals_tool import (
-    ComputeAngles,
-    ComputeChi1,
-    ComputeChi2,
-    ComputeChi3,
-    ComputeChi4,
-    ComputeDihedrals,
-    ComputeOmega,
-    ComputePhi,
-    ComputePsi,
-    RamachandranPlot,
-)
+from .bond_angles_dihedrals_tool import ComputeAngles
 from .distance_tools import ContactsTool, DistanceMatrixTool
 from .inertia import MomentOfInertia
 from .pca_tools import PCATool
@@ -22,14 +11,6 @@ from .vis_tools import VisFunctions, VisualizeProtein
 
 __all__ = [
     "ComputeAngles",
-    "ComputeChi1",
-    "ComputeChi2",
-    "ComputeChi3",
-    "ComputeChi4",
-    "ComputeDihedrals",
-    "ComputeOmega",
-    "ComputePhi",
-    "ComputePsi",
     "ComputeLPRMSD",
     "ComputeRMSD",
     "ComputeRMSF",
@@ -39,7 +20,6 @@ __all__ = [
     "PCATool",
     "PPIDistance",
     "RadiusofGyrationTool",
-    "RamachandranPlot",
     "RMSDCalculator",
     "SimulationOutputFigures",
     "SolventAccessibleSurfaceArea",
