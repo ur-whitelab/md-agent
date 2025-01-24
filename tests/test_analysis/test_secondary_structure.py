@@ -37,16 +37,42 @@ def test_compute_dssp(loaded_cif_traj, compute_dssp_simple, compute_dssp):
     assert np.all(dssp[0][:10] == [" ", " ", " ", "E", "E", "E", "T", "T", "E", "E"])
 
 
+def test_get_frame(compute_dssp):
+    # random dummy traj with 3 frames
+    xyz = np.random.rand(10, 10, 3)
+    topology = md.Topology()
+    chain = topology.add_chain()
+    residue = topology.add_residue("ALA", chain)
+    for _ in range(10):
+        topology.add_atom("CA", md.element.carbon, residue)
+    traj = md.Trajectory(xyz, topology)
+
+    # first frame
+    first_frame = compute_dssp._get_frame(traj, "first")
+    assert first_frame.n_frames == 1
+    assert np.array_equal(first_frame.xyz, traj.xyz[0].reshape(1, -1, 3))
+
+    # last frame
+    last_frame = compute_dssp._get_frame(traj, "last")
+    assert last_frame.n_frames == 1
+    assert np.array_equal(last_frame.xyz, traj.xyz[-1].reshape(1, -1, 3))
+
+    # all frames
+    all_frames = compute_dssp._get_frame(traj, "all")
+    assert all_frames.n_frames == traj.n_frames
+    assert np.array_equal(all_frames.xyz, traj.xyz)
+
+
 def test_dssp_codes(compute_dssp_simple, compute_dssp):
     dssp_codes_simple = compute_dssp_simple._dssp_codes()
     assert dssp_codes_simple == ["H", "E", "C", "NA"]
 
     nl_simple = compute_dssp_simple._dssp_natural_language()
     assert nl_simple == {
-        "H": "helix",
-        "E": "strand",
-        "C": "coil",
-        "NA": "not assigned, not a protein residue",
+        "H": "residues in helix",
+        "E": "residues in strand",
+        "C": "residues in coil",
+        "NA": "residues not assigned, not a protein residue",
     }
 
     dssp_codes = compute_dssp._dssp_codes()
@@ -54,15 +80,15 @@ def test_dssp_codes(compute_dssp_simple, compute_dssp):
 
     nl = compute_dssp._dssp_natural_language()
     assert nl == {
-        "H": "alpha helix",
-        "B": "beta bridge",
-        "E": "extended strand",
-        "G": "three helix",
-        "I": "five helix",
-        "T": "hydrogen bonded turn",
-        "S": "bend",
-        " ": "loop or irregular",
-        "NA": "not assigned, not a protein residue",
+        "H": "residues in alpha helix",
+        "B": "residues in beta bridge",
+        "E": "residues in extended strand",
+        "G": "residues in three helix",
+        "I": "residues in five helix",
+        "T": "residues in hydrogen bonded turn",
+        "S": "residues in bend",
+        " ": "residues in loop or irregular",
+        "NA": "residues not assigned, not a protein residue",
     }
 
 
@@ -71,9 +97,9 @@ def test_convert_dssp_counts(compute_dssp_simple, compute_dssp):
 
     descriptive_counts = compute_dssp_simple._convert_dssp_counts(dssp_counts)
     assert descriptive_counts == {
-        "helix": 0,
-        "strand": 5,
-        "coil": 5,
+        "residues in helix": 0,
+        "residues in strand": 5,
+        "residues in coil": 5,
     }
 
     dssp_counts = {"H": 0, "B": 0, "E": 5, "G": 0, "I": 0, "T": 0, "S": 0, " ": 5}
@@ -81,14 +107,14 @@ def test_convert_dssp_counts(compute_dssp_simple, compute_dssp):
     descriptive_counts = compute_dssp._convert_dssp_counts(dssp_counts)
 
     assert descriptive_counts == {
-        "alpha helix": 0,
-        "beta bridge": 0,
-        "extended strand": 5,
-        "three helix": 0,
-        "five helix": 0,
-        "hydrogen bonded turn": 0,
-        "bend": 0,
-        "loop or irregular": 5,
+        "residues in alpha helix": 0,
+        "residues in beta bridge": 0,
+        "residues in extended strand": 5,
+        "residues in three helix": 0,
+        "residues in five helix": 0,
+        "residues in hydrogen bonded turn": 0,
+        "residues in bend": 0,
+        "residues in loop or irregular": 5,
     }
 
 
@@ -96,24 +122,24 @@ def test_summarize_dssp(compute_dssp_simple, compute_dssp):
     dssp_array = np.array([["C", "C", "C", "E", "E", "E", "C", "C", "E", "E"]])
     summary = compute_dssp_simple._summarize_dssp(dssp_array)
     assert summary == {
-        "helix": 0,
-        "strand": 5,
-        "coil": 5,
-        "not assigned, not a protein residue": 0,
+        "residues in helix": 0,
+        "residues in strand": 5,
+        "residues in coil": 5,
+        "residues not assigned, not a protein residue": 0,
     }
 
     dssp_array = np.array([[" ", " ", " ", "E", "E", "E", "T", "T", "E", "E"]])
     summary = compute_dssp._summarize_dssp(dssp_array)
     assert summary == {
-        "alpha helix": 0,
-        "beta bridge": 0,
-        "extended strand": 5,
-        "three helix": 0,
-        "five helix": 0,
-        "hydrogen bonded turn": 2,
-        "bend": 0,
-        "loop or irregular": 3,
-        "not assigned, not a protein residue": 0,
+        "residues in alpha helix": 0,
+        "residues in beta bridge": 0,
+        "residues in extended strand": 5,
+        "residues in three helix": 0,
+        "residues in five helix": 0,
+        "residues in hydrogen bonded turn": 2,
+        "residues in bend": 0,
+        "residues in loop or irregular": 3,
+        "residues not assigned, not a protein residue": 0,
     }
 
 

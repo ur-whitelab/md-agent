@@ -1,6 +1,4 @@
 # Standard Library Imports
-import ast
-import json
 import os
 import re
 
@@ -8,15 +6,10 @@ import re
 import textwrap
 from typing import Any, Dict, List, Optional, Type
 
-import langchain
 import requests
-import streamlit as st
-from langchain.chains import LLMChain
-from langchain.prompts import PromptTemplate
 from langchain.tools import BaseTool
 from openff.toolkit.topology import Molecule
 from openmm import (
-    AndersenThermostat,
     BrownianIntegrator,
     LangevinIntegrator,
     LangevinMiddleIntegrator,
@@ -24,7 +17,6 @@ from openmm import (
     OpenMMException,
     Platform,
     VerletIntegrator,
-    app,
     unit,
 )
 from openmm.app import (
@@ -45,7 +37,7 @@ from openmm.app import (
     Simulation,
     StateDataReporter,
 )
-from openmm.unit import bar, femtoseconds, kelvin, nanometers, picosecond, picoseconds
+from openmm.unit import bar, kelvin, nanometers, picoseconds
 from openmmforcefields.generators import SMIRNOFFTemplateGenerator
 from pydantic import BaseModel, Field
 from rdkit import Chem
@@ -110,430 +102,6 @@ FORCEFIELD_LIST = [
 ]
 
 
-class SimulationFunctions:
-    def __init__(
-        self,
-        path_registry,
-        temperature: float = 0.05,
-        model_name: str = "gpt-4",
-        request_timeout: int = 1000,
-        max_tokens: int = 2000,
-    ):
-        self.path_registry = path_registry
-        self.temperature = temperature
-        self.model_name = model_name
-        self.request_timeout = request_timeout
-        self.max_tokens = max_tokens
-
-        self.llm = langchain.chat_models.ChatOpenAI(
-            temperature=self.temperature,
-            model_name=self.model_name,
-            request_timeout=self.request_timeout,
-            max_tokens=self.request_timeout,
-        )
-
-    #######==================System Congifuration==================########
-    # System Configuration initialization.
-
-    def _create_system(
-        pdb,
-        forcefield,
-        nonbondedMethod="NoCutoff",
-        nonbondedCutoff=None,
-        ewaldErrorTolerance=None,
-        constraints="None",
-        rigidWater=False,
-        constraintTolerance=None,
-        **kwargs,
-    ):
-        # Create a dictionary to hold system parameters
-        system_params = {
-            "nonbondedMethod": nonbondedMethod,
-            "constraints": constraints,
-            "rigidWater": rigidWater,
-        }
-
-        # Set nonbondedCutoff if applicable
-        if (
-            nonbondedMethod in ["PME", "CutoffNonPeriodic", "CutoffPeriodic"]
-            and nonbondedCutoff is not None
-        ):
-            system_params["nonbondedCutoff"] = nonbondedCutoff
-
-        # Set ewaldErrorTolerance if PME is used
-        if nonbondedMethod == "PME" and ewaldErrorTolerance is not None:
-            system_params["ewaldErrorTolerance"] = ewaldErrorTolerance
-
-        # Set constraintTolerance if constraints are used
-        if constraints in ["HBonds", " AllBonds"] and constraintTolerance is not None:
-            system_params["constraintTolerance"] = constraintTolerance
-        elif system_params["rigidWater"] and constraintTolerance is not None:
-            system_params["constraintTolerance"] = constraintTolerance
-
-        # Update system_params with any additional parameters provided
-        system_params.update(kwargs)
-        system = forcefield.createSystem(pdb.topology, **system_params)
-        return system
-
-    ########==================Integrator==================########
-    # Integrator
-    def _define_integrator(
-        integrator_type="LangevinMiddle",
-        temperature=300 * kelvin,
-        friction=1.0 / picoseconds,
-        timestep=0.004 * picoseconds,
-        **kwargs,
-    ):
-        # Create a dictionary to hold integrator parameters
-        integrator_params = {
-            "temperature": temperature,
-            "friction": friction,
-            "timestep": timestep,
-        }
-
-        # Update integrator_params with any additional parameters provided
-        integrator_params.update(kwargs)
-
-        # Create the integrator
-        if integrator_type == "LangevinMiddle":
-            integrator = LangevinMiddleIntegrator(**integrator_params)
-        elif integrator_type == "Verlet":
-            integrator = VerletIntegrator(**integrator_params)
-        elif integrator_type == "Brownian":
-            integrator = BrownianIntegrator(**integrator_params)
-        else:
-            raise Exception("Integrator type not recognized")
-
-        return integrator
-
-    def _prompt_summary(self, query: str):
-        prompt_template = """Your input is the original query. Your
-                            task is to parse through the user query.
-                            and provide a summary of the file path input,
-                            the type of preprocessing needed (this is the
-                            same as cleaning the file), the forcefield
-                            used for the simulation,
-                            the ensemble of the simulation, the integrator needed,
-                            the number of steps, the timestep, the temperature,
-                            and other instructions.
-                            and follow the format "name: description.
-
-                            File Path: what is the file path of the file
-                            you are using? it must include a .cif or .pdb extension.
-                            Preprocessing: what preprocessing is needed?
-                            you can choose from the following: standard cleaning,
-                            remove water, add hydrogens, add hydrogens and remove
-                            water. The default is add hydrogens and remove water.
-                            Forcefield: what forcefields are you using?
-                            you can choose from the following: AMBER, CHARMM,
-                            OPLS, GROMACS. Default -->  "amber14-all.xml, tip3p.xml".
-                            Ensemble: what ensemble are you using?
-                            you can choose from the following:
-                            NPT, NVT, NVE. Default --> "NVT".
-                            Integrator: what integrator are you using?
-                            you can choose from the following:
-                            Langevin, Verlet, Brownian.
-                            The default depends on the ensemble
-                            (NPT -> Langevin, NVT -> Langevin, NVE -> Verlet).
-                            Number of Steps: how many steps
-                            are you using? The default is 10000.
-                            Timestep: what is the timestep?
-                            Default --> "1 fs".
-                            Temperature: what is the temperature?
-                            Default --> "300 K".
-                            Pressure: What is the pressure?
-                            If NPT ensemble, the default is 1.0 bar, otherwise None.
-                            Friction: what is the friction coefficient?
-                            Default --> "1.0"
-                            record_params: what parameters do you want to record?
-                            you can choose from the following:
-                            step, time, potentialEnergy, kineticEnergy,
-                            totalEnergy, temperature, volume, density,
-                            progress, remainingTime, speed, elapsedTime,
-                            separator, systemMass, totalSteps, append.
-                            Default --> ["step", "potentialEnergy", "temperature"].
-                            Other Instructions: what other instructions do you have?
-                            The default is none.
-                            Example of the final output:
-                            File Path: 1a1p.pdb
-                            Preprocessing: standard cleaning
-                            Forcefield: amber14-all.xml, tip3p.xml
-                            Ensemble: NPT
-                            Integrator: Langevin
-                            Number of Steps: 10000
-                            Timestep: 1 fs
-                            Temperature: 300 K
-                            Pressure: 1.0 bar
-                            Friction: 1.0
-                            record_params: ["step", "potentialEnergy", "temperature"]
-                            Other Instructions: none
-                            If there is not enough information in a category,
-                            you may fill in with the default, but explicitly state so.
-                            Here is the information:{query}"""
-        prompt = PromptTemplate(template=prompt_template, input_variables=["query"])
-        llm_chain = LLMChain(prompt=prompt, llm=self.llm)
-
-        return llm_chain.run(" ".join(query))
-
-    def _save_to_file(self, summary: str, filename: str):
-        """Parse the summary string and
-        save it to a file in JSON format."""
-        # Split the summary into lines
-        lines = summary.strip().split("\n")
-
-        # Parse each line into a key and a value
-        summary_dict = {}
-        for line in lines:
-            key, value = line.split(":")
-            summary_dict[key.strip()] = value.strip()
-
-        # Save the dictionary to a file
-        with open(filename, "w") as f:
-            json.dump(summary_dict, f)
-
-        # add filename to registry
-        file_description = "Simulation Parameters"
-        self.path_registry.map_path(filename, filename, file_description)
-
-    def _instruction_summary(self, query: str):
-        summary = self._prompt_summary(query)
-        self._save_to_file(
-            summary, f"{self.path_registry.ckpt_files}/simulation_parameters.json"
-        )
-        return summary
-
-    def _setup_simulation_from_json(self, file_name):
-        # Open the json file and load the parameters
-        with open(file_name, "r") as f:
-            params = json.load(f)
-        return params
-
-    def _setup_and_run_simulation(self, query):
-        # Load the force field
-        # ask for inputs from the user
-        params = self._setup_simulation_from_json(query)
-
-        # forcefield key can be forcefield_files or Forcefield
-        if "forcefield_files" in params:
-            params["forcefield_files"] = (
-                params["forcefield_files"]
-                .replace("(default)", "")
-                .replace(" and ", ",")
-                .strip()
-            )
-            Forcefield_files = [
-                file.strip() for file in params["forcefield_files"].split(",")
-            ]
-            Forcefield = Forcefield_files[0]
-            Water_model = Forcefield_files[1]
-        else:
-            params["Forcefield"] = (
-                params["Forcefield"]
-                .replace("(default)", "")
-                .replace(" and ", ",")
-                .strip()
-            )
-            Forcefield_files = [
-                file.strip() for file in params["Forcefield"].split(",")
-            ]
-            Forcefield = Forcefield_files[0]
-            Water_model = Forcefield_files[1]
-        print("Setting up forcefields :", Forcefield, Water_model)
-        st.markdown("Setting up forcefields", unsafe_allow_html=True)
-        # check if forcefields end in .xml
-        if Forcefield.endswith(".xml") and Water_model.endswith(".xml"):
-            forcefield = ForceField(Forcefield, Water_model)
-        # adding forcefield to registry
-
-        # Load the PDB file
-        pdbfile = self.path_registry.get_mapped_path(params["File Path"])
-        name = pdbfile.split(".")[0]
-        end = pdbfile.split(".")[1]
-        if end == "pdb":
-            pdb = PDBFile(pdbfile)
-        elif end == "cif":
-            pdb = PDBxFile(pdbfile)
-
-        modeller = Modeller(pdb.topology, pdb.positions)
-        system = forcefield.createSystem(
-            modeller.topology,
-            nonbondedMethod=app.PME,
-            nonbondedCutoff=1.0 * nanometers,
-            constraints=app.PME,
-        )
-
-        _integrator = params["Integrator"].split(" ")[0].strip()
-        _temp = params["Temperature"].split(" ")[0].strip()
-        _friction_coef = params["Friction"].split(" ")[0].strip()
-        _timestep = params["Timestep"].split(" ")[0].strip()
-
-        if _integrator == "Langevin":
-            print(
-                "Setting up Langevin integrator with Parameters:",
-                _temp,
-                "K",
-                _friction_coef,
-                "1/ps",
-                _timestep,
-                "fs",
-            )
-            st.markdown("Setting up Langevin integrator", unsafe_allow_html=True)
-            if params["Ensemble"] == "NPT":
-                _pressure = params["Pressure"].split(" ")[0].strip()
-                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
-            integrator = LangevinIntegrator(
-                float(_temp) * kelvin,
-                float(_friction_coef) / picosecond,
-                float(_timestep) * femtoseconds,
-            )
-        elif _integrator == "Verlet":
-            if params["Ensemble"] == "NPT":
-                _pressure = params["Pressure"].split(" ")[0].strip()
-                system.addForce(AndersenThermostat(_temp * kelvin, 1 / picosecond))
-                system.addForce(MonteCarloBarostat(_pressure * bar, _temp * kelvin))
-                print(
-                    "Setting up Verlet integrator with Parameters:",
-                    _timestep,
-                    "fs",
-                    _temp,
-                    "K",
-                    _pressure,
-                    "bar",
-                )
-            print("Setting up Verlet integrator with Parameters:", _timestep, "fs")
-            st.markdown("Setting up Verlet integrator", unsafe_allow_html=True)
-            integrator = VerletIntegrator(float(_timestep) * picoseconds)
-
-        simulation = Simulation(modeller.topology, system, integrator)
-        simulation.context.setPositions(modeller.positions)
-        simulation.minimizeEnergy()
-        # save initial positions to registry
-        file_name = "initial_positions.pdb"
-        with open(file_name, "w") as f:
-            PDBFile.writeFile(
-                simulation.topology,
-                simulation.context.getState(getPositions=True).getPositions(),
-                f,
-            )
-        print("Initial Positions saved to initial_positions.pdb")
-        simulation.reporters.append(PDBReporter(f"{name}.pdb", 1000))
-        # reporter_args = {"reportInterval": 1000}
-        reporter_args = {}
-        params["record_params"] = ast.literal_eval(params["record_params"])
-        for param in params["record_params"]:
-            if param in [
-                "step",
-                "time",
-                "potentialEnergy",
-                "kineticEnergy",
-                "totalEnergy",
-                "temperature",
-                "volume",
-                "density",
-                "progress",
-                "remainingTime",
-                "speed",
-                "elapsedTime",
-                "separator",
-                "systemMass",
-                "totalSteps",
-                "append",
-            ]:
-                # The params from the json file should be booleans
-                reporter_args[param] = True
-        simulation.reporters.append(
-            StateDataReporter(f"{name}.csv", 1000, **reporter_args)
-        )
-
-        simulation.step(int(params["Number of Steps"].split(" ")[0].strip()))
-
-        # add filenames to registry
-        file_name1 = "simulation_trajectory.pdb"
-        file_description1 = "Simulation PDB, containing the simulation trajectory"
-        self.path_registry.map_path(file_name1, f"{name}.pdb", file_description1)
-        file_name2 = "simulation_data.csv"
-        file_description2 = (
-            "Simulation Data, containing step, potential energy, and temperature"
-        )
-        self.path_registry.map_path(file_name2, f"{name}.csv", file_description2)
-
-        return simulation
-
-    def _extract_parameters_path(self):
-        """Check directory for parameters.json file."""
-        # Check if there is a parameters.json file in the directory.
-        if os.path.exists("simulation_parameters_summary.json"):
-            return "simulation_parameters_summary.json"
-        # If there's no exact match, check for
-        # any JSON file that contains 'parameters' in its name.
-        else:
-            for file in os.listdir("."):
-                if "parameters" in file and file.endswith(".json"):
-                    return file
-            # If no matching file is found, raise an exception.
-            raise ValueError("No parameters.json file found in directory.")
-
-
-class SetUpAndRunTool(BaseTool):
-    name = "SetUpAndRunTool"
-    description = """This tool will set up the simulation objects
-                    and run the simulation.
-                    It will ask for the parameters path.
-                    input:  json file
-                    """
-    path_registry: Optional[PathRegistry]
-
-    def __init__(
-        self,
-        path_registry: Optional[PathRegistry],
-    ):
-        super().__init__()
-        self.path_registry = path_registry
-
-    def _run(self, query: str) -> str:
-        """Use the tool"""
-        # find the parameters in the directory
-        try:
-            if self.path_registry is None:  # this should not happen
-                return "Registry not initialized"
-            sim_fxns = SimulationFunctions(path_registry=self.path_registry)
-            parameters = sim_fxns._extract_parameters_path()
-
-        except ValueError as e:
-            return (
-                str(e)
-                + """\nPlease use the Instruction summary tool with the
-                to create a parameters.json file in the directory."""
-            )
-        self.log("This are the parameters:")
-        self.log(parameters)
-        # print the parameters in json file
-        with open(parameters) as f:
-            params = json.load(f)
-        for key, value in params.items():
-            print(key, ":", value)
-
-        self.log("Are you sure you want to run the simulation? (y/n)")
-        response = input("yes or no: ")
-        if response.lower() in ["yes", "y"]:
-            sim_fxns._setup_and_run_simulation(parameters)
-        else:
-            return "Simulation interrupted due to human input"
-        return "Simulation Completed, simulation trajectory and data files saved."
-
-    def log(self, text, color="blue"):
-        if color == "blue":
-            print("\033[1;34m\t{}\033[00m".format(text))
-        if color == "red":
-            print("\033[31m\t{}\033[00m".format(text))
-
-    async def _arun(self, query: str) -> str:
-        """Use the tool asynchronously."""
-        raise NotImplementedError("custom_search does not support async")
-
-
-#######==================System Configuration==================########
-# System Configuration
 class SetUpandRunFunctionInput(BaseModel):
     pdb_id: str
     forcefield_files: List[str]
@@ -682,7 +250,6 @@ class OpenMMSimulation:
 
     def setup_system(self):
         print("Building system...")
-        st.markdown("Building system", unsafe_allow_html=True)
         self.pdb_id = self.params["pdb_id"]
         self.pdb_path = self.path_registry.get_mapped_path(self.pdb_id)
         self.pdb = PDBFile(self.pdb_path)
@@ -698,7 +265,7 @@ class OpenMMSimulation:
                 raise ValueError(str(e))
             else:
                 raise ValueError(
-                    f"Error building system. Please check the forcefield files {str(e)}"
+                    f"Error building system. Please check the forcefield files {str(e)}. Included force fields are: {FORCEFIELD_LIST}"
                 )
 
         if self.sys_params.get("nonbondedMethod", None) in [
@@ -706,9 +273,17 @@ class OpenMMSimulation:
             PME,
         ]:
             if self.sim_params["Ensemble"] == "NPT":
+                pressure = self.int_params.get("Pressure", 1.0)
+
+                if "Pressure" not in self.int_params:
+                    print(
+                        "Warning: 'Pressure' not provided. ",
+                        "Using default pressure of 1.0 atm.",
+                    )
+
                 self.system.addForce(
                     MonteCarloBarostat(
-                        self.int_params["Pressure"],
+                        pressure,
                         self.int_params["Temperature"],
                         self.sim_params.get("barostatInterval", 25),
                     )
@@ -716,7 +291,6 @@ class OpenMMSimulation:
 
     def setup_integrator(self):
         print("Setting up integrator...")
-        st.markdown("Setting up integrator", unsafe_allow_html=True)
         int_params = self.int_params
         integrator_type = int_params.get("integrator_type", "LangevinMiddle")
 
@@ -741,7 +315,6 @@ class OpenMMSimulation:
 
     def create_simulation(self):
         print("Creating simulation...")
-        st.markdown("Creating simulation", unsafe_allow_html=True)
         self.simulation = Simulation(
             self.modeller.topology,
             self.system,
@@ -1269,12 +842,10 @@ class OpenMMSimulation:
             file.write(script_content)
 
         print(f"Standalone simulation script written to {directory}/{filename}")
-        st.markdown("Standalone simulation script written", unsafe_allow_html=True)
 
     def run(self):
         # Minimize and Equilibrate
         print("Performing energy minimization...")
-        st.markdown("Performing energy minimization", unsafe_allow_html=True)
 
         self.simulation.minimizeEnergy()
         print("Minimization complete!")
@@ -1288,7 +859,6 @@ class OpenMMSimulation:
             )
         self.path_registry.map_path(f"top_{self.sim_id}", top_name, top_description)
         print("Initial Positions saved to initial_positions.pdb")
-        st.markdown("Minimization complete! Equilibrating...", unsafe_allow_html=True)
         print("Equilibrating...")
         _temp = self.int_params["Temperature"]
         self.simulation.context.setVelocitiesToTemperature(_temp)
@@ -1296,11 +866,9 @@ class OpenMMSimulation:
         self.simulation.step(_eq_steps)
         # Simulate
         print("Simulating...")
-        st.markdown("Simulating...", unsafe_allow_html=True)
         self.simulation.currentStep = 0
         self.simulation.step(self.sim_params["Number of Steps"])
         print("Done!")
-        st.markdown("Done!", unsafe_allow_html=True)
         if not self.save:
             if os.path.exists("temp_trajectory.dcd"):
                 os.remove("temp_trajectory.dcd")
@@ -1381,7 +949,6 @@ class SetUpandRunFunction(BaseTool):
             openmmsim.create_simulation()
 
             print("simulation set!")
-            st.markdown("simulation set!", unsafe_allow_html=True)
         except ValueError as e:
             msg = str(e) + f"This were the inputs {input_args}"
             if "No template for" in msg:
@@ -1660,7 +1227,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "constraints":
                     try:
-                        if type(value) == str:
+                        if isinstance(value, str):
                             if value == "None":
                                 processed_params[key] = None
                             elif value == "HBonds":
@@ -1684,7 +1251,7 @@ class SetUpandRunFunction(BaseTool):
                             "part of the parameters.\n"
                         )
                 if key == "rigidWater" or key == "rigidwater":
-                    if type(value) == bool:
+                    if isinstance(value, bool):
                         processed_params[key] = value
                     elif value == "True":
                         processed_params[key] = True
@@ -1709,7 +1276,7 @@ class SetUpandRunFunction(BaseTool):
                         )
                 if key == "solvate":
                     try:
-                        if type(value) == bool:
+                        if isinstance(value, bool):
                             processed_params[key] = value
                         elif value == "True":
                             processed_params[key] = True
@@ -1921,21 +1488,21 @@ class SetUpandRunFunction(BaseTool):
 
         # forcefield
         forcefield_files = values.get("forcefield_files")
-        if forcefield_files is None or forcefield_files is []:
+        if forcefield_files is None or forcefield_files == []:
             print("Setting default forcefields")
-            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         elif len(forcefield_files) == 0:
             print("Setting default forcefields v2")
-            st.markdown("Setting default forcefields", unsafe_allow_html=True)
             forcefield_files = ["amber14-all.xml", "amber14/tip3pfb.xml"]
         else:
             for file in forcefield_files:
                 if file not in FORCEFIELD_LIST:
-                    error_msg += "The forcefield file is not present"
-
+                    error_msg += (
+                        "The forcefield file is not present: forcefield files are: "
+                        + str(FORCEFIELD_LIST)
+                    )
         save = values.get("save", True)
-        if type(save) != bool:
+        if not isinstance(save, bool):
             error_msg += "save must be a boolean value"
 
         if error_msg != "":
@@ -1993,7 +1560,10 @@ def create_simulation_input(pdb_path, forcefield_files):
     Water_model = Forcefield_files[1]
     # check if they are part of the list
     if Forcefield not in FORCEFIELD_LIST:
-        raise Exception("Forcefield not recognized")
+        raise Exception(
+            "Forcefield not recognized: Possible forcefields are: "
+            + str(FORCEFIELD_LIST)
+        )
     if Water_model not in FORCEFIELD_LIST:
         raise Exception("Water model not recognized")
 

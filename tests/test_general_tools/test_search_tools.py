@@ -1,5 +1,5 @@
 import pytest
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 from mdagent.tools.base_tools import Scholar2ResultLLM
 

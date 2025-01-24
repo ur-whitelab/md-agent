@@ -487,18 +487,11 @@ def test_get_ids(query_uniprot):
         "P68871",
         "P02089",
         "P02070",
-        "O13163",
-        "Q10733",
         "P02008",
         "B3EWR7",
-        "Q90487",
-        "P04244",
         "P02094",
-        "P83479",
         "P01966",
-        "O93349",
         "P68872",
-        "P02110",
         "P69905",
         "P02088",
         "P02100",
@@ -507,6 +500,7 @@ def test_get_ids(query_uniprot):
         "P02091",
     ]
     all_ids = query_uniprot.get_ids("hemoglobin")
+    print(all_ids)
     single_id = query_uniprot.get_ids("hemoglobin", single_id=True)
     assert single_id[0] in hg_ids
     assert len(single_id) == 1

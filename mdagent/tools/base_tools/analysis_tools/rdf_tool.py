@@ -96,11 +96,11 @@ class RDFTool(BaseTool):
             Log_id=trajectory_id,
         )
         fig_id = self.path_registry.get_fileid(plot_name, type=FileType.FIGURE)
-
-        plt.savefig(f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png")
+        file_path = f"{self.path_registry.ckpt_figures}/rdf_{trajectory_id}.png"
+        plt.savefig(file_path)
         self.path_registry.map_path(
             fig_id,
-            plot_name,
+            file_path,
             description=f"RDF plot for the trajectory file with id: {trajectory_id}",
         )
         plt.close()
@@ -159,7 +159,7 @@ class RDFTool(BaseTool):
             )
 
         if stride:
-            if type(stride) != int:
+            if not isinstance(stride, int):
                 try:
                     stride = int(stride)
                     if stride <= 0:

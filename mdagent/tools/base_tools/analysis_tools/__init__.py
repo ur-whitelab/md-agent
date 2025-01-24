@@ -1,9 +1,10 @@
 from .distance_tools import ContactsTool, DistanceMatrixTool
+from .hydrogen_bonding_tools import HydrogenBondTool
 from .inertia import MomentOfInertia
 from .pca_tools import PCATool
 from .plot_tools import SimulationOutputFigures
 from .ppi_tools import PPIDistance
-from .rgy import RadiusofGyrationAverage, RadiusofGyrationPerFrame, RadiusofGyrationPlot
+from .rgy import RadiusofGyrationTool
 from .rmsd_tools import ComputeLPRMSD, ComputeRMSD, ComputeRMSF
 from .salt_bridge_tool import SaltBridgeTool
 from .sasa import SolventAccessibleSurfaceArea
@@ -15,12 +16,12 @@ __all__ = [
     "ComputeRMSF",
     "ContactsTool",
     "DistanceMatrixTool",
+    "HydrogenBondTool",
     "MomentOfInertia",
     "PCATool",
     "PPIDistance",
-    "RadiusofGyrationAverage",
-    "RadiusofGyrationPerFrame",
-    "RadiusofGyrationPlot",
+    "RadiusofGyrationTool",
+    "RMSDCalculator",
     "SaltBridgeTool",
     "SimulationOutputFigures",
     "SolventAccessibleSurfaceArea",

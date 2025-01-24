@@ -1,7 +1,6 @@
 from typing import Optional
 
 import requests
-import streamlit as st
 from langchain.tools import BaseTool
 from rdkit import Chem
 from rdkit.Chem import AllChem
@@ -27,7 +26,7 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
     }
     r = requests.post(url, json=query)
     if r.status_code == 204:
-        return None
+        return None, None
     if "cif" in query_string or "CIF" in query_string:
         filetype = "cif"
     else:
@@ -36,7 +35,6 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
         results = r.json()["result_set"]
         pdbid = max(results, key=lambda x: x["score"])["identifier"]
         print(f"PDB file found with this ID: {pdbid}")
-        st.markdown(f"PDB file found with this ID: {pdbid}", unsafe_allow_html=True)
         url = f"https://files.rcsb.org/download/{pdbid}.{filetype}"
         pdb = requests.get(url)
         filename = path_registry.write_file_name(
@@ -57,7 +55,7 @@ def get_pdb(query_string: str, path_registry: PathRegistry):
         )
 
         return filename, file_id
-    return None
+    return None, None
 
 
 class ProteinName2PDBTool(BaseTool):
