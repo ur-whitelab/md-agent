@@ -336,7 +336,7 @@ class ComputeAngles(BaseTool):
 
             return (
                 "Succeeded. All analyses completed. "
-                f"Ramachandran plot with ID {ram_plot_id}, message: {phi_message} "
+                f"Ramachandran plot with ID {phi_plot_id}, message: {phi_message} "
                 f"Chis plot with ID {chi_plot_id}, message: {chi_message}"
             )
 
