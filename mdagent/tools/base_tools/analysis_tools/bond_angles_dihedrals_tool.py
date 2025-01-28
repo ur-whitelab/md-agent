@@ -40,7 +40,7 @@ class ComputingAnglesSchema(BaseModel):
 class ComputeAngles(BaseTool):
     name = "ComputeAngles"
     description = """Analyze dihedral angles from a trajectory file. The tool allows for
-    analysis of the phi-psi angles, chi1-chi2 angles, or both. """
+    analysis of the phi-psi angles, chis angles, or both. """
 
     path_registry: PathRegistry | None = None
     args_schema = ComputingAnglesSchema
@@ -105,14 +105,14 @@ class ComputeAngles(BaseTool):
         except Exception as e:
             return f"Failed. Error loading trajectory: {str(e)}"
 
-        return self.analyze_trajectory(traj, analysis, traj_id)
+        return self.analyze_trajectory(traj, analysis, sim_id=traj_id)
 
     async def _arun(self, input):
         raise NotImplementedError("Async version not implemented")
 
     # Example helper functions (optional). You can instead just keep them as
     # blocks in the if-statements.
-    def compute_and_plot_phi_psi(self, traj, path_registry, sim_id):
+    def compute_and_plot_phi_psi(self, traj, sim_id):
         """
         Computes phi-psi angles, saves results to file, and produces Ramachandran plot.
         """
@@ -128,7 +128,7 @@ class ComputeAngles(BaseTool):
             return None, f"Failed. Error computing phi-psi angles: {str(e)}"
 
         # If path_registry is available, save files and produce plot
-        if path_registry is not None:
+        if self.path_registry is not None:
             # Save angle results
             save_results_to_file("phi_results.npz", phi_indices, phi_angles)
             save_results_to_file("psi_results.npz", psi_indices, psi_angles)
@@ -142,17 +142,17 @@ class ComputeAngles(BaseTool):
                 plt.ylabel(r"$\psi$")
                 plt.colorbar()
 
-                file_name = path_registry.write_file_name(
+                file_name = self.path_registry.write_file_name(
                     FileType.FIGURE,
                     fig_analysis="ramachandran",
                     file_format="png",
                     Sim_id=sim_id,
                 )
                 desc = f"Ramachandran plot for the simulation {sim_id}"
-                plot_id = path_registry.get_fileid(file_name, FileType.FIGURE)
-                path = path_registry.ckpt_dir + "/figures/"
+                plot_id = self.path_registry.get_fileid(file_name, FileType.FIGURE)
+                path = self.path_registry.ckpt_dir + "/figures/"
                 plt.savefig(path + file_name)
-                path_registry.map_path(plot_id, path + file_name, description=desc)
+                self.path_registry.map_path(plot_id, path + file_name, description=desc)
                 plt.clf()  # Clear the current figure so it does not overlay next plot
                 print("Ramachandran plot saved to file")
                 return plot_id, "Succeeded. Ramachandran plot saved."
@@ -277,7 +277,7 @@ class ComputeAngles(BaseTool):
             axes[1, 1], chi_4_angles_degrees, residue_names_4, title="$\chi$4"
         )
         # add title
-        fig.suptitle("Chi angles per residue for simulation {sim}", fontsize=16)
+        fig.suptitle(f"Chi angles per residue for simulation {sim_id}", fontsize=16)
         plt.tight_layout()
         # plt.show()
         # Save the figure
@@ -302,31 +302,25 @@ class ComputeAngles(BaseTool):
         """
         # Store optional references for convenience
 
-        self_sim_id = sim_id
-
         # ================ PHI-PSI ONLY =================
         if analysis == "phi-psi":
-            ram_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, self_sim_id)
+            ram_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, sim_id)
             return f"Ramachandran plot with ID {ram_plot_id}, message: {phi_message} "
 
         # ================ CHI1-CHI2 ONLY ================
         elif analysis == "chis":
-            chi_plot_id, chi_message = self.compute_plot_all_chi_angles(
-                traj, self_sim_id
-            )
+            chi_plot_id, chi_message = self.compute_plot_all_chi_angles(traj, sim_id)
             return f"Chis plot with ID {chi_plot_id}, message: {chi_message}"
 
         # ================ ALL =================
         elif analysis == "all":
             # First do phi-psi
-            phi_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, self_sim_id)
+            phi_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, sim_id)
             if "Failed." in phi_message:
                 return phi_message
 
             # Then do chi1-chi2
-            chi_plot_id, chi_message = self.compute_plot_all_chi_angles(
-                traj, self_sim_id
-            )
+            chi_plot_id, chi_message = self.compute_plot_all_chi_angles(traj, sim_id)
             if "Failed." in chi_message:
                 return chi_message
 
