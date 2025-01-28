@@ -105,7 +105,7 @@ class ComputeAngles(BaseTool):
         except Exception as e:
             return f"Failed. Error loading trajectory: {str(e)}"
 
-        return self.analyze_trajectory(traj, analysis, self.path_registry, traj_id)
+        return self.analyze_trajectory(traj, analysis, traj_id)
 
     async def _arun(self, input):
         raise NotImplementedError("Async version not implemented")
@@ -295,41 +295,37 @@ class ComputeAngles(BaseTool):
         plt.clf()  # Clear the current figure so it does not overlay next plot
         return plot_id, "Succeeded. Chi angles plot saved."
 
-    def analyze_trajectory(self, traj, analysis, path_registry=None, sim_id="sim"):
+    def analyze_trajectory(self, traj, analysis, sim_id="sim"):
         """
         Main function to decide which analysis to do:
         'phi-psi', 'chis', or 'all'.
         """
         # Store optional references for convenience
-        self_path_registry = path_registry
+
         self_sim_id = sim_id
 
         # ================ PHI-PSI ONLY =================
         if analysis == "phi-psi":
-            ram_plot_id, phi_message = self.compute_and_plot_phi_psi(
-                traj, self_path_registry, self_sim_id
-            )
+            ram_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, self_sim_id)
             return f"Ramachandran plot with ID {ram_plot_id}, message: {phi_message} "
 
         # ================ CHI1-CHI2 ONLY ================
         elif analysis == "chis":
             chi_plot_id, chi_message = self.compute_plot_all_chi_angles(
-                traj, self_path_registry, self_sim_id
+                traj, self_sim_id
             )
             return f"Chis plot with ID {chi_plot_id}, message: {chi_message}"
 
         # ================ ALL =================
         elif analysis == "all":
             # First do phi-psi
-            phi_plot_id, phi_message = self.compute_and_plot_phi_psi(
-                traj, self_path_registry, self_sim_id
-            )
+            phi_plot_id, phi_message = self.compute_and_plot_phi_psi(traj, self_sim_id)
             if "Failed." in phi_message:
                 return phi_message
 
             # Then do chi1-chi2
             chi_plot_id, chi_message = self.compute_plot_all_chi_angles(
-                traj, self_path_registry, self_sim_id
+                traj, self_sim_id
             )
             if "Failed." in chi_message:
                 return chi_message
