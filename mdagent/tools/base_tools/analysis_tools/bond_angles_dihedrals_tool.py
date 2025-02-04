@@ -31,8 +31,10 @@ class ComputingAnglesSchema(BaseModel):
     selection: Optional[str] = Field(
         "backbone and sidechain",
         description=(
-            "Which selection of atoms from the simulation "
-            "to use for the pca analysis"
+            "A string specifying which atoms to select from the trajectory, using "
+            "MDTraj’s selection syntax. Common examples include expressions like 'resid "
+            "1 to 10', 'name CA', or 'backbone' to define particular subsets of atoms "
+            "for analysis."
         ),
     )
 
@@ -104,6 +106,13 @@ class ComputeAngles(BaseTool):
             return f"Failed. Error loading trajectory: {str(e)}"
         except Exception as e:
             return f"Failed. Error loading trajectory: {str(e)}"
+        # make selection
+        if selection:
+            try:
+                traj = traj.atom_slice(traj.top.select(selection))
+            except Exception as e:
+                # return f"Failed. Error selecting atoms: {str(e)}"
+                print(f"Error selecting atoms: {str(e)}, defaulting to all atoms")
 
         return self.analyze_trajectory(traj, analysis, sim_id=traj_id)
 
