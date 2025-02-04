@@ -40,20 +40,20 @@ def test_compute_angles_ram_values(get_registry):
         "mdagent.tools.base_tools.analysis_tools.ComputeAngles.compute_and_plot_phi_psi"
     ) as mock_compute_and_plot_phi_psi:
         with patch(
-            "mdagent.tools.base_tools.analysis_tools.ComputeAngles.compute_and_plot_chi1_chi2"
-        ) as mock_compute_and_plot_chi1_chi2:
+            "mdagent.tools.base_tools.analysis_tools.ComputeAngles.compute_plot_all_chi_angles"
+        ) as compute_plot_all_chi_angles:
             mock_compute_and_plot_phi_psi.return_value = ("mockid", "mockresult")
             # instance.return_value = ("mockid", "mockresult")
             angles_tool._run(phi_psi_input_files)
             # print(result)
             assert mock_compute_and_plot_phi_psi.called
             # assert compute_and_plot_chi1_chi2 is not called
-            assert not mock_compute_and_plot_chi1_chi2.called
+            assert not compute_plot_all_chi_angles.called
 
             # =========================================================================#
-            mock_compute_and_plot_chi1_chi2.return_value = ("mockid", "mockresult")
+            compute_plot_all_chi_angles.return_value = ("mockid", "mockresult")
             angles_tool._run(chi_innput_files)
-            assert mock_compute_and_plot_chi1_chi2.called
+            assert compute_plot_all_chi_angles.called
             # assert compute_and_plot_phi_psi is not called
             assert (
                 mock_compute_and_plot_phi_psi.assert_called_once
