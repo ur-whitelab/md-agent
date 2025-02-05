@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import mdtraj as md
 import numpy as np
@@ -50,6 +52,12 @@ class SaltBridgeFunction:
                 ("HIS", "ASP"),
                 ("HIS", "GLU"),
             ]
+            warnings.warn(
+                "No residue pairs provided. Default charged residues "
+                "are being used, assuming physiological pH. "
+                f"Default pairs: {residue_pairs}",
+                UserWarning,
+            )
 
         donor_acceptor_pairs = []
         for pair in residue_pairs:
@@ -57,20 +65,19 @@ class SaltBridgeFunction:
             donor_atoms = self.traj.topology.select(f'resname == "{pair[0]}"')
             acceptor_atoms = self.traj.topology.select(f'resname == "{pair[1]}"')
 
-            if len(donor_atoms) == 0 or len(acceptor_atoms) == 0:
+            if not donor_atoms or not acceptor_atoms:
                 continue
 
-            donor_nitrogens = []  # N atoms in the donor residues (Arg, Lys, His)
-            for donor_atom_index in donor_atoms:
-                atom = self.traj.topology.atom(donor_atom_index)
-                if atom.element.symbol == "N":
-                    donor_nitrogens.append(atom.index)
-
-            acceptor_oxygens = []  # O atoms in the acceptor residues (Asp, Glu)
-            for acceptor_atom_index in acceptor_atoms:
-                atom = self.traj.topology.atom(acceptor_atom_index)
-                if atom.element.symbol == "O":
-                    acceptor_oxygens.append(atom.index)
+            donor_nitrogens = [  # N atoms in the donor residues (e.g. Arg, Lys, His)
+                atom.index
+                for atom in self.traj.topology.atoms
+                if atom.index in donor_atoms and atom.element.symbol == "N"
+            ]
+            acceptor_oxygens = [  # O atoms in the acceptor residues (e.g. Asp, Glu)
+                atom.index
+                for atom in self.traj.topology.atoms
+                if atom.index in acceptor_atoms and atom.element.symbol == "O"
+            ]
 
             # generate all possible donor-acceptor pairs
             pairs = np.array(np.meshgrid(donor_nitrogens, acceptor_oxygens)).T.reshape(
@@ -78,18 +85,15 @@ class SaltBridgeFunction:
             )
             donor_acceptor_pairs.append(pairs)
 
-        if donor_acceptor_pairs == []:
+        if not donor_acceptor_pairs:
             return None
 
-        donor_acceptor_pairs = np.vstack(
-            donor_acceptor_pairs
-        )  # combine all residue pairs
+        donor_acceptor_pairs = np.vstack(donor_acceptor_pairs)  # combine into one list
         all_distances = md.compute_distances(self.traj, donor_acceptor_pairs)
 
         salt_bridge_counts = []
         salt_bridge_pairs = []
         for frame_idx in range(self.traj.n_frames):
-            # salt_bridges_in_frame = set()
             frame_distances = all_distances[frame_idx]
             within_threshold = frame_distances <= threshold_distance
             salt_bridge_counts.append(np.sum(within_threshold))
@@ -194,7 +198,8 @@ class SaltBridgeTool(BaseTool):
     description = (
         "A tool to find and count salt bridges in a protein trajectory. "
         "You need to provide either PDB file or trajectory and topology files. "
-        "Threshold distance and a custom list of residue pairs (tuples) are optional. "
+        "Optional: provide threshold distance (default:0.4) and a custom list "
+        "of residue pairs as tuples of positive-charged and negative-charged. "
     )
     path_registry: PathRegistry | None = None
 
