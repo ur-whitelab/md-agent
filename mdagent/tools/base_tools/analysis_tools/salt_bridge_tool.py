@@ -65,7 +65,7 @@ class SaltBridgeFunction:
             donor_atoms = self.traj.topology.select(f'resname == "{pair[0]}"')
             acceptor_atoms = self.traj.topology.select(f'resname == "{pair[1]}"')
 
-            if not donor_atoms or not acceptor_atoms:
+            if donor_atoms.size == 0 or acceptor_atoms.size == 0:
                 continue
 
             donor_nitrogens = [  # N atoms in the donor residues (e.g. Arg, Lys, His)
