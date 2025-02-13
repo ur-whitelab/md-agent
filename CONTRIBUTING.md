@@ -9,8 +9,8 @@ To get started with contributing to md-agent, follow these steps:
 ```
 git clone https://github.com/ur-whitelab/md-agent.git
 cd md-agent
-conda env create -n mdagent -f environment.yaml
-conda activate mdagent
+conda env create -n mdcrow -f environment.yaml
+conda activate mdcrow
 ```
 
 ### Installing the Package and Dependencies and Configuring Pre-commit Hooks

@@ -2,7 +2,7 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from mdagent.agent.evaluate import Evaluator
+from mdcrow.agent.evaluate import Evaluator
 
 
 @pytest.fixture
@@ -62,11 +62,11 @@ def mock_agent(tmp_path):
     return agent
 
 
-@patch("mdagent.agent.evaluate.MDAgent")
-def test_create_agent(mock_mdagent, evaluator):
+@patch("mdcrow.agent.evaluate.MDCrow")
+def test_create_agent(mock_mdcrow, evaluator):
     agent_params = {"model_name": "test_model"}
     evaluator.create_agent(agent_params)
-    mock_mdagent.assert_called_once_with(**agent_params)
+    mock_mdcrow.assert_called_once_with(**agent_params)
 
 
 def test_reset(evaluator):
@@ -113,7 +113,7 @@ def test_evaluate_all_steps_contents(
 
 def test_run_and_evaluate(evaluator, mock_os_makedirs, mock_open_json):
     with patch(
-        "mdagent.agent.evaluate.Evaluator._evaluate_all_steps"
+        "mdcrow.agent.evaluate.Evaluator._evaluate_all_steps"
     ) as mock_evaluate_all_steps:
         mock_evaluate_all_steps.side_effect = [
             {"prompt_success": True},
