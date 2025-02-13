@@ -16,7 +16,7 @@ If you already have a conda environment, you can install dependencies before you
 
 ## Installation
 ```
-pip install git+https://github.com/ur-whitelab/md-agent.git
+pip install git+https://github.com/ur-whitelab/MDCrow.git
 ```
 
 ## Usage
