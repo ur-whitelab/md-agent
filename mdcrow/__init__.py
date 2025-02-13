@@ -1,3 +1,3 @@
-from .agent import Evaluator, MDCrow
+from .agent import MDCrow
 
-__all__ = ["MDCrow", "Evaluator"]
+__all__ = ["MDCrow"]
