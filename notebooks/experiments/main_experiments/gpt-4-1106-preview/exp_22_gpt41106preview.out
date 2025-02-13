@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -173,7 +173,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_66/pdb/1PQ2_raw_20240822_113806.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_66/pdb/1PQ2_raw_20240822_113806.pdb
 Now that the PDB file has been cleaned and is compatible with the force field, I can proceed to set up and run the simulation again using the SetUpandRunFunction tool with the cleaned PDB file ID.
 
 Action:
@@ -220,7 +220,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_66/simulations/NVT_1PQ2_114100_20240822_114113.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_66/simulations/NVT_1PQ2_114100_20240822_114113.py
 ['LOG_sim0_114939_7VDE_112704_20240822_114947.txt', 'TRAJ_sim0_113438_1TRN_113423_20240822_113445.dcd', 'exp_prompt_5', 'exp_prompt_6', 'exp_prompt_11', 'exp_prompt_2', 'TRAJ_sim0_112547_1XQ8_112529_20240822_112634.dcd', 'LOG_sim0_113438_1TRN_113423_20240822_113445.txt', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'TOP_sim0_112547_1XQ8_112529_20240822_112634.pdb', 'exp_prompt_8', 'exp_prompt_15', 'TRAJ_sim0_111330_1MBN_111315_20240822_111331.dcd', 'TRAJ_sim0_114733_4RMB_112827_20240822_114735.dcd', 'TOP_sim0_115252_6BB5_115236_20240822_115258.pdb', 'TOP_sim0_113438_1TRN_113423_20240822_113445.pdb', 'TRAJ_sim0_114105_1A3N_114009_20240822_114109.dcd', 'LOG_sim0_111330_1MBN_111315_20240822_111331.txt', 'TRAJ_sim0_115252_6BB5_115236_20240822_115258.dcd', 'exp_prompt_17', 'packmol.inp', 'LOG_sim0_114113_1PQ2_114100_20240822_114115.txt', 'LOG_sim0_115252_6BB5_115236_20240822_115258.txt', 'TOP_sim0_114733_4RMB_112827_20240822_114735.pdb', 'LOG_sim0_114733_4RMB_112827_20240822_114735.txt', 'exp_prompt_22', 'exp_prompt_9', 'exp_prompt_3', 'temp_topology.pdb', 'exp_prompt_19', 'LOG_sim0_112708_1ZNI_112647_20240822_112710.txt', 'TRAJ_sim0_112708_1ZNI_112647_20240822_112710.dcd', 'TOP_sim0_114113_1PQ2_114100_20240822_114115.pdb', 'exp_prompt_12', 'TRAJ_sim0_114939_7VDE_112704_20240822_114947.dcd', 'temp_trajectory.dcd', 'LOG_sim0_114105_1A3N_114009_20240822_114109.txt', 'exp_prompt_10', 'exp_prompt_14', 'exp_prompt_0', 'LOG_sim0_112547_1XQ8_112529_20240822_112634.txt', 'exp_prompt_16', 'TRAJ_sim0_114113_1PQ2_114100_20240822_114115.dcd', 'exp_prompt_23', 'exp_prompt_20', 'temp_log.txt', 'TOP_sim0_114939_7VDE_112704_20240822_114947.pdb', 'TOP_sim0_111330_1MBN_111315_20240822_111331.pdb', 'exp_prompt_7', 'TOP_sim0_114105_1A3N_114009_20240822_114109.pdb', 'exp_prompt_1', 'TOP_sim0_112708_1ZNI_112647_20240822_112710.pdb']
 Final Answer: The simulation of protein 1PQ2 has been successfully completed. The following files were generated during the simulation:
 
@@ -231,6 +231,6 @@ Final Answer: The simulation of protein 1PQ2 has been successfully completed. Th
 Additionally, a standalone script with ID sim0_114113 has been written, which can be used to reproduce the simulation or modify it for further analysis. The initial topology file ID is top_sim0_114113 and is saved in the files/pdb/ directory.Files found in registry: 1PQ2_113806: PDB file downloaded from RSCB, PDBFile ID: 1PQ2_113806, 1PQ2_114100: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_114113: Initial positions for simulation sim0_114113, sim0_114113: Basic Simulation of Protein 1PQ2_114100, rec0_114115: Simulation trajectory for protein 1PQ2_114100 and simulation sim0_114113, rec1_114115: Simulation state log for protein 1PQ2_114100 and simulation sim0_114113, rec2_114115: Simulation pdb frames for protein 1PQ2_114100 and simulation sim0_114113
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_66
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_66
 date and time: 2024-08-22
 time: 11:56:27

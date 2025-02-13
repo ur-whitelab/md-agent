@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -159,7 +159,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_75/pdb/4RMB_raw_20240902_173623.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_75/pdb/4RMB_raw_20240902_173623.pdb
 Action:
 ```
 {
@@ -203,7 +203,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_75/simulations/NVT_4RMB_173716_20240902_173719.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_75/simulations/NVT_4RMB_173716_20240902_173719.py
 ['LOG_sim0_173911_1ZNI_173907_20240902_173911.txt', 'exp_prompt_5', 'exp_prompt_6', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_4', 'exp_prompt_8', 'TOP_sim0_173719_4RMB_173716_20240902_173720.pdb', 'TRAJ_sim0_173911_1ZNI_173907_20240902_173911.dcd', 'exp_prompt_9', 'exp_prompt_3', 'LOG_sim0_173719_4RMB_173716_20240902_173720.txt', 'exp_prompt_12', 'TRAJ_sim0_173719_4RMB_173716_20240902_173720.dcd', 'exp_prompt_10', 'exp_prompt_0', 'exp_prompt_7', 'TOP_sim0_173911_1ZNI_173907_20240902_173911.pdb', 'exp_prompt_1']
 Action:
 ```
@@ -233,6 +233,6 @@ The radius of gyration plot for the simulation at 200K has been generated and sa
 If you need further analysis or have any more questions, feel free to ask!Files found in registry: 4RMB_173623: PDB file downloaded from RSCB, PDBFile ID: 4RMB_173623, 4RMB_173716: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_173719: Initial positions for simulation sim0_173719, sim0_173719: Basic Simulation of Protein 4RMB_173716, rec0_173720: Simulation trajectory for protein 4RMB_173716 and simulation sim0_173719, rec1_173720: Simulation state log for protein 4RMB_173716 and simulation sim0_173719, rec2_173720: Simulation pdb frames for protein 4RMB_173716 and simulation sim0_173719, rgy_rec0_173720: Radii of gyration per frame for rec0_173720, fig0_174304: Plot of radii of gyration over time for rec0_173720, rec0_174306: dssp values for trajectory with id: rec0_173720
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_75
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_75
 date and time: 2024-09-02
 time: 17:43:08

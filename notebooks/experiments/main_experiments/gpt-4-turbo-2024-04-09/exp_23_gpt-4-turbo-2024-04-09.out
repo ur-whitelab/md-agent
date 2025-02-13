@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -119,7 +119,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_115/pdb/1A3N_raw_20240903_102212.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_115/pdb/1A3N_raw_20240903_102212.pdb
 Now that the PDB file for 1A3N has been cleaned and the missing hydrogen atoms have been added, I can proceed to set up and run the molecular dynamics simulation again. This time, the cleaned PDB file should be compatible with the force field templates. I will use the SetUpandRunFunction tool with the cleaned PDB file to generate the trajectory and topology files required for RDF analysis.
 
 Action:
@@ -167,7 +167,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_115/simulations/NVT_1A3N_102244_20240903_102254.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_115/simulations/NVT_1A3N_102244_20240903_102254.py
 ['TRAJ_sim0_101850_1TRN_101840_20240903_101856.dcd', 'TOP_sim0_102254_1A3N_102244_20240903_102258.pdb', 'TRAJ_sim0_101522_1ZNI_101507_20240903_101525.dcd', 'exp_prompt_5', 'exp_prompt_6', 'TOP_sim0_100449_1MBN_100440_20240903_100450.pdb', 'TOP_sim0_102940_7VDE_101345_20240903_102948.pdb', 'exp_prompt_11', 'LOG_sim0_100449_1MBN_100440_20240903_100450.txt', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'LOG_sim0_101522_1ZNI_101507_20240903_101525.txt', 'exp_prompt_8', 'exp_prompt_15', 'TOP_sim0_101522_1ZNI_101507_20240903_101525.pdb', 'TRAJ_sim0_102414_1PQ2_102356_20240903_102429.dcd', 'exp_prompt_17', 'packmol.inp', 'TOP_sim0_101850_1TRN_101840_20240903_101856.pdb', 'TRAJ_sim0_100449_1MBN_100440_20240903_100450.dcd', 'LOG_sim0_103843_6BB5_103833_20240903_103850.txt', 'TRAJ_sim0_102940_7VDE_101345_20240903_102948.dcd', 'exp_prompt_22', 'exp_prompt_9', 'exp_prompt_3', 'temp_topology.pdb', 'exp_prompt_19', 'LOG_sim0_102254_1A3N_102244_20240903_102258.txt', 'TOP_sim0_103843_6BB5_103833_20240903_103850.pdb', 'LOG_sim0_101404_1ZNI_101352_20240903_101406.txt', 'TRAJ_sim0_102254_1A3N_102244_20240903_102258.dcd', 'exp_prompt_12', 'exp_prompt_10', 'LOG_sim0_101850_1TRN_101840_20240903_101856.txt', 'exp_prompt_14', 'TOP_sim0_101404_1ZNI_101352_20240903_101406.pdb', 'TOP_sim0_102414_1PQ2_102356_20240903_102429.pdb', 'exp_prompt_0', 'exp_prompt_16', 'TRAJ_sim0_103843_6BB5_103833_20240903_103850.dcd', 'exp_prompt_23', 'exp_prompt_20', 'TRAJ_sim0_101404_1ZNI_101352_20240903_101406.dcd', 'LOG_sim0_102940_7VDE_101345_20240903_102948.txt', 'exp_prompt_7', 'exp_prompt_1', 'LOG_sim0_102414_1PQ2_102356_20240903_102429.txt']
 The molecular dynamics simulation of protein 1A3N solvated in water has been successfully completed, and the necessary trajectory and topology files have been generated. The next step is to analyze the RDF (Radial Distribution Function) of the simulation. I will use the RDFTool with the trajectory file ID and the topology file ID to perform this analysis.
 
@@ -185,6 +185,6 @@ Action:
 ```Final Answer: The Radial Distribution Function (RDF) analysis of the simulation of protein 1A3N solvated in water has been successfully completed. The analysis plot has been generated and is identified by the file ID: fig0_105037. This plot will show the distribution of water molecules around the protein over the course of the simulation, providing insights into the solvation structure and the interactions between the protein and the solvent.Files found in registry: 1A3N_102212: PDB file downloaded from RSCB, PDBFile ID: 1A3N_102212, 1A3N_102244: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_102254: Initial positions for simulation sim0_102254, sim0_102254: Basic Simulation of Protein 1A3N_102244, rec0_102258: Simulation trajectory for protein 1A3N_102244 and simulation sim0_102254, rec1_102258: Simulation state log for protein 1A3N_102244 and simulation sim0_102254, rec2_102258: Simulation pdb frames for protein 1A3N_102244 and simulation sim0_102254, fig0_105037: RDF plot for the trajectory file with id: rec0_102258
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_115
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_115
 date and time: 2024-09-03
 time: 10:50:40

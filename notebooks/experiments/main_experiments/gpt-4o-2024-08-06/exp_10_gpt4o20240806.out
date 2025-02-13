@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -26,7 +26,7 @@ Download protein 1ATN.
 Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -105,7 +105,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/pdb/1ZNI_raw_20240821_110400.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/pdb/1ZNI_raw_20240821_110400.pdb
 To proceed with the simulation of protein 1ZNI at 300 K for 1 ns, I will now set up and run the molecular dynamics simulation using the cleaned PDB file. After the simulation, I will calculate the RMSD. Let's set up and run the simulation again with the cleaned file.
 
 Action:
@@ -234,7 +234,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/pdb/1ZNI_Clean_20240821_110418.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/pdb/1ZNI_Clean_20240821_110418.pdb
 To address the issue of NaN particle coordinates, I will attempt to set up and run the molecular dynamics simulation again using the newly cleaned PDB file. I will also adjust the simulation parameters to ensure stability. Let's proceed with the simulation setup.
 
 Action:
@@ -345,7 +345,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/pdb/1ZNI_Clean_20240821_230350.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/pdb/1ZNI_Clean_20240821_230350.pdb
 To address the persistent issue of NaN particle coordinates, I will attempt to set up and run the molecular dynamics simulation again using the newly cleaned PDB file. I will also ensure that the system is properly minimized before starting the simulation. Let's proceed with the simulation setup using a different set of force fields to ensure stability.
 
 Action:
@@ -440,7 +440,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/simulations/NPT_1ZNI_152415_20240822_233748.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/simulations/NPT_1ZNI_152415_20240822_233748.py
 ['LOG_sim0_152242_1ZNI_110418_20240821_152245.txt', 'TRAJ_sim0_152242_1ZNI_110418_20240821_152245.dcd', 'TOP_sim0_110428_1ZNI_110418_20240821_110431.pdb', 'exp_prompt_5', 'exp_prompt_6', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'exp_prompt_8', 'exp_prompt_15', 'LOG_sim0_105840_1XQ8_105835_20240821_105938.txt', 'TRAJ_sim0_042927_1ZNI_230350_20240822_042929.dcd', 'exp_prompt_17', 'packmol.inp', 'TOP_sim0_042927_1ZNI_230350_20240822_042929.pdb', 'TOP_sim0_233748_1ZNI_152415_20240822_233751.pdb', 'LOG_sim0_233748_1ZNI_152415_20240822_233751.txt', 'TOP_sim0_105840_1XQ8_105835_20240821_105938.pdb', 'exp_prompt_22', 'LOG_sim0_110428_1ZNI_110418_20240821_110431.txt', 'exp_prompt_9', 'TRAJ_sim0_230353_1ZNI_230350_20240821_230356.dcd', 'exp_prompt_3', 'exp_prompt_19', 'TOP_sim0_230353_1ZNI_230350_20240821_230356.pdb', 'LOG_sim0_230353_1ZNI_230350_20240821_230356.txt', 'exp_prompt_12', 'TRAJ_sim0_152420_1ZNI_152415_20240822_152423.dcd', 'TRAJ_sim0_105840_1XQ8_105835_20240821_105938.dcd', 'exp_prompt_10', 'exp_prompt_14', 'TRAJ_sim0_110428_1ZNI_110418_20240821_110431.dcd', 'exp_prompt_0', 'LOG_sim0_042927_1ZNI_230350_20240822_042929.txt', 'exp_prompt_16', 'LOG_sim0_152420_1ZNI_152415_20240822_152423.txt', 'exp_prompt_23', 'TOP_sim0_152242_1ZNI_110418_20240821_152245.pdb', 'exp_prompt_20', 'TOP_sim0_152420_1ZNI_152415_20240822_152423.pdb', 'TRAJ_sim0_233748_1ZNI_152415_20240822_233751.dcd', 'exp_prompt_7', 'exp_prompt_1']
 To complete the task, I need to calculate the RMSD of the simulation trajectory. Now that the simulation has been successfully completed, I will proceed with the RMSD calculation using the generated trajectory and topology files.
 
@@ -455,8 +455,8 @@ Action:
   }
 }
 ```Calculating RMSD...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/records/rmsd_233748.csv
-Plot saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29/figures/FIG_rmsd_233748_20240823_043015.png
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/records/rmsd_233748.csv
+Plot saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29/figures/FIG_rmsd_233748_20240823_043015.png
 Action:
 ```json
 {
@@ -466,6 +466,6 @@ Action:
 ```Files found in registry: 1ZNI_110400: PDB file downloaded from RSCB, PDBFile ID: 1ZNI_110400, 1ZNI_110418: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_110428: Initial positions for simulation sim0_110428, top_sim0_152242: Initial positions for simulation sim0_152242, 1ZNI_230350: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_230353: Initial positions for simulation sim0_230353, top_sim0_042927: Initial positions for simulation sim0_042927, 1ZNI_152415: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_152420: Initial positions for simulation sim0_152420, top_sim0_233748: Initial positions for simulation sim0_233748, sim0_233748: Basic Simulation of Protein 1ZNI_152415, rec0_233751: Simulation trajectory for protein 1ZNI_152415 and simulation sim0_233748, rec1_233751: Simulation state log for protein 1ZNI_152415 and simulation sim0_233748, rec2_233751: Simulation pdb frames for protein 1ZNI_152415 and simulation sim0_233748, rmsd_233748: RMSD for 233748, fig0_043015: RMSD plot for 233748
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_29
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_29
 date and time: 2024-08-23
 time: 04:30:18

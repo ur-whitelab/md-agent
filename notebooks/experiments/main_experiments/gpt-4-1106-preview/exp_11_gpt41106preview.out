@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -123,7 +123,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_55/pdb/8PFK_raw_20240822_113023.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_55/pdb/8PFK_raw_20240822_113023.pdb
 The PDB file for 8PFK has been cleaned and prepared for a more accurate secondary structure analysis. Now, I will perform the same cleaning process for the PDB file of 8PFQ to ensure both files are in the best possible state for analysis.
 
 Action:
@@ -140,7 +140,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_55/pdb/8PFQ_raw_20240822_113027.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_55/pdb/8PFQ_raw_20240822_113027.pdb
 Now that both PDB files have been cleaned, I will re-run the DSSP analysis on the cleaned files to compare the secondary structures of the two proteins accurately.
 
 Action:
@@ -174,6 +174,6 @@ The PDB files for proteins 8PFK and 8PFQ were successfully downloaded and cleane
 After cleaning, the DSSP analysis still showed no secondary structures for either protein, with 11 and 22 residues not assigned for 8PFK and 8PFQ, respectively. These findings suggest that the PDB files may not contain typical protein structures or that there may be a limitation in the analysis method used. Further investigation would be required to determine the nature of these structures and why they do not exhibit typical protein secondary structures.Files found in registry: 8PFK_113023: PDB file downloaded from RSCB, PDBFile ID: 8PFK_113023, 8PFQ_113027: PDB file downloaded from RSCB, PDBFile ID: 8PFQ_113027, rec0_113048: dssp values for trajectory with id: 8PFK_113023, rec0_113055: dssp values for trajectory with id: 8PFQ_113027, 8PFK_113107: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 8PFQ_113117: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , rec0_113122: dssp values for trajectory with id: 8PFK_113107, rec0_113130: dssp values for trajectory with id: 8PFQ_113117
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_55
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_55
 date and time: 2024-08-22
 time: 11:31:45

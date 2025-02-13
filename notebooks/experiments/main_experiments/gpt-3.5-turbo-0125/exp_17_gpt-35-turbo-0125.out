@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -63,9 +63,9 @@ Action:
     }
 }
 ```Error running molrender: [Errno 2] No such file or directory: 'molrender'. Using NGLView instead.
-Final Answer: The PDB file for protein 1XQ8 has been successfully downloaded, and the visualization has been created as a notebook.Files found in registry: 1XQ8_174505: PDB file downloaded from RSCB, PDBFile ID: 1XQ8_174505, /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_84/figures/1XQ8_raw_20240902_174505_vis.ipynb: Notebook to visualize cif/pdb file 1XQ8_raw_20240902_174505.pdb using nglview.
+Final Answer: The PDB file for protein 1XQ8 has been successfully downloaded, and the visualization has been created as a notebook.Files found in registry: 1XQ8_174505: PDB file downloaded from RSCB, PDBFile ID: 1XQ8_174505, /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_84/figures/1XQ8_raw_20240902_174505_vis.ipynb: Notebook to visualize cif/pdb file 1XQ8_raw_20240902_174505.pdb using nglview.
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_84
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_84
 date and time: 2024-09-02
 time: 17:45:43

@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -175,7 +175,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_116/pdb/1A3N_raw_20240903_103917.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_116/pdb/1A3N_raw_20240903_103917.pdb
 Now that the PDB file for oxygenated hemoglobin (1A3N) has been cleaned and the missing hydrogen atoms have been added, I can proceed with the simulation using the SetUpandRunFunction tool with the corrected file ID.
 
 Action:
@@ -215,36 +215,36 @@ Attempts at creating system: 0/3
 System built successfully
 <openmm.openmm.System; proxy of <Swig Object of type 'OpenMM::System *' at 0x2b209d277de0> >
 Traceback (most recent call last):
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/exps_batch/jobs/exps_gpt-4-turbo-2024-04-09/exp_prompt_23/exps.py", line 19, in <module>
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/exps_batch/jobs/exps_gpt-4-turbo-2024-04-09/exp_prompt_23/exps.py", line 19, in <module>
     agent.run(prompt)
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/mdagent/agent/agent.py", line 108, in run
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/mdcrow/agent/agent.py", line 108, in run
     model_output = self.agent.invoke(self.prompt, callbacks=callbacks)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/chains/base.py", line 166, in invoke
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/chains/base.py", line 166, in invoke
     raise e
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/chains/base.py", line 156, in invoke
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/chains/base.py", line 156, in invoke
     self._call(inputs, run_manager=run_manager)
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1612, in _call
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1612, in _call
     next_step_output = self._take_next_step(
                        ^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in _take_next_step
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in _take_next_step
     [
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in <listcomp>
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in <listcomp>
     [
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1403, in _iter_next_step
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1403, in _iter_next_step
     yield self._perform_agent_action(
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1425, in _perform_agent_action
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1425, in _perform_agent_action
     observation = tool.run(
                   ^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 585, in run
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 585, in run
     raise error_to_raise
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 554, in run
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 554, in run
     response = context.run(self._run, *tool_args, **tool_kwargs)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/mdagent/tools/base_tools/simulation_tools/setup_and_run.py", line 939, in _run
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/mdcrow/tools/base_tools/simulation_tools/setup_and_run.py", line 939, in _run
     openmmsim.setup_system()
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/mdagent/tools/base_tools/simulation_tools/setup_and_run.py", line 278, in setup_system
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/mdcrow/tools/base_tools/simulation_tools/setup_and_run.py", line 278, in setup_system
     self.int_params["Pressure"],
     ~~~~~~~~~~~~~~~^^^^^^^^^^^^
 KeyError: 'Pressure'

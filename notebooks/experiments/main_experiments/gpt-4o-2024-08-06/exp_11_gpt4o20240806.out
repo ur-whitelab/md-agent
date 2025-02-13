@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -26,7 +26,7 @@ Download protein 1ATN.
 Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -111,6 +111,6 @@ Final Answer: The comparison of the two proteins, 8PFK and 8PFQ, is as follows:
 Both proteins have no secondary structure assignments in terms of helices, strands, or coils, indicating that the residues are not recognized as typical protein residues in the DSSP analysis. The structural differences lie in the number of atoms, residues, and chains, with 8PFQ being larger in all aspects compared to 8PFK.Files found in registry: 8PFK_110515: PDB file downloaded from RSCB, PDBFile ID: 8PFK_110515, 8PFQ_110517: PDB file downloaded from RSCB, PDBFile ID: 8PFQ_110517, rec0_110522: dssp values for trajectory with id: 8PFK_110515, rec0_110523: dssp values for trajectory with id: 8PFQ_110517
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_30
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_30
 date and time: 2024-08-21
 time: 11:05:27

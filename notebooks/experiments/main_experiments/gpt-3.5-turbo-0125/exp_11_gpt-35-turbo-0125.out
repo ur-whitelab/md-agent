@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -91,31 +91,31 @@ Action:
     }
 }
 ```Traceback (most recent call last):
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/exps_batch/jobs/exps_gpt-3.5-turbo-0125/exp_prompt_10/exps.py", line 19, in <module>
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/exps_batch/jobs/exps_gpt-3.5-turbo-0125/exp_prompt_10/exps.py", line 19, in <module>
     agent.run(prompt)
-  File "/gpfs/fs2/scratch/jmedina9/mdagent/md-agent/mdagent/agent/agent.py", line 108, in run
+  File "/gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/mdcrow/agent/agent.py", line 108, in run
     model_output = self.agent.invoke(self.prompt, callbacks=callbacks)
                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/chains/base.py", line 166, in invoke
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/chains/base.py", line 166, in invoke
     raise e
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/chains/base.py", line 156, in invoke
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/chains/base.py", line 156, in invoke
     self._call(inputs, run_manager=run_manager)
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1612, in _call
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1612, in _call
     next_step_output = self._take_next_step(
                        ^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in _take_next_step
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in _take_next_step
     [
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in <listcomp>
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1318, in <listcomp>
     [
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1403, in _iter_next_step
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1403, in _iter_next_step
     yield self._perform_agent_action(
           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1425, in _perform_agent_action
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/agents/agent.py", line 1425, in _perform_agent_action
     observation = tool.run(
                   ^^^^^^^^^
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 585, in run
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 585, in run
     raise error_to_raise
-  File "/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 554, in run
+  File "/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain_core/tools/base.py", line 554, in run
     response = context.run(self._run, *tool_args, **tool_kwargs)
                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 TypeError: SummarizeProteinStructure._run() missing 1 required positional argument: 'traj_file'

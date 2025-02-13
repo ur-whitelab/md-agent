@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -26,7 +26,7 @@ Download protein 1ATN.
 Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -191,7 +191,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_1MBN_111517_and_1000_water_and_1000_methanol_v1.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_1MBN_111517_and_1000_water_and_1000_methanol_v1.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -247,7 +247,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111532.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111532.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the newly cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -304,7 +304,7 @@ Action:
   }
 }
 ```
-file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111538.pdb
+file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111538.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the newly cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -360,7 +360,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111546.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111546.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the newly cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -416,7 +416,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111554.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111554.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the newly cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -472,7 +472,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111605.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38/pdb/1_Clean_20240821_111605.pdb
 To proceed with the simulation of 1MBN in water and methanol solutions, I need to set up and run a short molecular dynamics simulation using the newly cleaned system. I will use the SetUpandRunFunction tool to perform this simulation with the cleaned PDB file.
 
 Action:
@@ -518,6 +518,6 @@ Molecule ID: water, Number of Molecules: 1000
 Molecule ID: methanol, Number of Molecules: 1000, 1_111532: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 1_111538: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 1_111546: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 1_111554: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 1_111605: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 1_111613: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues.
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_38
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_38
 date and time: 2024-08-21
 time: 11:16:20

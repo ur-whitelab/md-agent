@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -26,7 +26,7 @@ Download protein 1ATN.
 Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -161,7 +161,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_35/pdb/1C3W_raw_20240821_111025.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_35/pdb/1C3W_raw_20240821_111025.pdb
 To proceed with the molecular dynamics simulation, I will use the cleaned PDB file to set up and run the simulation at 300 K for 1 ns. After the simulation, I will plot the RMSD and radius of gyration over time.
 
 Action:
@@ -211,7 +211,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_35/simulations/NPT_1C3W_111043_20240821_111046.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_35/simulations/NPT_1C3W_111043_20240821_111046.py
 ['LOG_sim0_152242_1ZNI_110418_20240821_152245.txt', 'TRAJ_sim0_152242_1ZNI_110418_20240821_152245.dcd', 'TOP_sim0_110428_1ZNI_110418_20240821_110431.pdb', 'exp_prompt_5', 'exp_prompt_6', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'exp_prompt_8', 'exp_prompt_15', 'LOG_sim0_105840_1XQ8_105835_20240821_105938.txt', 'TRAJ_sim0_042927_1ZNI_230350_20240822_042929.dcd', 'exp_prompt_17', 'packmol.inp', 'TOP_sim0_042927_1ZNI_230350_20240822_042929.pdb', 'TOP_sim0_105840_1XQ8_105835_20240821_105938.pdb', 'LOG_sim0_110940_1TRN_110934_20240821_110946.txt', 'exp_prompt_22', 'LOG_sim0_110428_1ZNI_110418_20240821_110431.txt', 'TRAJ_sim0_111046_1C3W_111043_20240821_111051.dcd', 'exp_prompt_9', 'TRAJ_sim0_230353_1ZNI_230350_20240821_230356.dcd', 'exp_prompt_3', 'TOP_sim0_111046_1C3W_111043_20240821_111051.pdb', 'exp_prompt_19', 'TRAJ_sim0_110940_1TRN_110934_20240821_110946.dcd', 'TOP_sim0_230353_1ZNI_230350_20240821_230356.pdb', 'TOP_sim0_110940_1TRN_110934_20240821_110946.pdb', 'LOG_sim0_230353_1ZNI_230350_20240821_230356.txt', 'exp_prompt_12', 'TRAJ_sim0_105840_1XQ8_105835_20240821_105938.dcd', 'exp_prompt_10', 'exp_prompt_14', 'TRAJ_sim0_110428_1ZNI_110418_20240821_110431.dcd', 'exp_prompt_0', 'LOG_sim0_042927_1ZNI_230350_20240822_042929.txt', 'exp_prompt_16', 'TOP_sim0_152242_1ZNI_110418_20240821_152245.pdb', 'exp_prompt_20', 'exp_prompt_7', 'LOG_sim0_111046_1C3W_111043_20240821_111051.txt', 'exp_prompt_1']
 To complete the task, I need to plot the RMSD and radius of gyration over time using the simulation results. I will first calculate the RMSD and then the radius of gyration for the trajectory obtained from the simulation.
 
@@ -227,8 +227,8 @@ Action:
 }
 ```
 Calculating RMSD...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_35/records/rmsd_111046.csv
-Plot saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_35/figures/FIG_rmsd_111046_20240822_043241.png
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_35/records/rmsd_111046.csv
+Plot saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_35/figures/FIG_rmsd_111046_20240822_043241.png
 To complete the task, I need to calculate the radius of gyration for the trajectory and plot it over time. After that, I will provide the final answer with all the requested information.
 
 Action:
@@ -250,6 +250,6 @@ Action:
 ```Files found in registry: 1C3W_111025: PDB file downloaded from RSCB, PDBFile ID: 1C3W_111025, rec0_111027: dssp values for trajectory with id: 1C3W_111025, 1C3W_111043: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_111046: Initial positions for simulation sim0_111046, sim0_111046: Basic Simulation of Protein 1C3W_111043, rec0_111051: Simulation trajectory for protein 1C3W_111043 and simulation sim0_111046, rec1_111051: Simulation state log for protein 1C3W_111043 and simulation sim0_111046, rec2_111051: Simulation pdb frames for protein 1C3W_111043 and simulation sim0_111046, rmsd_111046: RMSD for 111046, fig0_043241: RMSD plot for 111046, rgy_rec0_111051: Radii of gyration per frame for rec0_111051, fig0_043244: Plot of radii of gyration over time for rec0_111051
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_35
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_35
 date and time: 2024-08-22
 time: 04:32:46

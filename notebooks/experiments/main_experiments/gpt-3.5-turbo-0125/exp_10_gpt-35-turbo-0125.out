@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -192,7 +192,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_77/pdb/1ZNI_raw_20240902_173902.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_77/pdb/1ZNI_raw_20240902_173902.pdb
 Action:
 ```
 {
@@ -237,11 +237,11 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_77/simulations/NVT_1ZNI_173907_20240902_173911.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_77/simulations/NVT_1ZNI_173907_20240902_173911.py
 ['LOG_sim0_173911_1ZNI_173907_20240902_173911.txt', 'exp_prompt_5', 'exp_prompt_6', 'TOP_sim0_175013_1PQ2_175010_20240902_175015.pdb', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'exp_prompt_8', 'exp_prompt_15', 'TOP_sim0_174433_1C3W_174430_20240902_174433.pdb', 'exp_prompt_17', 'LOG_sim0_175013_1PQ2_175010_20240902_175015.txt', 'TRAJ_sim0_173911_1ZNI_173907_20240902_173911.dcd', 'exp_prompt_22', 'exp_prompt_9', 'exp_prompt_3', 'exp_prompt_19', 'TRAJ_sim0_174433_1C3W_174430_20240902_174433.dcd', 'exp_prompt_12', 'exp_prompt_10', 'exp_prompt_14', 'TRAJ_sim0_175013_1PQ2_175010_20240902_175015.dcd', 'exp_prompt_0', 'exp_prompt_16', 'exp_prompt_23', 'exp_prompt_20', 'LOG_sim0_174433_1C3W_174430_20240902_174433.txt', 'exp_prompt_7', 'TOP_sim0_173911_1ZNI_173907_20240902_173911.pdb', 'exp_prompt_1']
 Final Answer: The simulation for protein 1ZNI at 300 K for 1 ns has been successfully completed. The RMSD calculation was performed during the simulation. The trajectory, simulation state log, and simulation pdb frames are available for further analysis. Additionally, a standalone script has been generated for reproducibility with the ID: sim0_173911.Files found in registry: 1ZNI_173902: PDB file downloaded from RSCB, PDBFile ID: 1ZNI_173902, 1ZNI_173907: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_173911: Initial positions for simulation sim0_173911, sim0_173911: Basic Simulation of Protein 1ZNI_173907, rec0_173911: Simulation trajectory for protein 1ZNI_173907 and simulation sim0_173911, rec1_173911: Simulation state log for protein 1ZNI_173907 and simulation sim0_173911, rec2_173911: Simulation pdb frames for protein 1ZNI_173907 and simulation sim0_173911
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_77
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_77
 date and time: 2024-09-02
 time: 18:15:47

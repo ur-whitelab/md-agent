@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -27,7 +27,7 @@ Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
 Simulate oxygenated hemoglobin (1A3N) and deoxygenated hemoglobin (6BB5). Then analyze the RDF of both.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -151,7 +151,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_98/pdb/1A3N_raw_20240903_101240.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_98/pdb/1A3N_raw_20240903_101240.pdb
 The PDB file for 1A3N has been successfully cleaned, resulting in a new file with the ID 1A3N_101325. Now I need to clean the PDB file for 7VDE using the CleaningToolFunction to ensure that it is also standardized and ready for simulation.
 
 Action:
@@ -168,7 +168,7 @@ Action:
         "add_hydrogens_ph": 7.0
     }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_98/pdb/7VDE_raw_20240903_101245.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_98/pdb/7VDE_raw_20240903_101245.pdb
 The PDB file for 7VDE has been successfully cleaned, resulting in a new file with the ID 7VDE_101345. Now that both PDB files are cleaned and standardized, I can proceed to set up and run the simulations for both 1A3N and 7VDE using the SetUpandRunFunction tool with the previously determined parameters.
 
 Action:
@@ -216,7 +216,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_98/simulations/NVT_1A3N_101325_20240903_101403.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_98/simulations/NVT_1A3N_101325_20240903_101403.py
 ['TRAJ_sim0_101850_1TRN_101840_20240903_101856.dcd', 'TOP_sim0_102254_1A3N_102244_20240903_102258.pdb', 'TRAJ_sim0_101522_1ZNI_101507_20240903_101525.dcd', 'exp_prompt_5', 'exp_prompt_6', 'TOP_sim0_100449_1MBN_100440_20240903_100450.pdb', 'exp_prompt_11', 'LOG_sim0_100449_1MBN_100440_20240903_100450.txt', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'LOG_sim0_101522_1ZNI_101507_20240903_101525.txt', 'exp_prompt_8', 'exp_prompt_15', 'TOP_sim0_101522_1ZNI_101507_20240903_101525.pdb', 'TRAJ_sim0_102414_1PQ2_102356_20240903_102429.dcd', 'LOG_sim0_101403_1A3N_101325_20240903_101407.txt', 'exp_prompt_17', 'packmol.inp', 'TRAJ_sim0_101403_1A3N_101325_20240903_101407.dcd', 'TOP_sim0_101850_1TRN_101840_20240903_101856.pdb', 'TRAJ_sim0_100449_1MBN_100440_20240903_100450.dcd', 'TOP_sim0_101403_1A3N_101325_20240903_101407.pdb', 'LOG_sim0_102227_4RMB_101449_20240903_102228.txt', 'exp_prompt_22', 'exp_prompt_9', 'exp_prompt_3', 'temp_topology.pdb', 'exp_prompt_19', 'LOG_sim0_102254_1A3N_102244_20240903_102258.txt', 'LOG_sim0_101404_1ZNI_101352_20240903_101406.txt', 'TRAJ_sim0_102254_1A3N_102244_20240903_102258.dcd', 'TOP_sim0_102227_4RMB_101449_20240903_102228.pdb', 'exp_prompt_12', 'LOG_sim0_101800_1A3N_101746_20240903_101804.txt', 'exp_prompt_10', 'LOG_sim0_101850_1TRN_101840_20240903_101856.txt', 'exp_prompt_14', 'TOP_sim0_101404_1ZNI_101352_20240903_101406.pdb', 'TOP_sim0_102414_1PQ2_102356_20240903_102429.pdb', 'exp_prompt_0', 'exp_prompt_16', 'TOP_sim0_101800_1A3N_101746_20240903_101804.pdb', 'TRAJ_sim0_102227_4RMB_101449_20240903_102228.dcd', 'TRAJ_sim0_101800_1A3N_101746_20240903_101804.dcd', 'exp_prompt_20', 'TRAJ_sim0_101404_1ZNI_101352_20240903_101406.dcd', 'exp_prompt_7', 'exp_prompt_1', 'LOG_sim0_102414_1PQ2_102356_20240903_102429.txt']
 The simulation for 1A3N has been successfully completed, and the relevant files have been saved with their respective IDs. I will now proceed to set up and run the simulation for 7VDE using the same parameters and the SetUpandRunFunction tool.
 
@@ -265,7 +265,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_98/simulations/NVT_7VDE_101345_20240903_102940.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_98/simulations/NVT_7VDE_101345_20240903_102940.py
 ['TRAJ_sim0_101850_1TRN_101840_20240903_101856.dcd', 'TRAJ_sim0_101522_1ZNI_101507_20240903_101525.dcd', 'exp_prompt_5', 'exp_prompt_6', 'TOP_sim0_100449_1MBN_100440_20240903_100450.pdb', 'TOP_sim0_102940_7VDE_101345_20240903_102948.pdb', 'exp_prompt_11', 'LOG_sim0_100449_1MBN_100440_20240903_100450.txt', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'exp_prompt_18', 'LOG_sim0_101522_1ZNI_101507_20240903_101525.txt', 'exp_prompt_8', 'exp_prompt_15', 'TOP_sim0_101522_1ZNI_101507_20240903_101525.pdb', 'TRAJ_sim0_102414_1PQ2_102356_20240903_102429.dcd', 'exp_prompt_17', 'packmol.inp', 'TOP_sim0_101850_1TRN_101840_20240903_101856.pdb', 'TRAJ_sim0_100449_1MBN_100440_20240903_100450.dcd', 'LOG_sim0_103843_6BB5_103833_20240903_103850.txt', 'TRAJ_sim0_102940_7VDE_101345_20240903_102948.dcd', 'exp_prompt_22', 'exp_prompt_9', 'exp_prompt_3', 'temp_topology.pdb', 'exp_prompt_19', 'TOP_sim0_103843_6BB5_103833_20240903_103850.pdb', 'LOG_sim0_101404_1ZNI_101352_20240903_101406.txt', 'exp_prompt_12', 'exp_prompt_10', 'LOG_sim0_101850_1TRN_101840_20240903_101856.txt', 'exp_prompt_14', 'TOP_sim0_101404_1ZNI_101352_20240903_101406.pdb', 'TOP_sim0_102414_1PQ2_102356_20240903_102429.pdb', 'exp_prompt_0', 'exp_prompt_16', 'TRAJ_sim0_103843_6BB5_103833_20240903_103850.dcd', 'exp_prompt_23', 'exp_prompt_20', 'TRAJ_sim0_101404_1ZNI_101352_20240903_101406.dcd', 'LOG_sim0_102940_7VDE_101345_20240903_102948.txt', 'exp_prompt_7', 'exp_prompt_1', 'LOG_sim0_102414_1PQ2_102356_20240903_102429.txt']
 The simulation for 7VDE has also been successfully completed, and the relevant files have been saved with their respective IDs. Now that both simulations are done, I need to plot the radius of gyration throughout both simulations. To do this, I will use the RadiusofGyrationPlot tool for each simulation trajectory.
 
@@ -310,6 +310,6 @@ Action:
 ```Files found in registry: 1A3N_101240: PDB file downloaded from RSCB, PDBFile ID: 1A3N_101240, 7VDE_101245: PDB file downloaded from RSCB, PDBFile ID: 7VDE_101245, 1A3N_101325: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , 7VDE_101345: Cleaned File:  Removed Heterogens, and Water Removed.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_101403: Initial positions for simulation sim0_101403, sim0_101403: Basic Simulation of Protein 1A3N_101325, rec0_101407: Simulation trajectory for protein 1A3N_101325 and simulation sim0_101403, rec1_101407: Simulation state log for protein 1A3N_101325 and simulation sim0_101403, rec2_101407: Simulation pdb frames for protein 1A3N_101325 and simulation sim0_101403, top_sim0_102940: Initial positions for simulation sim0_102940, sim0_102940: Basic Simulation of Protein 7VDE_101345, rec0_102948: Simulation trajectory for protein 7VDE_101345 and simulation sim0_102940, rec1_102948: Simulation state log for protein 7VDE_101345 and simulation sim0_102940, rec2_102948: Simulation pdb frames for protein 7VDE_101345 and simulation sim0_102940, rgy_rec0_101407: Radii of gyration per frame for rec0_101407, fig0_110028: Plot of radii of gyration over time for rec0_101407, rgy_rec0_102948: Radii of gyration per frame for rec0_102948, fig0_110034: Plot of radii of gyration over time for rec0_102948
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_98
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_98
 date and time: 2024-09-03
 time: 11:00:47

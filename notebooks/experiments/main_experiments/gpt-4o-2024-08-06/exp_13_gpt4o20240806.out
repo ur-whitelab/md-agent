@@ -1,7 +1,7 @@
 Run 'mamba init' to be able to run mamba activate/deactivate
 and start a new shell session. Or use conda to activate/deactivate.
 
-/scratch/jmedina9/myenvs/mdagentenv/bin/python
+/scratch/jmedina9/myenvs/mdcrowenv/bin/python
 Contents of the file as a list:
 Simulate PDB ID 1MBN at two different temperatures: 300 K and 400 K for 1 ns each. Plot the RMSD of both over time and compare the final secondary structures at the end of the simulations. Get information about this protein, such as the number of residues and chains, etc.
 Download the PDB file for protein 1LYZ.
@@ -26,7 +26,7 @@ Download protein 1ATN.
 Download and clean protein 1A3N.
 Perform a brief simulation of protein 1PQ2.
 Analyze the RDF of the simulation of 1A3N solvated in water.
-/scratch/jmedina9/myenvs/mdagentenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
+/scratch/jmedina9/myenvs/mdcrowenv/lib/python3.11/site-packages/langchain/_api/module_import.py:92: LangChainDeprecationWarning: Importing load_tools from langchain.agents is deprecated. Please replace deprecated imports:
 
 >> from langchain.agents import load_tools
 
@@ -138,7 +138,7 @@ Action:
     "add_hydrogens_ph": 7.0
   }
 }
-```file path: /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/pdb/1UBQ_raw_20240821_110652.pdb
+```file path: /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/pdb/1UBQ_raw_20240821_110652.pdb
 To proceed with the simulations, I will set up and run the first simulation for 1UBQ under high pressure using the cleaned PDB file. After that, I will set up the second simulation under low pressure. Once both simulations are complete, I will compute the RMSF for each condition and plot the moments of inertia over time.
 
 Action:
@@ -187,7 +187,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/simulations/NPT_1UBQ_110708_20240821_110714.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/simulations/NPT_1UBQ_110708_20240821_110714.py
 ['TOP_sim0_110428_1ZNI_110418_20240821_110431.pdb', 'exp_prompt_5', 'exp_prompt_6', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'TOP_sim0_142706_1MBN_104823_20240821_142707.pdb', 'exp_prompt_18', 'LOG_sim0_110635_1FNF_110629_20240821_110638.txt', 'exp_prompt_8', 'exp_prompt_15', 'LOG_sim0_105840_1XQ8_105835_20240821_105938.txt', 'TRAJ_sim0_110635_1FNF_110629_20240821_110638.dcd', 'exp_prompt_17', 'packmol.inp', 'LOG_sim0_110714_1UBQ_110708_20240821_110715.txt', 'TOP_sim0_105840_1XQ8_105835_20240821_105938.pdb', 'LOG_sim0_110940_1TRN_110934_20240821_110946.txt', 'exp_prompt_22', 'TOP_sim0_110714_1UBQ_110708_20240821_110715.pdb', 'LOG_sim0_110428_1ZNI_110418_20240821_110431.txt', 'TRAJ_sim0_111046_1C3W_111043_20240821_111051.dcd', 'exp_prompt_9', 'exp_prompt_3', 'TOP_sim0_111046_1C3W_111043_20240821_111051.pdb', 'exp_prompt_19', 'TOP_sim0_110635_1FNF_110629_20240821_110638.pdb', 'TRAJ_sim0_110940_1TRN_110934_20240821_110946.dcd', 'LOG_sim0_142706_1MBN_104823_20240821_142707.txt', 'TRAJ_sim0_110125_1ZNI_110113_20240821_110127.dcd', 'TOP_sim0_110940_1TRN_110934_20240821_110946.pdb', 'exp_prompt_12', 'TOP_sim0_110125_1ZNI_110113_20240821_110127.pdb', 'TRAJ_sim0_142706_1MBN_104823_20240821_142707.dcd', 'TRAJ_sim0_105840_1XQ8_105835_20240821_105938.dcd', 'exp_prompt_10', 'TRAJ_sim0_110714_1UBQ_110708_20240821_110715.dcd', 'exp_prompt_14', 'TRAJ_sim0_110428_1ZNI_110418_20240821_110431.dcd', 'LOG_sim0_110125_1ZNI_110113_20240821_110127.txt', 'exp_prompt_0', 'exp_prompt_16', 'exp_prompt_20', 'exp_prompt_7', 'LOG_sim0_111046_1C3W_111043_20240821_111051.txt', 'exp_prompt_1']
 To complete the task, I need to set up and run the second simulation for 1UBQ under low pressure using the cleaned PDB file. After both simulations are complete, I will compute the RMSF for each condition and plot the moments of inertia over time.
 
@@ -237,7 +237,7 @@ Initial Positions saved to initial_positions.pdb
 Equilibrating...
 Simulating...
 Done!
-Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/simulations/NPT_1UBQ_110708_20240821_143408.py
+Standalone simulation script written to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/simulations/NPT_1UBQ_110708_20240821_143408.py
 ['LOG_sim0_152242_1ZNI_110418_20240821_152245.txt', 'TRAJ_sim0_152242_1ZNI_110418_20240821_152245.dcd', 'TOP_sim0_110428_1ZNI_110418_20240821_110431.pdb', 'exp_prompt_5', 'exp_prompt_6', 'TRAJ_sim0_143408_1UBQ_110708_20240821_143409.dcd', 'exp_prompt_11', 'exp_prompt_2', 'exp_prompt_13', 'exp_prompt_21', 'exp_prompt_4', 'TOP_sim0_142706_1MBN_104823_20240821_142707.pdb', 'exp_prompt_18', 'LOG_sim0_110635_1FNF_110629_20240821_110638.txt', 'exp_prompt_8', 'exp_prompt_15', 'LOG_sim0_105840_1XQ8_105835_20240821_105938.txt', 'LOG_sim0_143408_1UBQ_110708_20240821_143409.txt', 'TRAJ_sim0_110635_1FNF_110629_20240821_110638.dcd', 'exp_prompt_17', 'packmol.inp', 'TOP_sim0_143408_1UBQ_110708_20240821_143409.pdb', 'TOP_sim0_105840_1XQ8_105835_20240821_105938.pdb', 'LOG_sim0_110940_1TRN_110934_20240821_110946.txt', 'exp_prompt_22', 'LOG_sim0_110428_1ZNI_110418_20240821_110431.txt', 'TRAJ_sim0_111046_1C3W_111043_20240821_111051.dcd', 'exp_prompt_9', 'exp_prompt_3', 'TOP_sim0_111046_1C3W_111043_20240821_111051.pdb', 'exp_prompt_19', 'TOP_sim0_110635_1FNF_110629_20240821_110638.pdb', 'TRAJ_sim0_110940_1TRN_110934_20240821_110946.dcd', 'LOG_sim0_142706_1MBN_104823_20240821_142707.txt', 'TRAJ_sim0_110125_1ZNI_110113_20240821_110127.dcd', 'TOP_sim0_110940_1TRN_110934_20240821_110946.pdb', 'exp_prompt_12', 'TOP_sim0_110125_1ZNI_110113_20240821_110127.pdb', 'TRAJ_sim0_142706_1MBN_104823_20240821_142707.dcd', 'TRAJ_sim0_105840_1XQ8_105835_20240821_105938.dcd', 'exp_prompt_10', 'exp_prompt_14', 'TRAJ_sim0_110428_1ZNI_110418_20240821_110431.dcd', 'LOG_sim0_110125_1ZNI_110113_20240821_110127.txt', 'exp_prompt_0', 'exp_prompt_16', 'TOP_sim0_152242_1ZNI_110418_20240821_152245.pdb', 'exp_prompt_20', 'exp_prompt_7', 'LOG_sim0_111046_1C3W_111043_20240821_111051.txt', 'exp_prompt_1']
 Action:
 ```json
@@ -253,8 +253,8 @@ Action:
   }
 }
 ```Calculating RMSF...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/records/rmsf_1UBQ.csv
-Plot saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/figures/FIG_rmsf_1UBQ_20240821_180233.png
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/records/rmsf_1UBQ.csv
+Plot saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/figures/FIG_rmsf_1UBQ_20240821_180233.png
 Action:
 ```json
 {
@@ -270,8 +270,8 @@ Action:
 }
 ```
 Calculating RMSF...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/records/rmsf_1UBQ_1.csv
-Plot saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/figures/FIG_rmsf_1UBQ_20240821_180235.png
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/records/rmsf_1UBQ_1.csv
+Plot saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/figures/FIG_rmsf_1UBQ_20240821_180235.png
 Action:
 ```json
 {
@@ -283,7 +283,7 @@ Action:
   }
 }
 ```Calculating moments of inertia...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/records/MOI_1UBQ.csv
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/records/MOI_1UBQ.csv
 Plot of moments of inertia saved to FIG_MOI_1UBQ_20240821_180237.png
 Action:
 ```json
@@ -296,7 +296,7 @@ Action:
   }
 }
 ```Calculating moments of inertia...
-Data saved to /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32/records/MOI_1UBQ_1.csv
+Data saved to /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32/records/MOI_1UBQ_1.csv
 Plot of moments of inertia saved to FIG_MOI_1UBQ_20240821_180239.png
 ```json
 {
@@ -306,6 +306,6 @@ Plot of moments of inertia saved to FIG_MOI_1UBQ_20240821_180239.png
 ```Files found in registry: 1UBQ_110652: PDB file downloaded from RSCB, PDBFile ID: 1UBQ_110652, 1UBQ_110708: Cleaned File:  Removed Heterogens, and Water Kept.  Replaced Nonstandard Residues. Added Hydrogens at pH 7.0. Missing Atoms Added and replaces nonstandard residues. , top_sim0_110714: Initial positions for simulation sim0_110714, sim0_110714: Basic Simulation of Protein 1UBQ_110708, rec0_110715: Simulation trajectory for protein 1UBQ_110708 and simulation sim0_110714, rec1_110715: Simulation state log for protein 1UBQ_110708 and simulation sim0_110714, rec2_110715: Simulation pdb frames for protein 1UBQ_110708 and simulation sim0_110714, top_sim0_143408: Initial positions for simulation sim0_143408, sim0_143408: Basic Simulation of Protein 1UBQ_110708, rec0_143409: Simulation trajectory for protein 1UBQ_110708 and simulation sim0_143408, rec1_143409: Simulation state log for protein 1UBQ_110708 and simulation sim0_143408, rec2_143409: Simulation pdb frames for protein 1UBQ_110708 and simulation sim0_143408, rmsf_1UBQ: RMSF for 1UBQ, fig0_180233: RMSF plot for 1UBQ, rmsf_1UBQ_1: RMSF for 1UBQ, fig0_180235: RMSF plot for 1UBQ, MOI_1UBQ: Moments of inertia for 1UBQ, fig0_180237: Plot of moments of inertia over time for 1UBQ, MOI_1UBQ_1: Moments of inertia for 1UBQ, fig0_180239: Plot of moments of inertia over time for 1UBQ
 
 
-Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdagent/md-agent/ckpt/ckpt_32
+Checkpint directory:  /gpfs/fs2/scratch/jmedina9/mdcrow/md-agent/ckpt/ckpt_32
 date and time: 2024-08-21
 time: 18:02:41
