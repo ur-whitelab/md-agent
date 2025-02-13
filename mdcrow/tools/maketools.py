@@ -63,7 +63,6 @@ from .base_tools import (
 def make_all_tools(
     llm: BaseLanguageModel,
     human=False,
-    safe_mode=False,
 ):
     load_dotenv()
     all_tools = []
@@ -72,9 +71,7 @@ def make_all_tools(
         all_tools += agents.load_tools(["llm-math"], llm)
         # all_tools += [PythonREPLTool()]
         all_tools += [
-            ModifyBaseSimulationScriptTool(
-                path_registry=path_instance, llm=llm, safe_mode=safe_mode
-            ),
+            ModifyBaseSimulationScriptTool(path_registry=path_instance, llm=llm),
         ]
         if path_instance.ckpt_papers:
             all_tools += [Scholar2ResultLLM(llm=llm, path_registry=path_instance)]

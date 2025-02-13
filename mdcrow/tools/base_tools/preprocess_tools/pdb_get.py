@@ -272,7 +272,7 @@ class MolPDB:
         except Exception as e:
             print(
                 "There was an error getting pdb. Please input a single molecule name."
-                f"{mol_str}"
+                f"{mol_str},{mol_name}"
             )
             return (
                 "Failed. There was an error getting pdb. "
